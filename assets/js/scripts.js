@@ -25,7 +25,7 @@ function logout() {
     localStorage.removeItem('WorkingBranch');
 
     // Redirect to login page after logging out
-    window.location.href = 'login.html';
+    window.location.href = 'index.html';
 }
 
 // Load user information when the page is ready
