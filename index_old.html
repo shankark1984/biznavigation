@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Form</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+
+    <div class="container">
+        <div class="button-group">
+            <button>New</button>
+            <button>Modify</button>
+            <button>Delete</button>
+            <button>Report</button>
+            <button>Query</button>
+            <button>Save</button>
+            <button>Exit</button>
+        </div>
+
+        <form id="customerForm">
+            <div class="form-grid">
+                <div>
+                    <input type="text" id="customerId" name="id" placeholder="Customer ID">
+                </div>
+                <div>
+                    <select id="customerName" name="name">
+                        <option value="">Select customer</option>
+                        <!-- Options will be dynamically added -->
+                    </select>
+                </div>
+                <div>
+                    <!-- <label for="active">Active:</label> -->
+                    <input type="checkbox" id="active" name="active">
+                </div>
+                <div>
+                    <input type="text" id="deActive" placeholder="De-Active Date" disabled>
+                </div>
+            </div>
+
+            <div class="address-section">
+                <div>
+                    <label for="address1">Address 1:</label>
+                    <input type="text" id="address1" name="address1">
+                </div>
+                <div>
+                    <label for="address2">Address 2:</label>
+                    <input type="text" id="address2" name="address2">
+                </div>
+                <div>
+                    <label for="address3">Address 3:</label>
+                    <input type="text" id="address3" name="address3">
+                </div>
+            </div>
+
+            <div class="form-grid">
+                <div>
+                    <label for="pinCode">Pin Code:</label>
+                    <input type="text" id="pinCode" name="pinCode">
+                </div>
+                <div>
+                    <label for="city">City:</label>
+                    <input type="text" id="city" name="city">
+                </div>
+                <div>
+                    <label for="country">Country:</label>
+                    <input type="text" id="country" name="country">
+                </div>
+            </div>
+
+            <div class="form-grid">
+                <div>
+                    <label for="contactPerson">Contact Person:</label>
+                    <input type="text" id="contactPerson" name="contactPerson">
+                </div>
+                <div>
+                    <label for="phoneNumber">Phone Number:</label>
+                    <input type="text" id="phoneNumber" name="phoneNumber">
+                </div>
+                <div>
+                    <label for="emailId">Email ID:</label>
+                    <input type="email" id="emailId" name="emailId">
+                </div>
+                <div>
+                    <label for="faxNumber">Fax Number:</label>
+                    <input type="text" id="faxNumber" name="faxNumber">
+                </div>
+            </div>
+
+            <div class="form-grid">
+                <div>
+                    <label for="gstNo">GST No:</label>
+                    <input type="text" id="gstNo" name="gstNo">
+                </div>
+                <div>
+                    <label for="panNo">PAN No:</label>
+                    <input type="text" id="panNo" name="panNo">
+                </div>
+                <div>
+                    <label for="defaultTax">Default Tax:</label>
+                    <select id="defaultTax" name="defaultTax">
+                        <option value="">Select tax</option>
+                        <!-- Tax options here -->
+                    </select>
+                </div>
+            </div>
+        </form>
+
+        <div class="tabs">
+            <ul class="tab-list">
+                <li class="tab" data-tab="purchaseOrder">Purchase Order</li>
+                <li class="tab" data-tab="pickupAddress">Pickup Address</li>
+                <li class="tab" data-tab="billingAddress">Billing Address</li>
+                <li class="tab" data-tab="otherCharges">Other Fixed Charges</li>
+                <li class="tab" data-tab="tariff">Tariff</li>
+                <li class="tab" data-tab="fuelSurcharge">Fuel Surcharge</li>
+            </ul>
+
+            <div class="tab-content" id="purchaseOrder">
+                <div>
+                    <label for="poNo">P.O No.:</label>
+                    <input type="text" id="poNo">
+                </div>
+                <div>
+                    <label for="poDate">P.O Date:</label>
+                    <input type="date" id="poDate">
+                </div>
+                <div>
+                    <label for="poAmount">P.O Amount:</label>
+                    <input type="number" id="poAmount">
+                </div>
+                <div>
+                    <label for="salesPerson">Sales Person:</label>
+                    <select id="salesPerson">
+                        <option value="">Select sales person</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="particulars">Particulars:</label>
+                    <textarea id="particulars"></textarea>
+                </div>
+                <button class="add-po-btn">Add P.O</button>
+            </div>
+
+            <!-- Add content for other tabs similarly -->
+        </div>
+
+    </div>
+
+    <script src="scripts.js"></script>
+</body>
+
+</html>
