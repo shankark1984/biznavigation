@@ -1,6 +1,6 @@
 {
     "name": "BizNavigation",
-    "short_name": "Namaste",
+    "short_name": "BizNavigation",
     "start_url": "/index.html",
     "display": "standalone",
     "background": "linear-gradient(to right, #283048, #859398);",
