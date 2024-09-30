@@ -1,0 +1,11 @@
+
+#partyName{
+    width:100%;
+    padding: 10px;
+    border-radius: 5px;
+    border: 1px solid #02b53e;
+    /* margin: 5px -5px 0px; */
+    appearance: none; /* For <select> to remove default arrow styling */
+    -webkit-appearance: none; /* For Safari */
+    -moz-appearance: none; /* For Firefox */
+}

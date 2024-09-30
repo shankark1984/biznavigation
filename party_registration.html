@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Company Registration</title>
+    <link rel="stylesheet" href="assets/css/styles.css">
+    <link rel="stylesheet" href="assets/css/party.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+</head>
+
+<body>
+
+    <form id="formID">
+        <div class="form-header">
+            <h2>Party Registration</h2>
+
+        </div>
+        <div class="button-group">
+            <button type="button" id="newButton">New</button>
+            <button type="button" id="modifyButton">Modify</button>
+            <button type="button" id="deleteButton">Delete</button>
+            <button type="button" id="reportButton">Report</button>
+            <button type="submit" id="saveButton">Save</button>
+        </div>
+
+        <div class="formborder">
+            <div class="form-group">
+                <div>
+                    <label for="partyType">Party Type</label>
+                    <select id="partyType" name="partyType" required class="two-input-group">
+                        <option value="" disabled selected>Select Party Type</option>
+                        <option value="Customer">Customer</option>
+                        <option value="Vendor">Vendor</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="partyCode">Party Code</label>
+                    <input type="text" id="partyCode" name="partyCode" required class="two-input-group"
+                        placeholder="Party Code" disabled style="background-color: #3333;">
+                </div>
+                <div>
+                    <label for="partyName">Party Name</label>
+                    <input list="partySuggestions" id="partyName" name="partyName" required placeholder="Party Name"
+                        autocomplete="off" style="background-color:yellow;">
+                    <datalist id="partySuggestions"></datalist>
+                </div>
+                <div>
+                    <label for="partyCurrentStatus">Active</label>
+                    <select id="partyCurrentStatus" name="partyCurrentStatus" required class="two-input-group">
+                        <option value="" disabled selected>Select Current Status</option>
+                        <option value="Active">Active</option>
+                        <option value="DeActive">De-Active</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="partyDeActiveDate">De-Active Date</label>
+                    <input type="date" id="partyDeActiveDate" name="partyDeActiveDate">
+                </div>
+                <div>
+                    <label for="partyAddress">Address</label>
+                    <textarea id="partyAddress" name="partyAddress" style="text-transform: capitalize;" required rows="1"></textarea>
+                </div>
+                <div>
+                    <label for="pinCode">Pin Code</label>
+                    <input type="text" id="pinCode" name="pinCode" required>
+                </div>
+                <div>
+                    <label for="city">City</label>
+                    <input type="text" id="city" name="city" style="text-transform: capitalize;" required>
+                </div>
+                <div>
+                    <label for="state">State</label>
+                    <input type="text" id="state" name="state" style="text-transform: capitalize;" required>
+                </div>
+                <div>
+                    <label for="country">Country</label>
+                    <input type="text" id="country" name="country" style="text-transform: capitalize;" required>
+                </div>
+                <div>
+                    <label for="panNumber">Pan Number</label>
+                    <input type="text" id="panNumber" name="panNumber" style="text-transform: uppercase;" required>
+                </div>
+                <div>
+                    <label for="gSTNumber">GST Number</label>
+                    <input type="text" id="gSTNumber" name="gSTNumber" style="text-transform: uppercase;" required>
+                </div>
+
+                <div>
+                    <label for="partyContactNumber">Phone Number</label>
+                    <input type="text" id="partyContactNumber" name="partyContactNumber" required>
+                </div>
+                <div>
+                    <label for="partyEmailID">Email ID</label>
+                    <input type="email" id="partyEmailID" name="partyEmailID" required>
+                </div>
+                <div>
+                    <label for="defaulttax">Default Tax</label>
+                    <select id="defaulttax" name="defaulttax" required>
+                        <option value="" disabled selected>Select Default Tax</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+
+    </form>
+
+    <script src="assets/js/header.js"></script>
+    <script src="assets/js/footer.js"></script>
+    <script src="assets/js/scripts.js"></script>
+    <script src="assets/js/global_function.js"></script>
+    <script src="assets/js/party-registration.js"></script>
+
+
+</body>
+
+</html>
