@@ -1,7 +1,7 @@
 {
     "name": "BizNavigation",
     "short_name": "Namaste",
-    "start_url": "/Login.html",
+    "start_url": "/index.html",
     "display": "standalone",
     "background": "linear-gradient(to right, #283048, #859398);",
     "theme_color": "#4CAF50",
