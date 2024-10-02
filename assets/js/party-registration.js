@@ -115,6 +115,32 @@ document.getElementById('modifyButton').addEventListener('click', function () {
     //     }
     // });
 });
+document.getElementById('newButton').addEventListener('click', function () {
+    // Clear all input fields and reset selects in the form
+    document.getElementById('formID').reset();
+
+    // Ensure the partyCode field remains disabled and unchanged
+    document.getElementById('partyCode').disabled = true;
+    document.getElementById('partyCode').value = '';
+
+    // Re-enable other fields (except partyCode)
+    const inputs = document.querySelectorAll('#formID input, #formID select, #formID textarea');
+    inputs.forEach(input => {
+        if (input.id !== 'partyCode') {
+            input.disabled = false; // Enable all fields except partyCode
+        }
+    });
+
+    // Optionally, reset formData if you have any stored data in JavaScript
+    formData = {}; // Reset formData variable if you use it
+
+    // Enable saveButton, disable modifyButton
+    document.getElementById('saveButton').disabled = false;
+    document.getElementById('newButton').disabled = true;
+    document.getElementById('modifyButton').disabled = true;
+    saveButton.textContent = 'Save';
+});
+
 
 
 
@@ -280,7 +306,7 @@ document.getElementById('saveButton').addEventListener('click', async function (
 
     fetch(PD_SCRIPT_APP_URL, {
         method: 'POST',
-        mode: 'cors',  // Changed to 'cors' to allow for JSON response
+        mode: 'no-cors',  // Changed to 'cors' to allow for JSON response
         headers: {
             'Content-Type': 'application/json'
         },
