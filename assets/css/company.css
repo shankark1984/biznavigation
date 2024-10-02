@@ -1,0 +1,20 @@
+/* Container for company registration header */
+.company-header {
+    display: flex;
+    justify-content: space-between; /* Align the company ID to the left and logo to the right */
+    align-items: center; /* Vertically center the items */
+    margin: 20px 0; /* Add some margin for spacing */
+}
+
+/* Styling for the company ID section */
+.company-header h2 {
+    margin: 0;
+    font-size: 24px;
+    color: #333;
+}
+
+/* Styling for the company logo */
+.company-logo {
+    height: 50px; /* Adjust the logo size */
+    margin-left: 20px; /* Optional: Add some space between the text and the logo */
+}

@@ -143,7 +143,7 @@ li.dropdown {
 /* Desktop Styles */
 @media (min-width: 769px) {
     .logo.mobile {
-        display: block; /* Hide mobile logo on desktop */
+        display: none; /* Hide mobile logo on desktop */
     }
 }
 
@@ -164,10 +164,10 @@ button {
 }
 
 /* Hover effect for buttons */
-button:hover {
-    background-color: white; /* Change background on hover */
-    color: black; /* Change text color on hover */
-    border: 2px solid #4CAF50; /* Add border on hover */
+.button-group button:hover {
+    background-color: white;
+    color: black;
+    border: 2px solid #4CAF50;
 }
 
 /* Disable default button appearance */
@@ -241,99 +241,13 @@ select {
     -moz-appearance: none; /* For Firefox */
 }
 
-/* Ensure consistency for input */
-input {
-    text-transform: capitalize; /* Ensures text capitalization is consistent */
-}
-
-/* Styles specifically for datalist options */
-datalist {
-    display: none; /* Datalist does not have direct styling */
-}
-
-/* Optionally, style for individual option items (though not applicable visually) */
-option {
-    padding: 10px;
-}
-
-/* Grouping input boxes in a row */
-.form-group,
-.two-input-group,
-.three-input-group {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 30px; /* Space between input boxes */
-    margin-bottom: 5px; /* Space below the group */
-}
-
-.form-group > div,
-.two-input-group div,
-.three-input-group div {
-    flex: 1; /* Allow the child divs to grow equally */
-    min-width: 200px; /* Set a minimum width */
-}
-
-/* Styling for single input form-group */
-.single-input-group {
-    margin-bottom: 5px;
-    display: block; /* Ensure it doesn't try to align in a row */
-}
-
-/* Responsive layout for smaller screens */
-@media (max-width: 768px) {
-    .form-group,
-    .two-input-group,
-    .three-input-group {
-        flex-direction: column; /* Stack inputs vertically */
-        gap: 10px; /* Adjust gap for better spacing */
-    }
-
-    .form-group input,
-    .two-input-group input,
-    .three-input-group input {
-        width: 100%; /* Make sure each input takes up the full width */
-        margin-bottom: 5px; /* Add margin below each input for spacing */
-    }
-}
-
-/* Tabs styling */
-.tabs {
-    margin: 20px auto;
-    max-width: 100%;
-}
-
-.tab-links {
-    display: flex;
-    list-style: none;
-    padding: 0;
-}
-
-.tab-links li {
-    flex-grow: 1;
-    text-align: center;
-    background-color: #f1f1f1;
-    border: 1px solid #ccc;
-    padding: 10px;
-    cursor: pointer;
-}
-
-.tab-content {
-    display: none; /* Hide all tab content by default */
-    border: 1px solid #ccc;
-    padding: 20px;
-    background-color: #f9f9f9;
-}
-
-.tab-content.active {
-    display: block; /* Show the active tab content */
-}
-
-/* Small input styling */
-.input-small {
-    width: 30%; /* Set the width to 30% */
-    padding: 10px; /* Add padding for better appearance */
-    border-radius: 5px; /* Make the corners rounded */
-    border: 1px solid #ccc; /* Border style */
+/* Styling for the textarea */
+textarea {
+    width: 100%; /* Full width */
+    padding: 10px; /* Padding for better appearance */
+    border-radius: 5px; /* Rounded corners */
+    border: 1px solid #02b53e; /* Border style */
+    resize: vertical; /* Allow vertical resizing only */
 }
 
 /* Company Form Specific Styles */
@@ -359,30 +273,51 @@ form#formID {
     color: #333; /* Dark text color */
 }
 
-/* Group of buttons */
-.button-group {
+/* Group of buttons within formID */
+#formID .button-group {
     display: flex; /* Align buttons in a row */
-    justify-content: flex-end; /* Align to the right */
+    justify-content: space-between; /* Space buttons evenly */
+    gap: 10px; /* Space between buttons */
+    flex-wrap: nowrap; /* Prevent wrapping */
     margin-top: 20px; /* Space above buttons */
 }
 
-/* Message for the user */
-.message {
-    background-color: #e9ffcc; /* Light green background */
-    border-left: 5px solid #4caf50; /* Green border on the left */
-    padding: 10px; /* Space inside the message */
-    margin: 20px 0; /* Space above and below the message */
-    border-radius: 5px; /* Rounded corners */
+/* Buttons within formID remain in one line */
+#formID .button-group button {
+    flex: 1 1 auto; /* Allow buttons to shrink if needed */
+    min-width: 100px; /* Set a minimum width to ensure buttons don't get too small */
+    margin: 5px; /* Margin around each button */
+    padding: 10px 15px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
 }
-/* Styling for the textarea */
-textarea {
-    width: 100%; /* Full width */
-    padding: 10px; /* Padding for better appearance */
-    border-radius: 5px; /* Rounded corners */
-    border: 1px solid #02b53e; /* Border style */
-    resize: vertical; /* Allow vertical resizing only */
+
+/* Hover effect for buttons */
+#formID .button-group button:hover {
+    background-color: white;
+    color: black;
+    border: 2px solid #4CAF50;
 }
-.company-logo {
-    max-width: 75px; /* Adjust the size as needed */
-    height: auto;
+
+/* Disable default button appearance */
+#formID .button-group button:disabled {
+    background-color: #ccc; /* Grey background */
+    color: #666; /* Dark grey text */
+    cursor: not-allowed; /* Not allowed cursor */
+}
+
+/* Media query for mobile screens */
+@media (max-width: 600px) {
+    #formID .button-group {
+        flex-wrap: nowrap; /* Ensure buttons do not wrap on small screens */
+        justify-content: space-between;
+    }
+
+    #formID .button-group button {
+        flex: 1; /* Allow buttons to adjust evenly */
+    }
 }
