@@ -306,7 +306,7 @@ document.getElementById('saveButton').addEventListener('click', async function (
 
     fetch(PD_SCRIPT_APP_URL, {
         method: 'POST',
-        mode: 'no-cors',  // Changed to 'cors' to allow for JSON response
+        mode: 'cors',  // Changed to 'cors' to allow for JSON response
         headers: {
             'Content-Type': 'application/json'
         },

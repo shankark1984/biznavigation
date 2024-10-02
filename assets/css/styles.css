@@ -147,28 +147,9 @@ li.dropdown {
     }
 }
 
-/* Button Styles */
-button {
-    background-color: #4CAF50; /* Green background */
-    border: none; /* Remove borders */
-    color: white; /* White text */
-    padding: 10px 15px; /* Some padding */
-    text-align: center; /* Center the text */
-    text-decoration: none; /* Remove underline */
-    display: inline-block; /* Make the buttons align */
-    font-size: 16px; /* Increase font size */
-    margin: 5px 2px; /* Add some margin */
-    transition-duration: 0.4s; /* Transition effect duration */
-    cursor: pointer; /* Pointer/hand icon */
-    border-radius: 5px; /* Rounded corners */
-}
 
-/* Hover effect for buttons */
-.button-group button:hover {
-    background-color: white;
-    color: black;
-    border: 2px solid #4CAF50;
-}
+
+
 
 /* Disable default button appearance */
 button:disabled {
@@ -272,20 +253,38 @@ form#formID {
     font-weight: bold; /* Make label text bold */
     color: #333; /* Dark text color */
 }
+/* Button Styles */
+button {
+    background-color: #4CAF50; /* Green background */
+    border: none; /* Remove borders */
+    color: white; /* White text */
+    padding: 10px 15px; /* Some padding */
+    text-align: center; /* Center the text */
+    text-decoration: none; /* Remove underline */
+    display: inline-block; /* Make the buttons align */
+    font-size: 16px; /* Increase font size */
+    margin: 5px 2px; /* Add some margin */
+    transition-duration: 0.4s; /* Transition effect duration */
+    cursor: pointer; /* Pointer/hand icon */
+    border-radius: 5px; /* Rounded corners */
+}
 
 /* Group of buttons within formID */
 #formID .button-group {
     display: flex; /* Align buttons in a row */
     justify-content: space-between; /* Space buttons evenly */
     gap: 10px; /* Space between buttons */
-    flex-wrap: nowrap; /* Prevent wrapping */
+    flex-wrap: wrap; /* Allow buttons to wrap on smaller screens */
     margin-top: 20px; /* Space above buttons */
+    width: 100%; /* Ensure the container takes full width */
+    box-sizing: border-box; /* Include padding and border in element's total width */
 }
 
 /* Buttons within formID remain in one line */
 #formID .button-group button {
     flex: 1 1 auto; /* Allow buttons to shrink if needed */
-    min-width: 100px; /* Set a minimum width to ensure buttons don't get too small */
+    min-width: 120px; /* Set a minimum width to ensure buttons don't get too small */
+    max-width: 200px; /* Set a maximum width for buttons */
     margin: 5px; /* Margin around each button */
     padding: 10px 15px;
     background-color: #4CAF50;
@@ -294,6 +293,7 @@ form#formID {
     border-radius: 5px;
     cursor: pointer;
     transition: background-color 0.3s;
+    box-sizing: border-box; /* Ensure padding is included in the width */
 }
 
 /* Hover effect for buttons */
@@ -319,5 +319,8 @@ form#formID {
 
     #formID .button-group button {
         flex: 1; /* Allow buttons to adjust evenly */
+        min-width: 15%; /* Make buttons full width on mobile */
+        text-align: center; /* Center the text */
+        margin: 5px 0px; /* Add some margin */
     }
 }
