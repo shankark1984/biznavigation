@@ -1,7 +1,7 @@
 const PD_sheetID = "1L_x7vb35dryppT-Ihq0FW6mfVzQKe86ajdv7mqbIW6k"; // Your Google Sheet ID
 const PD_apiKey = "AIzaSyDQzXSjDTekYX41dzeTxjCnmWZi-mgARMI"; // Your API key
 const PD_range = "PartyDetails!A2:AE"; // Specify the range of the sheet
-const PD_SCRIPT_APP_URL = 'https://script.google.com/macros/s/AKfycbyXgfpoWWl24CtEfYDpMzSn52Khh0URmVftWChoWwf68h3ya8J5ameHJ6wCt2ps2Vj6/exec';
+const PD_SCRIPT_APP_URL = 'https://script.google.com/macros/s/AKfycbwILa-7_dctukUYOugfdhzTrD6Sp8yFu-IaVpKzkUxR-WqGUIrGe3-j9Gf9sZeGWgdK/exec';
 
 let partyDetails = [];
 
@@ -207,50 +207,50 @@ console.log(url);
 
 
 // Function to save or update party details
-// async function savePartyDetails() {
-//     const partyName = $("#partyName").val();
-//     let partyCode;
+async function savePartyDetails() {
+    const partyName = $("#partyName").val();
+    let partyCode;
 
-//     if (saveButton.textContent === 'Save') {
-//         // Generate new party code
-//         partyCode = await generateNewPartyCode(partyName);
-//     } else if (saveButton.textContent === 'Update') {
-//         partyCode = $("#partyCode").val(); // Use existing party code
-//     }
-//     console.log(partyCode);
+    if (saveButton.textContent === 'Save') {
+        // Generate new party code
+        partyCode = await generateNewPartyCode(partyName);
+    } else if (saveButton.textContent === 'Update') {
+        partyCode = $("#partyCode").val(); // Use existing party code
+    }
+    console.log(partyCode);
 
-//     const partyData = {
-//         partyType: $("#partyType").val(),
-//         partyCode: $("#partyCode").val(),
-//         partyName: $("#partyName").val(),
-//         partyContactPerson: "", // Add logic to get this value if needed
-//         partyContactNumber: $("#partyContactNumber").val(),
-//         partyOperationPerson: "", // Add logic to get this value if needed
-//         partyOperationPersonNo: "", // Add logic to get this value if needed
-//         partyAccountPerson: "", // Add logic to get this value if needed
-//         partyAccountContactNo: "", // Add logic to get this value if needed
-//         partyEmailID: $("#partyEmailID").val(),
-//         partyAddress: $("#partyAddress").val(),
-//         city: $("#city").val(),
-//         pinCode: $("#pinCode").val(),
-//         state: $("#state").val(),
-//         country: $("#country").val(),
-//         panNumber: $("#panNumber").val(),
-//         gSTNumber: $("#gSTNumber").val(),
-//         defaulttax: $("#defaulttax").val(),
-//         partyCurrentStatus: $("#partyCurrentStatus").val(),
-//         partyDeActiveDate: $("#partyDeActiveDate").val(),
-//         createdBy: user_LoginID,
-//     };
+    const partyData = {
+        partyType: $("#partyType").val(),
+        partyCode: $("#partyCode").val(),
+        partyName: $("#partyName").val(),
+        partyContactPerson: "", // Add logic to get this value if needed
+        partyContactNumber: $("#partyContactNumber").val(),
+        partyOperationPerson: "", // Add logic to get this value if needed
+        partyOperationPersonNo: "", // Add logic to get this value if needed
+        partyAccountPerson: "", // Add logic to get this value if needed
+        partyAccountContactNo: "", // Add logic to get this value if needed
+        partyEmailID: $("#partyEmailID").val(),
+        partyAddress: $("#partyAddress").val(),
+        city: $("#city").val(),
+        pinCode: $("#pinCode").val(),
+        state: $("#state").val(),
+        country: $("#country").val(),
+        panNumber: $("#panNumber").val(),
+        gSTNumber: $("#gSTNumber").val(),
+        defaulttax: $("#defaulttax").val(),
+        partyCurrentStatus: $("#partyCurrentStatus").val(),
+        partyDeActiveDate: $("#partyDeActiveDate").val(),
+        createdBy: user_LoginID,
+    };
 
-//     if (saveButton.textContent === 'Save') {
-//         // Add a new record
-//         addNewRecord(partyData);
-//     } else if (saveButton.textContent === 'Update') {
-//         // Update existing record
-//         updateRecord(partyData.partyCode, partyData);
-//     }
-// }
+    if (saveButton.textContent === 'Save') {
+        // Add a new record
+        addNewRecord(partyData);
+    } else if (saveButton.textContent === 'Update') {
+        // Update existing record
+        updateRecord(partyData.partyCode, partyData);
+    }
+}
 
 // Save or update form data
 document.getElementById('saveButton').addEventListener('click', async function (event) {
@@ -303,15 +303,9 @@ document.getElementById('saveButton').addEventListener('click', async function (
 
     const action = (saveButton.textContent === 'Save') ? 'add' : 'update';
 
-    console.log('Show Action '+ action +' ' + formData.partyCode + 'Corrected data ' +formData.partyAddress);
-
-    if (action=='add'){
-        $("#partyCode").val(partyCode).prop('disabled', true);
-    }
-
     fetch(PD_SCRIPT_APP_URL, {
         method: 'POST',
-        mode: 'no-cors',  // Changed to 'cors' to allow for JSON response
+        mode: 'cors',  // Changed to 'cors' to allow for JSON response
         headers: {
             'Content-Type': 'application/json'
         },

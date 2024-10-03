@@ -1,25 +1,15 @@
 // header.js
 document.addEventListener("DOMContentLoaded", function () {
     const header = `
-        <header>
-        <!-- Hamburger Menu for Mobile -->
-        <div class="hamburger" onclick="toggleMenu()">
-            &#9776;
+        <nav class="menu-bar">
+        <div class="logo-container">
+            <img src="assets/img/icon-512x512.png" alt="Logo" class="logo">
+            <span class="company-name">BizNavigation</span>
         </div>
-
-        <!-- Navigation Menu -->
-        <ul class="nav-menu">
-            <!-- Logo Section -->
-            <li class="logo">
-                <h1 style="color: aliceblue; text-align: center;">
-                    <a href="home.html" style="color: aliceblue; text-decoration: none;">BizNavigation</a>
-                </h1>
-            </li>
-
-            <!-- Dropdowns for different sections -->
-            <li class="dropdown">
-                <a href="javascript:void(0)" class="dropbtn">Master</a>
-                <div class="dropdown-content">
+        <ul class="menu-items">
+            <li>
+                <a href="#">Master</a>
+                <div class="dropdown">
                     <a href="company.html">Company</a>
                     <a href="party_registration.html">Party Registration</a>
                     <a href="#">Employee</a>
@@ -28,11 +18,10 @@ document.addEventListener("DOMContentLoaded", function () {
                     <a href="#">Map</a>
                 </div>
             </li>
-
-            <li class="dropdown">
-                <a href="javascript:void(0)" class="dropbtn">Functions</a>
-                <div class="dropdown-content">
-                    <a href="form1.html">Enquiry</a>
+            <li>
+                <a href="#">Functions</a>
+                <div class="dropdown">
+                    <a href="#">Enquiry</a>
                     <a href="#">Quotation</a>
                     <a href="#">International</a>
                     <a href="#">Domestic</a>
@@ -41,22 +30,20 @@ document.addEventListener("DOMContentLoaded", function () {
                     <a href="#">Upload Data</a>
                 </div>
             </li>
-
-            <li class="dropdown">
-                <a href="javascript:void(0)" class="dropbtn">Accounting</a>
-                <div class="dropdown-content">
-                    <a href="form1.html">Customer Invoicing</a>
+            <li>
+                <a href="#">Accounting</a>
+                <div class="dropdown">
+                    <a href="#">Customer Invoicing</a>
                     <a href="#">Vendor Billing</a>
                     <a href="#">Payment Credit</a>
                     <a href="#">Payment Debit</a>
                     <a href="#">Tax Details</a>
                 </div>
             </li>
-
-            <li class="dropdown">
-                <a href="javascript:void(0)" class="dropbtn">Reports</a>
-                <div class="dropdown-content">
-                    <a href="form1.html">International Report</a>
+            <li>
+                <a href="#">Reports</a>
+                <div class="dropdown">
+                    <a href="#">International Report</a>
                     <a href="#">Domestic Report</a>
                     <a href="#">Customs Clearance Report</a>
                     <a href="#">FTL or FCL Report</a>
@@ -69,27 +56,27 @@ document.addEventListener("DOMContentLoaded", function () {
                     <a href="#">Accounting Ledger</a>
                 </div>
             </li>
-
-            <li class="dropdown">
-                <a href="javascript:void(0)" class="dropbtn">Tools</a>
-                <div class="dropdown-content">
-                    <a href="form1.html">Settings</a>
+            <li>
+                <a href="#">Tools</a>
+                <div class="dropdown">
+                    <a href="#">Settings</a>
                     <a href="#">Error Log</a>
                     <a href="#">Docket Master</a>
                     <a href="#">Reset Database</a>
-                    <a href="#">Create Query</a>
+                    <a href="#">reate Query</a>
                 </div>
             </li>
-
-            <!-- Right-aligned elements (User Info and Logout) -->
-            <li class="right-menu" style="margin-left: auto;">
-                <p style="color: white; padding-right: 5px;">User ID: <span id="userLoginID">UserLoginID</span></p>
-            </li>
-            <li class="right-menu">
-                <button class="logout-btn" onclick="logout()">Logout</button>
-            </li>
         </ul>
-    </header>
+        <div class="user-info">
+            <p class="user-id">User ID: <span id="userLoginID">UserLoginID</span></p>
+            <button class="logout-btn">Logout</button>
+        </div>
+        <div class="hamburger">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+    </nav>
     `;
     document.body.insertAdjacentHTML('afterbegin', header);
 });
