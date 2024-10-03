@@ -1,4 +1,4 @@
-const SCRIPT_ID = 'https://script.google.com/macros/s/AKfycbytVlA8kWLJmYmx1tQORmwNr4uITUvxqM60Zodnw7NjUnLq0BTQuBuaS_6a4NvDs8ES/exec';
+
 
 function login() {
     const userName = document.getElementById('userName').value;
@@ -13,7 +13,7 @@ function login() {
     }
 
     // Fetch user details from Google Sheets using Web Apps API
-    fetch(`${SCRIPT_ID}?action=login&userName=${encodeURIComponent(userName)}&password=${encodeURIComponent(password)}`)
+    fetch(`${UserLogin_SCRIPT_ID}?action=login&userName=${encodeURIComponent(userName)}&password=${encodeURIComponent(password)}`)
         .then(response => {
             if (!response.ok) {
                 throw new Error('Network response was not ok.');

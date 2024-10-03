@@ -4,14 +4,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Company Registration</title>
+    <title>BizNavigation</title>
     <link rel="stylesheet" href="assets/css/styles.css">
     <link rel="stylesheet" href="assets/css/company.css">
 </head>
 
 <body>
 
-    <form id="formID">
+    <form id="userForm">
         <div class="company-header">
             <h2>Company Registration -(<span id="CompID">companyid</span>)</h2>
             <img src="assets/img/logo/CA0001.png" alt="Company Logo" class="company-logo">
@@ -27,9 +27,8 @@
         <div class="formborder">
             <div class="form-group">
                 <div>
-                    <label for="shortCode">Short Code</label>
-                    <input type="text" id="shortCode" name="shortCode" required class="input-small"
-                        placeholder="Short Code">
+                    <label for="shortCode" aria-label="Enter the short code">Short Code</label>
+                    <input type="text" id="shortCode" name="shortCode" required class="input-small" placeholder="Short Code" aria-required="true">
                 </div>
                 <div>
                     <label for="companyName">Company Name</label>
@@ -46,14 +45,12 @@
                     <input type="text" id="uaNo" name="uaNo" style="text-transform: uppercase;" required
                         placeholder="Udyog Aadhaar No">
                 </div>
-            </div>
 
-            <div class="form-group single-input-group">
-                <label for="address">Address</label>
-                <input type="text" id="address" name="address" style="text-transform: capitalize;" required>
-            </div>
+                <div>
+                    <label for="address">Address</label>
+                    <input type="text" id="address" name="address" style="text-transform: capitalize;" required>
+                </div>
 
-            <div class="form-group">
                 <div>
                     <label for="pinCode">Pin Code</label>
                     <input type="text" id="pinCode" name="pinCode" required>
@@ -70,9 +67,8 @@
                     <label for="country">Country</label>
                     <input type="text" id="country" name="country" style="text-transform: capitalize;" required>
                 </div>
-            </div>
 
-            <div class="form-group two-input-group">
+
                 <div>
                     <label for="panNumber">Pan Number</label>
                     <input type="text" id="panNumber" name="panNumber" style="text-transform: uppercase;" required>
@@ -81,9 +77,8 @@
                     <label for="gstNumber">GST Number</label>
                     <input type="text" id="gstNumber" name="gstNumber" style="text-transform: uppercase;" required>
                 </div>
-            </div>
 
-            <div class="form-group three-input-group">
+
                 <div>
                     <label for="phoneNumber">Phone Number</label>
                     <input type="text" id="phoneNumber" name="phoneNumber" required>
@@ -96,139 +91,145 @@
                     <label for="website">Website</label>
                     <input type="url" id="website" name="website">
                 </div>
-            </div>
-        </div>
 
-        <!-- Tabs for Branch & Bank Details -->
-        <div class="tabs">
-            <ul class="tab-links">
-                <li class="active" onclick="openTab(event, 'branchDetails')">Branch Details <span class="arrow">▼</span>
-                </li>
-                <li onclick="openTab(event, 'bankDetails')">Bank Details <span class="arrow">▼</span></li>
-            </ul>
-
-            <div id="branchDetails" class="tab-content active">
-                <div class="form-group two-input-group">
-                    <div>
-                        <label for="branchcode">Branch Code</label>
-                        <input type="text" id="branchcode" name="branchcode" required class="input-small">
-                    </div>
-                    <div>
-                        <label for="branchaddress">Address</label>
-                        <input type="text" id="branchaddress" name="branchaddress" style="text-transform: capitalize;"
-                            required>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <div>
-                        <label for="branchPinCode">Pin Code</label>
-                        <input type="text" id="branchPinCode" name="branchPinCode" required>
-                    </div>
-                    <div>
-                        <label for="branchCity">City</label>
-                        <input type="text" id="branchCity" name="branchCity" style="text-transform: capitalize;"
-                            required>
-                    </div>
-                    <div>
-                        <label for="branchState">State</label>
-                        <input type="text" id="branchState" name="branchState" style="text-transform: capitalize;"
-                            required>
-                    </div>
-                    <div>
-                        <label for="branchCountry">Country</label>
-                        <input type="text" id="branchCountry" name="branchCountry" style="text-transform: capitalize;"
-                            required>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <div>
-                        <label for="branchPhoneNumber">Phone Number</label>
-                        <input type="text" id="branchPhoneNumber" name="branchPhoneNumber" required>
-                    </div>
-                    <div>
-                        <label for="branchEmail">Email ID</label>
-                        <input type="email" id="branchEmail" name="branchEmail" required>
-                    </div>
-                    <div>
-                        <label for="branchPanNumber">Pan Number</label>
-                        <input type="text" id="branchPanNumber" name="branchPanNumber"
-                            style="text-transform: uppercase;" required>
-                    </div>
-                    <div>
-                        <label for="branchGstNumber">GST Number</label>
-                        <input type="text" id="branchGstNumber" name="branchGstNumber"
-                            style="text-transform: uppercase;" required>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <div>
-                        <label for="branchStatus">Status</label>
-                        <select id="branchStatus" name="branchStatus" required>
-                            <option value="" disabled selected>Select an option</option>
-                            <option value="activebranch">Active</option>
-                            <option value="deactivebranch">Deactive</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label for="invoiceyn">Invoice?</label>
-                        <input type="checkbox" id="invoiceyn" name="invoiceyn">
-                    </div>
-                    <div>
-                        <button type="button" onclick="addBranchDetails()">Add</button>
-                    </div>
-                </div>
             </div>
 
-            <div id="bankDetails" class="tab-content">
-                <div class="form-group">
-                    <div>
-                        <label for="bankname">Bank Name</label>
-                        <input type="text" id="bankname" name="bankname" style="text-transform: uppercase;" required>
-                    </div>
-                    <div>
-                        <label for="accountno">Account No</label>
-                        <input type="text" id="accountno" name="accountno" style="text-transform: uppercase;" required>
-                    </div>
-                    <div>
-                        <label for="branchname">Branch Name</label>
-                        <input type="text" id="branchname" name="branchname" style="text-transform: uppercase;"
-                            required>
-                    </div>
-                    <div>
-                        <label for="defaultbank">Default Bank</label>
-                        <input type="checkbox" id="defaultbank" name="defaultbank">
-                    </div>
-                </div>
+            <!-- Tabs for Branch & Bank Details -->
+            <!-- <div class="tabs">
+                <ul class="tab-links">
+                    <li class="active" onclick="openTab(event, 'branchDetails')">Branch Details <span
+                            class="arrow">▼</span>
+                    </li>
+                    <li onclick="openTab(event, 'bankDetails')">Bank Details <span class="arrow">▼</span></li>
+                </ul> -->
 
-                <div class="form-group">
-                    <div>
-                        <label for="ifsccode">IFSC Code</label>
-                        <input type="text" id="ifsccode" name="ifsccode" style="text-transform: uppercase;" required>
+                <!-- <div id="branchDetails" class="tab-content active">
+                    <div class="form-group two-input-group">
+                        <div>
+                            <label for="branchcode">Branch Code</label>
+                            <input type="text" id="branchcode" name="branchcode" required class="input-small">
+                        </div>
+                        <div>
+                            <label for="branchaddress">Address</label>
+                            <input type="text" id="branchaddress" name="branchaddress"
+                                style="text-transform: capitalize;" required>
+                        </div>
                     </div>
-                    <div>
-                        <label for="micrcode">MICR Code</label>
-                        <input type="text" id="micrcode" name="micrcode" style="text-transform: uppercase;" required>
+                    <div class="form-group">
+                        <div>
+                            <label for="branchPinCode">Pin Code</label>
+                            <input type="text" id="branchPinCode" name="branchPinCode" required>
+                        </div>
+                        <div>
+                            <label for="branchCity">City</label>
+                            <input type="text" id="branchCity" name="branchCity" style="text-transform: capitalize;"
+                                required>
+                        </div>
+                        <div>
+                            <label for="branchState">State</label>
+                            <input type="text" id="branchState" name="branchState" style="text-transform: capitalize;"
+                                required>
+                        </div>
+                        <div>
+                            <label for="branchCountry">Country</label>
+                            <input type="text" id="branchCountry" name="branchCountry"
+                                style="text-transform: capitalize;" required>
+                        </div>
                     </div>
-                    <div>
-                        <label for="bankaddress">Address</label>
-                        <input type="text" id="bankaddress" name="bankaddress" style="text-transform: uppercase;"
-                            required>
+                    <div class="form-group">
+                        <div>
+                            <label for="branchPhoneNumber">Phone Number</label>
+                            <input type="text" id="branchPhoneNumber" name="branchPhoneNumber" required>
+                        </div>
+                        <div>
+                            <label for="branchEmail">Email ID</label>
+                            <input type="email" id="branchEmail" name="branchEmail" required>
+                        </div>
+                        <div>
+                            <label for="branchPanNumber">Pan Number</label>
+                            <input type="text" id="branchPanNumber" name="branchPanNumber"
+                                style="text-transform: uppercase;" required>
+                        </div>
+                        <div>
+                            <label for="branchGstNumber">GST Number</label>
+                            <input type="text" id="branchGstNumber" name="branchGstNumber"
+                                style="text-transform: uppercase;" required>
+                        </div>
                     </div>
-                    <div>
-                        <label for=""></label>
-                        <button type="button" onclick="addBankDetails()">Add</button>
+                    <div class="form-group">
+                        <div>
+                            <label for="branchStatus">Status</label>
+                            <select id="branchStatus" name="branchStatus" required>
+                                <option value="" disabled selected>Select an option</option>
+                                <option value="activebranch">Active</option>
+                                <option value="deactivebranch">Deactive</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="invoiceyn">Invoice?</label>
+                            <input type="checkbox" id="invoiceyn" name="invoiceyn">
+                        </div>
+                        <div>
+                            <button type="button" onclick="addBranchDetails()">Add</button>
+                        </div>
                     </div>
-                </div>
+                </div> -->
+
+                <!-- <div id="bankDetails" class="tab-content" >
+                    <div class="form-group">
+                        <div>
+                            <label for="bankname">Bank Name</label>
+                            <input type="text" id="bankname" name="bankname" style="text-transform: uppercase;"
+                                required>
+                        </div>
+                        <div>
+                            <label for="accountno">Account No</label>
+                            <input type="text" id="accountno" name="accountno" style="text-transform: uppercase;"
+                                required>
+                        </div>
+                        <div>
+                            <label for="branchname">Branch Name</label>
+                            <input type="text" id="branchname" name="branchname" style="text-transform: uppercase;"
+                                required>
+                        </div>
+                        <div>
+                            <label for="defaultbank">Default Bank</label>
+                            <input type="checkbox" id="defaultbank" name="defaultbank">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <div>
+                            <label for="ifsccode">IFSC Code</label>
+                            <input type="text" id="ifsccode" name="ifsccode" style="text-transform: uppercase;"
+                                required>
+                        </div>
+                        <div>
+                            <label for="micrcode">MICR Code</label>
+                            <input type="text" id="micrcode" name="micrcode" style="text-transform: uppercase;"
+                                required>
+                        </div>
+                        <div>
+                            <label for="bankaddress">Address</label>
+                            <input type="text" id="bankaddress" name="bankaddress" style="text-transform: uppercase;"
+                                required>
+                        </div>
+                        <div>
+                            <label for=""></label>
+                            <button type="button" onclick="addBankDetails()">Add</button>
+                        </div>
+                    </div>
+                </div> -->
             </div>
-        </div>
 
     </form>
-
+    <script src="assets/js/server.js"></script>
+    <script src="assets/js/companyDetails.js"></script>
     <script src="assets/js/header.js"></script>
     <script src="assets/js/footer.js"></script>
     <script src="assets/js/scripts.js"></script>
-    <script src="assets/js/company-registration.js"></script>
-    <script src="assets/js/global_function.js"></script>
+    <script src="assets/js/pincde.js"></script>
+
 
 </body>
 

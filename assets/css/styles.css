@@ -45,12 +45,12 @@ h1 {
     list-style-type: none;
 }
 
-.menu-items > li {
+.menu-items>li {
     position: relative;
     margin-right: 20px;
 }
 
-.menu-items > li > a {
+.menu-items>li>a {
     color: white;
     text-decoration: none;
     padding: 10px;
@@ -65,7 +65,7 @@ h1 {
     z-index: 1;
 }
 
-.menu-items > li:hover .dropdown {
+.menu-items>li:hover .dropdown {
     display: block;
 }
 
@@ -116,7 +116,8 @@ h1 {
         flex-wrap: wrap;
     }
 
-    .menu-items, .user-info {
+    .menu-items,
+    .user-info {
         display: none;
         width: 100%;
     }
@@ -125,7 +126,8 @@ h1 {
         display: flex;
     }
 
-    .menu-items.active, .user-info.active {
+    .menu-items.active,
+    .user-info.active {
         display: flex;
         flex-direction: column;
         position: static;
@@ -136,7 +138,7 @@ h1 {
         order: 1;
     }
 
-    .menu-items.active > li {
+    .menu-items.active>li {
         margin-right: 0;
         text-align: center;
     }
@@ -194,8 +196,8 @@ button:active {
 /* Form Styles */
 form {
     max-width: 1000px;
-    margin: 10px auto;
-    padding: 20px;
+    margin: 2px auto;
+    padding: 5px;
     border: 1px solid #ccc;
     border-radius: 5px;
     background-color: #f9f9f9;
@@ -209,7 +211,7 @@ label {
 input[type="text"],
 input[type="email"],
 input[type="url"],
-input[type="number"], 
+input[type="number"],
 input[type="date"],
 select,
 textarea {
@@ -227,7 +229,6 @@ textarea {
 }
 
 /* Company Form Specific Styles */
-form#formID,
 .formborder {
     border: 2px solid #007BFF;
     padding: 20px;
@@ -237,62 +238,23 @@ form#formID,
 }
 
 .formborder {
-    padding: 50px;
+    padding: 5px;
+
 }
 
-#formID label {
+#userForm label {
     font-weight: bold;
     color: #333;
 }
 
-#formID .button-group {
-    display: flex;
-    justify-content: space-between;
-    gap: 10px;
-    flex-wrap: wrap;
-    margin-top: 20px;
-    width: 100%;
-    box-sizing: border-box;
-}
-
-#formID .button-group button {
-    flex: 1 1 auto;
-    min-width: 120px;
-    max-width: 200px;
-    margin: 5px;
-    padding: 10px 15px;
-    background-color: #4CAF50;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.3s;
-    box-sizing: border-box;
-    text-align: center;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-#formID .button-group button:hover {
-    background-color: white;
-    color: black;
-    border: 2px solid #4CAF50;
-}
-
-#formID .button-group button:disabled {
-    background-color: #ccc;
-    color: #666;
-    cursor: not-allowed;
-}
 
 @media (max-width: 600px) {
-    #formID .button-group {
+    .button-group {
         flex-wrap: nowrap;
         justify-content: space-between;
     }
 
-    #formID .button-group button {
+    .button-group button {
         flex: 1;
         min-width: 15%;
         padding: 10px 5px;
@@ -301,4 +263,17 @@ form#formID,
         overflow: hidden;
         text-overflow: ellipsis;
     }
+}
+
+
+/* Grouping input boxes in a row */
+.form-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px; /* Space between input boxes */
+    margin-bottom: 5px; /* Space below the group */
+}
+.form-group > div {
+    flex: 1; /* Allow the child divs to grow equally */
+    min-width: 200px; /* Set a minimum width */
 }
