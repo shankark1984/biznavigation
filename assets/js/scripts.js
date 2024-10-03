@@ -22,7 +22,7 @@ document.addEventListener('DOMContentLoaded', function () {
             userLoginIDSpan.textContent = userLoginID;
         } else {
             // If no user is logged in, redirect to login page
-            window.location.href = 'login.html';
+            window.location.href = 'index.html';
         }
     }
 
@@ -35,7 +35,7 @@ document.addEventListener('DOMContentLoaded', function () {
         localStorage.removeItem('CompanyID');
         localStorage.removeItem('WorkingBranch');
 
-        window.location.href = 'login.html';
+        window.location.href = 'index.html';
     }
 
     if (logoutBtn) {
