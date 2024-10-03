@@ -8,6 +8,7 @@ body {
     font-family: Arial, sans-serif;
     background-color: #a55b5b;
 }
+
 h1 {
     text-align: center;
     margin-top: 0;
@@ -84,11 +85,9 @@ h1 {
     align-items: center;
 }
 
-.user-name {
-    margin-right: 10px;
-    padding: 5px;
-    border: 1px solid white;
-    border-radius: 3px;
+.user-id {
+    color: white;
+    padding-right: 10px;
 }
 
 .logout-btn {
@@ -153,7 +152,7 @@ h1 {
         border-top: 1px solid #555;
     }
 
-    .user-info.active .user-name,
+    .user-info.active .user-id,
     .user-info.active .logout-btn {
         width: 50%;
         margin-bottom: 10px;
@@ -164,18 +163,34 @@ h1 {
         margin-bottom: 0;
     }
 }
-/* Disable default button appearance */
-button:disabled {
-    background-color: #ccc; /* Grey background */
-    color: #666; /* Dark grey text */
-    cursor: not-allowed; /* Not allowed cursor */
+
+/* Button Styles */
+button {
+    background-color: #4CAF50;
+    border: none;
+    color: white;
+    padding: 5px 5px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    margin: 5px 2px;
+    transition-duration: 0.4s;
+    cursor: pointer;
+    border-radius: 5px;
 }
 
-/* Active state for buttons */
-button:active {
-    background-color: #3e8e41; /* Darker green */
-    transform: translateY(2px); /* Push down effect */
+button:disabled {
+    background-color: #ccc;
+    color: #666;
+    cursor: not-allowed;
 }
+
+button:active {
+    background-color: #3e8e41;
+    transform: translateY(2px);
+}
+
 /* Form Styles */
 form {
     max-width: 1000px;
@@ -191,86 +206,60 @@ label {
     margin: 5px 0;
 }
 
-/* Base styling for input elements */
 input[type="text"],
 input[type="email"],
 input[type="url"],
 input[type="number"], 
 input[type="date"],
-select {
+select,
+textarea {
     width: 100%;
     padding: 10px;
     border-radius: 5px;
     border: 1px solid #02b53e;
-    appearance: none; /* For <select> to remove default arrow styling */
-    -webkit-appearance: none; /* For Safari */
-    -moz-appearance: none; /* For Firefox */
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
 }
 
-/* Styling for the textarea */
 textarea {
-    width: 100%; /* Full width */
-    padding: 10px; /* Padding for better appearance */
-    border-radius: 5px; /* Rounded corners */
-    border: 1px solid #02b53e; /* Border style */
-    resize: vertical; /* Allow vertical resizing only */
+    resize: vertical;
 }
 
 /* Company Form Specific Styles */
-form#formID {
-    border: 2px solid #007BFF; /* Blue border */
-    padding: 20px; /* Space inside the border */
-    border-radius: 10px; /* Rounded corners */
-    background-color: #f9f9f9; /* Light background color */
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Add shadow for a subtle effect */
+form#formID,
+.formborder {
+    border: 2px solid #007BFF;
+    padding: 20px;
+    border-radius: 10px;
+    background-color: #f9f9f9;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .formborder {
-    border: 2px solid #007BFF; /* Blue border */
-    padding: 50px; /* Space inside the border */
-    border-radius: 10px; /* Rounded corners */
-    background-color: #f9f9f9; /* Light background color */
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Add shadow for a subtle effect */
+    padding: 50px;
 }
 
-/* Company Form Specific Styles */
 #formID label {
-    font-weight: bold; /* Make label text bold */
-    color: #333; /* Dark text color */
-}
-/* Button Styles */
-button {
-    background-color: #4CAF50; /* Green background */
-    border: none; /* Remove borders */
-    color: white; /* White text */
-    padding: 10px 15px; /* Some padding */
-    text-align: center; /* Center the text */
-    text-decoration: none; /* Remove underline */
-    display: inline-block; /* Make the buttons align */
-    font-size: 16px; /* Increase font size */
-    margin: 5px 2px; /* Add some margin */
-    transition-duration: 0.4s; /* Transition effect duration */
-    cursor: pointer; /* Pointer/hand icon */
-    border-radius: 5px; /* Rounded corners */
+    font-weight: bold;
+    color: #333;
 }
 
-/* Group of buttons within formID */
 #formID .button-group {
-    display: flex; /* Align buttons in a row */
-    justify-content: space-between; /* Space buttons evenly */
-    gap: 10px; /* Space between buttons */
-    flex-wrap: wrap; /* Allow buttons to wrap on smaller screens */
-    margin-top: 20px; /* Space above buttons */
-    width: 100%; /* Ensure the container takes full width */
-    box-sizing: border-box; /* Include padding and border in element's total width */
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 20px;
+    width: 100%;
+    box-sizing: border-box;
 }
 
-/* Buttons within formID remain in one line */
 #formID .button-group button {
-    flex: 1 1 auto; /* Allow buttons to shrink if needed */
-    min-width: 120px; /* Set a minimum width to ensure buttons don't get too small */
-    max-width: 200px; /* Set a maximum width for buttons */
-    margin: 5px; /* Margin around each button */
+    flex: 1 1 auto;
+    min-width: 120px;
+    max-width: 200px;
+    margin: 5px;
     padding: 10px 15px;
     background-color: #4CAF50;
     color: white;
@@ -278,34 +267,31 @@ button {
     border-radius: 5px;
     cursor: pointer;
     transition: background-color 0.3s;
-    box-sizing: border-box; /* Ensure padding is included in the width */
+    box-sizing: border-box;
 }
 
-/* Hover effect for buttons */
 #formID .button-group button:hover {
     background-color: white;
     color: black;
     border: 2px solid #4CAF50;
 }
 
-/* Disable default button appearance */
 #formID .button-group button:disabled {
-    background-color: #ccc; /* Grey background */
-    color: #666; /* Dark grey text */
-    cursor: not-allowed; /* Not allowed cursor */
+    background-color: #ccc;
+    color: #666;
+    cursor: not-allowed;
 }
 
-/* Media query for mobile screens */
 @media (max-width: 600px) {
     #formID .button-group {
-        flex-wrap: nowrap; /* Ensure buttons do not wrap on small screens */
+        flex-wrap: nowrap;
         justify-content: space-between;
     }
 
     #formID .button-group button {
-        flex: 1; /* Allow buttons to adjust evenly */
-        min-width: 15%; /* Make buttons full width on mobile */
-        text-align: center; /* Center the text */
-        margin: 5px 0px; /* Add some margin */
+        flex: 1;
+        min-width: 15%;
+        text-align: center;
+        margin: 5px 0px;
     }
 }
