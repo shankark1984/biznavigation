@@ -26,7 +26,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     <a href="#">International</a>
                     <a href="#">Domestic</a>
                     <a href="#">Customs Clearance</a>
-                    <a href="#">FTL or FCL</a>
+                    <a href="fulltruckload.html ">FTL or FCL</a>
                     <a href="#">Upload Data</a>
                 </div>
             </li>

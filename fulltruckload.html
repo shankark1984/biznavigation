@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BizNavigation</title>
+    <link rel="stylesheet" href="assets/css/styles.css">
+    <link rel="stylesheet" href="assets/css/party.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+</head>
+
+<body>
+
+    <form id="userForm">
+        <div class="form-header">
+            <h2>Full Truck Load</h2>
+        </div>
+        <div class="button-group">
+            <button type="button" id="newButton">New</button>
+            <button type="button" id="modifyButton">Modify</button>
+            <button type="button" id="deleteButton">Delete</button>
+            <button type="button" id="reportButton">Report</button>
+            <button type="submit" id="saveButton">Save</button>
+        </div>
+
+        <div class="formborder">
+            <div class="form-group">
+                <div>
+                    <label for="lrnumber">LR Number</label>
+                    <input type="text" id="lrnumber" name="lrnumber" required class="two-input-group"
+                        placeholder="LR Number" autocomplete="off" disabled style="background-color: #3333;">
+                </div>
+                <div>
+                    <label for="lrdate">LR Date</label>
+                    <input type="date" id="lrdate" name="lrdate">
+                </div>
+                <div>
+                    <label for="quotationid">Quotation ID</label>
+                    <input type="text" id="quotationid" name="quotationid" required class="two-input-group"
+                        placeholder="Quotation ID" autocomplete="off">
+                </div>
+
+                <div>
+                    <label for="movementtype">Movement Type</label>
+                    <select id="movementtype" name="movementtype" required class="two-input-group">
+                        <option value="" disabled selected>Select Movement Type</option>
+                        <option value="Clearance">Clearance</option>
+                        <option value="Domestic">Domestic</option>
+                        <option value="Empty Container">Empty Container</option>
+                        <option value="Export">Export</option>
+                        <option value="Import">Import</option>
+                        <option value="Ocean Fright">Ocean Fright</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label for="partyName">Party Name</label>
+                    <input list="partySuggestions" id="partyName" name="partyName" required placeholder="Party Name"
+                        autocomplete="off">
+                    <datalist id="partySuggestions"></datalist>
+                </div>
+                <div>
+                    <label for="originPinCode">Orgin Pincode</label>
+                    <input type="text" id="originPinCode" name="originPinCode" required autocomplete="off">
+                </div>
+                <div>
+                    <label for="orgincity">Orgin City</label>
+                    <input type="text" id="orgincity" name="orgincity" style="text-transform: capitalize;" required
+                        autocomplete="off">
+                </div>
+                <div>
+                    <label for="orginAddress">Orgin Address</label>
+                    <textarea type="text" id="orginAddress" name="orginAddress" style="text-transform: capitalize;"
+                        required rows="1" autocomplete="off"></textarea>
+                </div>
+                <div>
+                    <label for="destinationPinCode">Destination Pincode</label>
+                    <input type="text" id="destinationPinCode" name="destinationPinCode" required autocomplete="off">
+                </div>
+                <div>
+                    <label for="destinationcity">Destination City</label>
+                    <input type="text" id="destinationcity" name="destinationcity" style="text-transform: capitalize;"
+                        required autocomplete="off">
+                </div>
+                <div>
+                    <label for="estinationAddress">Destination Address</label>
+                    <textarea type="text" id="estinationAddress" name="estinationAddress"
+                        style="text-transform: capitalize;" required rows="1" autocomplete="off"></textarea>
+                </div>
+                <div>
+                    <label for="requesteddate">Requested Date</label>
+                    <input type="date" id="requesteddate" name="requesteddate">
+                </div>
+                <div>
+                <label for="vehicleTypelist">Vehicle Type</label>
+                <select id="vehicleTypelist" name="vehicleTypelist">
+                    <option value="" disabled selected>Select Default Tax</option>
+                </select>
+            </div>
+
+
+
+
+                <div>
+                    <label for="partyCurrentStatus">Active</label>
+                    <select id="partyCurrentStatus" name="partyCurrentStatus" required class="two-input-group">
+                        <option value="" disabled selected>Select Current Status</option>
+                        <option value="Active">Active</option>
+                        <option value="DeActive">De-Active</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="partyDeActiveDate">De-Active Date</label>
+                    <input type="date" id="partyDeActiveDate" name="partyDeActiveDate">
+                </div>
+
+                <div>
+                    <label for="pinCode">Pincode</label>
+                    <input type="text" id="pinCode" name="pinCode" required autocomplete="off">
+                </div>
+                <div>
+                    <label for="orgincity">City</label>
+                    <input type="text" id="orgincity" name="orgincity" style="text-transform: capitalize;" required
+                        autocomplete="off">
+                </div>
+                <div>
+                    <label for="pinCode">Pincode</label>
+                    <input type="text" id="pinCode" name="pinCode" required autocomplete="off">
+                </div>
+                <div>
+                    <label for="orgincity">City</label>
+                    <input type="text" id="orgincity" name="orgincity" style="text-transform: capitalize;" required
+                        autocomplete="off">
+                </div>
+
+                <div>
+                    <label for="panNumber">Pan Number</label>
+                    <input type="text" id="panNumber" name="panNumber" style="text-transform: uppercase;" required
+                        autocomplete="off">
+                </div>
+                <div>
+                    <label for="gSTNumber">GST Number</label>
+                    <input type="text" id="gSTNumber" name="gSTNumber" style="text-transform: uppercase;" required
+                        autocomplete="off">
+                </div>
+
+                <div>
+                    <label for="partyContactNumber">Phone Number</label>
+                    <input type="text" id="partyContactNumber" name="partyContactNumber" required autocomplete="off">
+                </div>
+                <div>
+                    <label for="partyEmailID">Email ID</label>
+                    <input type="email" id="partyEmailID" name="partyEmailID" required autocomplete="off">
+                </div>
+                <div>
+                    <label for="defaulttax">Default Tax</label>
+                    <select id="defaulttax" name="defaulttax">
+                        <option value="" disabled selected>Select Default Tax</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <script src="assets/js/server.js"></script>
+    <script src="assets/js/header.js"></script>
+    <script src="assets/js/footer.js"></script>
+    <script src="assets/js/scripts.js"></script>
+    <script src="assets/js/pincde.js"></script>
+    <script src="assets/js/party-registration.js"></script>
+    <script src="assets/js/vehicletype.js"></script>
+
+
+
+
+</body>
+
+</html>

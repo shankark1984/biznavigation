@@ -4,6 +4,7 @@ const TaxSettings_SHEETID = "18RUCi9bBNF7053NNE5IMEksoLOjLxXn2ySI2yfdxPiI"; // Y
 const UserLogin_SHEETID = "15oUpowoMk5zQhPoNbvxvtYJU8GWhF8xOdaNkn4UEsKM"; // Your Google Sheet ID "UserLogin"
 const CompanyProfile_SHEETID = "1oywrLJWBBvLiNXnshYfXrJheOd8lPX3fC_iVJD3uyiQ"; // Your Google Sheet ID "CompanyProfile"
 const PartyDetails_SHEETID ="16VIwLuGze8Pv6N0mWUpu3e171xugJJrbON00kbr_yZ8";// Your Google Sheet ID "PartyDetails"
+const VehicleType_SHEETID='1lH67VSgtESmHRN54uZQpQBgDOkykq-4VQAU66Miw0IM';
 
 const UserLogin_SCRIPT_ID = 'https://script.google.com/macros/s/AKfycbypu0xQ80LZHwHE1bMf76Zy0ESi0Qb9kzLtp4ltGPtIFVoA_k9hNHAFZhZFaqcO_Dzr/exec';
 const CompanyProfile_URL='https://script.google.com/macros/s/AKfycbxnNE6-mBBHQ6b9F7YaSUZ85GqRX_SGC68pfNG8B_uD7gj5fRFOQXMHr6Pae8DHnm0aHg/exec';
