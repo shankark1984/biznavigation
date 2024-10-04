@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BizNavigation</title>
     <link rel="stylesheet" href="assets/css/styles.css">
-    <link rel="stylesheet" href="assets/css/party.css">
+    <link rel="stylesheet" href="assets/css/fulltruckload.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
 </head>
 
@@ -93,74 +93,85 @@
                     <input type="date" id="requesteddate" name="requesteddate">
                 </div>
                 <div>
-                <label for="vehicleTypelist">Vehicle Type</label>
-                <select id="vehicleTypelist" name="vehicleTypelist">
-                    <option value="" disabled selected>Select Default Tax</option>
-                </select>
-            </div>
-
-
-
-
+                    <label for="vehicleType">Vehicle Type</label>
+                    <select id="vehicleType" name="vehicleType">
+                        <option value="" disabled selected>Select Vehicle Type</option>
+                    </select>
+                </div>
                 <div>
-                    <label for="partyCurrentStatus">Active</label>
+                    <label for="referencenumber">Reference Number</label>
+                    <input type="text" id="referencenumber" name="referencenumber" style="text-transform: uppercase;"
+                        required autocomplete="off">
+                </div>
+                <div style="position: relative;">
+                    <label for="invoicevalue">Invoice Value</label>
+                    <span class="inr-symbol">₹</span>
+                    <input type="number" id="invoicevalue" name="invoicevalue" min="0" step="0.01" placeholder="00.00"
+                        onblur="formatCurrency(this)">
+
+                </div>
+                <div>
+                    <label for="vehiclenumber">Vehicle Number</label>
+                    <input type="text" id="vehiclenumber" name="vehiclenumber" style="text-transform: uppercase;"
+                        required autocomplete="off">
+                </div>
+                <div>
+                    <label for="containernumber">Container Number</label>
+                    <input type="text" id="containernumber" name="containernumber" style="text-transform: uppercase;"
+                        required autocomplete="off">
+                </div>
+                <div>
+                    <label for="modetype">Mode Type</label>
                     <select id="partyCurrentStatus" name="partyCurrentStatus" required class="two-input-group">
-                        <option value="" disabled selected>Select Current Status</option>
-                        <option value="Active">Active</option>
-                        <option value="DeActive">De-Active</option>
+                        <option value="" disabled selected>Select Mode Type</option>
+                        <option value="FCL">FCL</option>
+                        <option value="LCL">LCL</option>
+                        <option value="FTL">FTL</option>
+                        <option value="LTL">LTL</option>
                     </select>
                 </div>
                 <div>
-                    <label for="partyDeActiveDate">De-Active Date</label>
-                    <input type="date" id="partyDeActiveDate" name="partyDeActiveDate">
+                    <label for="quantity">Quantity</label>
+                    <input type="number" id="quantity" name="quantity">
+                </div>
+                <div>
+                    <label for="cargowt">Cargo Wt (Kgs)</label>
+                    <input type="number" id="cargowt" name="cargowt">
                 </div>
 
-                <div>
-                    <label for="pinCode">Pincode</label>
-                    <input type="text" id="pinCode" name="pinCode" required autocomplete="off">
+                <!-- Tab Navigation -->
+                <div class="tab">
+                    <button type="button" class="tablinks" onclick="openTab(event, 'basicDetails')">Basic
+                        Details</button>
+                    <button type="button" class="tablinks" onclick="openTab(event, 'frightCharges')">Fright
+                        Charges</button>
                 </div>
-                <div>
-                    <label for="orgincity">City</label>
-                    <input type="text" id="orgincity" name="orgincity" style="text-transform: capitalize;" required
-                        autocomplete="off">
-                </div>
-                <div>
-                    <label for="pinCode">Pincode</label>
-                    <input type="text" id="pinCode" name="pinCode" required autocomplete="off">
-                </div>
-                <div>
-                    <label for="orgincity">City</label>
-                    <input type="text" id="orgincity" name="orgincity" style="text-transform: capitalize;" required
-                        autocomplete="off">
-                </div>
+                <!-- Fright Charges Tab -->
+                <div id="frightCharges" class="tab-content">
+                    <div class="form-group">
+                        <div>
+                            <label for="chargesType">Charges Type</label>
+                            <select id="chargesType" name="chargesType">
+                                <option value="" disabled selected>Select Charges Type</option>
+                            </select>
+                        </div>
+                        <div style="position: relative;">
+                            <label for="frightcharges">Fright Charges</label>
+                            <span class="inr-symbol">₹</span>
+                            <input type="number" id="frightcharges" name="frightcharges" min="0" step="0.01"
+                                placeholder="00.00" onblur="formatCurrency(this)">
+                        </div>
+                        <div style="position: relative;">
+                            <label for="othercharges">Other Charges</label>
+                            <span class="inr-symbol">₹</span>
+                            <input type="number" id="othercharges" name="othercharges" min="0" step="0.01"
+                                placeholder="00.00" onblur="formatCurrency(this)">
+                        </div>
 
-                <div>
-                    <label for="panNumber">Pan Number</label>
-                    <input type="text" id="panNumber" name="panNumber" style="text-transform: uppercase;" required
-                        autocomplete="off">
-                </div>
-                <div>
-                    <label for="gSTNumber">GST Number</label>
-                    <input type="text" id="gSTNumber" name="gSTNumber" style="text-transform: uppercase;" required
-                        autocomplete="off">
-                </div>
+                    </div>
 
-                <div>
-                    <label for="partyContactNumber">Phone Number</label>
-                    <input type="text" id="partyContactNumber" name="partyContactNumber" required autocomplete="off">
+
                 </div>
-                <div>
-                    <label for="partyEmailID">Email ID</label>
-                    <input type="email" id="partyEmailID" name="partyEmailID" required autocomplete="off">
-                </div>
-                <div>
-                    <label for="defaulttax">Default Tax</label>
-                    <select id="defaulttax" name="defaulttax">
-                        <option value="" disabled selected>Select Default Tax</option>
-                    </select>
-                </div>
-            </div>
-        </div>
     </form>
 
     <script src="assets/js/server.js"></script>
@@ -169,11 +180,10 @@
     <script src="assets/js/scripts.js"></script>
     <script src="assets/js/pincde.js"></script>
     <script src="assets/js/party-registration.js"></script>
-    <script src="assets/js/vehicletype.js"></script>
-
-
-
-
+    <!-- <script src="assets/js/vehicletype.js"></script> -->
+    <script src="assets/js/fulltruckload.js"></script>
+    <!-- <script src="assets/js/types.js"></script> -->
+    <script src="assets/js/test.js"></script>
 </body>
 
 </html>

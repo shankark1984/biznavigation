@@ -277,3 +277,28 @@ textarea {
     flex: 1; /* Allow the child divs to grow equally */
     min-width: 200px; /* Set a minimum width */
 }
+
+/* Styling the ₹ symbol inside the input */
+/* <span class="inr-symbol">₹</span> */
+.inr-symbol {
+    position: absolute;
+    left: 10px;
+    top: 38px;
+    font-size: 16px;
+    color: #333;
+}
+
+input[type="number"] {
+    padding-left: 20px; /* Adjust padding for the ₹ symbol */
+}
+
+#partyName{
+    width:100%;
+    padding: 10px;
+    border-radius: 5px;
+    border: 1px solid #02b53e;
+    /* margin: 5px -5px 0px; */
+    appearance: none; /* For <select> to remove default arrow styling */
+    -webkit-appearance: none; /* For Safari */
+    -moz-appearance: none; /* For Firefox */
+}
