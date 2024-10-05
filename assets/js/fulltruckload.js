@@ -1,9 +1,3 @@
-const MovementDetails_RANGE = "MovementDetails!A2:AJ"; // Google Sheet Range (CompanyID, ShortCode)
-let lrNumber = '';
-let transitType = '';
-let movementDetails=[];
-
-
 function openTab(evt, tabName) {
     let tabcontent = document.getElementsByClassName("tab-content");
     for (let i = 0; i < tabcontent.length; i++) {
@@ -123,6 +117,7 @@ document.getElementById('saveButton').addEventListener('click', async function (
         modeType: modeType,
         quantity: document.getElementById('quantity').value,
         cargoWT: document.getElementById('cargowt').value,
+        descriptionOfGoods: document.getElementById('descriptionofGoods').value,
         status: '',
         completionDate: '',
         frightCharges: '',
@@ -169,9 +164,10 @@ function loadMovementDetails() {
 
     $.getJSON(url, function (data) {
         const rows = data.values;
-        // Filter rows by companyID, assuming LR Number is in column 34 (index 33)
-        const filteredRows = rows.filter(row => row[33] === companyID);
+        // Filter rows by companyID, assuming LR Number is in column 35 (index 34)
+        const filteredRows = rows.filter(row => row[34] === companyID);
 
+        
         // partyDetails = rows.map(row => ({
         movementDetails = filteredRows.map(row => ({
             lrNumber: row[0],
@@ -196,17 +192,18 @@ function loadMovementDetails() {
             modeType: row[19],
             quantity: row[20],
             cargoWT: row[21],
-            status: row[22],
-            completionDate: row[23],
-            frightCharges: row[24],
-            otherCharges: row[25],
-            subTotal: row[26],
-            cGSTAmount: row[27],
-            sGSTAmount: row[28],
-            iGSTAmount: row[29],
-            totalGSTAmount: row[30],
-            grandTotalBilling: row[31],
-            invoiceNumber: row[32],
+            descriptionOfGoods:row[22],
+            status: row[23],
+            completionDate: row[24],
+            frightCharges: row[25],
+            otherCharges: row[26],
+            subTotal: row[27],
+            cGSTAmount: row[28],
+            sGSTAmount: row[29],
+            iGSTAmount: row[30],
+            totalGSTAmount: row[31],
+            grandTotalBilling: row[32],
+            invoiceNumber: row[33],
             // Add other fields as necessary
         }));
         populateLRNumberSuggestions();
@@ -255,6 +252,7 @@ $("#lrnumber").on("input", function () {
         $("#modeType").val(movementData.modeType);
         $("#quantity").val(movementData.quantity);
         $("#cargowt").val(movementData.cargoWT);
+        $("#descriptionofGoods").val(movementData.descriptionOfGoods);
 
         // Populate other fields as necessary
         saveButton.textContent = 'Update';

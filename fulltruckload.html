@@ -31,7 +31,7 @@
                 <div>
                     <label for="lrnumber">LR Number</label>
                     <input list="lrNumberSuggestions" id="lrnumber" name="lrnumber" class="two-input-group"
-                        placeholder="LR Number" autocomplete="off" disabled>
+                        placeholder="LR Number" autocomplete="off">
                         <datalist id="lrNumberSuggestions"></datalist>
                 </div>
                 <div>
@@ -135,10 +135,18 @@
             </div>
             <!-- Tab Navigation -->
             <div class="tab">
-                <button type="button" class="tablinks" onclick="openTab(event, 'basicDetails')">Basic
-                    Details</button>
+                <button type="button" class="tablinks" onclick="openTab(event, 'description')">Description</button>
                 <button type="button" class="tablinks" onclick="openTab(event, 'frightCharges')">Freight
                     Charges</button>
+            </div>
+
+            <div id="description" class="tab-content">
+                <div>
+                    <label for="descriptionofGoods">Description of Goods</label>
+                    <textarea id="descriptionofGoods" name="descriptionofGoods" style="text-transform: capitalize;"
+                        required rows="4" autocomplete="off"></textarea>
+                </div>
+
             </div>
             <!-- Freight Charges Tab -->
             <div id="frightCharges" class="tab-content">
@@ -176,6 +184,7 @@
     <script src="assets/js/dropdownlist.js"></script>
     <script src="assets/js/taxDescription.js"></script>
     <script src="assets/js/customerlist.js"></script>
+    <script src="assets/js/variable.js"></script>
 </body>
 
 </html>

@@ -1,13 +1,4 @@
-const TypesList_RANGE = "TypesList!A2:E"; // Google Sheet Range (ID, TaxCode, TaxDescription, TaxRate, CGST, SGST, IGST)
 
-// Arrays to store the fetched data for different types
-let vehicleTypeData = [];
-let bankNameData = [];
-let bloodGroupData = [];
-let chargesTypeData = [];
-let modeTypeData = [];
-let movementTypeData = [];
-let transitTypeData = [];
 
 // Fetch data from Google Sheets
 function loadTypeList() {

@@ -1,11 +1,10 @@
-// let partyDetails = [];
-// const range = "PartyDetails!A2:AF"; // Specify the range of the sheet
+
 
 // Function to load party details from Google Sheets
 function loadPartyDetails() {
 
-    const url = `https://sheets.googleapis.com/v4/spreadsheets/${PartyDetails_SHEETID}/values/${range}?key=${APIKEY}`;
-
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${PartyDetails_SHEETID}/values/${PartyDetails_RANGE}?key=${APIKEY}`;
+console.log ('Party Details '+url);
     $.getJSON(url, function (data) {
         const rows = data.values;
         // Filter rows by companyID, assuming companyID is in column 31 (index 30)

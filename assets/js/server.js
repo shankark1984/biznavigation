@@ -11,10 +11,8 @@ const MovementDetails_SHEETID='1WoiRk7RK1dAWR52TH1boPBnlSZASZp3wddOX5HeWS4Y';
 const UserLogin_SCRIPT_ID = 'https://script.google.com/macros/s/AKfycbypu0xQ80LZHwHE1bMf76Zy0ESi0Qb9kzLtp4ltGPtIFVoA_k9hNHAFZhZFaqcO_Dzr/exec';
 const CompanyProfile_URL = 'https://script.google.com/macros/s/AKfycbxnNE6-mBBHQ6b9F7YaSUZ85GqRX_SGC68pfNG8B_uD7gj5fRFOQXMHr6Pae8DHnm0aHg/exec';
 const PartyDetails_URL = 'https://script.google.com/macros/s/AKfycbxDzX0M7h5BZjOvHJztQvb4DvadBXHGqDGL9iAGq6QCeS1GOJKWEO8ScovJYMdKH_k65A/exec';
-const MovementDetails_URL='https://script.google.com/macros/s/AKfycbwk-hmR9wz5g2Pokr35qopYqrvsv6D7XDzXbA_pO2L3C5xFfGbLMe6OBzLDVlw3BbBbgw/exec';
+const MovementDetails_URL='https://script.google.com/macros/s/AKfycbzXTNSfPrgH7W4RGe90ZL4_g1GVV4ELKU_iNswdDOD7sSktK9t4veOvjQxZa4P7RlhZcA/exec';
 
-let partyDetails = [];
-const range = "PartyDetails!A2:AF"; // Specify the range of the sheet
 
 const empCode = localStorage.getItem('EmpCode');
 const userName = localStorage.getItem('UserName');
@@ -26,11 +24,24 @@ const workingBranch = localStorage.getItem('WorkingBranch');
 
 document.addEventListener('DOMContentLoaded', function () {
     // Initially disable buttons
-    document.getElementById('newButton').disabled = true;
-    document.getElementById('modifyButton').disabled = true;
-    document.getElementById('deleteButton').disabled = true;
-    document.getElementById('reportButton').disabled = true;
-    document.getElementById('saveButton').disabled = true;
+    // document.getElementById('newButton').disabled = true;
+    // document.getElementById('modifyButton').disabled = true;
+    // document.getElementById('deleteButton').disabled = true;
+    // document.getElementById('reportButton').disabled = true;
+    // document.getElementById('saveButton').disabled = true;
+    // // Initially disable buttons
+    const newButton = document.getElementById('newButton');
+    const modifyButton = document.getElementById('modifyButton');
+    const deleteButton = document.getElementById('deleteButton');
+    const reportButton = document.getElementById('reportButton');
+    const saveButton = document.getElementById('saveButton');
+
+    // Check if buttons exist before disabling them
+    if (newButton) newButton.disabled = true;
+    if (modifyButton) modifyButton.disabled = true;
+    if (deleteButton) deleteButton.disabled = true;
+    if (reportButton) reportButton.disabled = true;
+    if (saveButton) saveButton.disabled = true;
 });
 
 // Enable all form inputs
@@ -61,7 +72,7 @@ function clearForm() {
 function loadcompanyShortCode() {
     const CompanyProfile_RANGE = "CompanyProfile!A2:B"; // Google Sheet Range (CompanyID, ShortCode)
     const url = `https://sheets.googleapis.com/v4/spreadsheets/${CompanyProfile_SHEETID}/values/${CompanyProfile_RANGE}?key=${APIKEY}`;
-    console.log("Fetching data from: ", url); // For debugging
+    console.log("Fetching company profile  data from: ", url); // For debugging
 
     $.getJSON(url, function (data) {
         console.log("Data fetched from Google Sheets:", data); // Log the fetched data for debugging

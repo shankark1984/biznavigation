@@ -1,5 +1,5 @@
 
-let tempFormID = '';
+
 
 document.addEventListener('DOMContentLoaded', function () {
     const hamburger = document.querySelector('.hamburger');
@@ -82,7 +82,7 @@ window.addEventListener('DOMContentLoaded', function () {
 
 // Load Party Details
 function getPartyDetails(partyName,callback) {
-    const url = `https://sheets.googleapis.com/v4/spreadsheets/${PartyDetails_SHEETID}/values/${range}?key=${APIKEY}`;
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${PartyDetails_SHEETID}/values/${PartyDetails_RANGE}?key=${APIKEY}`;
 
     $.getJSON(url, function (data) {
         const rows = data.values;
@@ -119,21 +119,6 @@ function getPartyDetails(partyName,callback) {
             defaultTax: row[26], // Assuming default tax is in column 27 (index 26)
             // Add other fields as necessary
         }));
-
-        // callback(partyCodes);
-        // callback(partyType);
-        // callback(currentStatus);
-        // callback(deActiveDate);
-        // callback(address);
-        // callback(pinCode);
-        // callback(city);
-        // callback(state);
-        // callback(country);
-        // callback(panNumber);
-        // callback(gSTNumber);
-        // callback(contactNumber);
-        // callback(emailID);
-        // callback(defaultTax);
 
         callback(partyDetails)
         // Do something with the party details, like return or process it further

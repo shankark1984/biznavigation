@@ -1,13 +1,10 @@
-const SETTINGS_RANGE = "Settings!A2:G"; // Google Sheet Range (ID, TaxCode, TaxDescription, TaxRate, CGST, SGST, IGST)
 
-// Array to store the fetched tax data
-let tax_data = [];
 
 // Fetch tax data from Google Sheets
 function loadTaxData() {
     const url = `https://sheets.googleapis.com/v4/spreadsheets/${TaxSettings_SHEETID}/values/${SETTINGS_RANGE}?key=${APIKEY}`;
     
-    console.log("Fetching data from: ", url); // For debugging
+    console.log("Fetching tax description data from: ", url); // For debugging
 
     $.getJSON(url, function (data) {
         console.log("Data fetched from Google Sheets:", data); // Log the fetched data for debugging

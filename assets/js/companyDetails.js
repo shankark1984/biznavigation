@@ -1,4 +1,3 @@
-const COMPANY_PROFILE_RANGE = 'CompanyProfile!A2:R'; // Adjust the range as necessary
 
 // Fetch company data from Google Sheets
 function fetchCompanyData(companyID) {
@@ -39,8 +38,8 @@ function populateCompanyForm(companyData) {
     document.getElementById('cinNo').value = companyData[12] || '';
     document.getElementById('uaNo').value = companyData[13] || '';
     document.getElementById('website').value = companyData[14] || '';
-    // Display the logo if available
-    const logoElement = document.querySelector('.company-logo');
+    document.getElementById('companylogo').src = companyData[15] || '';
+
 
     if (userType == 1) {
         document.getElementById('modifyButton').disabled = false;
