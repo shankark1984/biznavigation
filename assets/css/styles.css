@@ -280,6 +280,7 @@ textarea {
 
 /* Styling the ₹ symbol inside the input */
 /* <span class="inr-symbol">₹</span> */
+/* INR symbol styling */
 .inr-symbol {
     position: absolute;
     left: 10px;
@@ -292,7 +293,7 @@ input[type="number"] {
     padding-left: 20px; /* Adjust padding for the ₹ symbol */
 }
 
-#partyName{
+#partyName, #lrnumber{
     width:100%;
     padding: 10px;
     border-radius: 5px;

@@ -9,7 +9,7 @@ function loadPartyDetails() {
     $.getJSON(url, function (data) {
         const rows = data.values;
         // Filter rows by companyID, assuming companyID is in column 31 (index 30)
-        const filteredRows = rows.filter(row => row[31] === companyID);
+        const filteredRows = rows.filter(row => row[30] === companyID);
 
         // partyDetails = rows.map(row => ({
         partyDetails = filteredRows.map(row => ({

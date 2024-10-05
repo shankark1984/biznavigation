@@ -15,6 +15,8 @@
     <form id="userForm">
         <div class="form-header">
             <h2>Full Truck Load</h2>
+            <input type="hidden" id="tempFormID" name="tempFormID">
+            <input type="hidden" id="partyCode" name="partyCode">
         </div>
         <div class="button-group">
             <button type="button" id="newButton">New</button>
@@ -28,32 +30,25 @@
             <div class="form-group">
                 <div>
                     <label for="lrnumber">LR Number</label>
-                    <input type="text" id="lrnumber" name="lrnumber" required class="two-input-group"
-                        placeholder="LR Number" autocomplete="off" disabled style="background-color: #3333;">
+                    <input list="lrNumberSuggestions" id="lrnumber" name="lrnumber" class="two-input-group"
+                        placeholder="LR Number" autocomplete="off" disabled>
+                        <datalist id="lrNumberSuggestions"></datalist>
                 </div>
                 <div>
                     <label for="lrdate">LR Date</label>
-                    <input type="date" id="lrdate" name="lrdate">
+                    <input type="date" id="lrdate" name="lrdate" required>
                 </div>
                 <div>
                     <label for="quotationid">Quotation ID</label>
-                    <input type="text" id="quotationid" name="quotationid" required class="two-input-group"
+                    <input type="text" id="quotationid" name="quotationid" class="two-input-group"
                         placeholder="Quotation ID" autocomplete="off">
                 </div>
-
                 <div>
-                    <label for="movementtype">Movement Type</label>
-                    <select id="movementtype" name="movementtype" required class="two-input-group">
+                    <label for="movementType">Movement Type</label>
+                    <select id="movementType" name="movementType">
                         <option value="" disabled selected>Select Movement Type</option>
-                        <option value="Clearance">Clearance</option>
-                        <option value="Domestic">Domestic</option>
-                        <option value="Empty Container">Empty Container</option>
-                        <option value="Export">Export</option>
-                        <option value="Import">Import</option>
-                        <option value="Ocean Fright">Ocean Fright</option>
                     </select>
                 </div>
-
                 <div>
                     <label for="partyName">Party Name</label>
                     <input list="partySuggestions" id="partyName" name="partyName" required placeholder="Party Name"
@@ -61,18 +56,18 @@
                     <datalist id="partySuggestions"></datalist>
                 </div>
                 <div>
-                    <label for="originPinCode">Orgin Pincode</label>
+                    <label for="originPinCode">Origin Pincode</label>
                     <input type="text" id="originPinCode" name="originPinCode" required autocomplete="off">
                 </div>
                 <div>
-                    <label for="orgincity">Orgin City</label>
+                    <label for="orgincity">Origin City</label>
                     <input type="text" id="orgincity" name="orgincity" style="text-transform: capitalize;" required
                         autocomplete="off">
                 </div>
                 <div>
-                    <label for="orginAddress">Orgin Address</label>
-                    <textarea type="text" id="orginAddress" name="orginAddress" style="text-transform: capitalize;"
-                        required rows="1" autocomplete="off"></textarea>
+                    <label for="orginAddress">Origin Address</label>
+                    <textarea id="orginAddress" name="orginAddress" style="text-transform: capitalize;" required rows="1"
+                        autocomplete="off"></textarea>
                 </div>
                 <div>
                     <label for="destinationPinCode">Destination Pincode</label>
@@ -84,9 +79,9 @@
                         required autocomplete="off">
                 </div>
                 <div>
-                    <label for="estinationAddress">Destination Address</label>
-                    <textarea type="text" id="estinationAddress" name="estinationAddress"
-                        style="text-transform: capitalize;" required rows="1" autocomplete="off"></textarea>
+                    <label for="destinationAddress">Destination Address</label>
+                    <textarea id="destinationAddress" name="destinationAddress" style="text-transform: capitalize;"
+                        required rows="1" autocomplete="off"></textarea>
                 </div>
                 <div>
                     <label for="requesteddate">Requested Date</label>
@@ -108,7 +103,6 @@
                     <span class="inr-symbol">₹</span>
                     <input type="number" id="invoicevalue" name="invoicevalue" min="0" step="0.01" placeholder="00.00"
                         onblur="formatCurrency(this)">
-
                 </div>
                 <div>
                     <label for="vehiclenumber">Vehicle Number</label>
@@ -121,14 +115,12 @@
                         required autocomplete="off">
                 </div>
                 <div>
-                    <label for="modetype">Mode Type</label>
-                    <select id="partyCurrentStatus" name="partyCurrentStatus" required class="two-input-group">
-                        <option value="" disabled selected>Select Mode Type</option>
-                        <option value="FCL">FCL</option>
-                        <option value="LCL">LCL</option>
-                        <option value="FTL">FTL</option>
-                        <option value="LTL">LTL</option>
-                    </select>
+                    <div>
+                        <label for="modeType">Mode Type</label>
+                        <select id="modeType" name="modeType">
+                            <option value="" disabled selected>Select Mode Type</option>
+                        </select>
+                    </div>
                 </div>
                 <div>
                     <label for="quantity">Quantity</label>
@@ -139,39 +131,40 @@
                     <input type="number" id="cargowt" name="cargowt">
                 </div>
 
-                <!-- Tab Navigation -->
-                <div class="tab">
-                    <button type="button" class="tablinks" onclick="openTab(event, 'basicDetails')">Basic
-                        Details</button>
-                    <button type="button" class="tablinks" onclick="openTab(event, 'frightCharges')">Fright
-                        Charges</button>
-                </div>
-                <!-- Fright Charges Tab -->
-                <div id="frightCharges" class="tab-content">
-                    <div class="form-group">
-                        <div>
-                            <label for="chargesType">Charges Type</label>
-                            <select id="chargesType" name="chargesType">
-                                <option value="" disabled selected>Select Charges Type</option>
-                            </select>
-                        </div>
-                        <div style="position: relative;">
-                            <label for="frightcharges">Fright Charges</label>
-                            <span class="inr-symbol">₹</span>
-                            <input type="number" id="frightcharges" name="frightcharges" min="0" step="0.01"
-                                placeholder="00.00" onblur="formatCurrency(this)">
-                        </div>
-                        <div style="position: relative;">
-                            <label for="othercharges">Other Charges</label>
-                            <span class="inr-symbol">₹</span>
-                            <input type="number" id="othercharges" name="othercharges" min="0" step="0.01"
-                                placeholder="00.00" onblur="formatCurrency(this)">
-                        </div>
-
+                
+            </div>
+            <!-- Tab Navigation -->
+            <div class="tab">
+                <button type="button" class="tablinks" onclick="openTab(event, 'basicDetails')">Basic
+                    Details</button>
+                <button type="button" class="tablinks" onclick="openTab(event, 'frightCharges')">Freight
+                    Charges</button>
+            </div>
+            <!-- Freight Charges Tab -->
+            <div id="frightCharges" class="tab-content">
+                <div class="form-group">
+                    <div>
+                        <label for="chargesType">Charges Type</label>
+                        <select id="chargesType" name="chargesType">
+                            <option value="" disabled selected>Select Charges Type</option>
+                        </select>
                     </div>
-
-
+                    <div style="position: relative;">
+                        <label for="frightcharges">Charges</label>
+                        <span class="inr-symbol">₹</span>
+                        <input type="number" id="frightcharges" name="frightcharges" min="0" step="0.01"
+                            placeholder="00.00" onblur="formatCurrency(this)">
+                    </div>
+                    <div>
+                        <label for="defaulttax">Default Tax</label>
+                        <select id="defaulttax" name="defaulttax">
+                            <option value="" disabled selected>Select Default Tax</option>
+                        </select>
+                    </div>
+                    <button>Add</button>
                 </div>
+               
+            </div>
     </form>
 
     <script src="assets/js/server.js"></script>
@@ -179,11 +172,10 @@
     <script src="assets/js/footer.js"></script>
     <script src="assets/js/scripts.js"></script>
     <script src="assets/js/pincde.js"></script>
-    <script src="assets/js/party-registration.js"></script>
-    <!-- <script src="assets/js/vehicletype.js"></script> -->
     <script src="assets/js/fulltruckload.js"></script>
-    <!-- <script src="assets/js/types.js"></script> -->
-    <script src="assets/js/test.js"></script>
+    <script src="assets/js/dropdownlist.js"></script>
+    <script src="assets/js/taxDescription.js"></script>
+    <script src="assets/js/customerlist.js"></script>
 </body>
 
 </html>
