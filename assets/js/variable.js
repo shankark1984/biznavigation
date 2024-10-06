@@ -3,6 +3,8 @@ const PartyDetails_RANGE = "PartyDetails!A2:AF"; // Specify the range of the she
 const TypesList_RANGE = "TypesList!A2:E"; // Google Sheet Range (ID, TaxCode, TaxDescription, TaxRate, CGST, SGST, IGST)
 const MovementDetails_RANGE = "MovementDetails!A2:AJ"; // Google Sheet Range (CompanyID, ShortCode)
 const SETTINGS_RANGE = "Settings!A2:G"; // Google Sheet Range (ID, TaxCode, TaxDescription, TaxRate, CGST, SGST, IGST)
+const MovementChargesDetails_RANGE='ChargesDetails!A2:L';
+const MovementChargesDetails_Range='ChargesDetails!A2:I';
 
 
 // Arrays to store the fetched data for different types

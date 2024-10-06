@@ -32,7 +32,7 @@
                     <label for="lrnumber">LR Number</label>
                     <input list="lrNumberSuggestions" id="lrnumber" name="lrnumber" class="two-input-group"
                         placeholder="LR Number" autocomplete="off">
-                        <datalist id="lrNumberSuggestions"></datalist>
+                    <datalist id="lrNumberSuggestions"></datalist>
                 </div>
                 <div>
                     <label for="lrdate">LR Date</label>
@@ -66,8 +66,8 @@
                 </div>
                 <div>
                     <label for="orginAddress">Origin Address</label>
-                    <textarea id="orginAddress" name="orginAddress" style="text-transform: capitalize;" required rows="1"
-                        autocomplete="off"></textarea>
+                    <textarea id="orginAddress" name="orginAddress" style="text-transform: capitalize;" required
+                        rows="1" autocomplete="off"></textarea>
                 </div>
                 <div>
                     <label for="destinationPinCode">Destination Pincode</label>
@@ -131,7 +131,7 @@
                     <input type="number" id="cargowt" name="cargowt">
                 </div>
 
-                
+
             </div>
             <!-- Tab Navigation -->
             <div class="tab">
@@ -169,9 +169,30 @@
                             <option value="" disabled selected>Select Default Tax</option>
                         </select>
                     </div>
-                    <button>Add</button>
+                    <button type="button" id="addButton">Add</button>
+
                 </div>
-               
+                <!-- Table to display data from Google Sheet -->
+                <div id="chargesDetailsTableContainer">
+                    <table id="chargesDetailsTable">
+                        <thead>
+                            <tr>
+                                <th>Charges Type</th>
+                                <th>Amount</th>
+                                <th>GST Type</th>
+                                <th>CGST Amount</th>
+                                <th>SGST Amount</th>
+                                <th>IGST Amount</th>
+                                <th>Total GST Amount</th>
+                                <th>Grand Total Billing</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Dynamic rows will be added here -->
+                        </tbody>
+                    </table>
+                </div>
+
             </div>
     </form>
 

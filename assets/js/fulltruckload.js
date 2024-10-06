@@ -17,10 +17,12 @@ document.getElementById('modifyButton').addEventListener('click', function () {
     enableForm();
     document.getElementById('saveButton').disabled = false;
     document.getElementById('modifyButton').disabled = true;
+    document.getElementById('reportButton').disabled = true;
     document.getElementById('saveButton').textContent = 'Update';
 });
 
 document.getElementById('newButton').addEventListener('click', function () {
+    location.reload();
     enableForm();
     document.getElementById('saveButton').disabled = false;
     document.getElementById('modifyButton').disabled = true;
@@ -152,7 +154,7 @@ document.getElementById('saveButton').addEventListener('click', async function (
     reportButton.disabled = false;
     disableForm();
     document.getElementById('newButton').disabled = false;
-    alert(`Party details ${action === 'add' ? 'saved' : 'updated'} successfully!`);
+    alert(`Movement details ${action === 'add' ? 'saved' : 'updated'} successfully!\nLR Number : ${lrNumber}`);
 });
 
 
@@ -167,7 +169,7 @@ function loadMovementDetails() {
         // Filter rows by companyID, assuming LR Number is in column 35 (index 34)
         const filteredRows = rows.filter(row => row[34] === companyID);
 
-        
+
         // partyDetails = rows.map(row => ({
         movementDetails = filteredRows.map(row => ({
             lrNumber: row[0],
@@ -192,7 +194,7 @@ function loadMovementDetails() {
             modeType: row[19],
             quantity: row[20],
             cargoWT: row[21],
-            descriptionOfGoods:row[22],
+            descriptionOfGoods: row[22],
             status: row[23],
             completionDate: row[24],
             frightCharges: row[25],
@@ -223,11 +225,11 @@ function populateLRNumberSuggestions() {
 $("#lrnumber").on("input", function () {
     const lrNumber = $(this).val();
     const movementData = movementDetails.find(movement => movement.lrNumber === lrNumber);
-    getPartyDetails(movementData.partyName, function(partyDetails) {
-           // Assuming you want to use the first matching party's partyCode
-           const partycode = partyDetails[0].partyCode;
-           // Set the value of the input field with id 'partyCode'
-           document.getElementById('partyCode').value = partycode;
+    getPartyDetails(movementData.partyName, function (partyDetails) {
+        // Assuming you want to use the first matching party's partyCode
+        const partycode = partyDetails[0].partyCode;
+        // Set the value of the input field with id 'partyCode'
+        document.getElementById('partyCode').value = partycode;
     });
 
 
@@ -254,6 +256,7 @@ $("#lrnumber").on("input", function () {
         $("#cargowt").val(movementData.cargoWT);
         $("#descriptionofGoods").val(movementData.descriptionOfGoods);
 
+        populateTable(lrNumber); // Replace with actual LRNumber to match
         // Populate other fields as necessary
         saveButton.textContent = 'Update';
         disableForm();
@@ -276,3 +279,132 @@ $(document).ready(function () {
     loadMovementDetails();
 
 });
+
+document.getElementById('addButton').addEventListener('click', async function (event) {
+    event.preventDefault();
+
+    // Ensure lrNumber is either from input or tempFormID
+    let lrNumber = document.getElementById('lrnumber').value || tempFormID;
+    let taxDesc = document.getElementById('defaulttax').value;
+    let chargesType = document.getElementById('chargesType').value;
+    // Check for duplicate entry
+    const isDuplicate = await checkDuplicate(lrNumber, chargesType);
+    if (isDuplicate) {
+        alert('Duplicate entry! This charges type already exists for the given LR number: ' + lrNumber + ".");
+        return; // Stop further execution
+    }
+
+    // Replace spaces with commas and split into array
+    let taxDescArray = taxDesc.replace(/\s+/g, ',').split(',');
+
+    // Parse percentages (remove % symbol and divide by 100)
+    let cGSTPercentage = parseFloat(taxDescArray[1].replace('%', '')) / 100 || 0;
+    let sGSTPercentage = parseFloat(taxDescArray[3].replace('%', '')) / 100 || 0;
+    let iGSTPercentage = parseFloat(taxDescArray[5].replace('%', '')) / 100 || 0;
+
+    console.log('CGST Percentage:', cGSTPercentage, 'SGST Percentage:', sGSTPercentage, 'IGST Percentage:', iGSTPercentage);
+
+    // Get basic amount
+    let basicAmount = parseFloat(document.getElementById('frightcharges').value) || 0;
+
+    // Calculate tax amounts
+    let cGStAmt = basicAmount * cGSTPercentage;
+    let sGSTAmt = basicAmount * sGSTPercentage;
+    let iGSTAmt = basicAmount * iGSTPercentage;
+    let totalGSTAmount = cGStAmt + sGSTAmt + iGSTAmt;
+    let grandTotalBilling = totalGSTAmount + basicAmount;
+
+    // Create form data object
+    const formData = {
+        lrNumber: lrNumber,
+        chargesType: document.getElementById('chargesType').value,
+        basicAmount: basicAmount,
+        gSTType: document.getElementById('defaulttax').value,
+        cGSTAmount: cGStAmt,
+        sGSTAmount: sGSTAmt,
+        iGSTAmount: iGSTAmt,
+        totalGSTAmount: totalGSTAmount,
+        grandTotalBilling: grandTotalBilling,
+        companyID: companyID,  // Ensure companyID is defined
+        createdBy: userLoginID, // Ensure userLoginID is defined
+        flg: 0
+    };
+
+    // Determine if we're adding or updating
+    const action = (document.getElementById('saveButton').textContent === 'Save') ? 'add' : 'update';
+
+    console.log('Action:', action, formData);
+
+    // Perform the fetch request
+    console.log('Movement Charges Details google sheet ' + MovementChargesDetails_URL)
+    const response = await fetch(MovementChargesDetails_URL, {
+        method: 'POST',
+        mode: 'no-cors',  // Use 'cors' to allow JSON responses
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ action: action, data: formData })
+    });
+    populateTable(lrNumber); // Replace with actual LRNumber to match
+});
+
+async function checkDuplicate(lrNumber, chargesType) {
+    // Construct the URL for Google Sheets API
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${MovementChargesDetails_SHEETID}/values/${MovementChargesDetails_Range}?key=${APIKEY}`;
+
+    try {
+        // Fetch data from Google Sheets
+        const response = await $.getJSON(url);
+        const rows = response.values;
+
+        // Assuming LR Number is in column 35 (index 34) and chargesType is in column X (replace X with the correct index)
+        const filteredRows = rows.filter(row => row[0] === lrNumber && row[1] === chargesType);
+
+        // If a matching entry is found, return true for duplicate
+        if (filteredRows.length > 0) {
+            return true; // Duplicate found
+        }
+
+        return false; // No duplicate found
+    } catch (error) {
+        console.error("Error fetching data:", error);
+        return false; // Handle errors, assume no duplicate
+    }
+}
+
+// Function to fetch data from Google Sheets
+async function fetchGoogleSheetData() {
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${MovementChargesDetails_SHEETID}/values/${MovementChargesDetails_Range}?key=${APIKEY}`;
+    const response = await fetch(url);
+    const data = await response.json();
+    console.log("Fetched Data:", data.values); // Log the fetched data
+    return data.values;
+}
+
+// Function to populate table with data where LRNumber matches
+async function populateTable(lrNumber) {
+    const data = await fetchGoogleSheetData();
+    const tableBody = document.querySelector('#chargesDetailsTable tbody');
+
+    // Assuming LRNumber is in the first column (index 0), adjust as needed
+    data.forEach((row, index) => {
+
+        if (row[0] === lrNumber) { // Match LRNumber
+            const newRow = document.createElement('tr');
+
+            // Log matching row
+            console.log("Matching Row:", row);
+
+            // Populate the row with ChargesDetails columns (start from column 1 or adjust as needed)
+            row.slice(1).forEach((cellValue) => {
+                const cell = document.createElement('td');
+                cell.innerText = cellValue;
+                newRow.appendChild(cell);
+            });
+
+            tableBody.appendChild(newRow);
+        }
+    });
+}
+
+
