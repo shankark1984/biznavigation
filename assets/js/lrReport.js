@@ -24,7 +24,7 @@ function populateCompanyForm(companyData) {
     document.getElementById('CompID').textContent = companyID;
     // Assuming the columns are: CompanyID, ShortCode, CompanyName, Address, City, PinCode, State, Country, PhoneNo, Email, GSTNumber, PANNumber, CINNo, UdyogAadhaarNo, WebSite, Logo, CreatedBy, CreatedOn
     document.getElementById('shortCode').value = companyData[1] || '';
-    document.getElementById('companyName').textContent = companyData[2] || '';
+    document.getElementById('companyName').value = companyData[2] || '';
     document.getElementById('address').value = companyData[3] || '';
     document.getElementById('city').value = companyData[4] || '';
     document.getElementById('pinCode').value = companyData[5] || '';

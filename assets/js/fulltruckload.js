@@ -82,6 +82,8 @@ async function fetchExistingLRNumber() {
 document.getElementById('saveButton').addEventListener('click', async function (event) {
     event.preventDefault();
 
+    chargesDetailsConfirmation(lrNumber);
+
     if (document.getElementById('saveButton').textContent === 'Save') {
         lrNumber = await generateNewLRNumber();
     } else if (document.getElementById('saveButton').textContent === 'Update') {
@@ -148,15 +150,43 @@ document.getElementById('saveButton').addEventListener('click', async function (
         body: JSON.stringify({ action: action, data: formData })
     });
 
+    
+    disableForm();
     saveButton.textContent = 'Update';
     modifyButton.disabled = false;
     saveButton.disabled = true;
-    reportButton.disabled = false;
-    disableForm();
+    reportButton.disabled = false;   
     document.getElementById('newButton').disabled = false;
+    document.getElementById('addButton').disabled = true;
     alert(`Movement details ${action === 'add' ? 'saved' : 'updated'} successfully!\nLR Number : ${lrNumber}`);
 });
 
+
+async function chargesDetailsConfirmation(lrnumber){
+
+    let lrNumber = document.getElementById('lrnumber').value || tempFormID;
+    // Create form data object
+    const formData = {
+        tempFormID:lrNumber,
+        lrNumber: lrNumber
+    };
+
+    // Determine if we're adding or updating
+    const action = 'chargesConfirm';
+
+    console.log('Action:', action, formData);
+
+    // Perform the fetch request
+
+    const response = await fetch(MovementChargesDetails_URL, {
+        method: 'POST',
+        mode: 'no-cors',  // Use 'cors' to allow JSON responses
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ action: action, data: formData })
+    });
+}
 
 
 // Function to load Movement details from Google Sheets
@@ -285,7 +315,7 @@ document.getElementById('addButton').addEventListener('click', async function (e
 
     // Ensure lrNumber is either from input or tempFormID
     let lrNumber = document.getElementById('lrnumber').value || tempFormID;
-    let taxDesc = document.getElementById('defaulttax').value;
+    let taxDesc = document.getElementById('defaulttax').value || 'CGST 0% SGST 0% IGST 0%';
     let chargesType = document.getElementById('chargesType').value;
     // Check for duplicate entry
     const isDuplicate = await checkDuplicate(lrNumber, chargesType);
@@ -319,7 +349,7 @@ document.getElementById('addButton').addEventListener('click', async function (e
         lrNumber: lrNumber,
         chargesType: document.getElementById('chargesType').value,
         basicAmount: basicAmount,
-        gSTType: document.getElementById('defaulttax').value,
+        gSTType: taxDesc,
         cGSTAmount: cGStAmt,
         sGSTAmount: sGSTAmt,
         iGSTAmount: iGSTAmt,
@@ -331,7 +361,7 @@ document.getElementById('addButton').addEventListener('click', async function (e
     };
 
     // Determine if we're adding or updating
-    const action = (document.getElementById('saveButton').textContent === 'Save') ? 'add' : 'update';
+    const action = (document.getElementById('addButton').textContent === 'Add') ? 'add' : 'update';
 
     console.log('Action:', action, formData);
 
@@ -386,9 +416,11 @@ async function populateTable(lrNumber) {
     const data = await fetchGoogleSheetData();
     const tableBody = document.querySelector('#chargesDetailsTable tbody');
 
+    // Clear existing table rows
+    tableBody.innerHTML = '';
+
     // Assuming LRNumber is in the first column (index 0), adjust as needed
     data.forEach((row, index) => {
-
         if (row[0] === lrNumber) { // Match LRNumber
             const newRow = document.createElement('tr');
 
@@ -406,5 +438,3 @@ async function populateTable(lrNumber) {
         }
     });
 }
-
-

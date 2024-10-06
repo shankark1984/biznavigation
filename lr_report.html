@@ -5,45 +5,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BizNavigation</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <link rel="stylesheet" href="assets/css/lrReport.css">
 
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 20px;
-            background-color: #ba3838;
-        }
-
-        table,
-        th,
-        td {
-            border: 1px solid black;
-            border-collapse: collapse;
-            background-color: rgb(213, 212, 215);
-        }
-
-        table {
-            max-width: 2480px;
-            width: 100%;
-        }
-    </style>
 </head>
 
 <body>
     <table>
-        <tr style="width: 100px;">
-            <th><img src="assets/img/logo/CA0001.png" alt="Company Logo" class="company-logo" id="companylogo"
+        <thead>
+            <tr>
+                <th><img src="assets/img/logo/CA0001.png" alt="Company Logo" class="company-logo" id="companylogo"
                     style="height: 100px;"></th>
-            <th>
-                <h1 id="companyNamea" name="companyName"></h1>
+                    <th><h1 id="companyName" name="companyName"></h1></th>
+                    <th>Invoice Number</th>
+            </tr>
+        </thead>
 
-            </th>
-        </tr>
     </table>
-    <table>
-        <th>Logo</th>
-        <th>BizNavigation</th>
-    </table>
+
+
+
+
     <!-- <script src="assets/js/companyDetails.js"></script> -->
     <script src="assets/js/lrReport.js"></script>
     <script src="assets/js/server.js"></script>

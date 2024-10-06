@@ -13,8 +13,8 @@ const MovementChargesDetails_SHEETID='173JnNnb2DA6uLx_tZJ6Mz4EVO3ycjJ0ynOc4DpXw5
 const UserLogin_SCRIPT_ID = 'https://script.google.com/macros/s/AKfycbypu0xQ80LZHwHE1bMf76Zy0ESi0Qb9kzLtp4ltGPtIFVoA_k9hNHAFZhZFaqcO_Dzr/exec';
 const CompanyProfile_URL = 'https://script.google.com/macros/s/AKfycbxnNE6-mBBHQ6b9F7YaSUZ85GqRX_SGC68pfNG8B_uD7gj5fRFOQXMHr6Pae8DHnm0aHg/exec';
 const PartyDetails_URL = 'https://script.google.com/macros/s/AKfycbxDzX0M7h5BZjOvHJztQvb4DvadBXHGqDGL9iAGq6QCeS1GOJKWEO8ScovJYMdKH_k65A/exec';
-const MovementDetails_URL='https://script.google.com/macros/s/AKfycbzXTNSfPrgH7W4RGe90ZL4_g1GVV4ELKU_iNswdDOD7sSktK9t4veOvjQxZa4P7RlhZcA/exec';
-const MovementChargesDetails_URL='https://script.google.com/macros/s/AKfycbwFjBXwmBFC1U-zKuqCytRJzRecBt_SwwlvHx6s-Ki_7Hzf0hh7V2TZquFdOrhAY8j7/exec';
+const MovementDetails_URL='https://script.google.com/macros/s/AKfycbxxVOV8_ESF0gDQN2gOIv8-COy_gBDjub87LX-jG1-j7W67MagjjZ4CWZ7uvaF6GJVOoA/exec';
+const MovementChargesDetails_URL='https://script.google.com/macros/s/AKfycbx-18j_uharOcVxlnRIl4XrhP6GyzQYoy1A9ySxzQm9z-H59a7C6yKqDs7qQvZk7-Lz/exec';
 
 const empCode = localStorage.getItem('EmpCode');
 const userName = localStorage.getItem('UserName');
