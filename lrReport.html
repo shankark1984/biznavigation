@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BizNavigation Report</title>
+
+    <!-- Bootstrap for responsive layout -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- External styles -->
+    <link rel="stylesheet" href="assets/css/lrReport.css">
+
+    <!-- External scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/2.3.10/purify.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.0/dist/JsBarcode.all.min.js" defer></script>
+</head>
+
+<body>
+    <div class="container mt-3 mb-3">
+        <!-- Download PDF Button -->
+        <div class="row mb-3">
+            <div class="col-12 text-end">
+                <button class="btn btn-primary" onclick="generatePDF()">Download PDF</button>
+            </div>
+        </div>
+
+        <div class="row border p-4" id="reportContent">
+            <!-- Company logo and header -->
+            <div class="col-12 border p-2 d-flex justify-content-between align-items-center text-center">
+                <img src="assets/img/logo/CA0001.png" alt="Company Logo" id="companylogo" class="company-logo"
+                    style="max-height: 100px;" />
+                <div class="company-info text-center">
+                    <h2 id="companyName" class="m-0">BizNavigation Pvt Ltd</h2>
+                    <p id="address" class="m-0" style="font-size: 14px;">Address</p>
+                </div>
+                <div class="text-end border p-2 text-center" style="width: 300px;">
+                    <div id="barcodeContainer">
+                        <p class="m-0" style="font-weight: bold;">LR Number:</p>
+                        <svg id="barcodeCanvas"></svg>
+                    </div>
+                    <p class="m-0">Date: <span id="reportDate">07-10-2024</span></p>
+                </div>
+            </div>
+
+            <!-- Locations -->
+            <div class="col-12 border p-2 d-flex justify-content-between text-center">
+                <div class="col-md-6 border p-2">
+                    <h6 style="font-weight: bold;">Pickup Location:</h6>
+                    <p id="pickupAddress" style="font-size: 12px; margin: 0;">Warehouse 1, Chennai</p>
+                </div>
+                <div class="col-md-6 border p-2">
+                    <h6 style="font-weight: bold;">Delivery Location:</h6>
+                    <p id="deliveryAddress" style="font-size: 12px; margin: 0;">Dock 45, Nellore</p>
+                </div>
+            </div>
+
+            <!-- Other Information -->
+            <div class="col-md-4 border p-2">
+                <p style="margin: 0;"><span style="font-weight: bold;">Origin: </span> <span id="originCity"></span></p>
+                <p style="margin: 0;"><span style="font-weight: bold;">Vehicle No.: </span> <span
+                        id="vehicleNumber"></span></p>
+                <p style="margin: 0;"><span style="font-weight: bold;">Vehicle Type: </span> <span
+                        id="vehicleType"></span></p>
+            </div>
+
+            <div class="col-md-4 border p-2">
+                <p style="margin: 0;"><span style="font-weight: bold;">Destination: </span> <span
+                        id="destinationCity"></span></p>
+                <p style="margin: 0;"><span style="font-weight: bold;">Mode: </span> <span id="modeType"></span></p>
+                <p style="margin: 0;"><span style="font-weight: bold;">Transit Type: </span> <span
+                        id="transitType"></span></p>
+            </div>
+
+            <div class="col-md-4 border p-2">
+                <p style="margin: 0;"><span style="font-weight: bold;">Invoice No: </span> <span
+                        id="invoiceNumber"></span></p>
+                <p style="margin: 0;"><span style="font-weight: bold;">Invoice Value: </span> <span
+                        id="invoiceValue"></span></p>
+                <p style="margin: 0;"><span style="font-weight: bold;">Payment Type: </span> <span
+                        id="paymentType"></span></p>
+            </div>
+
+
+            <!-- Freight Information Header -->
+            <div class="col-12 border p-1 d-flex justify-content-between text-center">
+                <div class="col-md-2 border d-flex align-items-center justify-content-center p-1">
+                    <p class="m-0" style="font-weight: bold;">No of Packages</p>
+                </div>
+                <div class="col-md-4 border d-flex align-items-center justify-content-center p-1">
+                    <p class="m-0" style="font-weight: bold;">Description of Goods (Said to Contain)</p>
+                </div>
+                <div class="col-md-2 border d-flex align-items-center justify-content-center p-1">
+                    <p class="m-0" style="font-weight: bold;">Weight</p>
+                </div>
+                <div class="col-md-4 border d-flex align-items-center justify-content-center p-1">
+                    <p class="m-0" style="font-weight: bold;">Freight Details</p>
+                </div>
+            </div>
+
+            <!-- Freight Information Content -->
+            <div class="col-12 border p-1 d-flex justify-content-between">
+                <div class="col-md-2 border p-1">
+                    <p id="quantity" class="text-center"></p>
+                </div>
+                <div class="col-md-4 border p-1">
+                    <p id="descriptionofGoods"></p>
+                </div>
+                <div class="col-md-2 border p-1">
+                    <p id="chargeableWeight" class="text-center"></p>
+                </div>
+                <div class="col-md-4 border p-1" id="totalFreight">
+                    <!-- <p id="totalFreight">Freight</p> -->
+                </div>
+            </div>
+
+            <!-- Payment Information -->
+            <div class="col-12 border p-2 d-flex justify-content-between align-items-start">
+                <!-- Caution Section -->
+                <div class="col-md-3 p-1 border d-flex flex-column">
+                    <p class="text-center mb-2">
+                        <span style="font-weight: bold; font-size: 14px;">Caution</span>
+                    </p>
+                    <p style="font-size: 11px; margin: 0; height: 100px;">
+                        This consignment will not be diverted, re-routed, or re-booked without the Consignee Bank's
+                        written permission and will be delivered at the destination.
+                    </p>
+                </div>
+
+                <!-- Disputes Section -->
+                <div class="col-md-5 p-1 border d-flex flex-column">
+                    <p class="text-center mb-2">
+                        <span style="font-weight: bold; font-size: 14px;" id="companyCity">All Disputes Subject to ??
+                            Jurisdiction only</span>
+                    </p>
+                    <p style="font-size: 11px; margin: 0; height: 100px;">
+                        The consignment covered by the Lorry Receipt will be stored at the destination under the control
+                        of the transport operator and delivered to or to the order of the Consignee bank as mentioned.
+                        It will under no circumstances be delivered without the written authority from the Consignee
+                        bank or its order endorsed on the consignee copy.
+                    </p>
+                </div>
+
+                <!-- Terms & Conditions Section -->
+                <div class="col-md-4 p-1 border d-flex flex-column">
+                    <p class="text-center mb-2">
+                        <span style="font-weight: bold; font-size: 14px;" id="companyCity">Terms & Conditions</span>
+                    </p>
+                    <p style="font-size: 11px; margin: 0; height: 100px;">
+                        1. Goods carried at OWNER'S RISK. Unloading to be done by the Consignee.<br>
+                        2. Proof Of Delivery will be provided as and when required by you & you can track all the
+                        Consignment through our Website:<br>
+                        3. GST to be paid by Consignee.
+                    </p>
+                </div>
+            </div>
+
+
+            <!-- Signatures -->
+            <div class="col-12 border p-2 d-flex justify-content-between" style="font-weight: bold;">
+                <!-- Consignor's Signature -->
+                <div class="col-md-6 p-3 border">
+                    <p style="font-size: 12px;">I hereby agree to the terms & conditions printed overleaf.</p><br>
+                    <p style="font-size: 14px;">Consignor's Signature</p>
+                </div>
+
+                <!-- Receiver's Signature -->
+                <div class="col-md-6 text-center p-3 border">
+                    <p style="font-size: 14px;">Receiver's Sign. & Stamp</p>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="col-12 border text-center p-3" style="font-weight: bold; font-size: 12px;">
+                <p style="margin: 0;">This is a computer-generated document. No signature is required.</p>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Custom JavaScript -->
+    <script src="assets/js/variable.js" defer></script>
+    <script src="assets/js/server.js" defer></script>
+    <script src="assets/js/lrReport.js" defer></script>
+</body>
+
+</html>

@@ -40,7 +40,7 @@ async function generateNewPartyCode(partyName) {
 
 // Function to fetch existing party codes from Google Sheets
 async function fetchExistingPartyCodes() {
-    const url = `https://sheets.googleapis.com/v4/spreadsheets/${PartyDetails_SHEETID}/values/${range}?key=${APIKEY}`;
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${PartyDetails_SHEETID}/values/${PartyDetails_RANGE}?key=${APIKEY}`;
     console.log(url);
 
     const response = await fetch(url);

@@ -438,3 +438,28 @@ async function populateTable(lrNumber) {
         }
     });
 }
+// function openReport() {
+//     lrNumber=document.getElementById('lrnumber').value,
+//     window.open('lrReport.html', '_blank'); // Opens lr_report.html in a new tab/window
+// }
+document.getElementById('reportButton').addEventListener('click', async function (event) {
+    event.preventDefault();
+
+    // Assuming lrNumber is defined elsewhere in your script
+    let lrNumber = document.getElementById('lrnumber').value; // Get lrNumber value from input
+
+    // Store lrNumber in localStorage
+    localStorage.setItem('lrNumber', lrNumber);
+
+    // Function to open the report window
+    function openReport() {
+        var newWindow = window.open('lrReport.html', 'LR Report', 'width=800,height=600');
+        if (newWindow) {
+            newWindow.focus();
+        } else {
+            alert('Please allow popups for this site.');
+        }
+    }
+
+    openReport();
+});

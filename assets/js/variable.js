@@ -22,3 +22,26 @@ let tax_data = [];
 let lrNumber = '';
 let transitType = '';
 let tempFormID = '';
+
+function toProperCase(str) {
+    return str
+        .toLowerCase() // Convert the entire string to lowercase
+        .split(' ') // Split the string into an array of words
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1)) // Capitalize the first letter of each word
+        .join(' '); // Join the words back into a single string
+}
+// Function to format date as dd-mm-yyyy
+function formatDate(dateString) {
+    let dateObj = new Date(dateString);  // Convert to Date object
+
+    // Ensure the date is valid
+    if (!isNaN(dateObj.getTime())) {
+        let day = ("0" + dateObj.getDate()).slice(-2);  // Ensure two digits for the day
+        let month = ("0" + (dateObj.getMonth() + 1)).slice(-2);  // Get month (0-indexed, add 1)
+        let year = dateObj.getFullYear();  // Get the year
+
+        return `${day}-${month}-${year}`;  // Return formatted date
+    } else {
+        return '';  // Return empty string if date is invalid
+    }
+}
