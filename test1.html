@@ -4,263 +4,262 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BizNavigation Report</title>
+    <title>BizNavigation</title>
+    <link rel="stylesheet" href="assets/css/styles.css">
+    <link rel="stylesheet" href="assets/css/fulltruckload.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <!-- Include DOMPurify from CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/2.3.10/purify.min.js"></script>
+    <!-- Include html2canvas from CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <!-- Include jsPDF from CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- Include QuaggaJS for barcode scanning -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
 
-    <!-- Bootstrap for layout -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-
-    <!-- Non-responsive layout style for A4 size -->
-    <style>
-        body {
-            width: 210mm;
-            height: 297mm;
-            margin: 0;
-            padding: 0;
-            font-family: Arial, sans-serif;
-            font-size: 12px;
-        }
-
-        .container {
-            width: 100%;
-            margin: 0 auto;
-            padding: 20px;
-            box-sizing: border-box;
-        }
-
-        .col-fixed {
-            float: left;
-            box-sizing: border-box;
-        }
-
-        .col-12 {
-            width: 100%;
-        }
-
-        .col-6 {
-            width: 50%;
-        }
-
-        .col-4 {
-            width: 33.33%;
-        }
-
-        .col-2 {
-            width: 16.66%;
-        }
-
-        .col-3 {
-            width: 25%;
-        }
-
-        .border {
-            border: 1px solid #333 !important;
-        }
-
-        .text-center {
-            text-align: center;
-        }
-
-        .text-end {
-            text-align: right;
-        }
-
-        .p-2 {
-            padding: 10px;
-        }
-
-        .p-4 {
-            padding: 20px;
-        }
-
-        .mt-3 {
-            margin-top: 20px;
-        }
-
-        .mb-3 {
-            margin-bottom: 20px;
-        }
-
-        .d-flex {
-            display: flex;
-        }
-
-        .justify-content-between {
-            justify-content: space-between;
-        }
-
-        .align-items-center {
-            align-items: center;
-        }
-
-        /* Ensure layout is A4 size when printing */
-        @media print {
-            @page {
-                size: A4;
-                margin: 10mm;
-            }
-
-            .btn {
-                display: none;
-            }
-
-            .container {
-                margin: 0;
-                padding: 0;
-            }
-
-            .border {
-                border-width: 0.5mm;
-            }
-        }
-
-        /* Add padding and uniform border to each section */
-        .border-bottom {
-            border-bottom: 1px solid #333;
-        }
-
-        .border-top {
-            border-top: 1px solid #333;
-        }
-
-        .border-left {
-            border-left: 1px solid #333;
-        }
-
-        .border-right {
-            border-right: 1px solid #333;
-        }
-
-        /* Space between rows and cells */
-        .row {
-            margin-bottom: 15px;
-        }
-
-        .p-1 {
-            padding: 5px;
-        }
-    </style>
-
-    <!-- External scripts -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/2.3.10/purify.min.js" defer></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.0/dist/JsBarcode.all.min.js" defer></script>
 </head>
 
 <body>
-    <div class="container mt-3 mb-3">
-        <!-- Download PDF Button -->
-        <div class="row mb-3">
-            <div class="col-12 text-end">
-                <button class="btn btn-primary" onclick="generatePDF()">Download PDF</button>
-            </div>
+
+    <form id="userForm">
+        <div class="form-header">
+            <h2>Full Truck Load</h2>
+            <input type="hidden" id="tempFormID" name="tempFormID">
+            <input type="hidden" id="partyCode" name="partyCode">
+        </div>
+        <div class="button-group">
+            <button type="button" id="newButton">New</button>
+            <button type="button" id="modifyButton">Modify</button>
+            <button type="button" id="deleteButton">Delete</button>
+            <button type="button" id="reportButton">Report</button>
+            <button type="submit" id="saveButton">Save</button>
         </div>
 
-        <div class="row border p-4" id="reportContent">
-            <!-- Company logo and header -->
-            <div class="col-12 border-bottom p-2 d-flex justify-content-between align-items-center text-center">
-                <img src="assets/img/logo/CA0001.png" alt="Company Logo" id="companylogo" class="company-logo"
-                    style="max-height: 100px;" />
-                <div class="company-info text-center">
-                    <h2 id="companyName" class="m-0">BizNavigation Pvt Ltd</h2>
-                    <p id="address" class="m-0" style="font-size: 14px;">Address</p>
+        <div class="formborder">
+            <div class="form-group">
+                <div>
+                    <label for="lrnumber">LR Number</label>
+                    <input list="lrNumberSuggestions" id="lrnumber" name="lrnumber" class="two-input-group"
+                        placeholder="LR Number" autocomplete="off">
+                    <datalist id="lrNumberSuggestions"></datalist>
                 </div>
-                <div class="text-end border p-2 text-center" style="width: 300px;">
-                    <div id="barcodeContainer">
-                        <p class="m-0" style="font-weight: bold;">LR Number:</p>
-                        <svg id="barcodeCanvas"></svg>
+                <!-- Add a button to scan barcode -->
+                <div><label for="">.</label>
+                    <button type="button" id="scanBarcodeButton">S</button>
+                    <video id="video" width="300" height="200" style="display:none;"></video>
+                </div>
+
+                <div>
+                    <label for="lrdate">LR Date</label>
+                    <input type="date" id="lrdate" name="lrdate" required>
+                </div>
+                <div>
+                    <label for="quotationid">Quotation ID</label>
+                    <input type="text" id="quotationid" name="quotationid" class="two-input-group"
+                        placeholder="Quotation ID" autocomplete="off">
+                </div>
+                <div>
+                    <label for="movementType">Movement Type</label>
+                    <select id="movementType" name="movementType">
+                        <option value="" disabled selected>Select Movement Type</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="partyName">Party Name</label>
+                    <input list="partySuggestions" id="partyName" name="partyName" required placeholder="Party Name"
+                        autocomplete="off">
+                    <datalist id="partySuggestions"></datalist>
+                </div>
+                <div>
+                    <label for="originPinCode">Origin Pincode</label>
+                    <input type="text" id="originPinCode" name="originPinCode" required autocomplete="off">
+                </div>
+                <div>
+                    <label for="orgincity">Origin City</label>
+                    <input type="text" id="orgincity" name="orgincity" style="text-transform: capitalize;" required
+                        autocomplete="off">
+                </div>
+                <div>
+                    <label for="orginAddress">Origin Address</label>
+                    <textarea id="orginAddress" name="orginAddress" style="text-transform: capitalize;" required
+                        rows="1" autocomplete="off"></textarea>
+                </div>
+                <div>
+                    <label for="destinationPinCode">Destination Pincode</label>
+                    <input type="text" id="destinationPinCode" name="destinationPinCode" required autocomplete="off">
+                </div>
+                <div>
+                    <label for="destinationcity">Destination City</label>
+                    <input type="text" id="destinationcity" name="destinationcity" style="text-transform: capitalize;"
+                        required autocomplete="off">
+                </div>
+                <div>
+                    <label for="destinationAddress">Destination Address</label>
+                    <textarea id="destinationAddress" name="destinationAddress" style="text-transform: capitalize;"
+                        required rows="1" autocomplete="off"></textarea>
+                </div>
+                <div>
+                    <label for="requesteddate">Requested Date</label>
+                    <input type="date" id="requesteddate" name="requesteddate">
+                </div>
+                <div>
+                    <label for="vehicleType">Vehicle Type</label>
+                    <select id="vehicleType" name="vehicleType">
+                        <option value="" disabled selected>Select Vehicle Type</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="referencenumber">Reference Number</label>
+                    <input type="text" id="referencenumber" name="referencenumber" style="text-transform: uppercase;"
+                        required autocomplete="off">
+                </div>
+                <div style="position: relative;">
+                    <label for="invoicevalue">Invoice Value</label>
+                    <span class="inr-symbol">₹</span>
+                    <input type="number" id="invoicevalue" name="invoicevalue" min="0" step="0.01" placeholder="00.00"
+                        onblur="formatCurrency(this)">
+                </div>
+                <div>
+                    <label for="vehiclenumber">Vehicle Number</label>
+                    <input type="text" id="vehiclenumber" name="vehiclenumber" style="text-transform: uppercase;"
+                        required autocomplete="off">
+                </div>
+                <div>
+                    <label for="containernumber">Container Number</label>
+                    <input type="text" id="containernumber" name="containernumber" style="text-transform: uppercase;"
+                        required autocomplete="off">
+                </div>
+                <div>
+                    <div>
+                        <label for="modeType">Mode Type</label>
+                        <select id="modeType" name="modeType">
+                            <option value="" disabled selected>Select Mode Type</option>
+                        </select>
                     </div>
-                    <p class="m-0">Date: <span id="reportDate">07-10-2024</span></p>
                 </div>
-            </div>
-
-            <!-- Locations -->
-            <div class="col-12 border-bottom p-2 d-flex justify-content-between text-center">
-                <div class="col-6 border p-2">
-                    <h6 style="font-weight: bold;">Pickup Location:</h6>
-                    <p id="pickupAddress" style="font-size: 12px; margin: 0;">Warehouse 1, Chennai</p>
+                <div>
+                    <label for="quantity">Quantity</label>
+                    <input type="number" id="quantity" name="quantity">
                 </div>
-                <div class="col-6 border p-2">
-                    <h6 style="font-weight: bold;">Delivery Location:</h6>
-                    <p id="deliveryAddress" style="font-size: 12px; margin: 0;">Dock 45, Nellore</p>
-                </div>
-            </div>
-
-            <!-- Other Information -->
-            <div class="col-4 border p-2 border-right">
-                <p style="margin: 0;"><span style="font-weight: bold;">Origin: </span> <span id="originCity"></span></p>
-                <p style="margin: 0;"><span style="font-weight: bold;">Vehicle No.: </span> <span id="vehicleNumber"></span></p>
-                <p style="margin: 0;"><span style="font-weight: bold;">Vehicle Type: </span> <span id="vehicleType"></span></p>
-            </div>
-
-            <div class="col-4 border p-2 border-right">
-                <p style="margin: 0;"><span style="font-weight: bold;">Destination: </span> <span id="destinationCity"></span></p>
-                <p style="margin: 0;"><span style="font-weight: bold;">Mode: </span> <span id="modeType"></span></p>
-                <p style="margin: 0;"><span style="font-weight: bold;">Transit Type: </span> <span id="transitType"></span></p>
-            </div>
-
-            <div class="col-4 border p-2">
-                <p style="margin: 0;"><span style="font-weight: bold;">Invoice No: </span> <span id="invoiceNumber"></span></p>
-                <p style="margin: 0;"><span style="font-weight: bold;">Invoice Value: </span> <span id="invoiceValue"></span></p>
-                <p style="margin: 0;"><span style="font-weight: bold;">Payment Type: </span> <span id="paymentType"></span></p>
-            </div>
-
-            <!-- Freight Information Header -->
-            <div class="col-12 border-bottom p-1 d-flex justify-content-between text-center">
-                <div class="col-1 border d-flex align-items-center justify-content-center p-1">
-                    <p class="m-0" style="font-weight: bold;">No of Packages</p>
-                </div>
-                <div class="col-4 border d-flex align-items-center justify-content-center p-1">
-                    <p class="m-0" style="font-weight: bold;">Description of Goods (Said to Contain)</p>
-                </div>
-                <div class="col-1 border d-flex align-items-center justify-content-center p-1">
-                    <p class="m-0" style="font-weight: bold;">Weight</p>
-                </div>
-                <div class="col-6 border d-flex align-items-center justify-content-center p-1">
-                    <p class="m-0" style="font-weight: bold;">Freight Details</p>
-                </div>
-            </div>
-
-            <!-- Freight Information Content -->
-            <div class="col-12 border-bottom p-1 d-flex justify-content-between">
-                <div class="col-2 border p-1">
-                    <p id="quantity" class="text-center"></p>
-                </div>
-                <div class="col-4 border p-1">
-                    <p id="descriptionofGoods"></p>
-                </div>
-                <div class="col-2 border p-1">
-                    <p id="chargeableWeight" class="text-center"></p>
-                </div>
-                <div class="col-4 border p-1" id="totalFreight">
-                    <!-- <p id="totalFreight">Freight</p> -->
-                </div>
-            </div>
-
-            <!-- Payment Information -->
-            <div class="col-12 p-2 d-flex justify-content-between align-items-start">
-                <!-- Caution Section -->
-                <div class="col-3 p-1 border d-flex flex-column">
-                    <p class="text-center mb-2">
-                        <span style="font-weight: bold; font-size: 14px;">Caution</span>
-                    </p>
-                    <p style="font-size: 11px; margin: 0; height: 100px;">
-                        This consignment will not be diverted, re-routed, or re-booked without the Consignee Bank's written permission and will be delivered at the destination.
-                    </p>
+                <div>
+                    <label for="cargowt">Cargo Wt (Kgs)</label>
+                    <input type="number" id="cargowt" name="cargowt">
                 </div>
 
-                <!-- Disputes Section -->
-                <div class="col-5 p-1 border d-flex flex-column">
-                    <p class="text-center mb-2">
-                        <span style="font-weight: bold; font-size: 14px;">Disputes</span>
-                    </p>
-                    <p style="font-size: 11px; margin: 0; height: 100px;">
-                        Any disputes regarding the consignment or payment will be subject to the jurisdiction of Chennai courts.
-                    </p>
-                </div>
+
             </div>
-        </div>
-    </div>
+            <!-- Tab Navigation -->
+            <div class="tab">
+                <button type="button" class="tablinks" onclick="openTab(event, 'description')">Description</button>
+                <button type="button" class="tablinks" onclick="openTab(event, 'frightCharges')">Freight
+                    Charges</button>
+            </div>
+
+            <div id="description" class="tab-content">
+                <div>
+                    <label for="descriptionofGoods">Description of Goods</label>
+                    <textarea id="descriptionofGoods" name="descriptionofGoods" style="text-transform: capitalize;"
+                        required rows="4" autocomplete="off"></textarea>
+                </div>
+
+            </div>
+            <!-- Freight Charges Tab -->
+            <div id="frightCharges" class="tab-content">
+                <div class="form-group">
+                    <div>
+                        <label for="chargesType">Charges Type</label>
+                        <select id="chargesType" name="chargesType">
+                            <option value="" disabled selected>Select Charges Type</option>
+                        </select>
+                    </div>
+                    <div style="position: relative;">
+                        <label for="frightcharges">Charges</label>
+                        <span class="inr-symbol">₹</span>
+                        <input type="number" id="frightcharges" name="frightcharges" min="0" step="0.01"
+                            placeholder="00.00" onblur="formatCurrency(this)">
+                    </div>
+                    <div>
+                        <label for="defaulttax">Default Tax</label>
+                        <select id="defaulttax" name="defaulttax">
+                            <option value="" disabled selected>Select Default Tax</option>
+                        </select>
+                    </div>
+                    <button type="button" id="addButton">Add</button>
+
+                </div>
+                <!-- Table to display data from Google Sheet -->
+                <div id="chargesDetailsTableContainer">
+                    <table id="chargesDetailsTable">
+                        <thead>
+                            <tr>
+                                <th>Charges Type</th>
+                                <th>Amount</th>
+                                <th>GST Type</th>
+                                <th>CGST Amount</th>
+                                <th>SGST Amount</th>
+                                <th>IGST Amount</th>
+                                <th>Total GST Amount</th>
+                                <th>Grand Total Billing</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Dynamic rows will be added here -->
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+    </form>
+
+    <script src="assets/js/server.js"></script>
+    <script src="assets/js/header.js"></script>
+    <script src="assets/js/footer.js"></script>
+    <script src="assets/js/scripts.js"></script>
+    <script src="assets/js/pincde.js"></script>
+    <script src="assets/js/fulltruckload.js"></script>
+    <script src="assets/js/dropdownlist.js"></script>
+    <script src="assets/js/taxDescription.js"></script>
+    <script src="assets/js/customerlist.js"></script>
+    <script src="assets/js/variable.js"></script>
+
+    <script>
+        // Start QuaggaJS Barcode scanner on button click
+        document.getElementById('scanBarcodeButton').addEventListener('click', function () {
+            const video = document.getElementById('video');
+            video.style.display = 'block'; // Show video element for scanning
+
+            Quagga.init({
+                inputStream: {
+                    name: "Live",
+                    type: "LiveStream",
+                    target: video, // Or '#yourElement' (optional)
+                    constraints: {
+                        width: 300,
+                        height: 200,
+                        facingMode: "environment" // Use rear camera
+                    },
+                },
+                decoder: {
+                    readers: ["code_128_reader"] // Type of barcode to scan
+                }
+            }, function (err) {
+                if (err) {
+                    console.log(err);
+                    return;
+                }
+                Quagga.start(); // Start scanning
+            });
+
+            // Process the barcode result
+            Quagga.onDetected(function (result) {
+                const code = result.codeResult.code;
+                console.log("Barcode detected and processed:", code);
+                document.getElementById('lrnumber').value = code; // Set the scanned LR number in the input
+                video.style.display = 'none'; // Hide video element after scanning
+                Quagga.stop(); // Stop Quagga after the scan
+            });
+        });
+    </script>
 </body>
 
 </html>

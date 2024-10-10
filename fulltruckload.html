@@ -14,8 +14,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <!-- Include jsPDF from CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-
-
+    <!-- Include QuaggaJS for barcode scanning -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
 
 </head>
 
@@ -43,6 +43,12 @@
                         placeholder="LR Number" autocomplete="off">
                     <datalist id="lrNumberSuggestions"></datalist>
                 </div>
+                <!-- Add a button to scan barcode -->
+                <div><label for="">.</label>
+                    <button type="button" id="scanBarcodeButton">S</button>
+                    <video id="video" width="300" height="200" style="display:none;"></video>
+                </div>
+
                 <div>
                     <label for="lrdate">LR Date</label>
                     <input type="date" id="lrdate" name="lrdate" required>
@@ -215,6 +221,45 @@
     <script src="assets/js/taxDescription.js"></script>
     <script src="assets/js/customerlist.js"></script>
     <script src="assets/js/variable.js"></script>
+
+    <script>
+        // Start QuaggaJS Barcode scanner on button click
+        document.getElementById('scanBarcodeButton').addEventListener('click', function () {
+            const video = document.getElementById('video');
+            video.style.display = 'block'; // Show video element for scanning
+
+            Quagga.init({
+                inputStream: {
+                    name: "Live",
+                    type: "LiveStream",
+                    target: video, // Or '#yourElement' (optional)
+                    constraints: {
+                        width: 300,
+                        height: 200,
+                        facingMode: "environment" // Use rear camera
+                    },
+                },
+                decoder: {
+                    readers: ["code_128_reader"] // Type of barcode to scan
+                }
+            }, function (err) {
+                if (err) {
+                    console.log(err);
+                    return;
+                }
+                Quagga.start(); // Start scanning
+            });
+
+            // Process the barcode result
+            Quagga.onDetected(function (result) {
+                const code = result.codeResult.code;
+                console.log("Barcode detected and processed:", code);
+                document.getElementById('lrnumber').value = code; // Set the scanned LR number in the input
+                video.style.display = 'none'; // Hide video element after scanning
+                Quagga.stop(); // Stop Quagga after the scan
+            });
+        });
+    </script>
 </body>
 
 </html>

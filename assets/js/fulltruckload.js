@@ -82,6 +82,12 @@ async function fetchExistingLRNumber() {
 document.getElementById('saveButton').addEventListener('click', async function (event) {
     event.preventDefault();
 
+    // Check if all required fields are filled
+    if (!areRequiredFieldsFilled()) {
+        return;
+    }
+
+
     chargesDetailsConfirmation(lrNumber);
 
     if (document.getElementById('saveButton').textContent === 'Save') {
@@ -150,24 +156,47 @@ document.getElementById('saveButton').addEventListener('click', async function (
         body: JSON.stringify({ action: action, data: formData })
     });
 
-    
+
     disableForm();
     saveButton.textContent = 'Update';
     modifyButton.disabled = false;
     saveButton.disabled = true;
-    reportButton.disabled = false;   
+    reportButton.disabled = false;
     document.getElementById('newButton').disabled = false;
     document.getElementById('addButton').disabled = true;
     alert(`Movement details ${action === 'add' ? 'saved' : 'updated'} successfully!\nLR Number : ${lrNumber}`);
 });
 
+// Function to check if all required fields are filled
+function areRequiredFieldsFilled() {
+    const requiredFields = [
+        'lrdate', 'quotationid', 'movementType', 'partyCode', 'partyName',
+        'originPinCode', 'orgincity', 'orginAddress', 'destinationPinCode',
+        'destinationcity', 'destinationAddress', 'requesteddate', 'vehicleType',
+        'referencenumber', 'invoicevalue', 'vehiclenumber', 'containernumber',
+        'quantity', 'cargowt', 'descriptionofGoods'
+    ];
 
-async function chargesDetailsConfirmation(lrnumber){
+    for (let fieldId of requiredFields) {
+        const field = document.getElementById(fieldId);
+        if (!field || !field.value.trim()) {
+            // Set focus on the first empty required field
+            field.focus();
+            alert('Please fill in all required fields.');
+            return false; // Return false if any required field is empty
+        }
+    }
+
+    return true; // Return true if all required fields are filled
+}
+
+
+async function chargesDetailsConfirmation(lrnumber) {
 
     let lrNumber = document.getElementById('lrnumber').value || tempFormID;
     // Create form data object
     const formData = {
-        tempFormID:lrNumber,
+        tempFormID: lrNumber,
         lrNumber: lrNumber
     };
 
@@ -463,3 +492,4 @@ document.getElementById('reportButton').addEventListener('click', async function
 
     openReport();
 });
+

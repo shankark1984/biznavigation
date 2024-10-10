@@ -35,6 +35,13 @@ function generatePDF() {
 
     const doc = new jsPDF(); // Create a new jsPDF instance
 
+    // Set margin values
+    const marginLeft = 5;
+    const marginTop = 10;
+    const marginRight = 5;
+    const imgWidth = 210 - marginLeft - marginRight; // Adjust width for margins
+    const pageHeight = 295; // A4 size height in mm
+
     // Wait for content to be fully loaded
     if (document.querySelector("#reportContent")) {
         // Use html2canvas to capture the content
@@ -42,22 +49,20 @@ function generatePDF() {
             scale: 2
         }).then(canvas => {
             const imgData = canvas.toDataURL('image/png');
-            const imgWidth = 210; // A4 size width in mm
-            const pageHeight = 295; // A4 size height in mm
             const imgHeight = (canvas.height * imgWidth) / canvas.width;
             let heightLeft = imgHeight;
 
-            let position = 0;
+            let position = marginTop; // Start the content below the top margin
 
-            // Add the image to the PDF
-            doc.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+            // Add the first image to the PDF with margin
+            doc.addImage(imgData, 'PNG', marginLeft, position, imgWidth, imgHeight);
             heightLeft -= pageHeight;
 
             // Handle multi-page PDF if the content is larger than one page
             while (heightLeft >= 0) {
                 position = heightLeft - imgHeight;
                 doc.addPage();
-                doc.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                doc.addImage(imgData, 'PNG', marginLeft, position, imgWidth, imgHeight);
                 heightLeft -= pageHeight;
             }
 
@@ -68,6 +73,7 @@ function generatePDF() {
         console.error("Content not found. Please ensure the #reportContent is fully loaded.");
     }
 }
+
 
 
 // Function to load Company data from Google Sheets

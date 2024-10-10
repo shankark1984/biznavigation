@@ -6,6 +6,7 @@ body {
     width: 210mm;
     height: 297mm;
     margin: 0;
+    /* Ensures no extra margin is applied */
     padding: 0;
     font-family: Arial, sans-serif;
     font-size: 12px;
@@ -14,7 +15,7 @@ body {
 .container {
     width: 100%;
     margin: 0 auto;
-    padding: 0px;
+    padding: 10px;
     box-sizing: border-box;
 }
 
@@ -71,6 +72,11 @@ body {
     margin-bottom: 20px;
 }
 
+.ml-3 {
+    margin-left: 20mm;
+    /* Corrected from margin-bottom to margin-left */
+}
+
 .d-flex {
     display: flex;
 }
@@ -83,9 +89,12 @@ body {
 @media print {
     @page {
         size: A4;
-        margin: 0mm;
+        width: 150cm;
+        margin: 20mm;
+        /* Set 20mm margin on all sides */
     }
 
+    /* Hide print buttons or other elements */
     .btn {
         display: none;
     }
