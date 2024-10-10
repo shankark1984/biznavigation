@@ -1,3 +1,5 @@
+
+
 document.addEventListener('DOMContentLoaded', function () {
     const companyID = localStorage.getItem('CompanyID');
     if (companyID) {
@@ -31,6 +33,7 @@ function generateBarcode(lrNumber) {
 
 function generatePDF() {
     // Load jsPDF from UMD
+    let lrNumber = localStorage.getItem('lrNumber');
     const { jsPDF } = window.jspdf;
 
     const doc = new jsPDF(); // Create a new jsPDF instance
@@ -67,7 +70,7 @@ function generatePDF() {
             }
 
             // Save the generated PDF
-            doc.save("BizNavigation_Report.pdf");
+            doc.save(lrNumber + ".pdf");
         });
     } else {
         console.error("Content not found. Please ensure the #reportContent is fully loaded.");
