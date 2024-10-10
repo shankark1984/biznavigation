@@ -1,50 +1,57 @@
+// Helper functions
+const showError = (message) => {
+    const errorMessage = document.getElementById('errorMessage');
+    errorMessage.innerHTML = message;
+    errorMessage.style.display = 'block';
+};
 
+const hideError = () => {
+    document.getElementById('errorMessage').style.display = 'none';
+};
+
+const storeUserDetails = (user) => {
+    const { EmpCode, UserName, UserLoginID, UserType, CompanyID, WorkingBranch } = user;
+    localStorage.setItem('EmpCode', EmpCode);
+    localStorage.setItem('UserName', UserName);
+    localStorage.setItem('UserLoginID', UserLoginID);
+    localStorage.setItem('UserType', UserType);
+    localStorage.setItem('CompanyID', CompanyID);
+    localStorage.setItem('WorkingBranch', WorkingBranch);
+};
 
 function login() {
     const userName = document.getElementById('userName').value;
     const password = document.getElementById('password').value;
-    const errorMessage = document.getElementById('errorMessage');
-    
-    errorMessage.style.display = 'none';  // Hide error message initially
 
     if (!userName || !password) {
-        alert('Please enter both username and password.');
+        showError('Please enter both username and password.');
         return;
     }
 
+    hideError();  // Hide error message initially
+
     // Fetch user details from Google Sheets using Web Apps API
-    fetch(`${UserLogin_SCRIPT_ID}?action=login&userName=${encodeURIComponent(userName)}&password=${encodeURIComponent(password)}`)
+    const url = `${UserLogin_SCRIPT_ID}?action=login&userName=${encodeURIComponent(userName)}&password=${encodeURIComponent(password)}`;
+
+    fetch(url)
         .then(response => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok.');
-            }
+            if (!response.ok) throw new Error('Network response was not ok.');
             return response.json();
         })
         .then(data => {
-            console.log(data);
             if (data.success) {
-                // Store user details in localStorage
-                localStorage.setItem('EmpCode', data.user.EmpCode);
-                localStorage.setItem('UserName', data.user.UserName);
-                localStorage.setItem('UserLoginID', data.user.UserLoginID);
-                localStorage.setItem('UserType', data.user.UserType);
-                localStorage.setItem('CompanyID', data.user.CompanyID);
-                localStorage.setItem('WorkingBranch', data.user.WorkingBranch);
-                
-                // Redirect to home.html
-                window.location.href = 'home.html';
+                storeUserDetails(data.user);
+                window.location.href = 'home.html';  // Redirect to home page
             } else {
-                errorMessage.innerHTML = 'Invalid username or password. Please try again.';
-                errorMessage.style.display = 'block';
+                showError('Invalid username or password. Please try again.');
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('An error occurred during login. Please try again.');
+            showError('An error occurred during login. Please try again.');
         });
 }
 
 function resetPassword() {
-    // Redirect to a reset password page or trigger the reset password process
     alert('Reset password functionality coming soon.');
 }

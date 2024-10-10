@@ -70,11 +70,16 @@ function generateTempFormID() {
 
 // Assign TempFormID when the form is opened (or page is loaded)
 window.addEventListener('DOMContentLoaded', function () {
-    tempFormID = generateTempFormID(); // Generate tempFormID
-    document.getElementById('tempFormID').value = tempFormID; // Set the hidden input value
-
-    console.log('TempFormID generated: ' + tempFormID); // Log for debugging
+    const tempFormIDElement = document.getElementById('tempFormID');
+    if (tempFormIDElement) {
+        const tempFormID = generateTempFormID(); // Generate tempFormID
+        tempFormIDElement.value = tempFormID; // Set the hidden input value
+        console.log('TempFormID generated: ' + tempFormID); // Log for debugging
+    } else {
+        console.error('tempFormID element not found.');
+    }
 });
+
 
 
 // Load Party Details
