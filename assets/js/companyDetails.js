@@ -1,28 +1,31 @@
-
 // Fetch company data from Google Sheets
-function fetchCompanyData(companyID) {
-    const url = `https://sheets.googleapis.com/v4/spreadsheets/${CompanyProfile_SHEETID}/values/${COMPANY_PROFILE_RANGE}?key=${APIKEY}`;
+async function fetchCompanyData(companyID) {
+    const url = createGoogleSheetsURL();
+    try {
+        const response = await fetch(url);
+        const data = await response.json();
 
-    fetch(url)
-        .then(response => response.json())
-        .then(data => {
-            const rows = data.values;
-            const companyData = rows.find(row => row[0] === companyID); // Match CompanyID
+        const rows = data.values;
+        const companyData = rows.find(row => row[0] === companyID); // Match CompanyID
 
-            if (companyData) {
-                populateCompanyForm(companyData);
-            } else {
-                console.error('Company data not found');
-            }
-        })
-        .catch(error => {
-            console.error('Error fetching data:', error);
-        });
+        if (companyData) {
+            populateCompanyForm(companyData);
+        } else {
+            console.error('Company data not found');
+        }
+    } catch (error) {
+        console.error('Error fetching data:', error);
+    }
+}
+
+// Create Google Sheets API URL
+function createGoogleSheetsURL() {
+    return `https://sheets.googleapis.com/v4/spreadsheets/${CompanyProfile_SHEETID}/values/${COMPANY_PROFILE_RANGE}?key=${APIKEY}`;
 }
 
 // Populate the form fields with the company data
 function populateCompanyForm(companyData) {
-    document.getElementById('CompID').textContent = companyID;
+    document.getElementById('CompID').textContent = companyData[0];  // Show the CompanyID
     // Assuming the columns are: CompanyID, ShortCode, CompanyName, Address, City, PinCode, State, Country, PhoneNo, Email, GSTNumber, PANNumber, CINNo, UdyogAadhaarNo, WebSite, Logo, CreatedBy, CreatedOn
     document.getElementById('shortCode').value = companyData[1] || '';
     document.getElementById('companyName').value = companyData[2] || '';
@@ -40,16 +43,23 @@ function populateCompanyForm(companyData) {
     document.getElementById('website').value = companyData[14] || '';
     document.getElementById('companylogo').src = companyData[15] || '';
 
+    handleUserTypePermissions();
+}
 
-    if (userType == 1) {
-        document.getElementById('modifyButton').disabled = false;
-        document.getElementById('newButton').disabled = false;
-    } else if (userType == 2) {
-        document.getElementById('modifyButton').disabled = false;
+// Handle form field permissions based on user type
+function handleUserTypePermissions() {
+    const userType = parseInt(localStorage.getItem('UserType'));
+    const modifyButton = document.getElementById('modifyButton');
+    const newButton = document.getElementById('newButton');
+
+    if (userType === 1) {
+        modifyButton.disabled = false;
+        newButton.disabled = false;
+    } else if (userType === 2) {
+        modifyButton.disabled = false;
     } else {
-        document.getElementById('modifyButton').disabled = true;
+        modifyButton.disabled = true;
     }
-
 }
 
 // When the page loads, fetch the company data
@@ -62,25 +72,25 @@ document.addEventListener('DOMContentLoaded', function () {
         console.error('No CompanyID found in localStorage');
     }
 });
-//Modify button event listener
+
+// Modify button event listener
 document.getElementById('modifyButton').addEventListener('click', function () {
     enableForm();  // Enable the form inputs when "Modify" button is clicked
     document.getElementById('saveButton').disabled = false; // Enable the Save button
     document.getElementById('modifyButton').disabled = true;
-    saveButton.textContent = 'Update';
+    document.getElementById('saveButton').textContent = 'Update';
 });
 
-//Modify button event listener
+// New button event listener
 document.getElementById('newButton').addEventListener('click', function () {
-    enableForm();  // Enable the form inputs when "Modify" button is clicked
+    enableForm();  // Enable the form inputs when "New" button is clicked
     document.getElementById('saveButton').disabled = false; // Enable the Save button
     document.getElementById('modifyButton').disabled = true;
-    saveButton.textContent = 'Save';
-    clearForm();
+    document.getElementById('saveButton').textContent = 'Save';
+    clearForm();  // Clear the form for a new entry
 });
 
-
-// Function to generate new company code
+// Generate new company ID
 async function generateNewCompanyID(companyName) {
     const firstLetter = companyName.charAt(0).toUpperCase();
     const existingCodes = await fetchExistingCompanyID();
@@ -102,38 +112,70 @@ async function generateNewCompanyID(companyName) {
     return `C${firstLetter}${String(newCount).padStart(4, '0')}`; // Pad with zeros
 }
 
-// Function to fetch existing company codes from Google Sheets
+// Fetch existing company IDs from Google Sheets
 async function fetchExistingCompanyID() {
-    const url = `https://sheets.googleapis.com/v4/spreadsheets/${CompanyProfile_SHEETID}/values/${COMPANY_PROFILE_RANGE}?key=${APIKEY}`;
-    console.log(url);
-    const response = await fetch(url);
-    const data = await response.json();
-
-    return data.values ? data.values.flat() : []; // Flatten if the data is in nested arrays
+    const url = createGoogleSheetsURL();
+    try {
+        const response = await fetch(url);
+        const data = await response.json();
+        return data.values ? data.values.flat() : []; // Flatten if the data is in nested arrays
+    } catch (error) {
+        console.error('Error fetching existing company IDs:', error);
+        return [];
+    }
 }
-
 
 // Save or update form data
 document.getElementById('saveButton').addEventListener('click', async function (event) {
     event.preventDefault();
 
-    // const companyID = localStorage.getItem('CompanyID') || null;
+    const saveButton = document.getElementById('saveButton');
     const companyName = document.getElementById('companyName').value;
     let companyID;
 
     if (saveButton.textContent === 'Save') {
-        // Generate new party code
+        // Generate new company ID
         companyID = await generateNewCompanyID(companyName);
     } else if (saveButton.textContent === 'Update') {
-        partyCode = localStorage.getItem('CompanyID'); // Use existing Company code
+        companyID = localStorage.getItem('CompanyID'); // Use existing Company code
     }
 
-    // Get form values
-    const formData = {
-        companyID: companyID,
+    const formData = gatherFormData(companyID);
+
+    const action = (saveButton.textContent === 'Save') ? 'add' : 'update';
+
+    try {
+        const response = await fetch(CompanyProfile_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ action, data: formData })
+        });
+
+        const data = await response.json();
+        if (data.success) {
+            alert(`Company ${action === 'add' ? 'saved' : 'updated'} successfully!`);
+            if (action === 'add') {
+                saveButton.textContent = 'Update';
+                document.getElementById('modifyButton').disabled = false;
+            }
+        } else {
+            alert(`Failed to ${action === 'add' ? 'save' : 'update'} company.`);
+        }
+    } catch (error) {
+        console.error('Error saving company:', error);
+        alert('Failed to save or update company data.');
+    }
+});
+
+// Gather form data for submission
+function gatherFormData(companyID) {
+    return {
+        companyID,
         shortCode: document.getElementById('shortCode').value,
-        companyName: companyName,
-        address: document.getElementById('address').value.charAt(0).toUpperCase() + document.getElementById('address').value.slice(1).toLowerCase(),
+        companyName: document.getElementById('companyName').value,
+        address: formatAddress(document.getElementById('address').value),
         city: document.getElementById('city').value,
         pinCode: document.getElementById('pinCode').value,
         state: document.getElementById('state').value,
@@ -147,30 +189,9 @@ document.getElementById('saveButton').addEventListener('click', async function (
         website: document.getElementById('website').value,
         createdBy: localStorage.getItem('UserLoginID')
     };
+}
 
-    const action = (saveButton.textContent === 'Save') ? 'add' : 'update';
-    // const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEETID}/values/${COMPANY_PROFILE_RANGE}?key=${APIKEY}`;
-    fetch(CompanyProfile_URL, {
-        method: 'POST',
-        mode: 'no-cors',  // Changed to 'cors' to allow for JSON response
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ action: action, data: formData })
-    })
-
-        .then(response => response.json())  // Ensure proper response handling
-        .then(data => {
-            if (data.success) {
-                alert(`Company ${action === 'add' ? 'saved' : 'updated'} successfully!`);
-                if (action === 'add') {
-                    // localStorage.setItem('CompanyID', data.companyID);
-                    saveButton.textContent = 'Update';
-                    modifyButton.disabled = false;
-                }
-            } else {
-                alert(`Failed to ${action === 'add' ? 'save' : 'update'} company.`);
-            }
-        })
-        .catch(error => console.error('Error:', error));
-});
+// Format address with proper case
+function formatAddress(address) {
+    return address.charAt(0).toUpperCase() + address.slice(1).toLowerCase();
+}

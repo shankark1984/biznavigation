@@ -12,225 +12,172 @@
 
 <body>
 
-    <form id="userForm">
+    <form id="userForm" aria-labelledby="formTitle">
         <div class="company-header">
-            <h2>Company Registration -(<span id="CompID">companyid</span>)</h2>
+            <h2 id="formTitle">Company Registration - (<span id="CompID">companyid</span>)</h2>
             <img src="assets/img/logo/CA0001.png" alt="Company Logo" class="company-logo" id="companylogo">
         </div>
+
+        <!-- Button Group -->
         <div class="button-group">
-            <button type="button" id="newButton">New</button>
-            <button type="button" id="modifyButton">Modify</button>
-            <button type="button" id="deleteButton">Delete</button>
-            <button type="button" id="reportButton">Report</button>
-            <button type="submit" id="saveButton">Save</button>
+            <button type="button" id="newButton" aria-label="Create a new company record">New</button>
+            <button type="button" id="modifyButton" aria-label="Modify an existing company record">Modify</button>
+            <button type="button" id="deleteButton" aria-label="Delete the company record">Delete</button>
+            <button type="button" id="reportButton" aria-label="Generate a report for the company">Report</button>
+            <button type="submit" id="saveButton" aria-label="Save the company details">Save</button>
         </div>
 
+        <!-- Company Details Form -->
         <div class="formborder">
-            <div class="form-group">
+            <fieldset class="form-group">
+                <legend>Company Information</legend>
+
+                <!-- Short Code -->
                 <div>
                     <label for="shortCode" aria-label="Enter the short code">Short Code</label>
-                    <input type="text" id="shortCode" name="shortCode" required class="input-small" placeholder="Short Code" aria-required="true">
+                    <input type="text" id="shortCode" name="shortCode" required class="input-small"
+                        placeholder="Short Code" aria-required="true">
                 </div>
+
+                <!-- Company Name -->
                 <div>
-                    <label for="companyName">Company Name</label>
+                    <label for="companyName" aria-label="Enter the company name">Company Name</label>
                     <input type="text" id="companyName" name="companyName" style="text-transform: capitalize;" required
                         placeholder="Company Name">
                 </div>
+
+                <!-- CIN No -->
                 <div>
-                    <label for="cinNo">CIN No</label>
+                    <label for="cinNo" aria-label="Enter the CIN number">CIN No</label>
                     <input type="text" id="cinNo" name="cinNo" style="text-transform: uppercase;" required
                         placeholder="CIN No">
                 </div>
+
+                <!-- Udyog Aadhaar No -->
                 <div>
-                    <label for="uaNo">UA No</label>
+                    <label for="uaNo" aria-label="Enter the Udyog Aadhaar number">UA No</label>
                     <input type="text" id="uaNo" name="uaNo" style="text-transform: uppercase;" required
                         placeholder="Udyog Aadhaar No">
                 </div>
 
+                <!-- Address -->
                 <div>
-                    <label for="address">Address</label>
-                    <textarea type="text" id="address" name="address" style="text-transform: capitalize;" required
-                    rows="1" autocomplete="off"></textarea>
+                    <label for="address" aria-label="Enter the company address">Address</label>
+                    <textarea id="address" name="address" style="text-transform: capitalize;" required rows="1"
+                        autocomplete="off" aria-required="true"></textarea>
                 </div>
 
+                <!-- Pin Code -->
                 <div>
-                    <label for="pinCode">Pin Code</label>
-                    <input type="text" id="pinCode" name="pinCode" required>
-                </div>
-                <div>
-                    <label for="city">City</label>
-                    <input type="text" id="city" name="city" style="text-transform: capitalize;" required>
-                </div>
-                <div>
-                    <label for="state">State</label>
-                    <input type="text" id="state" name="state" style="text-transform: capitalize;" required>
-                </div>
-                <div>
-                    <label for="country">Country</label>
-                    <input type="text" id="country" name="country" style="text-transform: capitalize;" required>
+                    <label for="pinCode" aria-label="Enter the company pin code">Pin Code</label>
+                    <input type="text" id="pinCode" name="pinCode" required aria-required="true">
                 </div>
 
-
+                <!-- City -->
                 <div>
-                    <label for="panNumber">Pan Number</label>
+                    <label for="city" aria-label="Enter the company city">City</label>
+                    <input type="text" id="city" name="city" style="text-transform: capitalize;" required
+                        aria-required="true">
+                </div>
+
+                <!-- State -->
+                <div>
+                    <label for="state" aria-label="Enter the company state">State</label>
+                    <input type="text" id="state" name="state" style="text-transform: capitalize;" required
+                        aria-required="true">
+                </div>
+
+                <!-- Country -->
+                <div>
+                    <label for="country" aria-label="Enter the company country">Country</label>
+                    <input type="text" id="country" name="country" style="text-transform: capitalize;" required
+                        aria-required="true">
+                </div>
+
+                <!-- Pan Number -->
+                <div>
+                    <label for="panNumber" aria-label="Enter the company pan number">Pan Number</label>
                     <input type="text" id="panNumber" name="panNumber" style="text-transform: uppercase;" required>
                 </div>
+
+                <!-- GST Number -->
                 <div>
-                    <label for="gstNumber">GST Number</label>
+                    <label for="gstNumber" aria-label="Enter the company GST number">GST Number</label>
                     <input type="text" id="gstNumber" name="gstNumber" style="text-transform: uppercase;" required>
                 </div>
 
-
+                <!-- Phone Number -->
                 <div>
-                    <label for="phoneNumber">Phone Number</label>
+                    <label for="phoneNumber" aria-label="Enter the company phone number">Phone Number</label>
                     <input type="text" id="phoneNumber" name="phoneNumber" required>
                 </div>
+
+                <!-- Email ID -->
                 <div>
-                    <label for="email">Email ID</label>
+                    <label for="email" aria-label="Enter the company email ID">Email ID</label>
                     <input type="email" id="email" name="email" required>
                 </div>
+
+                <!-- Website -->
                 <div>
-                    <label for="website">Website</label>
+                    <label for="website" aria-label="Enter the company website">Website</label>
                     <input type="url" id="website" name="website">
                 </div>
-
+            </fieldset>
+            <!-- Tab Navigation for Branch and Bank Details -->
+            <div class="tab">
+                <button type="button" class="tablinks" onclick="openTab(event, 'branchDetails')">Branch Details</button>
+                <button type="button" class="tablinks" onclick="openTab(event, 'bankDetails')">Bank Details</button>
             </div>
 
-            <!-- Tabs for Branch & Bank Details -->
-            <!-- <div class="tabs">
-                <ul class="tab-links">
-                    <li class="active" onclick="openTab(event, 'branchDetails')">Branch Details <span
-                            class="arrow">▼</span>
-                    </li>
-                    <li onclick="openTab(event, 'bankDetails')">Bank Details <span class="arrow">▼</span></li>
-                </ul> -->
-
-                <!-- <div id="branchDetails" class="tab-content active">
-                    <div class="form-group two-input-group">
-                        <div>
-                            <label for="branchcode">Branch Code</label>
-                            <input type="text" id="branchcode" name="branchcode" required class="input-small">
-                        </div>
-                        <div>
-                            <label for="branchaddress">Address</label>
-                            <input type="text" id="branchaddress" name="branchaddress"
-                                style="text-transform: capitalize;" required>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <div>
-                            <label for="branchPinCode">Pin Code</label>
-                            <input type="text" id="branchPinCode" name="branchPinCode" required>
-                        </div>
-                        <div>
-                            <label for="branchCity">City</label>
-                            <input type="text" id="branchCity" name="branchCity" style="text-transform: capitalize;"
-                                required>
-                        </div>
-                        <div>
-                            <label for="branchState">State</label>
-                            <input type="text" id="branchState" name="branchState" style="text-transform: capitalize;"
-                                required>
-                        </div>
-                        <div>
-                            <label for="branchCountry">Country</label>
-                            <input type="text" id="branchCountry" name="branchCountry"
-                                style="text-transform: capitalize;" required>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <div>
-                            <label for="branchPhoneNumber">Phone Number</label>
-                            <input type="text" id="branchPhoneNumber" name="branchPhoneNumber" required>
-                        </div>
-                        <div>
-                            <label for="branchEmail">Email ID</label>
-                            <input type="email" id="branchEmail" name="branchEmail" required>
-                        </div>
-                        <div>
-                            <label for="branchPanNumber">Pan Number</label>
-                            <input type="text" id="branchPanNumber" name="branchPanNumber"
-                                style="text-transform: uppercase;" required>
-                        </div>
-                        <div>
-                            <label for="branchGstNumber">GST Number</label>
-                            <input type="text" id="branchGstNumber" name="branchGstNumber"
-                                style="text-transform: uppercase;" required>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <div>
-                            <label for="branchStatus">Status</label>
-                            <select id="branchStatus" name="branchStatus" required>
-                                <option value="" disabled selected>Select an option</option>
-                                <option value="activebranch">Active</option>
-                                <option value="deactivebranch">Deactive</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label for="invoiceyn">Invoice?</label>
-                            <input type="checkbox" id="invoiceyn" name="invoiceyn">
-                        </div>
-                        <div>
-                            <button type="button" onclick="addBranchDetails()">Add</button>
-                        </div>
-                    </div>
-                </div> -->
-
-                <!-- <div id="bankDetails" class="tab-content" >
-                    <div class="form-group">
-                        <div>
-                            <label for="bankname">Bank Name</label>
-                            <input type="text" id="bankname" name="bankname" style="text-transform: uppercase;"
-                                required>
-                        </div>
-                        <div>
-                            <label for="accountno">Account No</label>
-                            <input type="text" id="accountno" name="accountno" style="text-transform: uppercase;"
-                                required>
-                        </div>
-                        <div>
-                            <label for="branchname">Branch Name</label>
-                            <input type="text" id="branchname" name="branchname" style="text-transform: uppercase;"
-                                required>
-                        </div>
-                        <div>
-                            <label for="defaultbank">Default Bank</label>
-                            <input type="checkbox" id="defaultbank" name="defaultbank">
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <div>
-                            <label for="ifsccode">IFSC Code</label>
-                            <input type="text" id="ifsccode" name="ifsccode" style="text-transform: uppercase;"
-                                required>
-                        </div>
-                        <div>
-                            <label for="micrcode">MICR Code</label>
-                            <input type="text" id="micrcode" name="micrcode" style="text-transform: uppercase;"
-                                required>
-                        </div>
-                        <div>
-                            <label for="bankaddress">Address</label>
-                            <input type="text" id="bankaddress" name="bankaddress" style="text-transform: uppercase;"
-                                required>
-                        </div>
-                        <div>
-                            <label for=""></label>
-                            <button type="button" onclick="addBankDetails()">Add</button>
-                        </div>
-                    </div>
-                </div> -->
+            <!-- Tab Content for Branch Details -->
+            <div id="branchDetails" class="tab-content">
+                <div>
+                    <label for="branchDescription">Branch Description</label>
+                    <textarea id="branchDescription" name="branchDescription" required rows="4" placeholder="Describe the branch location" style="text-transform: capitalize;"></textarea>
+                </div>
+                <div>
+                    <label for="branchAddress">Branch Address</label>
+                    <textarea id="branchAddress" name="branchAddress" required rows="2" placeholder="Enter branch address"></textarea>
+                </div>
+                <div>
+                    <label for="branchPhoneNumber">Branch Phone Number</label>
+                    <input type="text" id="branchPhoneNumber" name="branchPhoneNumber" required placeholder="Branch Phone Number">
+                </div>
             </div>
+
+            <!-- Tab Content for Bank Details -->
+            <div id="bankDetails" class="tab-content">
+                <div>
+                    <label for="bankName">Bank Name</label>
+                    <input type="text" id="bankName" name="bankName" required placeholder="Enter bank name">
+                </div>
+                <div>
+                    <label for="bankAccountNumber">Account Number</label>
+                    <input type="text" id="bankAccountNumber" name="bankAccountNumber" required placeholder="Enter bank account number">
+                </div>
+                <div>
+                    <label for="ifscCode">IFSC Code</label>
+                    <input type="text" id="ifscCode" name="ifscCode" required placeholder="Enter IFSC Code">
+                </div>
+                <div>
+                    <label for="bankBranch">Branch</label>
+                    <input type="text" id="bankBranch" name="bankBranch" required placeholder="Enter branch name">
+                </div>
+            </div>
+
+        </div>
+
+        </div>
 
     </form>
+
     <script src="assets/js/server.js"></script>
     <script src="assets/js/companyDetails.js"></script>
     <script src="assets/js/header.js"></script>
     <script src="assets/js/footer.js"></script>
     <script src="assets/js/scripts.js"></script>
-    <script src="assets/js/pincde.js"></script>
+    <script src="assets/js/pincode.js"></script>
     <script src="assets/js/variable.js"></script>
 </body>
 
