@@ -124,6 +124,7 @@
                     <input type="url" id="website" name="website">
                 </div>
             </fieldset>
+
             <!-- Tab Navigation for Branch and Bank Details -->
             <div class="tab">
                 <button type="button" class="tablinks" onclick="openTab(event, 'branchDetails')">Branch Details</button>
@@ -131,43 +132,49 @@
             </div>
 
             <!-- Tab Content for Branch Details -->
+
             <div id="branchDetails" class="tab-content">
-                <div>
-                    <label for="branchDescription">Branch Description</label>
-                    <textarea id="branchDescription" name="branchDescription" required rows="4" placeholder="Describe the branch location" style="text-transform: capitalize;"></textarea>
-                </div>
-                <div>
-                    <label for="branchAddress">Branch Address</label>
-                    <textarea id="branchAddress" name="branchAddress" required rows="2" placeholder="Enter branch address"></textarea>
-                </div>
-                <div>
-                    <label for="branchPhoneNumber">Branch Phone Number</label>
-                    <input type="text" id="branchPhoneNumber" name="branchPhoneNumber" required placeholder="Branch Phone Number">
+                <div class="form-group">
+                    <div>
+                        <label for="branchDescription">Branch Description</label>
+                        <textarea id="branchDescription" name="branchDescription" required rows="4"
+                            placeholder="Describe the branch location" style="text-transform: capitalize;"></textarea>
+                    </div>
+                    <div>
+                        <label for="branchAddress">Branch Address</label>
+                        <textarea id="branchAddress" name="branchAddress" required rows="2"
+                            placeholder="Enter branch address"></textarea>
+                    </div>
+                    <div>
+                        <label for="branchPhoneNumber">Branch Phone Number</label>
+                        <input type="text" id="branchPhoneNumber" name="branchPhoneNumber" required
+                            placeholder="Branch Phone Number">
+                    </div>
                 </div>
             </div>
-
             <!-- Tab Content for Bank Details -->
+
             <div id="bankDetails" class="tab-content">
-                <div>
-                    <label for="bankName">Bank Name</label>
-                    <input type="text" id="bankName" name="bankName" required placeholder="Enter bank name">
-                </div>
-                <div>
-                    <label for="bankAccountNumber">Account Number</label>
-                    <input type="text" id="bankAccountNumber" name="bankAccountNumber" required placeholder="Enter bank account number">
-                </div>
-                <div>
-                    <label for="ifscCode">IFSC Code</label>
-                    <input type="text" id="ifscCode" name="ifscCode" required placeholder="Enter IFSC Code">
-                </div>
-                <div>
-                    <label for="bankBranch">Branch</label>
-                    <input type="text" id="bankBranch" name="bankBranch" required placeholder="Enter branch name">
+                <div class="form-group">
+                    <div>
+                        <label for="bankName">Bank Name</label>
+                        <input type="text" id="bankName" name="bankName" required placeholder="Enter bank name">
+                    </div>
+                    <div>
+                        <label for="bankAccountNumber">Account Number</label>
+                        <input type="text" id="bankAccountNumber" name="bankAccountNumber" required
+                            placeholder="Enter bank account number">
+                    </div>
+                    <div>
+                        <label for="ifscCode">IFSC Code</label>
+                        <input type="text" id="ifscCode" name="ifscCode" required placeholder="Enter IFSC Code">
+                    </div>
+                    <div>
+                        <label for="bankBranch">Branch</label>
+                        <input type="text" id="bankBranch" name="bankBranch" required placeholder="Enter branch name">
+                    </div>
                 </div>
             </div>
-
-        </div>
-
         </div>
 
     </form>
@@ -179,6 +186,9 @@
     <script src="assets/js/scripts.js"></script>
     <script src="assets/js/pincode.js"></script>
     <script src="assets/js/variable.js"></script>
+
+
+
 </body>
 
 </html>

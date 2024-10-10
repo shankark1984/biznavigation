@@ -7,6 +7,13 @@
 body {
     font-family: Arial, sans-serif;
     background-color: #a55b5b;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;  /* Full viewport height */
+}
+
+main {
+    flex-grow: 1;  /* Allows main content to take up available space */
 }
 
 h1 {
@@ -15,6 +22,7 @@ h1 {
     color: #333;
 }
 
+/* Menu Bar */
 .menu-bar {
     background-color: #333;
     color: white;
@@ -111,6 +119,7 @@ h1 {
     margin: 2px 0;
 }
 
+/* Responsive Menu */
 @media screen and (max-width: 768px) {
     .menu-bar {
         flex-wrap: wrap;
@@ -220,8 +229,6 @@ textarea {
     border-radius: 5px;
     border: 1px solid #02b53e;
     appearance: none;
-    -webkit-appearance: none;
-    -moz-appearance: none;
 }
 
 textarea {
@@ -237,17 +244,12 @@ textarea {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
-.formborder {
-    padding: 5px;
-
-}
-
 #userForm label {
     font-weight: bold;
     color: #333;
 }
 
-
+/* Button Group */
 @media (max-width: 600px) {
     .button-group {
         flex-wrap: nowrap;
@@ -265,22 +267,20 @@ textarea {
     }
 }
 
-
-/* Grouping input boxes in a row */
+/* Grouping Input Boxes */
 .form-group {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px; /* Space between input boxes */
-    margin-bottom: 5px; /* Space below the group */
+    gap: 10px;
+    margin-bottom: 5px;
 }
+
 .form-group > div {
-    flex: 1; /* Allow the child divs to grow equally */
-    min-width: 200px; /* Set a minimum width */
+    flex: 1;
+    min-width: 200px;
 }
 
 /* Styling the ₹ symbol inside the input */
-/* <span class="inr-symbol">₹</span> */
-/* INR symbol styling */
 .inr-symbol {
     position: absolute;
     left: 10px;
@@ -293,29 +293,94 @@ input[type="number"] {
     padding-left: 20px; /* Adjust padding for the ₹ symbol */
 }
 
-#partyName, #lrnumber{
-    width:100%;
+#partyName, #lrnumber {
+    width: 100%;
     padding: 10px;
     border-radius: 5px;
     border: 1px solid #02b53e;
-    /* margin: 5px -5px 0px; */
-    appearance: none; /* For <select> to remove default arrow styling */
-    -webkit-appearance: none; /* For Safari */
-    -moz-appearance: none; /* For Firefox */
+    appearance: none;
 }
+
+/* Charges Details Table */
 #chargesDetailsTable {
     border-collapse: collapse;
-    width: 100%; /* Optional: Make table full width */
+    width: 100%;
     font-size: 12px;
 }
 
-/* Apply border to table, header, and data cells */
 #chargesDetailsTable, #chargesDetailsTable th, #chargesDetailsTable td {
     border: 1px solid black;
 }
 
-/* Optional: Add some padding and alignment for better readability */
 #chargesDetailsTable th, #chargesDetailsTable td {
     padding: 10px;
     text-align: left;
+}
+
+/* Footer Styles */
+footer {
+    background-color: #333;
+    color: #fff;
+    padding: 20px 0;
+    text-align: center;
+    margin-top: auto;  /* Pushes the footer to the bottom */
+}
+
+.footer-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    padding: 0 20px;
+}
+
+.footer-container p {
+    margin: 0;
+    font-size: 14px;
+}
+
+.footer-links {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    gap: 15px;
+}
+
+.footer-links li {
+    display: inline;
+}
+
+.footer-links a {
+    color: #fff;
+    text-decoration: none;
+    font-size: 14px;
+}
+
+.footer-links a:hover {
+    text-decoration: underline;
+}
+
+.social-icons {
+    display: flex;
+    gap: 15px;
+}
+
+.social-icons a img {
+    width: 24px;
+    height: 24px;
+}
+
+@media (max-width: 768px) {
+    .footer-container {
+        flex-direction: column;
+    }
+
+    .footer-links {
+        margin-top: 10px;
+    }
+
+    .social-icons {
+        margin-top: 10px;
+    }
 }

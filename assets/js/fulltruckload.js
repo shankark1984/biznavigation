@@ -1,18 +1,3 @@
-// function openTab(evt, tabName) {
-//     let tabcontent = document.getElementsByClassName("tab-content");
-//     for (let i = 0; i < tabcontent.length; i++) {
-//         tabcontent[i].classList.remove("active");
-//     }
-
-//     let tablinks = document.getElementsByClassName("tablinks");
-//     for (let i = 0; i < tablinks.length; i++) {
-//         tablinks[i].className = tablinks[i].className.replace(" active", "");
-//     }
-
-//     document.getElementById(tabName).classList.add("active");
-//     evt.currentTarget.className += " active";
-// }
-
 document.getElementById('modifyButton').addEventListener('click', function () {
     enableForm();
     document.getElementById('saveButton').disabled = false;
@@ -87,14 +72,15 @@ document.getElementById('saveButton').addEventListener('click', async function (
         return;
     }
 
-
-    chargesDetailsConfirmation(lrNumber);
-
     if (document.getElementById('saveButton').textContent === 'Save') {
         lrNumber = await generateNewLRNumber();
     } else if (document.getElementById('saveButton').textContent === 'Update') {
         lrNumber = document.getElementById('lrnumber').value;
     }
+
+     // Load movement charges details and wait for the data
+    await loadMovementChargesDetails(lrNumber);
+     chargesDetailsConfirmation(lrNumber);
 
     const modeType = document.getElementById('modeType').value;
     if (modeType === 'FTL') {
@@ -130,14 +116,14 @@ document.getElementById('saveButton').addEventListener('click', async function (
         descriptionOfGoods: document.getElementById('descriptionofGoods').value,
         status: '',
         completionDate: '',
-        frightCharges: '',
-        otherCharges: '',
-        subTotal: '',
-        cGSTAmount: '',
-        sGSTAmount: '',
-        iGSTAmount: '',
-        totalGSTAmount: '',
-        grandTotalBilling: '',
+        frightCharges: frightCharges,
+        otherCharges: otherCharges,
+        subTotal: subTotal,
+        cGSTAmount: cGSTAmount,
+        sGSTAmount: sGSTAmount,
+        iGSTAmount: iGSTAmount,
+        totalGSTAmount: totalGSTAmount,
+        grandTotalBilling: grandTotal,
         invoiceNumber: '',
         companyID: companyID,
         createdBy: userLoginID,
@@ -146,6 +132,7 @@ document.getElementById('saveButton').addEventListener('click', async function (
     const action = (document.getElementById('saveButton').textContent === 'Save') ? 'add' : 'update';
 
     console.log('Action: ' + action, formData);
+    saveButton.disabled = true;
 
     const response = await fetch(MovementDetails_URL, {
         method: 'POST',
@@ -160,7 +147,7 @@ document.getElementById('saveButton').addEventListener('click', async function (
     disableForm();
     saveButton.textContent = 'Update';
     modifyButton.disabled = false;
-    saveButton.disabled = true;
+
     reportButton.disabled = false;
     document.getElementById('newButton').disabled = false;
     document.getElementById('addButton').disabled = true;
@@ -173,9 +160,10 @@ function areRequiredFieldsFilled() {
         'lrdate', 'quotationid', 'movementType', 'partyCode', 'partyName',
         'originPinCode', 'orgincity', 'orginAddress', 'destinationPinCode',
         'destinationcity', 'destinationAddress', 'requesteddate', 'vehicleType',
-        'referencenumber', 'invoicevalue', 'vehiclenumber', 'containernumber',
-        'quantity', 'cargowt', 'descriptionofGoods'
+        'referencenumber', 'invoicevalue', 'vehiclenumber',
+        'quantity', 'cargowt', 'modeType', 'quantity', 'cargowt'
     ];
+
 
     for (let fieldId of requiredFields) {
         const field = document.getElementById(fieldId);
@@ -341,7 +329,7 @@ $(document).ready(function () {
 
 document.getElementById('addButton').addEventListener('click', async function (event) {
     event.preventDefault();
-
+    document.getElementById('saveButton').disabled = true;
     // Ensure lrNumber is either from input or tempFormID
     let lrNumber = document.getElementById('lrnumber').value || tempFormID;
     let taxDesc = document.getElementById('defaulttax').value || 'CGST 0% SGST 0% IGST 0%';
@@ -393,7 +381,7 @@ document.getElementById('addButton').addEventListener('click', async function (e
     const action = (document.getElementById('addButton').textContent === 'Add') ? 'add' : 'update';
 
     console.log('Action:', action, formData);
-
+    document.getElementById('saveButton').disabled = false;
     // Perform the fetch request
     console.log('Movement Charges Details google sheet ' + MovementChargesDetails_URL)
     const response = await fetch(MovementChargesDetails_URL, {
@@ -493,3 +481,66 @@ document.getElementById('reportButton').addEventListener('click', async function
     openReport();
 });
 
+async function loadMovementChargesDetails(lrNumber) {
+
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${MovementChargesDetails_SHEETID}/values/${MovementChargesDetails_Range}?key=${APIKEY}`;
+    console.log("Fetching movement charges details from:", url);
+
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            if (data && data.values) {
+                const rows = data.values;
+
+                // Reset global variables before calculating new charges
+                frightCharges = 0;
+                otherCharges = 0;
+                cGSTAmount = 0;
+                sGSTAmount = 0;
+                iGSTAmount = 0;
+                totalGSTAmount = 0;
+
+                // Loop through all rows and sum freight for matching lrNumber
+                rows.forEach(row => {
+                    if (row[0] === lrNumber) {
+                        // If the row is 'Freight Amount'
+                        if (row[1] === 'Freight Amount') {
+                            frightCharges = parseFloat(row[2]);
+                        }
+                        // Add other charges
+                        else {
+                            const othercharges = parseFloat(row[2]);
+                            otherCharges += othercharges;
+                        }
+
+                        // Add GST values if they exist
+                        const cGSt = parseFloat(row[4]); // Assuming cGST is in the fifth column
+                        const sGSt = parseFloat(row[5]); // Assuming sGST is in the sixth column
+                        const iGSt = parseFloat(row[6]); // Assuming iGST is in the seventh column
+
+                        if (!isNaN(cGSt)) {
+                            cGSTAmount += cGSt;
+                        }
+                        if (!isNaN(sGSt)) {
+                            sGSTAmount += sGSt;
+                        }
+                        if (!isNaN(iGSt)) {
+                            iGSTAmount += iGSt;
+                        }
+                    }
+                });
+
+                totalGSTAmount = cGSTAmount + sGSTAmount + iGSTAmount;
+                subTotal = frightCharges + otherCharges;
+                grandTotal = totalGSTAmount + subTotal;
+
+                // Log the grand total for debugging
+                console.log("Grand Total:", grandTotal);
+            } else {
+                console.error('No matching movement data found or freight is zero.');
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching movement data:', error);
+        });
+}

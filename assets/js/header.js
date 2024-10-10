@@ -46,7 +46,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     <a href="#">International Report</a>
                     <a href="#">Domestic Report</a>
                     <a href="#">Customs Clearance Report</a>
-                    <a href="#">FTL or FCL Report</a>
+                    <a href="fulltruck_Report.html">FTL or FCL Report</a>
                     <a href="#">Customer Invoice Report</a>
                     <a href="#">Vendor Billing Report</a>
                     <a href="#">Payment Received</a>
