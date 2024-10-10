@@ -1,20 +1,92 @@
-.company-logo {
-    height: 100px;
+* {
+    box-sizing: border-box;
+}
+
+body {
+    width: 210mm;
+    height: 297mm;
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+    font-size: 12px;
 }
 
 .container {
-    max-width: 1000px;
-}
-
-table {
     width: 100%;
-    text-align: left;
+    margin: 0 auto;
+    padding: 0px;
+    box-sizing: border-box;
 }
 
-.center-align {
+.col-fixed {
+    float: left;
+    box-sizing: border-box;
+}
+
+.col-12 {
+    width: 100%;
+}
+
+.col-6 {
+    width: 50%;
+}
+
+.col-4 {
+    width: 33.33%;
+}
+
+.col-2 {
+    width: 16.66%;
+}
+
+.col-3 {
+    width: 25%;
+}
+
+.border {
+    border: 1px solid #000 !important;
+}
+
+.text-center {
     text-align: center;
 }
-/* Set border color for elements with the 'border' class */
-.border {
-    border-color: black !important;
+
+.text-end {
+    text-align: right;
+}
+
+.p-2 {
+    padding: 10px;
+}
+
+.p-4 {
+    padding: 20px;
+}
+
+.mt-3 {
+    margin-top: 20px;
+}
+
+.mb-3 {
+    margin-bottom: 20px;
+}
+
+.d-flex {
+    display: flex;
+}
+
+.justify-content-between {
+    justify-content: space-between;
+}
+
+/* Ensure layout is A4 size when printing */
+@media print {
+    @page {
+        size: A4;
+        margin: 0mm;
+    }
+
+    .btn {
+        display: none;
+    }
 }

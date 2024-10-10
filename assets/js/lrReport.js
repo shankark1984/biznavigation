@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', function () {
         loadCompanyData(companyID);
         // let lrNumber = "ASL0000002"; // Sample LR Number
         loadMovementDetailsForLR(lrNumber, companyID); // Pass companyID explicitly
-        // loadMovementChargesDetailsForLR(lrNumber);
+        loadMovementChargesDetailsForLR(lrNumber);
         // generatePDF() // Uncomment this to generate PDF if needed
     } else {
         console.error('No CompanyID found in localStorage');
@@ -19,8 +19,8 @@ function generateBarcode(lrNumber) {
     if (lrNumber) {
         JsBarcode("#barcodeCanvas", lrNumber, {
             format: "CODE128",
-            width: 2,
-            height: 50,
+            width: 1.3,
+            height: 20,
             displayValue: true
         });
         console.log("Barcode generated for LR Number:", lrNumber);
@@ -35,34 +35,40 @@ function generatePDF() {
 
     const doc = new jsPDF(); // Create a new jsPDF instance
 
-    // Use html2canvas to capture the content
-    html2canvas(document.querySelector("#reportContent"), {
-        scale: 2
-    }).then(canvas => {
-        const imgData = canvas.toDataURL('image/png');
-        const imgWidth = 210; // A4 size width in mm
-        const pageHeight = 295; // A4 size height in mm
-        const imgHeight = (canvas.height * imgWidth) / canvas.width;
-        let heightLeft = imgHeight;
+    // Wait for content to be fully loaded
+    if (document.querySelector("#reportContent")) {
+        // Use html2canvas to capture the content
+        html2canvas(document.querySelector("#reportContent"), {
+            scale: 2
+        }).then(canvas => {
+            const imgData = canvas.toDataURL('image/png');
+            const imgWidth = 210; // A4 size width in mm
+            const pageHeight = 295; // A4 size height in mm
+            const imgHeight = (canvas.height * imgWidth) / canvas.width;
+            let heightLeft = imgHeight;
 
-        let position = 0;
+            let position = 0;
 
-        // Add the image to the PDF
-        doc.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
-
-        // Handle multi-page PDF if the content is larger than one page
-        while (heightLeft >= 0) {
-            position = heightLeft - imgHeight;
-            doc.addPage();
+            // Add the image to the PDF
             doc.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
             heightLeft -= pageHeight;
-        }
 
-        // Save the generated PDF
-        doc.save("BizNavigation_Report.pdf");
-    });
+            // Handle multi-page PDF if the content is larger than one page
+            while (heightLeft >= 0) {
+                position = heightLeft - imgHeight;
+                doc.addPage();
+                doc.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                heightLeft -= pageHeight;
+            }
+
+            // Save the generated PDF
+            doc.save("BizNavigation_Report.pdf");
+        });
+    } else {
+        console.error("Content not found. Please ensure the #reportContent is fully loaded.");
+    }
 }
+
 
 // Function to load Company data from Google Sheets
 function loadCompanyData(companyID) {
