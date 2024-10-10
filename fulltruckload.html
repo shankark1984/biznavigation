@@ -195,35 +195,20 @@
                                 <th>Charges Type</th>
                                 <th>Amount</th>
                                 <th>GST Type</th>
-                                <th>CGST Amount</th>
-                                <th>SGST Amount</th>
-                                <th>IGST Amount</th>
-                                <th>Total GST Amount</th>
-                                <th>Grand Total Billing</th>
+                                <th>Action</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            <!-- Dynamic rows will be added here -->
+                        <tbody id="chargesDetailsTableBody">
+                            <!-- Rows will be added dynamically -->
                         </tbody>
                     </table>
                 </div>
-
             </div>
+        </div>
+
     </form>
 
-    <script src="assets/js/server.js"></script>
-    <script src="assets/js/header.js"></script>
-    <script src="assets/js/footer.js"></script>
-    <script src="assets/js/scripts.js"></script>
-    <script src="assets/js/pincde.js"></script>
-    <script src="assets/js/fulltruckload.js"></script>
-    <script src="assets/js/dropdownlist.js"></script>
-    <script src="assets/js/taxDescription.js"></script>
-    <script src="assets/js/customerlist.js"></script>
-    <script src="assets/js/variable.js"></script>
-
     <script>
-        // Start QuaggaJS Barcode scanner on button click
         document.getElementById('scanBarcodeButton').addEventListener('click', function () {
             const video = document.getElementById('video');
             video.style.display = 'block'; // Show video element for scanning
@@ -255,6 +240,8 @@
                 const code = result.codeResult.code;
                 console.log("Barcode detected and processed:", code);
                 document.getElementById('lrnumber').value = code; // Set the scanned LR number in the input
+
+                // Stop scanning and hide the camera feed
                 video.style.display = 'none'; // Hide video element after scanning
                 Quagga.stop(); // Stop Quagga after the scan
             });
