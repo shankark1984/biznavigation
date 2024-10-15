@@ -5,7 +5,8 @@ async function loadTypeList() {
     // Fetch data from the 'dropdown_list' table
     const { data, error } = await supabaseClient
         .from('dropdown_list')
-        .select('description, type_of_value');
+        .select('description, type_of_value')
+        .order('description', { ascending: true });
 
     if (error) {
         console.error("Error fetching data from Supabase:", error.message);

@@ -59,7 +59,7 @@ document.addEventListener("DOMContentLoaded", function () {
             <li>
                 <a href="#">Tools</a>
                 <div class="dropdown">
-                    <a href="#">Settings</a>
+                    <a href="setting.html">Settings</a>
                     <a href="#">Error Log</a>
                     <a href="#">Docket Master</a>
                     <a href="#">Reset Database</a>

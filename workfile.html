@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BizNavigation</title>
+    <link rel="stylesheet" href="assets/css/styles.css">
+    <link rel="stylesheet" href="assets/css/fulltruckload.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Include DOMPurify from CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/2.3.10/purify.min.js"></script>
+    <!-- Include html2canvas from CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <!-- Include jsPDF from CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js"></script> <!-- Supabase client -->
+</head>
+<form id="userForm">
+    <div class="form-header">
+        <h2>Settings</h2>
+        <input type="hidden" id="tempFormID" name="tempFormID">
+        <input type="hidden" id="partyCode" name="partyCode">
+    </div>
+    <!-- Tab Navigation -->
+    <div class="tab">
+        <button type="button" class="tablinks" onclick="openTab(event, 'dropdownlist')">Dropdown List</button>
+        <button type="button" class="tablinks" onclick="openTab(event, 'frightCharges')">Freight Charges</button>
+    </div>
+
+    <div id="dropdownlist" class="tab-content">
+        <!-- <div class="form-group"> -->
+            <div>
+                <label for="dldescription">Description</label>
+                <input type="text" id="dldescription" name="dldescription" style="text-transform: capitalize;"
+                    autocomplete="off">
+            </div>
+            <div>
+                <label for="typeofvalue">Assigned</label>
+                <select id="typeofvalue" onchange="filterTable()">
+                    <option value="" disabled selected>Select Assigned To</option>
+                    <option value="ChargesType">Charges Type</option>
+                    <option value="VehicleType">Vehicle Type</option>
+                    <option value="BloodGroup">Blood Group</option>
+                    <option value="BankName">Bank Name</option>
+                    <option value="TransitType">Transit Type</option>
+                    <option value="MovementType">Movement Type</option>
+                    <option value="ModeType">Mode Type</option>
+                </select>
+            </div>
+            <div>
+                <label for="dlcondition">Condition</label>
+                <textarea id="dlcondition" name="dlcondition" style="text-transform: capitalize;" required rows="1"
+                    autocomplete="off"></textarea>
+            </div>
+            <div>
+                <label for="dlvalue">Value</label>
+                <input type="text" id="dlvalue" name="dlvalue" style="text-transform: capitalize;" autocomplete="off">
+            </div>
+            <div>
+                <label for="dlhsncode">HSN Code</label>
+                <input type="text" id="dlhsncode" name="dlhsncode" style="text-transform: capitalize;"
+                    autocomplete="off">
+            </div>
+            <div>
+                <button>Add</button>
+            </div>
+        </div>
+
+
+    </div>
+
+
+
+
+
+
+
+    <!-- Freight Charges Tab -->
+    <div id="frightCharges" class="tab-content">
+        <div class="form-group">
+            <div>
+                <label for="chargesType">Charges Type</label>
+                <select id="chargesType" name="chargesType">
+                    <option value="" disabled selected>Select Charges Type</option>
+                </select>
+            </div>
+            <div style="position: relative;">
+                <label for="frightcharges">Charges</label>
+                <span class="inr-symbol">₹</span>
+                <input type="number" id="frightcharges" name="frightcharges" min="0" step="0.01" placeholder="00.00"
+                    onblur="formatCurrency(this)">
+            </div>
+            <div>
+                <label for="defaulttax">Default Tax</label>
+                <select id="defaulttax" name="defaulttax">
+                    <option value="" disabled selected>Select Default Tax</option>
+                </select>
+            </div>
+
+            <button type="button" id="addButton">Add</button>
+
+        </div>
+        <!-- Table to display data from Google Sheet -->
+        <div id="chargesDetailsTableContainer">
+            <table id="chargesDetailsTable">
+                <thead>
+                    <tr>
+                        <th>Charges Type</th>
+                        <th>Amount</th>
+                        <th>GST Type</th>
+                        <th>CGST Amount</th>
+                        <th>SGST Amount</th>
+                        <th>IGST Amount</th>
+                        <th>Total GST Amount</th>
+                        <th>Grand Total Billing</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Dynamic rows will be added here -->
+                </tbody>
+            </table>
+        </div>
+
+</form>
+
+<body>
+    <script src="assets/js/variable.js"></script>
+    <script src="assets/js/server.js"></script>
+    <script src="assets/js/generalfunction.js"></script>
+    <script src="assets/js/header.js"></script>
+    <script src="assets/js/footer.js"></script>
+    <script src="assets/js/scripts.js"></script>
+    <script src="assets/js/pincode.js"></script>
+    <script src="assets/js/fulltruckload.js"></script>
+    <script src="assets/js/dropdownlist.js"></script>
+    <script src="assets/js/taxDescription.js"></script>
+    <script src="assets/js/customerlist.js"></script>
+</body>
+
+</html>
