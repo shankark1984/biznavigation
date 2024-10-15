@@ -1,6 +1,6 @@
 {
     "name": "BizNavigation",
-    "short_name": "BizNav",
+    "short_name": "BizNavigation",
     "start_url": "/index.html",
     "scope": "/",
     "display": "standalone",
