@@ -3,7 +3,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const header = `
         <nav class="menu-bar">
         <div class="logo-container">
-        <a href="home.html">
+        <a href="home.html" style="display: flex; align-items: center; text-decoration: none;">
              <img src="assets/img/applogo.png" alt="Logo" class="logo">
             <div>
                 <h2>BizNavigation</h2>
