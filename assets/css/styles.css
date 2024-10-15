@@ -6,7 +6,7 @@
 
 body {
     font-family: Arial, sans-serif;
-    background-color: #a55b5b;
+    background-color: #46e9fc;
     display: flex;
     flex-direction: column;
     min-height: 100vh;
@@ -37,21 +37,31 @@ h1 {
 .logo-container {
     display: flex;
     align-items: center;
+    padding: 3px 6px;
+    background-color: whitesmoke;
+    border-radius: 1em;
+    /* Adjust background color as needed */
+}
+.logo-container div h2 {
+    font-family:'Montserrat', sans-serif;
+    font-weight: bold;
+    color:black;
+    margin: 0;
+}
+
+.logo-container div span {
+    font-family: 'Open Sans', sans-serif;
+    font-size: 0.5em;
+    color: blue;
+    display: block;
+    margin-top: 5px;
 }
 
 .logo {
-    width: 40px;
-    height: 40px;
-    margin-right: 10px;
-    display: block;
-    /* Center the logo */
-    margin: 0 auto 20px;
-    /* Add space below the logo */
-    max-width: 100%;
-    /* Make it responsive */
-    height: auto;
-    /* Maintain aspect ratio */
+    max-width: 50px;
+    margin-right: 5px;
 }
+
 
 .logologin {
     width: 75px;

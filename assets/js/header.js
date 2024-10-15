@@ -3,8 +3,13 @@ document.addEventListener("DOMContentLoaded", function () {
     const header = `
         <nav class="menu-bar">
         <div class="logo-container">
-            <img src="assets/img/icon-512x512.png" alt="Logo" class="logo">
-            <span class="company-name">BizNavigation</span>
+        <a href="home.html">
+             <img src="assets/img/applogo.png" alt="Logo" class="logo">
+            <div>
+                <h2>BizNavigation</h2>
+                <span style="font-size: 0.5em;">TAKE YOUR BUSINESS TO THE NEXT LEVEL</span>
+            </div>
+            </a>
         </div>
         <ul class="menu-items">
             <li>

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,28 +9,37 @@
     <link rel="manifest" href="/manifest.json">
     <script src="https://unpkg.com/@supabase/supabase-js"></script> <!-- Supabase client -->
 </head>
+
 <body>
 
     <div class="login-container">
+        <h2 style="color: red; font-size: 3em;">Login</h2>
         <!-- Logo added here -->
-        <img src="assets/img/icon-192x192.png" alt="BizNavigation Logo" class="logologin">
-        
-        <h2 style="color: red;">User Login</h2>
-        <p style="font-size: 12px; font-weight: bold; color: blue;">TAKE YOUR BUSINESS TO THE NEXT LEVEL</p>
+
+        <div class="logo-container">
+            <img src="assets/img/applogo.png" alt="Logo" class="logo">
+            <div>
+                <h2>BizNavigation</h2>
+                <span style="font-size: 0.5em;">TAKE YOUR BUSINESS TO THE NEXT LEVEL</span>
+            </div>
+        </div>
         <form id="loginForm" onsubmit="return false;">
             <div class="form-group">
-                <label for="userName">User Name</label>
-                <input type="text" id="userName" name="userName" required autocomplete="off">
+                <label for="userName">Username</label>
+                <input type="text" id="userName" name="userName" required autocomplete="off"
+                    placeholder="Type your username">
                 <label for="password">Password</label>
-                <input type="password" id="password" name="password" required autocomplete="off">
+                <input type="password" id="password" name="password" required autocomplete="off"
+                    placeholder="Type your password">
+                <a href="" class="" onclick="resetPassword()"><span style="font-size: 10px; position: bottom;">Reset
+                        Password</span></a>
             </div>
             <div class="button-group">
-                <a href="" class="" onclick="resetPassword()"><span style="font-size: 10px; position: bottom;">Reset Password</span></a>
                 <button type="button" onclick="login()">Login</button>
-                
+
                 <!-- <button type="button" class="reset-btn" onclick="resetPassword()">Reset Password</button> -->
             </div>
-            
+
         </form>
         <p id="errorMessage" style="color: red; display: none;">Invalid username or password. Please try again.</p>
     </div>
@@ -38,4 +48,5 @@
 
     <script src="assets/js/footer.js"></script>
 </body>
+
 </html>
