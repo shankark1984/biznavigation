@@ -1,37 +1,39 @@
+// Function to load party details from Supabase
+async function loadPartyDetails() {
+    try {
+        const { data: partyDetailsData, error } = await supabaseClient
+            .from('party_details')
+            .select('*')
+            .eq('company_id', companyID); // Fetch rows filtered by company ID
 
+        if (error) {
+            console.error('Error fetching party details:', error);
+            return;
+        }
 
-// Function to load party details from Google Sheets
-function loadPartyDetails() {
-
-    const url = `https://sheets.googleapis.com/v4/spreadsheets/${PartyDetails_SHEETID}/values/${PartyDetails_RANGE}?key=${APIKEY}`;
-console.log ('Party Details '+url);
-    $.getJSON(url, function (data) {
-        const rows = data.values;
-        // Filter rows by companyID, assuming companyID is in column 31 (index 30)
-        const filteredRows = rows.filter(row => row[31] === companyID);
-
-        // partyDetails = rows.map(row => ({
-        partyDetails = filteredRows.map(row => ({
-            partyType: row[1],
-            partyCode: row[0],
-            partyName: row[2], // Party Name
-            currentStatus: row[27],
-            deActiveDate: row[28],
-            address: row[10],
-            pinCode: row[12],
-            city: row[11],
-            state: row[13],
-            country: row[14],
-            panNumber: row[15],
-            gSTNumber: row[16],
-            contactNumber: row[4],
-            emailID: row[9],
-            defaultTax: row[26],
-
-            // Add other fields as necessary
+        // Map the data to match the format used in the form
+        partyDetails = partyDetailsData.map(row => ({
+            partyType: row.party_type,
+            partyCode: row.party_code,
+            partyName: row.party_name,
+            currentStatus: row.current_status,
+            deActiveDate: row.deactive_date,
+            address: row.address,
+            pinCode: row.pin_code,
+            city: row.city,
+            state: row.state,
+            country: row.country,
+            panNumber: row.pan_number,
+            gSTNumber: row.gst_number,
+            contactNumber: row.contact_number,
+            emailID: row.email_id,
+            defaultTax: row.default_tax,
         }));
-        populatePartySuggestions();
-    });
+
+        populatePartySuggestions(); // Populate the datalist with party names
+    } catch (error) {
+        console.error('Error:', error);
+    }
 }
 
 // Populate the datalist with party names
@@ -63,9 +65,9 @@ $("#partyName").on("input", function () {
         $("#partyContactNumber").val(partyData.contactNumber);
         $("#partyEmailID").val(partyData.emailID);
         $("#defaulttax").val(partyData.defaultTax);
-
     }
 });
+
 // Load party details on page load
 $(document).ready(function () {
     loadPartyDetails();

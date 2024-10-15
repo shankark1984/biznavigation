@@ -6,100 +6,36 @@
     <title>BizNavigation</title>
     <link rel="stylesheet" href="assets/css/styles.css">
     <link rel="manifest" href="/manifest.json">
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-        }
-
-        .login-container {
-            background-color: #fff;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
-            width: 300px;
-        }
-
-        h2 {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
-        .form-group {
-            margin-bottom: 15px;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-        }
-
-        input[type="text"], input[type="password"] {
-            width: 100%;
-            padding: 8px;
-            border-radius: 5px;
-            border: 1px solid #ccc;
-            box-sizing: border-box;
-        }
-
-        .button-group {
-            display: flex;
-            justify-content: space-between;
-        }
-
-        .button-group button {
-            width: 48%;
-            padding: 10px;
-            background-color: #007BFF;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-
-        .button-group button:hover {
-            background-color: #0056b3;
-        }
-
-        .reset-btn {
-            background-color: #6c757d;
-        }
-
-        .reset-btn:hover {
-            background-color: #5a6268;
-        }
-    </style>
+    <script src="https://unpkg.com/@supabase/supabase-js"></script> <!-- Supabase client -->
 </head>
 <body>
 
     <div class="login-container">
-        <h2>Login</h2>
-        <form id="loginForm">
+        <!-- Logo added here -->
+        <img src="assets/img/icon-192x192.png" alt="BizNavigation Logo" class="logologin">
+        
+        <h2 style="color: red;">User Login</h2>
+        <p style="font-size: 12px; font-weight: bold; color: blue;">TAKE YOUR BUSINESS TO THE NEXT LEVEL</p>
+        <form id="loginForm" onsubmit="return false;">
             <div class="form-group">
                 <label for="userName">User Name</label>
-                <input type="text" id="userName" name="userName" required>
-            </div>
-            <div class="form-group">
+                <input type="text" id="userName" name="userName" required autocomplete="off">
                 <label for="password">Password</label>
-                <input type="password" id="password" name="password" required>
+                <input type="password" id="password" name="password" required autocomplete="off">
             </div>
-            <div class="form-group">
+            <div class="button-group">
+                <a href="" class="" onclick="resetPassword()"><span style="font-size: 10px; position: bottom;">Reset Password</span></a>
                 <button type="button" onclick="login()">Login</button>
-                <button type="button" onclick="resetPassword()">Reset Password</button>
+                
+                <!-- <button type="button" class="reset-btn" onclick="resetPassword()">Reset Password</button> -->
             </div>
+            
         </form>
         <p id="errorMessage" style="color: red; display: none;">Invalid username or password. Please try again.</p>
     </div>
-
-    <script src="assets/js/login.js"></script>
     <script src="assets/js/server.js"></script>
-    <script src="assets/js/variable.js"></script>
+    <script src="assets/js/login.js"></script>
+
+    <script src="assets/js/footer.js"></script>
 </body>
 </html>

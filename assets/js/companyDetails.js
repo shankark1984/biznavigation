@@ -1,77 +1,69 @@
-// Fetch company data from Google Sheets
+// Fetch company data from Supabase
 async function fetchCompanyData(companyID) {
-    const url = createGoogleSheetsURL();
     try {
-        const response = await fetch(url);
-        const data = await response.json();
+        const { data, error } = await supabaseClient
+            .from('company_profile')
+            .select('*')
+            .eq('company_id', companyID)
+            .single(); // We expect only one company record
 
-        const rows = data.values;
-        const companyData = rows.find(row => row[0] === companyID); // Match CompanyID
-
-        if (companyData) {
-            populateCompanyForm(companyData);
+        if (error) {
+            console.error('Error fetching company data:', error.message);
         } else {
-            console.error('Company data not found');
+            populateCompanyForm(data);
         }
     } catch (error) {
         console.error('Error fetching data:', error);
     }
 }
 
-// Create Google Sheets API URL
-function createGoogleSheetsURL() {
-    return `https://sheets.googleapis.com/v4/spreadsheets/${CompanyProfile_SHEETID}/values/${COMPANY_PROFILE_RANGE}?key=${APIKEY}`;
-}
-
 // Populate the form fields with the company data
 function populateCompanyForm(companyData) {
-    document.getElementById('CompID').textContent = companyData[0];  // Show the CompanyID
-    // Assuming the columns are: CompanyID, ShortCode, CompanyName, Address, City, PinCode, State, Country, PhoneNo, Email, GSTNumber, PANNumber, CINNo, UdyogAadhaarNo, WebSite, Logo, CreatedBy, CreatedOn
-    document.getElementById('shortCode').value = companyData[1] || '';
-    document.getElementById('companyName').value = companyData[2] || '';
-    document.getElementById('address').value = companyData[3] || '';
-    document.getElementById('city').value = companyData[4] || '';
-    document.getElementById('pinCode').value = companyData[5] || '';
-    document.getElementById('state').value = companyData[6] || '';
-    document.getElementById('country').value = companyData[7] || '';
-    document.getElementById('phoneNumber').value = companyData[8] || '';
-    document.getElementById('email').value = companyData[9] || '';
-    document.getElementById('gstNumber').value = companyData[10] || '';
-    document.getElementById('panNumber').value = companyData[11] || '';
-    document.getElementById('cinNo').value = companyData[12] || '';
-    document.getElementById('uaNo').value = companyData[13] || '';
-    document.getElementById('website').value = companyData[14] || '';
-    document.getElementById('companylogo').src = companyData[15] || '';
+    document.getElementById('CompID').textContent = companyData.company_id || ''; // Show the CompanyID
+    document.getElementById('shortCode').value = companyData.short_code || '';
+    document.getElementById('companyName').value = companyData.company_name || '';
+    document.getElementById('address').value = companyData.address || '';
+    document.getElementById('city').value = companyData.city || '';
+    document.getElementById('pinCode').value = companyData.pin_code || '';
+    document.getElementById('state').value = companyData.state || '';
+    document.getElementById('country').value = companyData.country || '';
+    document.getElementById('phoneNumber').value = companyData.phone_no || '';
+    document.getElementById('email').value = companyData.e_mail || '';
+    document.getElementById('gstNumber').value = companyData.gst_number || '';
+    document.getElementById('panNumber').value = companyData.pan_number || '';
+    document.getElementById('cinNo').value = companyData.cin_no || '';
+    document.getElementById('uaNo').value = companyData.Udyog_aadhaar_no || '';
+    document.getElementById('website').value = companyData.web_site || '';
+    document.getElementById('companylogo').src = companyData.logo_path || '';
 
     handleUserTypePermissions();
 }
 
 // Handle form field permissions based on user type
 function handleUserTypePermissions() {
-    const userType = parseInt(localStorage.getItem('UserType'));
+    const userType = parseInt(localStorage.getItem('UserType'), 10);
     const modifyButton = document.getElementById('modifyButton');
     const newButton = document.getElementById('newButton');
 
-    if (userType === 1) {
-        modifyButton.disabled = false;
-        newButton.disabled = false;
-    } else if (userType === 2) {
-        modifyButton.disabled = false;
-    } else {
-        modifyButton.disabled = true;
-    }
+    modifyButton.disabled = !(userType === 1 || userType === 2); // Only users of type 1 and 2 can modify
+    newButton.disabled = userType !== 1; // Only user of type 1 can create new entries
 }
 
-// When the page loads, fetch the company data
-document.addEventListener('DOMContentLoaded', function () {
-    disableForm();  // Disable all inputs on page load
-    const companyID = localStorage.getItem('CompanyID');
-    if (companyID) {
-        fetchCompanyData(companyID);
-    } else {
-        console.error('No CompanyID found in localStorage');
-    }
-});
+// Enable form inputs
+function enableForm() {
+    document.querySelectorAll('input, select, textarea').forEach(el => el.disabled = false);
+}
+
+// Disable form inputs
+function disableForm() {
+    document.querySelectorAll('input, select, textarea').forEach(el => el.disabled = true);
+}
+
+// Clear form fields
+function clearForm() {
+    document.querySelectorAll('input, textarea').forEach(el => el.value = '');
+    document.getElementById('companylogo').src = ''; // Clear logo field
+}
 
 // Modify button event listener
 document.getElementById('modifyButton').addEventListener('click', function () {
@@ -90,78 +82,48 @@ document.getElementById('newButton').addEventListener('click', function () {
     clearForm();  // Clear the form for a new entry
 });
 
-// Generate new company ID
-async function generateNewCompanyID(companyName) {
-    const firstLetter = companyName.charAt(0).toUpperCase();
-    const existingCodes = await fetchExistingCompanyID();
-
-    // Filter codes that start with the same first letter
-    const filteredCodes = existingCodes.filter(code => code.startsWith(firstLetter));
-
-    // Find the highest numeric suffix
-    let highestCount = 0;
-    filteredCodes.forEach(code => {
-        const count = parseInt(code.slice(1), 10); // Get the number part of the code
-        if (count > highestCount) {
-            highestCount = count;
-        }
-    });
-
-    // Increment the highest count and format the new company code
-    const newCount = highestCount + 1;
-    return `C${firstLetter}${String(newCount).padStart(4, '0')}`; // Pad with zeros
-}
-
-// Fetch existing company IDs from Google Sheets
-async function fetchExistingCompanyID() {
-    const url = createGoogleSheetsURL();
-    try {
-        const response = await fetch(url);
-        const data = await response.json();
-        return data.values ? data.values.flat() : []; // Flatten if the data is in nested arrays
-    } catch (error) {
-        console.error('Error fetching existing company IDs:', error);
-        return [];
-    }
-}
-
 // Save or update form data
 document.getElementById('saveButton').addEventListener('click', async function (event) {
     event.preventDefault();
 
     const saveButton = document.getElementById('saveButton');
-    const companyName = document.getElementById('companyName').value;
-    let companyID;
+    const companyNameElement = document.getElementById('companyName');
 
-    if (saveButton.textContent === 'Save') {
-        // Generate new company ID
-        companyID = await generateNewCompanyID(companyName);
-    } else if (saveButton.textContent === 'Update') {
-        companyID = localStorage.getItem('CompanyID'); // Use existing Company code
+    if (!companyNameElement || companyNameElement.value.trim() === '') {
+        console.error('Company name field not found or empty!');
+        alert('Please enter a company name.');
+        return; // Exit if the companyName element is not found or is empty
     }
+
+    const companyID = saveButton.textContent === 'Save'
+        ? await generateNewCompanyID(companyNameElement.value)
+        : localStorage.getItem('CompanyID'); // Use existing Company ID for updates
 
     const formData = gatherFormData(companyID);
 
-    const action = (saveButton.textContent === 'Save') ? 'add' : 'update';
-
     try {
-        const response = await fetch(CompanyProfile_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ action, data: formData })
-        });
+        const action = saveButton.textContent === 'Save' ? 'insert' : 'update';
+        let response;
 
-        const data = await response.json();
-        if (data.success) {
-            alert(`Company ${action === 'add' ? 'saved' : 'updated'} successfully!`);
-            if (action === 'add') {
+        if (action === 'insert') {
+            response = await supabaseClient
+                .from('company_profile')
+                .insert([formData]);
+        } else {
+            response = await supabaseClient
+                .from('company_profile')
+                .update(formData)
+                .eq('company_id', companyID);
+        }
+
+        if (response.error) {
+            alert(`Failed to ${action === 'insert' ? 'save' : 'update'} company: ${response.error.message}`);
+        } else {
+            alert(`Company ${action === 'insert' ? 'saved' : 'updated'} successfully!`);
+            if (action === 'insert') {
                 saveButton.textContent = 'Update';
                 document.getElementById('modifyButton').disabled = false;
             }
-        } else {
-            alert(`Failed to ${action === 'add' ? 'save' : 'update'} company.`);
         }
     } catch (error) {
         console.error('Error saving company:', error);
@@ -172,26 +134,65 @@ document.getElementById('saveButton').addEventListener('click', async function (
 // Gather form data for submission
 function gatherFormData(companyID) {
     return {
-        companyID,
-        shortCode: document.getElementById('shortCode').value,
-        companyName: document.getElementById('companyName').value,
+        company_id: companyID,
+        short_code: document.getElementById('shortCode').value,
+        company_name: document.getElementById('companyName').value,
         address: formatAddress(document.getElementById('address').value),
         city: document.getElementById('city').value,
-        pinCode: document.getElementById('pinCode').value,
+        pin_code: document.getElementById('pinCode').value,
         state: document.getElementById('state').value,
         country: document.getElementById('country').value,
-        phoneNumber: document.getElementById('phoneNumber').value,
-        email: document.getElementById('email').value,
-        gstNumber: document.getElementById('gstNumber').value.toUpperCase(),
-        panNumber: document.getElementById('panNumber').value.toUpperCase(),
-        cinNo: document.getElementById('cinNo').value,
-        uaNo: document.getElementById('uaNo').value,
-        website: document.getElementById('website').value,
-        createdBy: localStorage.getItem('UserLoginID')
+        phone_no: document.getElementById('phoneNumber').value,
+        e_mail: document.getElementById('email').value,
+        gst_number: document.getElementById('gstNumber').value.toUpperCase(),
+        pan_number: document.getElementById('panNumber').value.toUpperCase(),
+        cin_no: document.getElementById('cinNo').value,
+        Udyog_aadhaar_no: document.getElementById('uaNo').value,
+        web_site: document.getElementById('website').value,
+        logo_path: document.getElementById('companylogo').src,
+        created_by: localStorage.getItem('UserLoginID') || 'unknown' // You can store the creator info
     };
 }
 
 // Format address with proper case
 function formatAddress(address) {
-    return address.charAt(0).toUpperCase() + address.slice(1).toLowerCase();
+    return address ? address.charAt(0).toUpperCase() + address.slice(1).toLowerCase() : '';
 }
+
+// Example function to generate new company ID (if required)
+async function generateNewCompanyID(companyName) {
+    const firstLetter = companyName.charAt(0).toUpperCase();
+    const { data, error } = await supabaseClient
+        .from('company_profile')
+        .select('company_id'); // Get existing IDs
+
+    if (error) {
+        console.error('Error fetching existing company IDs:', error.message);
+        return `C${firstLetter}0001`; // Fallback ID if error occurs
+    }
+
+    const existingCodes = data.map(item => item.company_id);
+    const filteredCodes = existingCodes.filter(code => code.startsWith(firstLetter));
+
+    let highestCount = 0;
+    filteredCodes.forEach(code => {
+        const count = parseInt(code.slice(1), 10); // Get the number part of the code
+        if (count > highestCount) {
+            highestCount = count;
+        }
+    });
+
+    const newCount = highestCount + 1;
+    return `C${firstLetter}${String(newCount).padStart(4, '0')}`; // Pad with zeros
+}
+
+// When the page loads, fetch the company data
+document.addEventListener('DOMContentLoaded', function () {
+    disableForm();  // Disable all inputs on page load
+    const companyID = localStorage.getItem('CompanyID');
+    if (companyID) {
+        fetchCompanyData(companyID);
+    } else {
+        console.error('No CompanyID found in localStorage');
+    }
+});

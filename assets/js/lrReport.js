@@ -1,5 +1,3 @@
-
-
 document.addEventListener('DOMContentLoaded', function () {
     const companyID = localStorage.getItem('CompanyID');
     if (companyID) {
@@ -78,88 +76,101 @@ function generatePDF() {
 }
 
 
+async function loadCompanyData(companyID) {
+    console.log("Fetching company data from Supabase...");
 
-// Function to load Company data from Google Sheets
-function loadCompanyData(companyID) {
+    try {
+        // Fetch company data from the "CompanyProfile" table
+        let { data, error } = await supabaseClient
+            .from('company_profile') // Replace with your actual table name in Supabase
+            .select('*')
+            .eq('company_id', companyID); // Filter by companyID
 
-    const url = `https://sheets.googleapis.com/v4/spreadsheets/${CompanyProfile_SHEETID}/values/${COMPANY_PROFILE_RANGE}?key=${APIKEY}`;
-    console.log("Fetching company data from:", url);
+        if (error) {
+            throw error;
+        }
 
-    fetch(url)
-        .then(response => response.json())
-        .then(data => {
-            const rows = data.values;
-            const companyData = rows.find(row => row[0] === companyID); // Match CompanyID
+        // Check if data was found
+        if (data && data.length > 0) {
+            const companyData = data[0]; // Assuming companyID is unique, use the first result
 
-            if (companyData) {
-                document.getElementById('companyName').innerText = companyData[2] || '';
-                let companyAddress = `${companyData[3]} ${companyData[4]} - ${companyData[5]} ${companyData[6]} ${companyData[7]}`;
-                companyAddress = toProperCase(companyAddress);
-                companyAddress = `${companyAddress}\nPAN No: ${companyData[11]} | GST No: ${companyData[10]}\nContact No: ${companyData[8]}`;
-                companyAddress += ` | ${companyData[9]} | ${companyData[14]}`;
-                document.getElementById('address').innerText = companyAddress;
-                document.getElementById('companylogo').src = companyData[15];
-                document.getElementById('companyCity').innerText = 'All Disputes Subject to ' + companyData[4] + ' Jurisdiction only';
+            // Fill in company details
+            document.getElementById('companyName').innerText = companyData.company_name || '';
+            let companyAddress = `${companyData.address} ${companyData.city} - ${companyData.pin_code} ${companyData.state} ${companyData.country}`;
+            companyAddress = toProperCase(companyAddress);
+            companyAddress = `${companyAddress}\nPAN No: ${companyData.pan_number} | GST No: ${companyData.gst_number}\nContact No: ${companyData.phone_no}`;
+            companyAddress += ` | ${companyData.e_mail} | ${companyData.web_site}`;
+            document.getElementById('address').innerText = companyAddress;
+            document.getElementById('companylogo').src = companyData.logo_path;
+            document.getElementById('companyCity').innerText = 'All Disputes Subject to ' + companyData.city + ' Jurisdiction only';
 
-            } else {
-                console.error('Company data not found');
-            }
-        })
-        .catch(error => {
-            console.error('Error fetching data:', error);
-        });
+        } else {
+            console.error('Company data not found');
+        }
+
+    } catch (error) {
+        console.error('Error fetching data from Supabase:', error);
+    }
 }
 
 // Function to load Movement details from Google Sheets
-function loadMovementDetailsForLR(lrNumber, companyID) {
+async function loadMovementDetailsForLR(lrNumber, companyID) {
     let invoiceValue = '';
-    const url = `https://sheets.googleapis.com/v4/spreadsheets/${MovementDetails_SHEETID}/values/${MovementDetails_RANGE}?key=${APIKEY}`;
-    console.log("Fetching movement details from:", url);
+    console.log("Fetching movement details from Supabase...");
 
-    fetch(url)
-        .then(response => response.json())
-        .then(data => {
-            const rows = data.values;
-            const movementDetails = rows.find(row => row[34] === companyID && row[0] === lrNumber); // Match CompanyID and LR Number
+    try {
+        // Fetch movement details from the "MovementDetails" table
+        let { data, error } = await supabaseClient
+            .from('booking_details') // Replace with your actual table name in Supabase
+            .select('*')
+            .eq('company_id', companyID) // Filter by companyID
+            .eq('lr_number', lrNumber); // Filter by lrNumber (assuming lrNumber is in column 0)
 
-            if (movementDetails) {
-                generateBarcode(lrNumber); // Call the function to generate barcode
-                document.getElementById('reportDate').innerText = formatDate(movementDetails[1]); // Assuming [1] is the date
-                document.getElementById('pickupAddress').innerText = toProperCase(movementDetails[9] + ' ' + movementDetails[8] + '--' + movementDetails[7]);
-                document.getElementById('deliveryAddress').innerText = toProperCase(movementDetails[12] + ' ' + movementDetails[11] + '--' + movementDetails[10]);
-                document.getElementById('originCity').innerText = movementDetails[8];
-                document.getElementById('destinationCity').innerText = movementDetails[11];
-                document.getElementById('vehicleNumber').innerText = movementDetails[17];
-                document.getElementById('vehicleType').innerText = movementDetails[14];
-                document.getElementById('modeType').innerText = movementDetails[19];
-                document.getElementById('transitType').innerText = movementDetails[4];
-                document.getElementById('invoiceNumber').innerText = movementDetails[15] || 'As per Invoice';
-                if (movementDetails[16] == 0 || movementDetails[16] == null) {
-                    invoiceValue = 'As per Invoice'
-                } else {
-                    invoiceValue = movementDetails[16]
-                }
-                document.getElementById('invoiceValue').innerText = invoiceValue;
-                document.getElementById('paymentType').innerText = 'TBB';//movementDetails[4] ;
-                document.getElementById('quantity').innerText = movementDetails[20];
-                document.getElementById('chargeableWeight').innerText = movementDetails[21] + 'Kgs';
-                if (movementDetails[18]) {
-                    let containerNumber = 'Container Number: ' + movementDetails[18]
-                    document.getElementById('descriptionofGoods').innerText = movementDetails[22] + containerNumber;
-                } else {
-                    document.getElementById('descriptionofGoods').innerText = movementDetails[22];
-                }
+        if (error) {
+            throw error;
+        }
+
+        // Check if movement details were found
+        if (data && data.length > 0) {
+            const movementDetails = data[0]; // Assuming lrNumber is unique, use the first result
+
+            // Call the function to generate barcode
+            generateBarcode(lrNumber);
+
+            // Assuming the structure of the columns in Supabase matches your previous Google Sheets structure
+            document.getElementById('reportDate').innerText = formatDate(movementDetails.pickup_date); // Replace with your actual field
+            document.getElementById('pickupAddress').innerText = toProperCase(movementDetails.origin_address + ' ' + movementDetails.origin_city + '--' + movementDetails.origin_pincode);
+            document.getElementById('deliveryAddress').innerText = toProperCase(movementDetails.destination_address + ' ' + movementDetails.destination_city + '--' + movementDetails.destination_pincode);
+            document.getElementById('originCity').innerText = movementDetails.origin_city;
+            document.getElementById('destinationCity').innerText = movementDetails.destination_city;
+            document.getElementById('vehicleNumber').innerText = movementDetails.vehicle_number;
+            document.getElementById('vehicleType').innerText = movementDetails.vehicle_type;
+            document.getElementById('modeType').innerText = movementDetails.mode_type;
+            document.getElementById('transitType').innerText = movementDetails.transit_type;
+            document.getElementById('invoiceNumber').innerText = movementDetails.reference_number || 'As per Invoice';
+            invoiceValue = movementDetails.invoice_value == 0 || movementDetails.invoice_value == null ? 'As per Invoice' : movementDetails.invoice_value;
+            document.getElementById('invoiceValue').innerText = invoiceValue;
+            document.getElementById('paymentType').innerText = 'TBB'; // Adjust this based on actual data
+            document.getElementById('quantity').innerText = movementDetails.quantity;
+            document.getElementById('chargeableWeight').innerText = movementDetails.cargo_weight + 'Kgs';
+
+            if (movementDetails.container_number) {
+                let containerNumber = 'Container Number: ' + movementDetails.container_number;
+                document.getElementById('descriptionofGoods').innerText = movementDetails.description_of_goods + containerNumber;
             } else {
-                console.error('Movement data not found');
+                document.getElementById('descriptionofGoods').innerText = movementDetails.description_of_goods;
             }
-        })
-        .catch(error => {
-            console.error('Error fetching movement data:', error);
-        });
+
+        } else {
+            console.error('Movement data not found');
+        }
+
+    } catch (error) {
+        console.error('Error fetching movement data from Supabase:', error);
+    }
 }
 
-
-function loadMovementChargesDetailsForLR(lrNumber) {
+async function loadMovementChargesDetailsForLR(lrNumber) {
     let totalFreight = 0;
     let cGSTAmt = 0;
     let iGSTAmt = 0;
@@ -167,178 +178,127 @@ function loadMovementChargesDetailsForLR(lrNumber) {
     let totalGSTAmt = 0;
     let grandTotalAmt = 0;
 
-    const url = `https://sheets.googleapis.com/v4/spreadsheets/${MovementChargesDetails_SHEETID}/values/${MovementChargesDetails_Range}?key=${APIKEY}`;
-    console.log("Fetching movement charges details from:", url);
+    console.log("Fetching movement charges details from Supabase...");
 
-    fetch(url)
-        .then(response => response.json())
-        .then(data => {
-            if (data && data.values) {
-                const rows = data.values;
+    try {
+        // Fetch movement charges details from the "MovementChargesDetails" table
+        let { data, error } = await supabaseClient
+            .from('booking_charges') // Replace with your actual table name in Supabase
+            .select('*')
+            .eq('lr_number', lrNumber); // Filter by lrNumber
 
-                let tableContent = `
-                    <style>
-                        table {
-                            border-collapse: collapse;
-                            width: 100%;
-                            font-size: 9px; /* Smaller font size to fit in the div */
-                        }
-                        th, td {
-                            border: 1px solid black;
-                            padding: 4px; /* Reduced padding to save space */
-                            text-align: center;
-                        }
-                        th {
-                            background-color: #f2f2f2;
-                        }
-                        td.right-align {
-                            text-align: right; /* Align numeric values to the right */
-                        }
-                        td.total-charges {
-                            font-weight: bold; /* Bold style for Total Charges column */
-                        }
-                        tr.grand-total td {
-                            font-weight: bold; /* Bold style for Grand Total row */
-                        }
-                    </style>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Description</th>
-                                <th>Freight</th>
-                                <th>CGST</th>
-                                <th>SGST</th>
-                                <th>IGST</th>
-                                <th>Total Charges</th>
-                            </tr>
-                        </thead>
-                        <tbody>
+        if (error) {
+            throw error;
+        }
+
+        if (data && data.length > 0) {
+            let tableContent = `
+                <style>
+                    table {
+                        border-collapse: collapse;
+                        width: 100%;
+                        font-size: 9px; /* Smaller font size to fit in the div */
+                    }
+                    th, td {
+                        border: 1px solid black;
+                        padding: 4px; /* Reduced padding to save space */
+                        text-align: center;
+                    }
+                    th {
+                        background-color: #f2f2f2;
+                    }
+                    td.right-align {
+                        text-align: right; /* Align numeric values to the right */
+                    }
+                    td.total-charges {
+                        font-weight: bold; /* Bold style for Total Charges column */
+                    }
+                    tr.grand-total td {
+                        font-weight: bold; /* Bold style for Grand Total row */
+                    }
+                </style>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Description</th>
+                            <th>Freight</th>
+                            <th>CGST</th>
+                            <th>SGST</th>
+                            <th>IGST</th>
+                            <th>Total Charges</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            // Loop through all rows and sum freight for matching lrNumber
+            data.forEach(row => {
+                const description = row.charges_type; // Assuming description is in your table
+                const freight = parseFloat(row.amount); // Assuming freight is in your table
+                const cGSt = parseFloat(row.cgst_amount); // Assuming cGST is in your table
+                const sGSt = parseFloat(row.sgst_amount); // Assuming sGST is in your table
+                const iGSt = parseFloat(row.igst_amount); // Assuming iGST is in your table
+
+                console.log('Charges Type: ' + description);
+                if (!isNaN(freight)) {
+                    totalFreight += freight;
+                }
+                if (!isNaN(cGSt)) {
+                    cGSTAmt += cGSt;
+                }
+                if (!isNaN(sGSt)) {
+                    sGSTAmt += sGSt;
+                }
+                if (!isNaN(iGSt)) {
+                    iGSTAmt += iGSt;
+                }
+
+                const totalCharges = freight + cGSt + sGSt + iGSt;
+
+                // Add the row for each charge type, right-aligning the numeric values
+                tableContent += `
+                    <tr>
+                        <td>${description}</td>
+                        <td class="right-align">${freight.toFixed(2)}</td>
+                        <td class="right-align">${cGSt.toFixed(2)}</td>
+                        <td class="right-align">${sGSt.toFixed(2)}</td>
+                        <td class="right-align">${iGSt.toFixed(2)}</td>
+                        <td class="right-align total-charges">${totalCharges.toFixed(2)}</td>
+                    </tr>
+                `;
+            });
+
+            if (totalFreight > 0) {
+                totalGSTAmt = cGSTAmt + sGSTAmt + iGSTAmt;
+                grandTotalAmt = totalFreight + totalGSTAmt;
+
+                // Add table rows for total amounts with bold styling for Grand Total row
+                tableContent += `
+                    <tr class="grand-total">
+                        <td><strong>Grand Total</strong></td>
+                        <td class="right-align">${totalFreight.toFixed(2)}</td>
+                        <td class="right-align">${cGSTAmt.toFixed(2)}</td>
+                        <td class="right-align">${sGSTAmt.toFixed(2)}</td>
+                        <td class="right-align">${iGSTAmt.toFixed(2)}</td>
+                        <td class="right-align">${grandTotalAmt.toFixed(2)}</td>
+                    </tr>
                 `;
 
-                // Loop through all rows and sum freight for matching lrNumber
-                rows.forEach(row => {
-                    if (row[0] === lrNumber) {
-                        const description = row[1]; // Assuming charge type is in the second column
-                        const freight = parseFloat(row[2]); // Assuming freight is in the third column
-                        const cGSt = parseFloat(row[4]); // Assuming cGST is in the fifth column
-                        const sGSt = parseFloat(row[5]); // Assuming sGST is in the sixth column
-                        const iGSt = parseFloat(row[6]); // Assuming iGST is in the seventh column
+                // Close the table
+                tableContent += `
+                    </tbody>
+                </table>
+                `;
 
-                        console.log('Charges Type: ' + description);
-                        if (!isNaN(freight)) {
-                            totalFreight += freight;
-                        }
-                        if (!isNaN(cGSt)) {
-                            cGSTAmt += cGSt;
-                        }
-                        if (!isNaN(sGSt)) {
-                            sGSTAmt += sGSt;
-                        }
-                        if (!isNaN(iGSt)) {
-                            iGSTAmt += iGSt;
-                        }
-
-                        const totalCharges = freight + cGSt + sGSt + iGSt;
-
-                        // Add the row for each charge type, right-aligning the numeric values
-                        tableContent += `
-                            <tr>
-                                <td>${description}</td>
-                                <td class="right-align">${freight.toFixed(2)}</td>
-                                <td class="right-align">${cGSt.toFixed(2)}</td>
-                                <td class="right-align">${sGSt.toFixed(2)}</td>
-                                <td class="right-align">${iGSt.toFixed(2)}</td>
-                                <td class="right-align total-charges">${totalCharges.toFixed(2)}</td> <!-- Bold Total Charges column -->
-                            </tr>
-                        `;
-                    }
-                });
-
-                if (totalFreight > 0) {
-                    totalGSTAmt = cGSTAmt + sGSTAmt + iGSTAmt;
-                    grandTotalAmt = totalFreight + totalGSTAmt;
-
-                    // Add table rows for total amounts with bold styling for Grand Total row
-                    tableContent += `
-                        <tr class="grand-total">
-                            <td><strong>Grand Total</strong></td>
-                            <td class="right-align">${totalFreight.toFixed(2)}</td>
-                            <td class="right-align">${cGSTAmt.toFixed(2)}</td>
-                            <td class="right-align">${sGSTAmt.toFixed(2)}</td>
-                            <td class="right-align">${iGSTAmt.toFixed(2)}</td>
-                            <td class="right-align">${grandTotalAmt.toFixed(2)}</td>
-                        </tr>
-                    `;
-
-                    // Close the table
-                    tableContent += `
-                        </tbody>
-                    </table>
-                    `;
-
-                    // Insert the table into the HTML
-                    document.getElementById('totalFreight').innerHTML = tableContent;
-                } else {
-                    console.error('No matching movement data found or freight is zero.');
-                }
+                // Insert the table into the HTML
+                document.getElementById('totalFreight').innerHTML = tableContent;
             } else {
-                console.error('Invalid response data or no data found.');
+                console.error('No matching movement data found or freight is zero.');
             }
-        })
-        .catch(error => {
-            console.error('Error fetching movement data:', error);
-        });
+        } else {
+            console.error('No data found.');
+        }
+    } catch (error) {
+        console.error('Error fetching movement charges data from Supabase:', error);
+    }
 }
-
-
-
-
-
-
-// $.getJSON(url, function (data) {
-//     const rows = data.values;
-//     // Filter rows by companyID, assuming LR Number is in column 35 (index 34)
-//     const filteredRows = rows.filter(row => row[34] === companyID && row[0] === lrNumber);
-
-
-// partyDetails = rows.map(row => ({
-// movementDetails = filteredRows.map(row => ({
-//     lrNumber: row[0],
-//     lrDate: row[1],
-//     quotationID: row[2],
-//     movementType: row[3],
-//     transitType: row[4],
-//     partyCode: row[5],
-//     partyName: row[6],
-//     originPinCode: row[7],
-//     originCity: row[8],
-//     originAddress: row[9],
-//     destinationPinCode: row[10],
-//     destinationCity: row[11],
-//     destinationAddress: row[12],
-//     requestedDate: row[13],
-//     vehicleType: row[14],
-//     referenceNumber: row[15],
-//     invoiceValue: row[16],
-//     vehicleNumber: row[17],
-//     containerNumber: row[18],
-//     modeType: row[19],
-//     quantity: row[20],
-//     cargoWT: row[21],
-//     descriptionOfGoods: row[22],
-//     status: row[23],
-//     completionDate: row[24],
-//     frightCharges: row[25],
-//     otherCharges: row[26],
-//     subTotal: row[27],
-//     cGSTAmount: row[28],
-//     sGSTAmount: row[29],
-//     iGSTAmount: row[30],
-//     totalGSTAmount: row[31],
-//     grandTotalBilling: row[32],
-//     invoiceNumber: row[33],
-//     // Add other fields as necessary
-// }));
-
-// });
-// }

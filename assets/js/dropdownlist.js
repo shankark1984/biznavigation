@@ -1,56 +1,51 @@
+// Function to fetch data from Supabase
+async function loadTypeList() {
+    console.log("Fetching data from Supabase...");
 
+    // Fetch data from the 'dropdown_list' table
+    const { data, error } = await supabaseClient
+        .from('dropdown_list')
+        .select('description, type_of_value');
 
-// Fetch data from Google Sheets
-function loadTypeList() {
-    const url = `https://sheets.googleapis.com/v4/spreadsheets/${TypesList_SHEETID}/values/${TypesList_RANGE}?key=${APIKEY}`;
-
-    console.log("Fetching data from: ", url); // For debugging
-
-    $.getJSON(url, function (data) {
-        console.log("Data fetched from Google Sheets:", data); // Log the fetched data for debugging
-
-        const rows = data.values;
-        if (!rows || rows.length === 0) {
-            console.error("No data found in the sheet.");
-            return;
-        }
-
-        // Loop through each row and store the relevant data
-        rows.forEach(row => {
-            const description = row[0];  // TaxDescription in column 1 (index 0)
-            const typeOfValue = row[1];
-
-            if (typeOfValue === "VehicleType") {
-                vehicleTypeData.push({ description });
-            } else if (typeOfValue === "BankName") {
-                bankNameData.push({ description });
-            } else if (typeOfValue === "BloodGroup") {
-                bloodGroupData.push({ description });
-            } else if (typeOfValue === "ChargesType") {
-                chargesTypeData.push({ description });
-            } else if (typeOfValue === "ModeType") {
-                modeTypeData.push({ description });
-            } else if (typeOfValue === "MovementType") {
-                movementTypeData.push({ description });
-            } else if (typeOfValue === "TransitType") {
-                transitTypeData.push({ description });
-            }
-        });
-
-        // Populate the dropdowns after data is fetched
-        populateVehicleTypeDropdown();
-        populateBankNameDropdown();
-        populateBloodGroupDropdown();
-        populateChargesTypeDropdown();
-        populateModeTypeDropdown();
-        populateMovementTypeDropdown();
-        populateTransitTypeDropdown();
-    }).fail(function (jqXHR, textStatus, errorThrown) {
-        console.error("Error fetching data from Google Sheets:", textStatus, errorThrown);
+    if (error) {
+        console.error("Error fetching data from Supabase:", error.message);
         alert("Failed to load data. Please try again later.");
-    });
-}
+        return;
+    }
 
+    console.log("Data fetched from Supabase:", data); // Log the fetched data for debugging
+
+    // Loop through each row and store the relevant data
+    data.forEach(row => {
+        const description = row.description;  // TaxDescription in column 1 (index 0)
+        const typeOfValue = row.type_of_value;
+
+        if (typeOfValue === "VehicleType") {
+            vehicleTypeData.push({ description });
+        } else if (typeOfValue === "BankName") {
+            bankNameData.push({ description });
+        } else if (typeOfValue === "BloodGroup") {
+            bloodGroupData.push({ description });
+        } else if (typeOfValue === "ChargesType") {
+            chargesTypeData.push({ description });
+        } else if (typeOfValue === "ModeType") {
+            modeTypeData.push({ description });
+        } else if (typeOfValue === "MovementType") {
+            movementTypeData.push({ description });
+        } else if (typeOfValue === "TransitType") {
+            transitTypeData.push({ description });
+        }
+    });
+
+    // Populate the dropdowns after data is fetched
+    populateVehicleTypeDropdown();
+    populateBankNameDropdown();
+    populateBloodGroupDropdown();
+    populateChargesTypeDropdown();
+    populateModeTypeDropdown();
+    populateMovementTypeDropdown();
+    populateTransitTypeDropdown();
+}
 // Populate the <select> dropdowns for VehicleType
 function populateVehicleTypeDropdown() {
     const vehicleTypeSelect = $("#vehicleType"); // Target the <select> element

@@ -1,20 +1,17 @@
-const APIKEY = "AIzaSyDQzXSjDTekYX41dzeTxjCnmWZi-mgARMI"; // Your API key
+// Initialize Supabase
+const { createClient } = supabase;
+// Initialize Supabase
+const SUPABASE_URL = 'https://qfdrugniulwovfaijgkr.supabase.co'; // Your Supabase URL
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFmZHJ1Z25pdWx3b3ZmYWlqZ2tyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mjg1OTA4MjIsImV4cCI6MjA0NDE2NjgyMn0.Jnh7qgfwZlU-REZIML3cub8FHSfdkpZkDQUFgpIjo74'; // Your Supabase Anon Key
 
-const TaxSettings_SHEETID = "18RUCi9bBNF7053NNE5IMEksoLOjLxXn2ySI2yfdxPiI"; // Your Google Sheet ID "TaxSettings"
-const UserLogin_SHEETID = "15oUpowoMk5zQhPoNbvxvtYJU8GWhF8xOdaNkn4UEsKM"; // Your Google Sheet ID "UserLogin"
-const CompanyProfile_SHEETID = "1oywrLJWBBvLiNXnshYfXrJheOd8lPX3fC_iVJD3uyiQ"; // Your Google Sheet ID "CompanyProfile"
-const PartyDetails_SHEETID = "16VIwLuGze8Pv6N0mWUpu3e171xugJJrbON00kbr_yZ8";// Your Google Sheet ID "PartyDetails"
-const VehicleType_SHEETID = '1lH67VSgtESmHRN54uZQpQBgDOkykq-4VQAU66Miw0IM';
-const TypesList_SHEETID = '1z2d7KZQWuHILakrdG3kTe76rQmZSzk8x9wt_h92RXFg';
-const MovementDetails_SHEETID='1WoiRk7RK1dAWR52TH1boPBnlSZASZp3wddOX5HeWS4Y';
-const MovementChargesDetails_SHEETID='173JnNnb2DA6uLx_tZJ6Mz4EVO3ycjJ0ynOc4DpXw5ac';
+const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+console.log(timeZone); // e.g., "America/New_York"
 
-const UserLogin_SCRIPT_ID = 'https://script.google.com/macros/s/AKfycbypu0xQ80LZHwHE1bMf76Zy0ESi0Qb9kzLtp4ltGPtIFVoA_k9hNHAFZhZFaqcO_Dzr/exec';
-const CompanyProfile_URL = 'https://script.google.com/macros/s/AKfycbxnNE6-mBBHQ6b9F7YaSUZ85GqRX_SGC68pfNG8B_uD7gj5fRFOQXMHr6Pae8DHnm0aHg/exec';
-const PartyDetails_URL = 'https://script.google.com/macros/s/AKfycbxDzX0M7h5BZjOvHJztQvb4DvadBXHGqDGL9iAGq6QCeS1GOJKWEO8ScovJYMdKH_k65A/exec';
-const MovementDetails_URL='https://script.google.com/macros/s/AKfycbxxVOV8_ESF0gDQN2gOIv8-COy_gBDjub87LX-jG1-j7W67MagjjZ4CWZ7uvaF6GJVOoA/exec';
-const MovementChargesDetails_URL='https://script.google.com/macros/s/AKfycbx-18j_uharOcVxlnRIl4XrhP6GyzQYoy1A9ySxzQm9z-H59a7C6yKqDs7qQvZk7-Lz/exec';
+const now = new Date();
+const localtimeStamp = now.toLocaleString(); // Local date and time
+console.log(localtimeStamp);
 
 const empCode = localStorage.getItem('EmpCode');
 const userName = localStorage.getItem('UserName');
@@ -24,87 +21,5 @@ const companyID = localStorage.getItem('CompanyID');
 const workingBranch = localStorage.getItem('WorkingBranch');
 
 
-document.addEventListener('DOMContentLoaded', function () {
-    // Initially disable buttons
-    // document.getElementById('newButton').disabled = true;
-    // document.getElementById('modifyButton').disabled = true;
-    // document.getElementById('deleteButton').disabled = true;
-    // document.getElementById('reportButton').disabled = true;
-    // document.getElementById('saveButton').disabled = true;
-    // // Initially disable buttons
-    const newButton = document.getElementById('newButton');
-    const modifyButton = document.getElementById('modifyButton');
-    const deleteButton = document.getElementById('deleteButton');
-    const reportButton = document.getElementById('reportButton');
-    const saveButton = document.getElementById('saveButton');
-
-    // Check if buttons exist before disabling them
-    if (newButton) newButton.disabled = true;
-    if (modifyButton) modifyButton.disabled = true;
-    if (deleteButton) deleteButton.disabled = true;
-    if (reportButton) reportButton.disabled = true;
-    if (saveButton) saveButton.disabled = true;
-});
-
-// Enable all form inputs
-function enableForm() {
-    const inputs = document.querySelectorAll('#userForm input, #userForm select, #userForm textarea');
-    inputs.forEach(input => input.disabled = false);
-}
-// Disable all form inputs
-function disableForm() {
-    const inputs = document.querySelectorAll('#userForm input, #userForm select, #userForm textarea');
-    inputs.forEach(input => input.disabled = true);
-}
-// Clear all input fields and select elements
-function clearForm() {
-    const inputs = document.querySelectorAll('#userForm input, #userForm select, #userForm textarea');
-    inputs.forEach(input => {
-        input.value = '';  // Reset the value
-        if (input.type === 'checkbox') {
-            input.checked = false;  // Uncheck if it's a checkbox
-        }
-        if (input.tagName === 'SELECT') {
-            input.selectedIndex = 0;  // Reset the select to the first option
-        }
-    });
-}
-
-// Fetch data from Google Sheets
-function loadcompanyShortCode() {
-    const CompanyProfile_RANGE = "CompanyProfile!A2:B"; // Google Sheet Range (CompanyID, ShortCode)
-    const url = `https://sheets.googleapis.com/v4/spreadsheets/${CompanyProfile_SHEETID}/values/${CompanyProfile_RANGE}?key=${APIKEY}`;
-    console.log("Fetching company profile  data from: ", url); // For debugging
-
-    $.getJSON(url, function (data) {
-        console.log("Data fetched from Google Sheets:", data); // Log the fetched data for debugging
-
-        const rows = data.values;
-        if (!rows || rows.length === 0) {
-            console.error("No data found in the sheet.");
-            return;
-        }
-
-        // Loop through each row and store the relevant data
-        rows.forEach(row => {
-            const companyid = row[0];  // CompanyID in column 1 (index 0)
-            const shortCode = row[1];   // ShortCode in column 2 (index 1)
-            if (companyid === companyID) {
-                localStorage.setItem('companyShortCode', shortCode); // Store the array as a string
-            }
-        });
-
-        // Optional: Log the stored data for verification
-        console.log("Stored Company Short Codes:", localStorage.getItem('companyShortCode'));
-
-    }).fail(function (jqXHR, textStatus, errorThrown) {
-        console.error("Error fetching data from Google Sheets:", textStatus, errorThrown);
-        alert("Failed to load data. Please try again later.");
-    });
-}
-// Load the data once the page is ready
-document.addEventListener('DOMContentLoaded', function () {
-    loadcompanyShortCode();
-});
 
 

@@ -1,25 +1,30 @@
+// Fetch tax data from Supabase
+async function loadTaxData() {
+    try {
+        console.log("Fetching tax description data from Supabase..."); // For debugging
 
+        // Query the 'tax_details' table in Supabase
+        let { data, error } = await supabaseClient
+            .from('tax_details') // Replace with your actual table name
+            .select('tax_code, tax_description'); // Fix the typo here
 
-// Fetch tax data from Google Sheets
-function loadTaxData() {
-    const url = `https://sheets.googleapis.com/v4/spreadsheets/${TaxSettings_SHEETID}/values/${SETTINGS_RANGE}?key=${APIKEY}`;
-    
-    console.log("Fetching tax description data from: ", url); // For debugging
+        if (error) {
+            throw error;
+        }
 
-    $.getJSON(url, function (data) {
-        console.log("Data fetched from Google Sheets:", data); // Log the fetched data for debugging
-        
-        const rows = data.values;
-        if (!rows || rows.length === 0) {
-            console.error("No data found in the sheet.");
+        if (!data || data.length === 0) {
+            console.error("No data found in the table.");
             return;
         }
 
+        // Array to store tax data
+        let tax_data = [];
+
         // Loop through each row and store the TaxCode and TaxDescription
-        rows.forEach(row => {
-            const taxCode = row[1];  // TaxCode in column 2 (index 1)
-            const taxDescription = row[2];  // TaxDescription in column 3 (index 2)
-            
+        data.forEach(row => {
+            const taxCode = row.tax_code;  // TaxCode column
+            const taxDescription = row.tax_description;  // TaxDescription column (fixed)
+
             // Push data to tax_data array
             tax_data.push({
                 taxCode: taxCode,
@@ -28,15 +33,15 @@ function loadTaxData() {
         });
 
         // Call populateDropdown to fill the select element
-        populateDropdown();
-    }).fail(function (jqXHR, textStatus, errorThrown) {
-        console.error("Error fetching data from Google Sheets:", textStatus, errorThrown);
+        populateDropdown(tax_data);
+    } catch (error) {
+        console.error("Error fetching data from Supabase:", error.message);
         alert("Failed to load tax data. Please try again later.");
-    });
+    }
 }
 
 // Populate the <select> dropdown with tax data
-function populateDropdown() {
+function populateDropdown(tax_data) {
     const taxSelect = $("#defaulttax"); // Target the <select> element
     taxSelect.empty();  // Clear existing options
     
@@ -46,7 +51,6 @@ function populateDropdown() {
     // Loop through tax_data and create <option> elements
     tax_data.forEach(tax => {
         const option = `<option value="${tax.taxDescription}">${tax.taxDescription}</option>`;
-        // const option = `<option value="${tax.taxCode}">${tax.taxDescription} (${tax.taxCode})</option>`;
         taxSelect.append(option);
     });
 }

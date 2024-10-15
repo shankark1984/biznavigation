@@ -9,11 +9,13 @@ body {
     background-color: #a55b5b;
     display: flex;
     flex-direction: column;
-    min-height: 100vh;  /* Full viewport height */
+    min-height: 100vh;
+    /* Full viewport height */
 }
 
 main {
-    flex-grow: 1;  /* Allows main content to take up available space */
+    flex-grow: 1;
+    /* Allows main content to take up available space */
 }
 
 h1 {
@@ -29,7 +31,7 @@ h1 {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 10px 20px;
+    padding: 5px 20px;
 }
 
 .logo-container {
@@ -41,6 +43,28 @@ h1 {
     width: 40px;
     height: 40px;
     margin-right: 10px;
+    display: block;
+    /* Center the logo */
+    margin: 0 auto 20px;
+    /* Add space below the logo */
+    max-width: 100%;
+    /* Make it responsive */
+    height: auto;
+    /* Maintain aspect ratio */
+}
+
+.logologin {
+    width: 75px;
+    height: 75px;
+    margin-right: 10px;
+    display: block;
+    /* Center the logo */
+    margin: 0 auto 20px;
+    /* Add space below the logo */
+    max-width: 100%;
+    /* Make it responsive */
+    height: auto;
+    /* Maintain aspect ratio */
 }
 
 .company-name {
@@ -191,10 +215,16 @@ button {
     border-radius: 5px;
 }
 
+/* Disabled button styles */
 button:disabled {
-    background-color: #ccc;
-    color: #666;
+    background-color: #c0c0c0;
+    /* Gray background color for disabled state */
+    color: #7d7d7d;
+    /* Gray text color */
+    border: 1px solid #a0a0a0;
+    /* Lighter border for disabled state */
     cursor: not-allowed;
+    /* Change cursor to indicate unavailability */
 }
 
 button:active {
@@ -275,7 +305,7 @@ textarea {
     margin-bottom: 5px;
 }
 
-.form-group > div {
+.form-group>div {
     flex: 1;
     min-width: 200px;
 }
@@ -290,15 +320,16 @@ textarea {
 }
 
 input[type="number"] {
-    padding-left: 20px; /* Adjust padding for the ₹ symbol */
+    padding-left: 20px;
+    /* Adjust padding for the ₹ symbol */
 }
 
-#partyName, #lrnumber {
+#partyName,
+#lrnumber {
     width: 100%;
     padding: 10px;
     border-radius: 5px;
     border: 1px solid #02b53e;
-    appearance: none;
 }
 
 /* Charges Details Table */
@@ -308,11 +339,14 @@ input[type="number"] {
     font-size: 12px;
 }
 
-#chargesDetailsTable, #chargesDetailsTable th, #chargesDetailsTable td {
+#chargesDetailsTable,
+#chargesDetailsTable th,
+#chargesDetailsTable td {
     border: 1px solid black;
 }
 
-#chargesDetailsTable th, #chargesDetailsTable td {
+#chargesDetailsTable th,
+#chargesDetailsTable td {
     padding: 10px;
     text-align: left;
 }
@@ -321,9 +355,10 @@ input[type="number"] {
 footer {
     background-color: #333;
     color: #fff;
-    padding: 20px 0;
+    padding: 5px 0;
     text-align: center;
-    margin-top: auto;  /* Pushes the footer to the bottom */
+    margin-top: auto;
+    /* Pushes the footer to the bottom */
 }
 
 .footer-container {
@@ -383,4 +418,97 @@ footer {
     .social-icons {
         margin-top: 10px;
     }
+}
+
+/* Login Container Styles */
+.login-container {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+    width: 300px;
+    margin: auto;
+    /* Center the login container */
+}
+
+h2 {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"] {
+    width: 100%;
+    padding: 8px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    box-sizing: border-box;
+}
+
+.button-group {
+    display: flex;
+    justify-content: space-between;
+}
+
+.button-group button {
+    width: 48%;
+    padding: 10px;
+    background-color: #007BFF;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+
+.button-group button:disabled {
+    background-color: #c0c0c0;
+    /* Gray background */
+    color: #7d7d7d;
+    /* Gray text */
+    border: 1px solid #a0a0a0;
+    /* Lighter border */
+    cursor: not-allowed;
+    /* Not-allowed cursor */
+}
+
+.button-group button:hover {
+    background-color: #0056b3;
+}
+
+.reset-btn {
+    background-color: #6c757d;
+}
+
+.reset-btn:hover {
+    background-color: #5a6268;
+}
+
+#errorMessage {
+    color: red;
+    display: none;
+    text-align: center;
+    margin-top: 10px;
+}
+.delete-btn {
+    background-color: #ff4d4d;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    cursor: pointer;
+}
+
+.delete-btn:hover {
+    background-color: #ff1a1a;
 }

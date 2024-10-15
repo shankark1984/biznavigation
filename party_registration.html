@@ -8,8 +8,7 @@
     <link rel="stylesheet" href="assets/css/styles.css">
     <link rel="stylesheet" href="assets/css/party.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-
+    <script src="https://unpkg.com/@supabase/supabase-js"></script> <!-- Supabase client -->
 </head>
 
 <body>
@@ -24,7 +23,7 @@
             <button type="button" id="modifyButton">Modify</button>
             <button type="button" id="deleteButton">Delete</button>
             <button type="button" id="reportButton">Report</button>
-            <button type="submit" id="saveButton">Save</button>
+            <button type="button" id="saveButton">Save</button>
         </div>
 
         <div class="formborder">
@@ -40,11 +39,12 @@
                 <div>
                     <label for="partyCode">Party Code</label>
                     <input type="text" id="partyCode" name="partyCode" required class="two-input-group"
-                        placeholder="Party Code" autocomplete="off" disabled style="background-color: #3333;">
+                        placeholder="Party Code" autocomplete="off" disabled style="background-color: #333; color: white;">
                 </div>
                 <div>
                     <label for="partyName">Party Name</label>
-                    <input list="partySuggestions" id="partyName" name="partyName" required placeholder="Party Name" autocomplete="off">
+                    <input list="partySuggestions" id="partyName" name="partyName" required placeholder="Party Name"
+                        autocomplete="off">
                     <datalist id="partySuggestions"></datalist>
                 </div>
                 <div>
@@ -61,8 +61,8 @@
                 </div>
                 <div>
                     <label for="partyAddress">Address</label>
-                    <textarea type="text" id="partyAddress" name="partyAddress" style="text-transform: capitalize;" required
-                        rows="1" autocomplete="off"></textarea>
+                    <textarea type="text" id="partyAddress" name="partyAddress" style="text-transform: capitalize;"
+                        required rows="1" autocomplete="off"></textarea>
                 </div>
                 <div>
                     <label for="pinCode">Pin Code</label>
@@ -70,25 +70,29 @@
                 </div>
                 <div>
                     <label for="city">City</label>
-                    <input type="text" id="city" name="city" style="text-transform: capitalize;" required autocomplete="off">
+                    <input type="text" id="city" name="city" style="text-transform: capitalize;" required
+                        autocomplete="off">
                 </div>
                 <div>
                     <label for="state">State</label>
-                    <input type="text" id="state" name="state" style="text-transform: capitalize;" required autocomplete="off">
+                    <input type="text" id="state" name="state" style="text-transform: capitalize;" required
+                        autocomplete="off">
                 </div>
                 <div>
                     <label for="country">Country</label>
-                    <input type="text" id="country" name="country" style="text-transform: capitalize;" required autocomplete="off">
+                    <input type="text" id="country" name="country" style="text-transform: capitalize;" required
+                        autocomplete="off">
                 </div>
                 <div>
                     <label for="panNumber">Pan Number</label>
-                    <input type="text" id="panNumber" name="panNumber" style="text-transform: uppercase;" required autocomplete="off">
+                    <input type="text" id="panNumber" name="panNumber" style="text-transform: uppercase;" required
+                        autocomplete="off">
                 </div>
                 <div>
                     <label for="gSTNumber">GST Number</label>
-                    <input type="text" id="gSTNumber" name="gSTNumber" style="text-transform: uppercase;" required autocomplete="off">
+                    <input type="text" id="gSTNumber" name="gSTNumber" style="text-transform: uppercase;" required
+                        autocomplete="off">
                 </div>
-
                 <div>
                     <label for="partyContactNumber">Phone Number</label>
                     <input type="text" id="partyContactNumber" name="partyContactNumber" required autocomplete="off">
@@ -106,18 +110,17 @@
             </div>
         </div>
     </form>
-    <script src="assets/js/variable.js"></script>
+
     <script src="assets/js/server.js"></script>
+    <script src="assets/js/generalfunction.js"></script>
+    <script src="assets/js/variable.js"></script>
     <script src="assets/js/header.js"></script>
     <script src="assets/js/footer.js"></script>
+    <script src="assets/js/pincode.js"></script>
     <script src="assets/js/scripts.js"></script>
-    <script src="assets/js/pincde.js"></script>
     <script src="assets/js/party-registration.js"></script>
     <script src="assets/js/customerlist.js"></script>
     <script src="assets/js/taxDescription.js"></script>
-
-
-
 </body>
 
 </html>

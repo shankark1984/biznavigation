@@ -1,126 +1,145 @@
+// Global variable declarations for reusability
+const saveButton = document.getElementById('saveButton');
+const modifyButton = document.getElementById('modifyButton');
+const newButton = document.getElementById('newButton');
 
-//Modify button event listener
-document.getElementById('modifyButton').addEventListener('click', function () {
+// Modify button event listener
+modifyButton.addEventListener('click', function () {
     enableForm();  // Enable the form inputs when "Modify" button is clicked
-    document.getElementById('saveButton').disabled = false; // Enable the Save button
-    document.getElementById('modifyButton').disabled = true;
+    saveButton.disabled = false; // Enable the Save button
+    modifyButton.disabled = true;
     saveButton.textContent = 'Update';
 });
 
-//Modify button event listener
-document.getElementById('newButton').addEventListener('click', function () {
-    enableForm();  // Enable the form inputs when "Modify" button is clicked
-    document.getElementById('saveButton').disabled = false; // Enable the Save button
-    document.getElementById('modifyButton').disabled = true;
+// New button event listener
+newButton.addEventListener('click', function () {
+    saveButton.disabled = false; // Enable the Save button
+    modifyButton.disabled = true;
     saveButton.textContent = 'Save';
-    clearForm();
+    clearForm(); // Make sure to define this function
 });
 
 // Function to generate new party code
 async function generateNewPartyCode(partyName) {
+
+    const today = new Date();
+    // Check if partyName is defined and is a string
+    if (!partyName || typeof partyName !== 'string') {
+        console.error('Invalid party name:', partyName);
+        return null; // Return null if partyName is not valid
+    }
     const firstLetter = partyName.charAt(0).toUpperCase();
-    const existingCodes = await fetchExistingPartyCodes();
-
-    // Filter codes that start with the same first letter
-    const filteredCodes = existingCodes.filter(code => code.startsWith(firstLetter));
-
-    // Find the highest numeric suffix
-    let highestCount = 0;
-    filteredCodes.forEach(code => {
-        const count = parseInt(code.slice(1), 10); // Get the number part of the code
-        if (count > highestCount) {
-            highestCount = count;
-        }
-    });
-
-    // Increment the highest count and format the new party code
-    const newCount = highestCount + 1;
-    return `${firstLetter}${String(newCount).padStart(4, '0')}`; // Pad with zeros
+    console.log('First letter of party name:', firstLetter); // Logging first letter
+    const dateSum = convertDateToNumberAndSum(today);
+    const randomNum = Math.floor(Math.random() * 1000).toString().padStart(4, '0');
+    const newPartyCode = `${firstLetter}${dateSum}${randomNum}`;
+    return newPartyCode;
 }
 
-// Function to fetch existing party codes from Google Sheets
-async function fetchExistingPartyCodes() {
-    const url = `https://sheets.googleapis.com/v4/spreadsheets/${PartyDetails_SHEETID}/values/${PartyDetails_RANGE}?key=${APIKEY}`;
-    console.log(url);
-
-    const response = await fetch(url);
-    const data = await response.json();
-
-    return data.values ? data.values.flat() : []; // Flatten if the data is in nested arrays
-}
+function convertDateToNumberAndSum(date) {
+    // Convert date to a timestamp (number of milliseconds since 1970-01-01)
+    const timestamp = date.getTime();
+    // Convert the timestamp to a string and split it into an array of digits
+    const digits = timestamp.toString().split('');  
+    // Sum the digits
+    const sum = digits.reduce((total, digit) => total + parseInt(digit, 10), 0);
+    return sum;
+  }
 
 
 // Save or update form data
-document.getElementById('saveButton').addEventListener('click', async function (event) {
+saveButton.addEventListener('click', async function (event) {
     event.preventDefault();
-
+    saveButton.disabled = true;
     const partyName = $("#partyName").val();
     let partyCode;
 
     if (saveButton.textContent === 'Save') {
         // Generate new party code
         partyCode = await generateNewPartyCode(partyName);
+        console.log('New Party Code ' +partyCode);
+
     } else if (saveButton.textContent === 'Update') {
         partyCode = $("#partyCode").val(); // Use existing party code
     }
-    console.log(partyCode);
 
     // Get form values
     const formData = {
-        partyCode: partyCode,
-        partyType: $("#partyType").val(),
-        partyName: $("#partyName").val(),
-        partyContactPerson: "", // Add logic to get this value if needed
-        partyContactNumber: $("#partyContactNumber").val(),
-        partyOperationPerson: "", // Add logic to get this value if needed
-        partyOperationPersonNo: "", // Add logic to get this value if needed
-        partyAccountPerson: "", // Add logic to get this value if needed
-        partyAccountContactNo: "", // Add logic to get this value if needed
-        partyEmailID: $("#partyEmailID").val(),
-        partyAddress: $("#partyAddress").val(),
+        party_code: partyCode,
+        party_type: $("#partyType").val(),
+        party_name: partyName,
+        contact_person: "", // Add logic to get this value if needed
+        contact_number: $("#partyContactNumber").val(),
+        email_id: $("#partyEmailID").val(),
+        address: $("#partyAddress").val(),
         city: $("#city").val(),
-        pinCode: $("#pinCode").val(),
+        pin_code: $("#pinCode").val(),
         state: $("#state").val(),
         country: $("#country").val(),
-        panNumber: $("#panNumber").val(),
-        gSTNumber: $("#gSTNumber").val(),
-        tDSPercentage: '',
-        tDSEndDate: '',
-        tDSStatus: '',
-        pymentTandC: '',
-        accountNo: '',
-        bankName: '',
-        branchName: '',
-        iFSCCode: '',
-        accountType: '',
-        defaulttax: $("#defaulttax").val(),
-        partyCurrentStatus: $("#partyCurrentStatus").val(),
-        partyDeActiveDate: $("#partyDeActiveDate").val(),
-        createdBy: userLoginID,
-        companyID: companyID,
+        pan_number: $("#panNumber").val(),
+        gst_number: $("#gSTNumber").val(),
+        default_tax: $("#defaulttax").val(),
+        current_status: $("#partyCurrentStatus").val(),
+        deactive_date: $("#partyDeActiveDate").val() || null, // Set to null if empty
+        company_id: companyID, // Ensure companyID is defined
+        created_by: userLoginID, // Ensure userLoginID is defined
+        created_at: localtimeStamp,
     };
+
+    // Remove properties that are empty strings, especially for date fields
+    Object.keys(formData).forEach(key => {
+        if (formData[key] === "") {
+            formData[key] = null; // Set empty strings to null
+        }
+    });
 
     const action = (saveButton.textContent === 'Save') ? 'add' : 'update';
 
-    console.log('Show Action ' + action + ' ' + formData.partyCode + 'Corrected data ' + formData.partyAddress);
+    console.log('Action:', action, formData.party_code);
 
-    if (action == 'add') {
-        $("#partyCode").val(partyCode).prop('disabled', true);
+    if (action === 'add') {
+        const { data, error } = await supabaseClient
+            .from('party_details')
+            .insert([formData]);
+
+        if (error) {
+            console.error('Error saving new party details:', error);
+            alert('Error saving party details');
+        } else {
+            console.log('Party details saved successfully:', data);
+            $("#partyCode").val(partyCode).prop('disabled', true);
+            alert('Party details saved successfully!');
+        }
+    } else if (action === 'update') {
+        const { data, error } = await supabaseClient
+            .from('party_details')
+            .update(formData)
+            .eq('party_code', partyCode);
+
+        if (error) {
+            console.error('Error updating party details:', error);
+            alert('Error updating party details');
+        } else {
+            console.log('Party details updated successfully:', data);
+            alert('Party details updated successfully!');
+        }
     }
 
-    fetch(PartyDetails_URL, {
-        method: 'POST',
-        mode: 'no-cors',  // Changed to 'cors' to allow for JSON response
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ action: action, data: formData })
-    })
-
     saveButton.textContent = 'Update';
-    modifyButton.disabled = false
-    saveButton.disabled = true
-    document.getElementById('newButton').disabled = false;
-    alert(`Party details ${action === 'add' ? 'saved' : 'updated'} successfully!`);
+    modifyButton.disabled = false;
+    newButton.disabled = false;
+});
 
+
+// Handle form field permissions based on user type
+function handleUserTypePermissions() {
+    const userType = parseInt(localStorage.getItem('UserType'), 10);
+    saveButton.disabled = userType !== 1 && userType !== 2; // Only users of type 1 and 2 can modify
+    newButton.disabled = userType !== 1; // Only users of type 1 can create new entries
+}
+
+// When the page loads, fetch the company data
+document.addEventListener('DOMContentLoaded', function () {
+    handleUserTypePermissions();
+    enableForm();  // Ensure enableForm is defined
 });
