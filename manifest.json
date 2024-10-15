@@ -1,21 +1,66 @@
 {
     "name": "BizNavigation",
-    "short_name": "BizNavigation",
+    "short_name": "BizNav",
     "start_url": "/index.html",
+    "scope": "/",
     "display": "standalone",
-    "background": "linear-gradient(to right, #283048, #859398);",
+    "orientation": "portrait",
+    "background_color": "#283048",
     "theme_color": "#4CAF50",
-    "description": "Namaste Wep App for Face Attendance System.",
+    "description": "BizNavigation is a business managments systems for logistics.",
+    "lang": "en-US",
     "icons": [
         {
-            "src": "assets/img/icon-192x192.png",
+            "src": "assets/img/applogo-192x192.png",
             "sizes": "192x192",
             "type": "image/png"
         },
         {
-            "src": "/assets/img/icon-512x512.png",
+            "src": "assets/img/applogo-512x512.png",
             "sizes": "512x512",
             "type": "image/png"
+        },
+        {
+            "src": "assets/img/applogo-apple.png",
+            "sizes": "180x180",
+            "type": "image/png",
+            "purpose": "maskable any"
         }
-    ]
+    ],
+    "screenshots": [
+        {
+            "src": "assets/screenshots/screenshot1.png",
+            "sizes": "1080x1920",
+            "type": "image/png"
+        },
+        {
+            "src": "assets/screenshots/screenshot2.png",
+            "sizes": "1080x1920",
+            "type": "image/png"
+        }
+    ],
+    "categories": ["business", "productivity"],
+    "dir": "ltr",
+    "share_target": {
+        "action": "/share.html",
+        "method": "POST",
+        "enctype": "multipart/form-data",
+        "params": {
+            "title": "name",
+            "text": "description",
+            "url": "link"
+        }
+    },
+    "related_applications": [
+        {
+            "platform": "play",
+            "url": "https://play.google.com/store/apps/details?id=com.biznavigation.app",
+            "id": "com.biznavigation.app"
+        },
+        {
+            "platform": "itunes",
+            "url": "https://apps.apple.com/app/id123456789"
+        }
+    ],
+    "prefer_related_applications": true
 }
