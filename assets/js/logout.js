@@ -1,4 +1,4 @@
-const maxIdleTime = 1 * 60 * 1000; // 5 minutes in milliseconds
+const maxIdleTime = 5 * 60 * 1000; // 5 minutes in milliseconds
 
 // Update the last activity time in localStorage
 function updateLastActivityTime() {
