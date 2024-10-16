@@ -27,16 +27,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function logout() {
-        // Clear user data from localStorage
-        localStorage.removeItem('EmpCode');
-        localStorage.removeItem('UserName');
-        localStorage.removeItem('UserLoginID');
-        localStorage.removeItem('UserType');
-        localStorage.removeItem('CompanyID');
-        localStorage.removeItem('WorkingBranch');
-        localStorage.removeItem('CompanyShortCode');
-
-        window.location.href = 'index.html';
+        logoutlocalstorage();
     }
 
     if (logoutBtn) {
