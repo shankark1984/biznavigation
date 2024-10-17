@@ -25,11 +25,12 @@ async function loadPartyDetails() {
             country: row.country,
             panNumber: row.pan_number,
             gSTNumber: row.gst_number,
+            contactPerson:row.contact_person,
             contactNumber: row.contact_number,
             emailID: row.email_id,
             defaultTax: row.default_tax,
         }));
-
+        // document.getElementById('saveButton').disabled = true;
         populatePartySuggestions(); // Populate the datalist with party names
     } catch (error) {
         console.error('Error:', error);
@@ -62,15 +63,20 @@ $("#partyName").on("input", function () {
         $("#country").val(partyData.country);
         $("#panNumber").val(partyData.panNumber);
         $("#gSTNumber").val(partyData.gSTNumber);
+        $("#partyContacperson").val(partyData.contactPerson);
         $("#partyContactNumber").val(partyData.contactNumber);
         $("#partyEmailID").val(partyData.emailID);
         $("#defaulttax").val(partyData.defaultTax);
+
+        document.getElementById('saveButton').disabled = true;
+        document.getElementById('newButton').disabled = false;
+        document.getElementById('modifyButton').disabled = false;
+        disableForm();
     }
 });
 
 // Load party details on page load
 $(document).ready(function () {
     loadPartyDetails();
-    document.getElementById('saveButton').disabled = false;
-    document.getElementById('newButton').disabled = false;
+
 });

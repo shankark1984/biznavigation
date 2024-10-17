@@ -29,7 +29,7 @@
                     placeholder="Type your username">
                 <label for="password">Password</label>
                 <input type="password" id="password" name="password" required autocomplete="off"
-                    placeholder="Type your password">
+                    placeholder="Type your password" onkeydown="checkEnterKey(event)">
                 <a href="" class="" onclick="resetPassword()"><span style="font-size: 10px; position: bottom;color:blue;">Reset
                         Password</span></a>
             </div>
@@ -42,6 +42,13 @@
         </form>
         <p id="errorMessage" style="color: red; display: none;">Invalid username or password. Please try again.</p>
     </div>
+    <script>
+        function checkEnterKey(event) {
+            if (event.key === 'Enter') {
+                login(); // Call the login function when Enter is pressed
+            }
+        }
+    </script>
     <script src="assets/js/server.js"></script>
     <script src="assets/js/login.js"></script>
 

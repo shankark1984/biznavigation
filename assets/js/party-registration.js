@@ -17,6 +17,7 @@ newButton.addEventListener('click', function () {
     modifyButton.disabled = true;
     saveButton.textContent = 'Save';
     clearForm(); // Make sure to define this function
+    enableForm();
 });
 
 // Function to generate new party code
@@ -68,7 +69,7 @@ saveButton.addEventListener('click', async function (event) {
         party_code: partyCode,
         party_type: $("#partyType").val(),
         party_name: partyName,
-        contact_person: "", // Add logic to get this value if needed
+        contact_person: $("#partyContacperson").val(), // Add logic to get this value if needed 
         contact_number: $("#partyContactNumber").val(),
         email_id: $("#partyEmailID").val(),
         address: $("#partyAddress").val(),
@@ -124,7 +125,7 @@ saveButton.addEventListener('click', async function (event) {
             alert('Party details updated successfully!');
         }
     }
-
+    disableForm();
     saveButton.textContent = 'Update';
     modifyButton.disabled = false;
     newButton.disabled = false;
