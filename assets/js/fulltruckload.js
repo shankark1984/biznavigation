@@ -86,13 +86,15 @@ document.getElementById('saveButton').addEventListener('click', async function (
         requested_date: document.getElementById('requesteddate').value,
         vehicle_type: document.getElementById('vehicleType').value,
         reference_number: document.getElementById('referencenumber').value,
-        invoice_value: document.getElementById('invoicevalue').value,
+        invoice_value: parseFloat(document.getElementById('invoiceValue')) || 0,
         vehicle_number: document.getElementById('vehiclenumber').value,
         container_number: document.getElementById('containernumber').value,
         mode_type: modeType,
         quantity: document.getElementById('quantity').value,
-        cargo_weight: document.getElementById('cargowt').value,
+        actual_weight: document.getElementById('actualwt').value,
+        charge_weight: document.getElementById('chargewt').value,
         description_of_goods: document.getElementById('descriptionofGoods').value,
+        payment_type: document.getElementById('paymentType').value,
         created_by: userLoginID,  // Ensure userLoginID is available
         company_id: companyID,  // Ensure companyID is available
         created_at: localtimeStamp,
@@ -159,12 +161,15 @@ async function loadMovementDetails() {
         requestedDate: row.requested_date,
         vehicleType: row.vehicle_type,
         referenceNumber: row.reference_number,
-        invoiceValue: row.invoice_value,
+        vendorCode: row.vendor_code,
+        vendorName: row.vendor_name,
         vehicleNumber: row.vehicle_number,
         containerNumber: row.container_number,
         modeType: row.mode_type,
         quantity: row.quantity,
-        cargoWT: row.cargo_weight,
+        actualWT: row.actual_weight,
+        chargeWT: row.charge_weight,
+        paymentType: row.payment_type,
         descriptionOfGoods: row.description_of_goods,
         status: row.status,
         completionDate: row.completion_date,
@@ -194,12 +199,14 @@ $("#lrnumber").on("input", async function () {
         console.error('Error fetching customer_code:', error);
     } else if (data.length > 0) {
         const customerId = data[0].customer_code;  // Get the customer_id from the response
+        const vendorCode = data[0].vendor_code;
         console.log('Customer ID:', customerId);
+        console.log('VendorpartyCode ID:', vendorCode);
         document.getElementById('partyCode').value = customerId;
+        document.getElementById('vendorCode').value = vendorCode;
     } else {
         console.log('No record found for the given LR number.');
     }
-
 
     if (movementData) {
         $("#lrdate").val(movementData.lrDate);
@@ -217,11 +224,14 @@ $("#lrnumber").on("input", async function () {
         $("#vehicleType").val(movementData.vehicleType);
         $("#referencenumber").val(movementData.referenceNumber);
         $("#invoicevalue").val(movementData.invoiceValue);
+        $("#vendorName").val(movementData.vendorName);
         $("#vehiclenumber").val(movementData.vehicleNumber);
         $("#containernumber").val(movementData.containerNumber);
         $("#modeType").val(movementData.modeType);
         $("#quantity").val(movementData.quantity);
-        $("#cargowt").val(movementData.cargoWT);
+        $("#actualwt").val(movementData.actualWT);
+        $("#chargewt").val(movementData.chargeWT);
+        $("#paymentType").val(movementData.paymentType);
         $("#descriptionofGoods").val(movementData.descriptionOfGoods);
 
         populateTable(lrNumber); // Replace with actual LRNumber to match
@@ -301,8 +311,7 @@ function areRequiredFieldsFilled() {
         'lrdate', 'quotationid', 'movementType', 'partyName',
         'originPinCode', 'orgincity', 'orginAddress', 'destinationPinCode',
         'destinationcity', 'destinationAddress', 'requesteddate', 'vehicleType',
-        'referencenumber', 'invoicevalue', 'vehiclenumber',
-        'quantity', 'cargowt', 'modeType', 'quantity', 'cargowt'
+        'vehiclenumber', 'quantity', 'chargewt', 'modeType', 'quantity', 'chargewt'
     ];
 
 

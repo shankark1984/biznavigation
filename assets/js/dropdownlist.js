@@ -35,6 +35,8 @@ async function loadTypeList() {
             movementTypeData.push({ description });
         } else if (typeOfValue === "TransitType") {
             transitTypeData.push({ description });
+        // } else if (typeOfValue === "PaymentType") {
+        //     paymentTypeDate.push({ description });
         }
     });
 
@@ -46,6 +48,7 @@ async function loadTypeList() {
     populateModeTypeDropdown();
     populateMovementTypeDropdown();
     populateTransitTypeDropdown();
+    // populatePaymentTypeDropdown();
 }
 // Populate the <select> dropdowns for VehicleType
 function populateVehicleTypeDropdown() {
@@ -151,6 +154,21 @@ function populateTransitTypeDropdown() {
         transitTypeSelect.append(option);
     });
 }
+
+// Populate the <select> dropdowns for TransitType
+// function populatePaymentTypeDropdown() {
+//     const paymentTypeSelect = $("#paymentType"); // Target the <select> element
+//     paymentTypeSelect.empty();  // Clear existing options
+
+//     // Add a placeholder option
+//     paymentTypeSelect.append('<option value="" disabled selected>Select Payment Type</option>');
+
+//     // Loop through transitTypeData and create <option> elements
+//     paymentTypeDate.forEach(type => {
+//         const option = `<option value="${type.description}">${type.description}</option>`;
+//         paymentTypeSelect.append(option);
+//     });
+// }
 
 // Load the data once the page is ready
 document.addEventListener('DOMContentLoaded', function () {

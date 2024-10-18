@@ -15,6 +15,7 @@ async function loadPartyDetails() {
         partyDetails = partyDetailsData.map(row => ({
             partyType: row.party_type,
             partyCode: row.party_code,
+            vendorCode:row.party_code,
             partyName: row.party_name,
             currentStatus: row.current_status,
             deActiveDate: row.deactive_date,
@@ -32,6 +33,7 @@ async function loadPartyDetails() {
         }));
         // document.getElementById('saveButton').disabled = true;
         populatePartySuggestions(); // Populate the datalist with party names
+        populatevendorSuggestions();
     } catch (error) {
         console.error('Error:', error);
     }
@@ -45,6 +47,8 @@ function populatePartySuggestions() {
     });
     $("#partySuggestions").html(suggestions);
 }
+
+
 
 // When a party name is selected from the dropdown, populate the form with relevant details
 $("#partyName").on("input", function () {
@@ -67,16 +71,47 @@ $("#partyName").on("input", function () {
         $("#partyContactNumber").val(partyData.contactNumber);
         $("#partyEmailID").val(partyData.emailID);
         $("#defaulttax").val(partyData.defaultTax);
+    }
+});
 
-        document.getElementById('saveButton').disabled = true;
-        document.getElementById('newButton').disabled = false;
-        document.getElementById('modifyButton').disabled = false;
-        disableForm();
+
+// Populate the datalist with party names
+function populatevendorSuggestions() {
+    let vendorsuggestions = "";
+    partyDetails.forEach(vendor => {
+        vendorsuggestions += `<option data-party-code="${vendor.vendorCode}" value="${vendor.partyName}"></option>`;
+    });
+    $("#vendorSuggestions").html(vendorsuggestions);
+}
+
+// When a vendor name is selected from the dropdown, populate the form with relevant details
+$("#vendorName").on("input", function () {
+    const vendorName = $(this).val();
+    const partyData = partyDetails.find(party => party.partyName === vendorName);
+
+    if (partyData) {
+        $("#partyType").val(partyData.partyType);
+        $("#vendorCode").val(partyData.partyCode);
+        $("#partyCurrentStatus").val(partyData.currentStatus);
+        $("#partyDeActiveDate").val(partyData.deActiveDate);
+        $("#partyAddress").val(partyData.address);
+        $("#pinCode").val(partyData.pinCode);
+        $("#city").val(partyData.city);
+        $("#state").val(partyData.state);
+        $("#country").val(partyData.country);
+        $("#panNumber").val(partyData.panNumber);
+        $("#gSTNumber").val(partyData.gSTNumber);
+        $("#partyContacperson").val(partyData.contactPerson);
+        $("#partyContactNumber").val(partyData.contactNumber);
+        $("#partyEmailID").val(partyData.emailID);
+        $("#defaulttax").val(partyData.defaultTax);
+
     }
 });
 
 // Load party details on page load
 $(document).ready(function () {
     loadPartyDetails();
-
+    document.getElementById('saveButton').disabled = false;
+    document.getElementById('newButton').disabled = false;
 });

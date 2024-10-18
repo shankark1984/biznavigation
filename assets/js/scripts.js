@@ -41,35 +41,7 @@ document.addEventListener('DOMContentLoaded', function () {
     loadUserInfo();
 });
 
-function formatCurrency(input) {
-    let value = parseFloat(input.value).toFixed(2);
-    if (!isNaN(value)) {
-        input.value = value;
-    } else {
-        input.value = '0.00';
-    }
-}
 
-// Function to generate a unique temporary form ID
-function generateTempFormID() {
-    // Generate a random unique identifier, e.g., using current timestamp and random numbers
-    const timestamp = Date.now();
-    const randomNum = Math.floor(Math.random() * 10000); // 4-digit random number
-
-    return `TEMP-${timestamp}-${randomNum}`;
-}
-
-// Assign TempFormID when the form is opened (or page is loaded)
-window.addEventListener('DOMContentLoaded', function () {
-    const tempFormIDElement = document.getElementById('tempFormID');
-    if (tempFormIDElement) {
-        const tempFormID = generateTempFormID(); // Generate tempFormID
-        tempFormIDElement.value = tempFormID; // Set the hidden input value
-        console.log('TempFormID generated: ' + tempFormID); // Log for debugging
-    } else {
-        console.error('tempFormID element not found.');
-    }
-});
 
 
 
@@ -121,17 +93,4 @@ async function getPartyDetails(partyName, companyID, callback) {
 }
 
 
-// Function to handle tab switching
-function openTab(evt, tabName) {
-    var i, tabcontent, tablinks;
-    tabcontent = document.getElementsByClassName("tab-content");
-    for (i = 0; i < tabcontent.length; i++) {
-        tabcontent[i].style.display = "none";
-    }
-    tablinks = document.getElementsByClassName("tablinks");
-    for (i = 0; i < tablinks.length; i++) {
-        tablinks[i].classList.remove("active");
-    }
-    document.getElementById(tabName).style.display = "block";
-    evt.currentTarget.classList.add("active");
-}
+

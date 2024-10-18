@@ -22,4 +22,33 @@ const workingBranch = localStorage.getItem('WorkingBranch');
 
 
 
+// Arrays to store the fetched data for different types
+let partyDetails = [];
+let vehicleTypeData = [];
+let bankNameData = [];
+let bloodGroupData = [];
+let chargesTypeData = [];
+let modeTypeData = [];
+let movementTypeData = [];
+let transitTypeData = [];
+let movementDetails = [];
+let tax_data = [];
+
+let lrNumber = '';
+let transitType = '';
+let tempFormID = '';
+
+let frightCharges = 0;
+let otherCharges = 0;
+let subTotal = 0;
+let cGSTAmount = 0;
+let sGSTAmount = 0;
+let iGSTAmount = 0;
+let totalGSTAmount = 0;
+let grandTotal = 0;
+
+
+
+
+
 
