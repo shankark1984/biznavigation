@@ -15,8 +15,11 @@ function setupPincodeListener(pinCodeFieldId, cityFieldId) {
     pincodeInput.addEventListener('blur', function () {
         const pincode = this.value.trim();
         if (pincode.length !== 6 || isNaN(pincode)) {
-            alert('Please enter a valid 6-digit pin code.');
+            pincodeInput.style.border = '2px solid red'; // Add red border
+            // alert('Please enter a valid 6-digit pin code.');
             return;
+        }else{
+            pincodeInput.style.border = ''; // Reset border if valid
         }
 
         fetch(`https://api.postalpincode.in/pincode/${pincode}`)

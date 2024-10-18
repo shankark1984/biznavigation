@@ -79,7 +79,7 @@ saveButton.addEventListener('click', async function (event) {
         country: $("#country").val(),
         pan_number: $("#panNumber").val(),
         gst_number: $("#gSTNumber").val(),
-        default_tax: $("#defaulttax").val(),
+        default_tax: $("#defaulttax").val() || 'CGST 0% SGST 0% IGST 0%',
         current_status: $("#partyCurrentStatus").val(),
         deactive_date: $("#partyDeActiveDate").val() || null, // Set to null if empty
         company_id: companyID, // Ensure companyID is defined
@@ -143,4 +143,15 @@ function handleUserTypePermissions() {
 document.addEventListener('DOMContentLoaded', function () {
     handleUserTypePermissions();
     enableForm();  // Ensure enableForm is defined
+});
+document.getElementById('partyCurrentStatus').addEventListener('change', function() {
+    const status = document.getElementById('partyCurrentStatus').value;
+    const deActiveDate = document.getElementById('partyDeActiveDate');
+    
+    if (status === 'Active') {
+        deActiveDate.disabled = true;
+        deActiveDate.value = ''; // Optionally clear the date field
+    } else {
+        deActiveDate.disabled = false;
+    }
 });
