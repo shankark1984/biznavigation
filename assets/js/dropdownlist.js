@@ -48,6 +48,7 @@ async function loadTypeList() {
     populateModeTypeDropdown();
     populateMovementTypeDropdown();
     populateTransitTypeDropdown();
+    vendorpopulateChargesTypeDropdown();
     // populatePaymentTypeDropdown();
 }
 // Populate the <select> dropdowns for VehicleType
@@ -109,6 +110,20 @@ function populateChargesTypeDropdown() {
         chargesTypeSelect.append(option);
     });
 }
+// Populate the <select> dropdowns for ChargesType
+function vendorpopulateChargesTypeDropdown() {
+    const chargesTypeSelect = $("#vendorChargesType"); // Target the <select> element
+    chargesTypeSelect.empty();  // Clear existing options
+
+    // Add a placeholder option
+    chargesTypeSelect.append('<option value="" disabled selected>Select Charges Type</option>');
+
+    // Loop through chargesTypeData and create <option> elements
+    chargesTypeData.forEach(type => {
+        const option = `<option value="${type.description}">${type.description}</option>`;
+        chargesTypeSelect.append(option);
+    });
+}
 
 // Populate the <select> dropdowns for ModeType
 function populateModeTypeDropdown() {
@@ -154,21 +169,6 @@ function populateTransitTypeDropdown() {
         transitTypeSelect.append(option);
     });
 }
-
-// Populate the <select> dropdowns for TransitType
-// function populatePaymentTypeDropdown() {
-//     const paymentTypeSelect = $("#paymentType"); // Target the <select> element
-//     paymentTypeSelect.empty();  // Clear existing options
-
-//     // Add a placeholder option
-//     paymentTypeSelect.append('<option value="" disabled selected>Select Payment Type</option>');
-
-//     // Loop through transitTypeData and create <option> elements
-//     paymentTypeDate.forEach(type => {
-//         const option = `<option value="${type.description}">${type.description}</option>`;
-//         paymentTypeSelect.append(option);
-//     });
-// }
 
 // Load the data once the page is ready
 document.addEventListener('DOMContentLoaded', function () {

@@ -59,7 +59,7 @@
                     </select>
                 </div>
                 <div>
-                    <label for="partyName">Party Name</label>
+                    <label for="partyName">Customer Name</label>
                     <input list="partySuggestions" id="partyName" name="partyName" required placeholder="Party Name"
                         autocomplete="off">
                     <datalist id="partySuggestions"></datalist>
@@ -224,30 +224,30 @@
             <div id="vendorCharges" class="tab-content">
                 <div class="form-group">
                     <div>
-                        <label for="chargesType">Charges Type</label>
-                        <select id="chargesType" name="chargesType">
+                        <label for="vendorChargesType">Charges Type</label>
+                        <select id="vendorChargesType" name="vendorChargesType">
                             <option value="" disabled selected>Select Charges Type</option>
                         </select>
                     </div>
                     <div style="position: relative;">
-                        <label for="frightcharges">Charges</label>
+                        <label for="vendorFrightcharges">Charges</label>
                         <span class="inr-symbol">₹</span>
-                        <input type="number" id="frightcharges" name="frightcharges" min="0" step="0.01"
+                        <input type="number" id="vendorFrightcharges" name="vendorFrightcharges" min="0" step="0.01"
                             placeholder="00.00" onblur="formatCurrency(this)">
                     </div>
                     <div>
-                        <label for="defaulttax">Default Tax</label>
-                        <select id="defaulttax" name="defaulttax">
+                        <label for="vendorDefaultTax">Default Tax</label>
+                        <select id="vendorDefaultTax" name="vendorDefaultTax">
                             <option value="" disabled selected>Select Default Tax</option>
                         </select>
                     </div>
             
-                    <button type="button" id="addButton">Add</button>
+                    <button type="button" id="VendoraddButton">Add</button>
 
                 </div>
                 <!-- Table to display data from Google Sheet -->
-                <div id="chargesDetailsTableContainer">
-                    <table id="chargesDetailsTable">
+                <div id="vendorchargesDetailsTableContainer">
+                    <table id="vendorchargesDetailsTable">
                         <thead>
                             <tr>
                                 <th>Charges Type</th>

@@ -4,7 +4,8 @@ async function loadPartyDetails() {
         const { data: partyDetailsData, error } = await supabaseClient
             .from('party_details')
             .select('*')
-            .eq('company_id', companyID); // Fetch rows filtered by company ID
+            .eq('company_id', companyID)// Fetch rows filtered by company ID
+            .order('party_name', { ascending: true }); // Order by party_name A to Z (ascending)
 
         if (error) {
             console.error('Error fetching party details:', error);
@@ -106,6 +107,7 @@ $("#vendorName").on("input", function () {
         $("#partyEmailID").val(partyData.emailID);
         $("#defaulttax").val(partyData.defaultTax);
 
+
     }
 });
 
@@ -114,4 +116,5 @@ $(document).ready(function () {
     loadPartyDetails();
     document.getElementById('saveButton').disabled = false;
     document.getElementById('newButton').disabled = false;
+ 
 });

@@ -54,7 +54,7 @@ async function generateNewLRNumber() {
 //Save or Update Booking Details
 document.getElementById('saveButton').addEventListener('click', async function (event) {
     event.preventDefault();
-
+    document.getElementById('saveButton').disabled = true;
     if (!areRequiredFieldsFilled()) {
         return;
     }
@@ -87,6 +87,8 @@ document.getElementById('saveButton').addEventListener('click', async function (
         vehicle_type: document.getElementById('vehicleType').value,
         reference_number: document.getElementById('referencenumber').value,
         invoice_value: parseFloat(document.getElementById('invoiceValue')) || 0,
+        vendor_code: document.getElementById('vendorCode').value,
+        vendor_name: document.getElementById('vendorName').value,
         vehicle_number: document.getElementById('vehiclenumber').value,
         container_number: document.getElementById('containernumber').value,
         mode_type: modeType,
@@ -137,7 +139,8 @@ async function loadMovementDetails() {
     const { data, error } = await supabaseClient
         .from('booking_details')
         .select('*')
-        .eq('company_id', companyID);
+        .eq('company_id', companyID)
+        .order('lr_number', { ascending: true }); // Order by party_name A to Z (ascending)
 
     if (error) {
         console.error('Error fetching movement details:', error);
@@ -463,7 +466,8 @@ document.getElementById('addButton').addEventListener('click', async function (e
         grand_total_billing: grandTotalBilling,
         flg: 0,  // Assuming this is a flag for active or inactive records
         created_by: userLoginID,  // Ensure userLoginID is defined
-        created_at: localtimeStamp
+        created_at: localtimeStamp,
+        account_type: 'Sale'
     };
 
     const action = (document.getElementById('addButton').textContent === 'Add') ? 'add' : 'update';

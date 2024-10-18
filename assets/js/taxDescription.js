@@ -34,6 +34,7 @@ async function loadTaxData() {
 
         // Call populateDropdown to fill the select element
         populateDropdown(tax_data);
+        vendorpopulateDropdown(tax_data);
     } catch (error) {
         console.error("Error fetching data from Supabase:", error.message);
         alert("Failed to load tax data. Please try again later.");
@@ -55,6 +56,20 @@ function populateDropdown(tax_data) {
     });
 }
 
+// Populate the <select> dropdown with tax data
+function vendorpopulateDropdown(tax_data) {
+    const taxSelect = $("#vendorDefaultTax"); // Target the <select> element
+    taxSelect.empty();  // Clear existing options
+    
+    // Add a placeholder option
+    taxSelect.append('<option value="" disabled selected>Select Default Tax</option>');
+
+    // Loop through tax_data and create <option> elements
+    tax_data.forEach(tax => {
+        const option = `<option value="${tax.taxDescription}">${tax.taxDescription}</option>`;
+        taxSelect.append(option);
+    });
+}
 // Load the tax data once the page is ready
 document.addEventListener('DOMContentLoaded', function () {
     loadTaxData();

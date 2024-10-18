@@ -41,24 +41,25 @@ function convertDateToNumberAndSum(date) {
     // Convert date to a timestamp (number of milliseconds since 1970-01-01)
     const timestamp = date.getTime();
     // Convert the timestamp to a string and split it into an array of digits
-    const digits = timestamp.toString().split('');  
+    const digits = timestamp.toString().split('');
     // Sum the digits
     const sum = digits.reduce((total, digit) => total + parseInt(digit, 10), 0);
     return sum;
-  }
+}
 
 
 // Save or update form data
 saveButton.addEventListener('click', async function (event) {
     event.preventDefault();
     saveButton.disabled = true;
+    newButton.disabled=true;
     const partyName = $("#partyName").val();
     let partyCode;
 
     if (saveButton.textContent === 'Save') {
         // Generate new party code
         partyCode = await generateNewPartyCode(partyName);
-        console.log('New Party Code ' +partyCode);
+        console.log('New Party Code ' + partyCode);
 
     } else if (saveButton.textContent === 'Update') {
         partyCode = $("#partyCode").val(); // Use existing party code
@@ -144,14 +145,21 @@ document.addEventListener('DOMContentLoaded', function () {
     handleUserTypePermissions();
     enableForm();  // Ensure enableForm is defined
 });
-document.getElementById('partyCurrentStatus').addEventListener('change', function() {
+document.getElementById('partyCurrentStatus').addEventListener('change', function () {
     const status = document.getElementById('partyCurrentStatus').value;
     const deActiveDate = document.getElementById('partyDeActiveDate');
-    
+
     if (status === 'Active') {
         deActiveDate.disabled = true;
         deActiveDate.value = ''; // Optionally clear the date field
     } else {
         deActiveDate.disabled = false;
+    }
+});
+
+document.getElementById('partyName').addEventListener('change', function () {
+    const partyCode = document.getElementById('partyCode').value;
+    if (partyCode) { // If partyCode is not null or empty
+        disableForm();
     }
 });
