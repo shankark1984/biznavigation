@@ -345,7 +345,8 @@ input[type="number"] {
 }
 
 /* Charges Details Table */
-#chargesDetailsTable {
+#chargesDetailsTable,
+#vendorchargesDetailsTable {
     border-collapse: collapse;
     width: 100%;
     font-size: 12px;
@@ -353,12 +354,17 @@ input[type="number"] {
 
 #chargesDetailsTable,
 #chargesDetailsTable th,
-#chargesDetailsTable td {
+#chargesDetailsTable td,
+#vendorchargesDetailsTable,
+#vendorchargesDetailsTable th,
+#vendorchargesDetailsTable td {
     border: 1px solid black;
 }
 
 #chargesDetailsTable th,
-#chargesDetailsTable td {
+#chargesDetailsTable td,
+#vendorchargesDetailsTable th,
+#vendorchargesDetailsTable td {
     padding: 10px;
     text-align: left;
 }

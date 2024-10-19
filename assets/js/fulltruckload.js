@@ -1,9 +1,12 @@
+
 document.getElementById('modifyButton').addEventListener('click', function () {
     enableForm();
     document.getElementById('saveButton').disabled = false;
     document.getElementById('modifyButton').disabled = true;
     document.getElementById('reportButton').disabled = true;
     document.getElementById('saveButton').textContent = 'Update';
+    document.getElementById('addButton').disabled = false;
+    document.getElementById('VendoraddButton').disabled = false;
 });
 
 document.getElementById('newButton').addEventListener('click', function () {
@@ -238,6 +241,11 @@ $("#lrnumber").on("input", async function () {
         $("#descriptionofGoods").val(movementData.descriptionOfGoods);
 
         populateTable(lrNumber); // Replace with actual LRNumber to match
+        vendorpopulateTable(lrNumber); // Replace with actual LRNumber to match
+        document.getElementById('addButton').disabled = true;
+        document.getElementById('VendoraddButton').disabled = true;
+
+
         // Populate other fields as necessary
         saveButton.textContent = 'Update';
         disableForm();
@@ -385,7 +393,8 @@ async function fetchSupabaseData() {
         // Fetch data from 'booking_charges' table
         let { data, error } = await supabaseClient
             .from('booking_charges') // Table name
-            .select('*'); // Fetch all fields
+            .select('*') // Fetch all fields
+            .eq('account_type', 'Sale')// Fetch rows filtered by company ID
 
         if (error) {
             console.error("Error fetching data:", error);
@@ -404,19 +413,21 @@ async function fetchSupabaseData() {
 async function deleteTableRow(row, rowId) {
     // First, delete from the database
     try {
-        let { error } = await supabaseClient
-            .from('booking_charges') // Your table name
-            .delete() // Perform the delete action
-            .eq('id', rowId); // Specify which row to delete using the row ID
+        if (document.getElementById('modifyButton').disabled == true) {
+            // If successful, remove the row from the table
+            let { error } = await supabaseClient
+                .from('booking_charges') // Your table name
+                .delete() // Perform the delete action
+                .eq('id', rowId); // Specify which row to delete using the row ID
 
-        if (error) {
-            console.error("Error deleting from database:", error);
-            return; // Stop further execution if there's an error
+            if (error) {
+                console.error("Error deleting from database:", error);
+                return; // Stop further execution if there's an error
+            }
+
+            row.remove();
+            alert('Charges deleted successfully.');
         }
-
-        // If successful, remove the row from the table
-        row.remove();
-        alert('Charges deleted successfully.');
     } catch (error) {
         console.error("Unexpected error deleting row:", error);
     }
@@ -522,4 +533,183 @@ document.getElementById('reportButton').addEventListener('click', async function
     }
 
     openReport();
+});
+
+
+
+
+
+// Function to populate table with data where LRNumber matches
+async function vendorpopulateTable(lrNumber) {
+    const data = await vendorfetchSupabaseData(); // Fetch the data
+    const tableBody = document.querySelector('#vendorchargesDetailsTable tbody');
+
+    // Clear existing table rows
+    tableBody.innerHTML = '';
+
+    // Loop through the fetched data
+    data.forEach(row => {
+        if (row.lr_number === lrNumber) { // Match the LR number
+            const newRow = document.createElement('tr');
+
+            // Log the matching row
+            console.log("Matching Row:", row);
+
+            // Populate the row with relevant fields
+            const fields = [
+                row.charges_type, row.amount, row.gst_type,
+                row.cgst_amount, row.sgst_amount, row.igst_amount,
+                row.total_gst_amount, row.grand_total_billing
+            ];
+
+            // Create and append cells to the new row
+            fields.forEach(cellValue => {
+                const cell = document.createElement('td');
+                cell.innerText = cellValue;
+                newRow.appendChild(cell);
+            });
+
+            // Add delete button
+            const deleteCell = document.createElement('td');
+            const deleteButton = document.createElement('button');
+            deleteButton.innerText = 'Delete';
+            deleteButton.className = 'delete-btn'; // Optional: for styling
+            deleteButton.onclick = (event) => {
+                event.preventDefault(); // Prevent the default form submission behavior
+                vendordeleteTableRow(newRow, row.id); // Pass row ID to delete function
+            };
+            deleteCell.appendChild(deleteButton);
+            newRow.appendChild(deleteCell);
+
+            tableBody.appendChild(newRow);
+        }
+    });
+}
+
+
+// Function to fetch data from Supabase
+async function vendorfetchSupabaseData() {
+    try {
+        // Fetch data from 'booking_charges' table
+        let { data, error } = await supabaseClient
+            .from('booking_charges') // Table name
+            .select('*')// Fetch all fields
+            .eq('account_type', 'Buy')// Fetch rows filtered by company ID
+
+        if (error) {
+            console.error("Error fetching data:", error);
+            return [];
+        }
+
+        console.log("Fetched Data:", data); // Log the fetched data
+        return data;
+    } catch (error) {
+        console.error("Unexpected error fetching data:", error);
+        return [];
+    }
+}
+
+// Function to delete a row from the table and database
+async function vendordeleteTableRow(row, rowId) {
+    // First, delete from the database
+    try {
+        if (document.getElementById('modifyButton').disabled == true) {
+            // If successful, remove the row from the table
+            let { error } = await supabaseClient
+                .from('booking_charges') // Your table name
+                .delete() // Perform the delete action
+                .eq('id', rowId); // Specify which row to delete using the row ID
+
+            if (error) {
+                console.error("Error deleting from database:", error);
+                return; // Stop further execution if there's an error
+            }
+
+            row.remove();
+            alert('Charges deleted successfully.');
+        }
+
+    } catch (error) {
+        console.error("Unexpected error deleting row:", error);
+    }
+}
+
+document.getElementById('VendoraddButton').addEventListener('click', async function (event) {
+    event.preventDefault();
+    document.getElementById('VendoraddButton').disabled = true;
+
+    let lrNumber = document.getElementById('lrnumber').value || tempFormID;
+    let taxDesc_v = document.getElementById('vendorDefaultTax').value || 'CGST 0% SGST 0% IGST 0%';
+    let chargesType_v = document.getElementById('vendorChargesType').value;
+
+    // Check for duplicate entry in Supabase
+    let { data: duplicateData, error: duplicateError } = await supabaseClient
+        .from('booking_charges')
+        .select('*')
+        .eq('lr_number', lrNumber)
+        .eq('charges_type', chargesType_v && 'account_type', 'Buy');
+
+    if (duplicateData && duplicateData.length > 0) {
+        alert('Duplicate entry! This charges type already exists for the given LR number: ' + lrNumber + ".");
+        return; // Stop further execution
+    }
+
+    let taxDescArray_v = taxDesc_v.replace(/\s+/g, ',').split(',');
+    let cGSTPercentage_v = parseFloat(taxDescArray_v[1].replace('%', '')) / 100 || 0;
+    let sGSTPercentage_v = parseFloat(taxDescArray_v[3].replace('%', '')) / 100 || 0;
+    let iGSTPercentage_v = parseFloat(taxDescArray_v[5].replace('%', '')) / 100 || 0;
+
+    let basicAmount_v = parseFloat(document.getElementById('vendorFrightcharges').value) || 0;
+    let cGStAmt_v = basicAmount_v * cGSTPercentage_v;
+    let sGSTAmt_v = basicAmount_v * sGSTPercentage_v;
+    let iGSTAmt_v = basicAmount_v * iGSTPercentage_v;
+    let totalGSTAmount_v = cGStAmt_v + sGSTAmt_v + iGSTAmt_v;
+    let grandTotalBilling_v = totalGSTAmount_v + basicAmount_v;
+
+    const formData = {
+        lr_number: lrNumber,
+        charges_type: chargesType_v,
+        amount: basicAmount_v,
+        gst_type: taxDesc_v,
+        cgst_amount: cGStAmt_v,
+        sgst_amount: sGSTAmt_v,
+        igst_amount: iGSTAmt_v,
+        total_gst_amount: totalGSTAmount_v,
+        grand_total_billing: grandTotalBilling_v,
+        flg: 0,  // Assuming this is a flag for active or inactive records
+        created_by: userLoginID,  // Ensure userLoginID is defined
+        created_at: localtimeStamp,
+        account_type: 'Buy'
+    };
+
+    const action = (document.getElementById('VendoraddButton').textContent === 'Add') ? 'add' : 'update';
+
+    // Insert or Update record in Supabase
+    if (action === 'add') {
+        const { data, error } = await supabaseClient
+            .from('booking_charges')
+            .insert([formData]);
+        if (error) {
+            console.error('Error adding data:', error);
+        } else {
+            console.log('Data added:', data);
+        }
+    } else {
+        // For updating, you'll need an ID to identify the record
+        const { data, error } = await supabaseClient
+            .from('booking_charges')
+            .update(formData)
+            .eq('lr_number', lrNumber)
+            .eq('charges_type', chargesType_v && 'account_type', 'Buy');
+        if (error) {
+            console.error('Error updating data:', error);
+        } else {
+            console.log('Data updated:', data);
+        }
+    }
+
+    document.getElementById('VendoraddButton').disabled = false;
+
+    // Populate table or perform any other operations needed
+    vendorpopulateTable(lrNumber);
 });
