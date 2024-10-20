@@ -135,13 +135,45 @@ document.getElementById('saveButton').addEventListener('click', async function (
     alert(`Movement details ${action === 'add' ? 'saved' : 'updated'} successfully!\nLR Number: ${lrNumber}`);
 });
 
+//customer list
+document.getElementById('partyName').addEventListener('input', async function (e) {
+    const inputValue = e.target.value.trim().toLowerCase();
+    console.log('Customer Name '+inputValue);
+    await loadPartyDetails(inputValue); // Pass the input value to the function
+});
+// Clear the suggestion box when input field loses focus
+document.getElementById('partyName').addEventListener('blur', function () {
+    setTimeout(() => {
+        document.getElementById('partySuggestions').innerHTML = ''; // Clear suggestions on blur
+    }, 200); // Timeout to allow suggestion click events to fire before clearing
+});
 
+//vendor name list
+document.getElementById('vendorName').addEventListener('input', async function (e) {
+    const inputValue = e.target.value.trim().toLowerCase();
+    console.log('Vendor Name '+inputValue);
+    await loadPartyDetails(inputValue); // Pass the input value to the function
+});
+// Clear the suggestion box when input field loses focus
+document.getElementById('vendorName').addEventListener('blur', function () {
+    setTimeout(() => {
+        document.getElementById('vendorSuggestions').innerHTML = ''; // Clear suggestions on blur
+    }, 200); // Timeout to allow suggestion click events to fire before clearing
+});
 // Real-time event listener for user input
 document.getElementById('lrnumber').addEventListener('input', async function (e) {
     const inputValue = e.target.value.trim().toLowerCase();
     console.log('LR Number '+inputValue);
     await loadMovementDetails(inputValue); // Pass the input value to the function
 });
+
+// Clear the suggestion box when input field loses focus
+document.getElementById('lrnumber').addEventListener('blur', function () {
+    setTimeout(() => {
+        document.getElementById('lrNumberSuggestions').innerHTML = ''; // Clear suggestions on blur
+    }, 200); // Timeout to allow suggestion click events to fire before clearing
+});
+
 //Fetch and Load Booking Details
 async function loadMovementDetails(query = '') {
     const { data, error } = await supabaseClient

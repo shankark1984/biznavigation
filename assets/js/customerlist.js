@@ -1,10 +1,11 @@
 // Function to load party details from Supabase
-async function loadPartyDetails() {
+async function loadPartyDetails(query = '') {
     try {
         const { data: partyDetailsData, error } = await supabaseClient
             .from('party_details')
             .select('*')
             .eq('company_id', companyID)// Fetch rows filtered by company ID
+            .ilike('party_name', `%${query}%`) // Use ilike for case-insensitive partial matching
             .order('party_name', { ascending: true }); // Order by party_name A to Z (ascending)
 
         if (error) {
@@ -113,7 +114,7 @@ $("#vendorName").on("input", function () {
 
 // Load party details on page load
 $(document).ready(function () {
-    loadPartyDetails();
+    // loadPartyDetails();
     document.getElementById('saveButton').disabled = false;
     document.getElementById('newButton').disabled = false;
  
