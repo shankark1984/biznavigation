@@ -159,6 +159,12 @@
                         <option value="Credit">Credit</option>
                     </select>
                 </div>
+                <div>
+                    <label for="routedetails">Route Details</label>
+                    <input list="routeSuggestions" id="routedetails" name="routedetails" required placeholder="Selete Route"
+                        autocomplete="off">
+                    <datalist id="routeSuggestions"></datalist>
+                </div>
             </div>
             <!-- Tab Navigation -->
             <div class="tab">
@@ -205,8 +211,8 @@
                         <thead>
                             <tr>
                                 <th>Charges Type</th>
-                                <th>Amount</th>
                                 <th>GST Type</th>
+                                <th>Amount</th>
                                 <th>CGST Amount</th>
                                 <th>SGST Amount</th>
                                 <th>IGST Amount</th>
@@ -251,8 +257,8 @@
                         <thead>
                             <tr>
                                 <th>Charges Type</th>
-                                <th>Amount</th>
                                 <th>GST Type</th>
+                                <th>Amount</th>
                                 <th>CGST Amount</th>
                                 <th>SGST Amount</th>
                                 <th>IGST Amount</th>
@@ -279,6 +285,7 @@
     <script src="assets/js/taxDescription.js"></script>
     <script src="assets/js/customerlist.js"></script>
     <script src="assets/js/logout.js"></script>
+    <script src="assets/js/routemaster.js"></script>
 
 </body>
 

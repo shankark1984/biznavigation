@@ -174,3 +174,5 @@ function populateTransitTypeDropdown() {
 document.addEventListener('DOMContentLoaded', function () {
     loadTypeList();
 });
+
+

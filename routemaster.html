@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BizNavigation</title>
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="assets/css/styles.css">
+    <link rel="stylesheet" href="assets/css/fulltruckload.css">
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <!-- Third-party Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/2.3.10/purify.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js"></script> <!-- Supabase client -->
+</head>
+
+<body>
+    <header>
+        <h2>Settings</h2>
+    </header>
+
+    <main>
+        <form id="userForm">
+            <input type="hidden" id="tempFormID" name="tempFormID">
+            <input type="hidden" id="partyCode" name="partyCode">
+
+            <!-- Tab Navigation -->
+            <nav class="tab">
+                <button type="button" class="tablinks" onclick="openTab(event, 'routDetails')">Route Details</button>
+                <button type="button" class="tablinks" onclick="openTab(event, 'missingPinCodeDetails')">Pincode Details</button>
+            </nav>
+
+            <!-- Dropdown List Tab Content -->
+            <section id="routDetails" class="tab-content">
+                <div class="form-group">
+                    <div>
+                        <label for="routeDescription">Route Description</label>
+                        <input type="text" id="routeDescription" name="routeDescription"
+                            style="text-transform: capitalize;" autocomplete="off" required>
+                    </div>
+                    <div>
+                        <label for="distance">Distance (Kms)</label>
+                        <input type="number" id="distance" name="distance" autocomplete="off">
+                    </div>
+                    <div>
+                        <label for="" style="color: white;">.</label>
+                        <button type="button" onclick="addRoute()">Add</button>
+                    </div>
+                </div>
+                <!-- Route Table -->
+                <table id="routeTable" border="1">
+                    <thead>
+                        <tr>
+                            <th>Route Description</th>
+                            <th>Distance (Kms)</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Rows will be populated dynamically -->
+                    </tbody>
+                </table>
+            </section>
+
+            <!-- Dropdown List Tab Content -->
+            <section id="missingPinCodeDetails" class="tab-content">
+                <div class="form-group">
+                    <div>
+                        <label for="pincode">Pin Code</label>
+                        <input type="text" id="pincode" name="pincode" autocomplete="off" required>
+                    </div>
+                    <div>
+                        <label for="city">City</label>
+                        <input type="text" id="city" name="city" style="text-transform: capitalize;" autocomplete="off">
+                    </div>
+                    <div>
+                        <label for="state">State</label>
+                        <input type="text" id="state" name="state" style="text-transform: capitalize;" autocomplete="off">
+                    </div>
+                    <div>
+                        <label for="country">Country</label>
+                        <input type="text" id="country" name="country" style="text-transform: capitalize;" autocomplete="off">
+                    </div>
+                    <div>
+                        <label for="" style="color: white;">.</label>
+                        <button type="button" onclick="addPinCode()">Add</button>
+                    </div>
+                </div>
+                <!-- Route Table -->
+                <table id="pinCodeTable" border="1">
+                    <thead>
+                        <tr>
+                            <th>Pin Code</th>
+                            <th>City</th>
+                            <th>State</th>
+                            <th>Country</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Rows will be populated dynamically -->
+                    </tbody>
+                </table>
+            </section>
+
+        </form>
+    </main>
+
+    <footer>
+        <!-- Scripts -->
+
+        <script src="assets/js/server.js"></script>
+        <script src="assets/js/generalfunction.js"></script>
+        <script src="assets/js/header.js"></script>
+        <script src="assets/js/footer.js"></script>
+        <script src="assets/js/scripts.js"></script>
+        <script src="assets/js/routemaster.js"></script>
+        <!-- <script src="assets/js/pincode.js"></script> -->
+        <!-- <script src="assets/js/fulltruckload.js"></script> -->
+        <script src="assets/js/dropdownlist.js"></script>
+        <script src="assets/js/taxDescription.js"></script>
+        <!-- <script src="assets/js/customerlist.js"></script> -->
+        <script src="assets/js/logout.js"></script>
+    </footer>
+</body>
+
+</html>

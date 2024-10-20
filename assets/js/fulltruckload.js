@@ -58,6 +58,8 @@ async function generateNewLRNumber() {
 document.getElementById('saveButton').addEventListener('click', async function (event) {
     event.preventDefault();
     document.getElementById('saveButton').disabled = true;
+    document.getElementById('addButton').disabled = true;
+    document.getElementById('VendoraddButton').disabled = true;
     if (!areRequiredFieldsFilled()) {
         return;
     }
@@ -133,18 +135,25 @@ document.getElementById('saveButton').addEventListener('click', async function (
     alert(`Movement details ${action === 'add' ? 'saved' : 'updated'} successfully!\nLR Number: ${lrNumber}`);
 });
 
-// Load party details on page load
-$(document).ready(function () {
-    loadMovementDetails();
+
+// Real-time event listener for user input
+document.getElementById('lrnumber').addEventListener('input', async function (e) {
+    const inputValue = e.target.value.trim().toLowerCase();
+    console.log('LR Number '+inputValue);
+    await loadMovementDetails(inputValue); // Pass the input value to the function
 });
 //Fetch and Load Booking Details
-async function loadMovementDetails() {
+async function loadMovementDetails(query = '') {
     const { data, error } = await supabaseClient
         .from('booking_details')
         .select('*')
         .eq('company_id', companyID)
-        .order('lr_number', { ascending: true }); // Order by party_name A to Z (ascending)
-
+        .ilike('lr_number', `%${query}%`) // Use ilike for case-insensitive partial matching
+        .order('lr_number', { ascending: false }); // Order by party_name A to Z (ascending)
+        
+        if (data) {
+            console.log(data); // Check this to ensure all data is retrieved
+        }
     if (error) {
         console.error('Error fetching movement details:', error);
         return;
@@ -191,6 +200,7 @@ function populateLRNumberSuggestions() {
     });
     document.getElementById("lrNumberSuggestions").innerHTML = suggestions;
 }
+
 // When a LR Number is selected from the dropdown, populate the form with relevant details
 $("#lrnumber").on("input", async function () {
     const lrNumber = $(this).val();
@@ -198,7 +208,7 @@ $("#lrnumber").on("input", async function () {
 
     const { data, error } = await supabaseClient
         .from('booking_details')
-        .select('customer_code')  // Only selecting customer_code
+        .select('*')  // Only selecting customer_code
         .eq('lr_number', lrNumber);
 
     if (error) {
@@ -301,12 +311,12 @@ async function loadMovementChargesDetails(lrNumber) {
 }
 
 //Check for Duplicate Entry
-async function checkDuplicate(lrNumber, chargesType) {
+async function checkDuplicate(lrNumber, chargesType, accountType) {
     const { data, error } = await supabaseClient
         .from('booking_charges')
         .select('*')
         .eq('lr_number', lrNumber)
-        .eq('charges_type', chargesType);
+        .eq('charges_type', chargesType && 'account_type', accountType);
 
     if (error) {
         console.error('Error checking duplicate:', error);
@@ -343,10 +353,44 @@ function areRequiredFieldsFilled() {
 async function populateTable(lrNumber) {
     const data = await fetchSupabaseData(); // Fetch the data
     const tableBody = document.querySelector('#chargesDetailsTable tbody');
+    const tableFoot = document.querySelector('#chargesDetailsTable tfoot');
 
     // Clear existing table rows
     tableBody.innerHTML = '';
 
+    // Variables to store total sums
+    let totalAmount = 0;
+    let totalCGST = 0;
+    let totalSGST = 0;
+    let totalIGST = 0;
+    let totalGST = 0;
+    let grandTotal = 0;
+
+    // Function to update the totals row
+    function updateTotals() {
+        // Clear any existing footer content
+        if (tableFoot) {
+            tableFoot.innerHTML = '';
+        }
+        const totalRow = document.createElement('tr');
+        totalRow.innerHTML = `
+            <td colspan="2"><strong>Total</strong></td>
+            <td><strong>${totalAmount.toFixed(2)}</strong></td>
+            <td><strong>${totalCGST.toFixed(2)}</strong></td>
+            <td><strong>${totalSGST.toFixed(2)}</strong></td>
+            <td><strong>${totalIGST.toFixed(2)}</strong></td>
+            <td><strong>${totalGST.toFixed(2)}</strong></td>
+            <td><strong>${grandTotal.toFixed(2)}</strong></td>
+            <td></td>
+        `;
+        if (tableFoot) {
+            tableFoot.appendChild(totalRow);
+        } else {
+            const newFooter = document.createElement('tfoot');
+            newFooter.appendChild(totalRow);
+            document.querySelector('#chargesDetailsTable').appendChild(newFooter);
+        }
+    }
     // Loop through the fetched data
     data.forEach(row => {
         if (row.lr_number === lrNumber) { // Match the LR number
@@ -357,7 +401,7 @@ async function populateTable(lrNumber) {
 
             // Populate the row with relevant fields
             const fields = [
-                row.charges_type, row.amount, row.gst_type,
+                row.charges_type, row.gst_type, row.amount,
                 row.cgst_amount, row.sgst_amount, row.igst_amount,
                 row.total_gst_amount, row.grand_total_billing
             ];
@@ -376,16 +420,41 @@ async function populateTable(lrNumber) {
             deleteButton.className = 'delete-btn'; // Optional: for styling
             deleteButton.onclick = (event) => {
                 event.preventDefault(); // Prevent the default form submission behavior
+
+                // Subtract the deleted row's values from the totals
+                totalAmount -= parseFloat(row.amount || 0);
+                totalCGST -= parseFloat(row.cgst_amount || 0);
+                totalSGST -= parseFloat(row.sgst_amount || 0);
+                totalIGST -= parseFloat(row.igst_amount || 0);
+                totalGST -= parseFloat(row.total_gst_amount || 0);
+                grandTotal -= parseFloat(row.grand_total_billing || 0);
+
+                // Remove the row from the table
+                tableBody.removeChild(newRow);
+
+                // Update totals after row deletion
+                updateTotals();
+
                 deleteTableRow(newRow, row.id); // Pass row ID to delete function
             };
             deleteCell.appendChild(deleteButton);
             newRow.appendChild(deleteCell);
 
             tableBody.appendChild(newRow);
+
+            // Accumulate totals
+            totalAmount += parseFloat(row.amount || 0);
+            totalCGST += parseFloat(row.cgst_amount || 0);
+            totalSGST += parseFloat(row.sgst_amount || 0);
+            totalIGST += parseFloat(row.igst_amount || 0);
+            totalGST += parseFloat(row.total_gst_amount || 0);
+            grandTotal += parseFloat(row.grand_total_billing || 0);
         }
     });
-}
 
+    // Add or update totals row after the loop
+    updateTotals();
+}
 
 // Function to fetch data from Supabase
 async function fetchSupabaseData() {
@@ -446,7 +515,8 @@ document.getElementById('addButton').addEventListener('click', async function (e
         .from('booking_charges')
         .select('*')
         .eq('lr_number', lrNumber)
-        .eq('charges_type', chargesType);
+        .eq('charges_type', chargesType)
+        .eq('account_type', 'Sale');
 
     if (duplicateData && duplicateData.length > 0) {
         alert('Duplicate entry! This charges type already exists for the given LR number: ' + lrNumber + ".");
@@ -539,13 +609,48 @@ document.getElementById('reportButton').addEventListener('click', async function
 
 
 
-// Function to populate table with data where LRNumber matches
 async function vendorpopulateTable(lrNumber) {
     const data = await vendorfetchSupabaseData(); // Fetch the data
     const tableBody = document.querySelector('#vendorchargesDetailsTable tbody');
+    const tableFoot = document.querySelector('#vendorchargesDetailsTable tfoot');
 
     // Clear existing table rows
     tableBody.innerHTML = '';
+
+    // Variables to store total sums
+    let totalAmount = 0;
+    let totalCGST = 0;
+    let totalSGST = 0;
+    let totalIGST = 0;
+    let totalGST = 0;
+    let grandTotal = 0;
+
+    // Function to update the totals row
+    function updateTotals() {
+        // Clear any existing footer content
+        if (tableFoot) {
+            tableFoot.innerHTML = '';
+        }
+
+        const totalRow = document.createElement('tr');
+        totalRow.innerHTML = `
+            <td colspan="2"><strong>Total</strong></td>
+            <td><strong>${totalAmount.toFixed(2)}</strong></td>
+            <td><strong>${totalCGST.toFixed(2)}</strong></td>
+            <td><strong>${totalSGST.toFixed(2)}</strong></td>
+            <td><strong>${totalIGST.toFixed(2)}</strong></td>
+            <td><strong>${totalGST.toFixed(2)}</strong></td>
+            <td><strong>${grandTotal.toFixed(2)}</strong></td>
+            <td></td>
+        `;
+        if (tableFoot) {
+            tableFoot.appendChild(totalRow);
+        } else {
+            const newFooter = document.createElement('tfoot');
+            newFooter.appendChild(totalRow);
+            document.querySelector('#vendorchargesDetailsTable').appendChild(newFooter);
+        }
+    }
 
     // Loop through the fetched data
     data.forEach(row => {
@@ -557,7 +662,7 @@ async function vendorpopulateTable(lrNumber) {
 
             // Populate the row with relevant fields
             const fields = [
-                row.charges_type, row.amount, row.gst_type,
+                row.charges_type, row.gst_type, row.amount,
                 row.cgst_amount, row.sgst_amount, row.igst_amount,
                 row.total_gst_amount, row.grand_total_billing
             ];
@@ -576,15 +681,43 @@ async function vendorpopulateTable(lrNumber) {
             deleteButton.className = 'delete-btn'; // Optional: for styling
             deleteButton.onclick = (event) => {
                 event.preventDefault(); // Prevent the default form submission behavior
+
+                // Subtract the deleted row's values from the totals
+                totalAmount -= parseFloat(row.amount || 0);
+                totalCGST -= parseFloat(row.cgst_amount || 0);
+                totalSGST -= parseFloat(row.sgst_amount || 0);
+                totalIGST -= parseFloat(row.igst_amount || 0);
+                totalGST -= parseFloat(row.total_gst_amount || 0);
+                grandTotal -= parseFloat(row.grand_total_billing || 0);
+
+                // Remove the row from the table
+                tableBody.removeChild(newRow);
+
+                // Update totals after row deletion
+                updateTotals();
+
                 vendordeleteTableRow(newRow, row.id); // Pass row ID to delete function
             };
             deleteCell.appendChild(deleteButton);
             newRow.appendChild(deleteCell);
 
             tableBody.appendChild(newRow);
+
+            // Accumulate totals
+            totalAmount += parseFloat(row.amount || 0);
+            totalCGST += parseFloat(row.cgst_amount || 0);
+            totalSGST += parseFloat(row.sgst_amount || 0);
+            totalIGST += parseFloat(row.igst_amount || 0);
+            totalGST += parseFloat(row.total_gst_amount || 0);
+            grandTotal += parseFloat(row.grand_total_billing || 0);
         }
     });
+
+    // Add or update totals row after the loop
+    updateTotals();
 }
+
+
 
 
 // Function to fetch data from Supabase
@@ -647,7 +780,8 @@ document.getElementById('VendoraddButton').addEventListener('click', async funct
         .from('booking_charges')
         .select('*')
         .eq('lr_number', lrNumber)
-        .eq('charges_type', chargesType_v && 'account_type', 'Buy');
+        .eq('charges_type', chargesType_v)
+        .eq('account_type', 'Buy');
 
     if (duplicateData && duplicateData.length > 0) {
         alert('Duplicate entry! This charges type already exists for the given LR number: ' + lrNumber + ".");
@@ -713,3 +847,9 @@ document.getElementById('VendoraddButton').addEventListener('click', async funct
     // Populate table or perform any other operations needed
     vendorpopulateTable(lrNumber);
 });
+document.getElementById('frightcharges').addEventListener('change', async function (event) {
+    document.getElementById('addButton').disabled = false;
+})
+document.getElementById('vendorFrightcharges').addEventListener('change', async function (event) {
+    document.getElementById('VendoraddButton').disabled = false;
+})

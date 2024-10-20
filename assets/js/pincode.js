@@ -54,7 +54,9 @@ async function setupPincodeListener(pinCodeFieldId, cityFieldId) {
                     updateFieldValue('state', row.state);
                     updateFieldValue('country', row.country);
                 } else {
+                    pincodeInput.style.border = '2px solid red'; // Add red border
                     console.error('Pincode not found in missing_pincodes table', error);
+                    alert('Invalid Pincode');
                 }
             }
         } catch (error) {

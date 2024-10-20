@@ -185,7 +185,8 @@ async function loadMovementChargesDetailsForLR(lrNumber) {
         let { data, error } = await supabaseClient
             .from('booking_charges') // Replace with your actual table name in Supabase
             .select('*')
-            .eq('lr_number', lrNumber); // Filter by lrNumber
+            .eq('lr_number', lrNumber) // Filter by lrNumber
+            .eq('account_type', 'Sale'); // Filter by lrNumber
 
         if (error) {
             throw error;

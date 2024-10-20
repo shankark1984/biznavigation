@@ -337,7 +337,15 @@ input[type="number"] {
 
 #partyName,
 #lrnumber,
-#vendorName {
+#vendorName,
+#routedetails {
+    width: 100%;
+    padding: 10px;
+    border-radius: 5px;
+    border: 1px solid #02b53e;
+}
+
+datalist {
     width: 100%;
     padding: 10px;
     border-radius: 5px;
@@ -367,6 +375,19 @@ input[type="number"] {
 #vendorchargesDetailsTable td {
     padding: 10px;
     text-align: left;
+}
+
+th,
+td {
+    padding: 10px;
+    text-align: left;
+    border: 1px solid black;
+}
+
+table {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: 1em;
 }
 
 /* Footer Styles */
