@@ -61,6 +61,7 @@ document.getElementById('saveButton').addEventListener('click', async function (
     document.getElementById('addButton').disabled = true;
     document.getElementById('VendoraddButton').disabled = true;
     if (!areRequiredFieldsFilled()) {
+        document.getElementById('saveButton').disabled = false;
         return;
     }
 
@@ -160,6 +161,7 @@ document.getElementById('vendorName').addEventListener('blur', function () {
         document.getElementById('vendorSuggestions').innerHTML = ''; // Clear suggestions on blur
     }, 200); // Timeout to allow suggestion click events to fire before clearing
 });
+
 // Real-time event listener for user input
 document.getElementById('lrnumber').addEventListener('input', async function (e) {
     const inputValue = e.target.value.trim().toLowerCase();
@@ -361,7 +363,7 @@ async function checkDuplicate(lrNumber, chargesType, accountType) {
 // Function to check if all required fields are filled
 function areRequiredFieldsFilled() {
     const requiredFields = [
-        'lrdate', 'quotationid', 'movementType', 'partyName',
+        'lrdate', 'movementType', 'partyName',
         'originPinCode', 'orgincity', 'orginAddress', 'destinationPinCode',
         'destinationcity', 'destinationAddress', 'requesteddate', 'vehicleType',
         'vehiclenumber', 'quantity', 'chargewt', 'modeType', 'quantity', 'chargewt'

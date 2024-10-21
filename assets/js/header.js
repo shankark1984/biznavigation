@@ -19,8 +19,6 @@ document.addEventListener("DOMContentLoaded", function () {
                     <a href="party_registration.html">Party Registration</a>
                     <a href="#">Employee</a>
                     <a href="#">User Rules</a>
-                    <a href="#">UOM</a>
-                    <a href="#">Map</a>
                 </div>
             </li>
             <li>
