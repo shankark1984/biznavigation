@@ -29,30 +29,30 @@
         </div>
         <div class="button-group">
             <button type="button" id="newButton" accesskey="n">New</button>
-            <button type="button" id="modifyButton" accesskey="m" >Modify</button>
-            <button type="button" id="deleteButton"accesskey="d">Delete</button>
+            <button type="button" id="modifyButton" accesskey="m">Modify</button>
+            <button type="button" id="deleteButton" accesskey="d">Delete</button>
             <button type="button" id="reportButton" accesskey="r">Report</button>
             <button type="button" id="saveButton" accesskey="s">Save</button>
         </div>
 
         <div class="formborder">
             <div class="form-group">
-                <div>
+                <div style="width: 150px;">
                     <label for="lrnumber">LR Number</label>
                     <input list="lrNumberSuggestions" id="lrnumber" name="lrnumber" class="two-input-group"
                         placeholder="LR Number" autocomplete="off">
                     <datalist id="lrNumberSuggestions"></datalist>
                 </div>
-                <div>
+                <div style="width: 150px;">
                     <label for="lrdate">LR Date</label>
                     <input type="date" id="lrdate" name="lrdate" required>
                 </div>
-                <div>
+                <div style="width: 150px;">
                     <label for="quotationid">Quotation ID</label>
                     <input type="text" id="quotationid" name="quotationid" class="two-input-group"
                         placeholder="Quotation ID" autocomplete="off">
                 </div>
-                <div>
+                <div style="width: 150px;">
                     <label for="movementType">Movement Type</label>
                     <select id="movementType" name="movementType">
                         <option value="" disabled selected>Select Movement Type</option>
@@ -110,8 +110,8 @@
                 <div style="position: relative;">
                     <label for="invoicevalue">Invoice Value</label>
                     <span class="inr-symbol">₹</span>
-                    <input type="number" id="invoicevalue" name="invoicevalue" min="0" step="0.01" placeholder="00.00" value="0"
-                        onblur="formatCurrency(this)">
+                    <input type="number" id="invoicevalue" name="invoicevalue" min="0" step="0.01" placeholder="00.00"
+                        value="0" onblur="formatCurrency(this)">
                 </div>
                 <div>
                     <label for="vendorName">Vendor Name</label>
@@ -161,15 +161,16 @@
                 </div>
                 <div>
                     <label for="routedetails">Route Details</label>
-                    <input list="routeSuggestions" id="routedetails" name="routedetails" required placeholder="Selete Route"
-                        autocomplete="off">
+                    <input list="routeSuggestions" id="routedetails" name="routedetails" required
+                        placeholder="Selete Route" autocomplete="off">
                     <datalist id="routeSuggestions"></datalist>
                 </div>
             </div>
             <!-- Tab Navigation -->
             <div class="tab">
                 <button type="button" class="tablinks" onclick="openTab(event, 'description')">Description</button>
-                <button type="button" class="tablinks" onclick="openTab(event, 'frightCharges')">Freight Charges</button>
+                <button type="button" class="tablinks" onclick="openTab(event, 'frightCharges')">Freight
+                    Charges</button>
                 <button type="button" class="tablinks" onclick="openTab(event, 'vendorCharges')">Vendor Charges</button>
             </div>
 
@@ -201,7 +202,7 @@
                             <option value="" disabled selected>Select Default Tax</option>
                         </select>
                     </div>
-            
+
                     <button type="button" id="addButton">Add</button>
 
                 </div>
@@ -247,7 +248,7 @@
                             <option value="" disabled selected>Select Default Tax</option>
                         </select>
                     </div>
-            
+
                     <button type="button" id="VendoraddButton">Add</button>
 
                 </div>
