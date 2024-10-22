@@ -37,17 +37,17 @@
 
         <div class="formborder">
             <div class="form-group">
-                <div style="width: 150px;">
+                <div>
                     <label for="lrnumber">LR Number</label>
                     <input list="lrNumberSuggestions" id="lrnumber" name="lrnumber" class="two-input-group"
                         placeholder="LR Number" autocomplete="off">
                     <datalist id="lrNumberSuggestions"></datalist>
                 </div>
-                <div style="width: 150px;">
+                <div>
                     <label for="lrdate">LR Date</label>
                     <input type="date" id="lrdate" name="lrdate" required>
                 </div>
-                <div style="width: 150px;">
+                <div>
                     <label for="quotationid">Quotation ID</label>
                     <input type="text" id="quotationid" name="quotationid" class="two-input-group"
                         placeholder="Quotation ID" autocomplete="off">
@@ -58,45 +58,45 @@
                         <option value="" disabled selected>Select Movement Type</option>
                     </select>
                 </div>
-                <div>
+                <div style="width: 300px;">
                     <label for="partyName">Customer Name</label>
                     <input list="partySuggestions" id="partyName" name="partyName" required placeholder="Party Name"
                         autocomplete="off">
                     <datalist id="partySuggestions"></datalist>
                 </div>
-                <div>
+                <div style="width: 150px;">
                     <label for="originPinCode">Origin Pincode</label>
                     <input type="text" id="originPinCode" name="originPinCode" required autocomplete="off">
                 </div>
-                <div>
+                <div style="width: 200px;">
                     <label for="orgincity">Origin City</label>
                     <input type="text" id="orgincity" name="orgincity" style="text-transform: capitalize;" required
                         autocomplete="off">
                 </div>
-                <div>
+                <div style="width: 570px;">
                     <label for="orginAddress">Origin Address</label>
                     <textarea id="orginAddress" name="orginAddress" style="text-transform: capitalize;" required
                         rows="1" autocomplete="off"></textarea>
                 </div>
-                <div>
+                <div style="width: 150px;">
                     <label for="destinationPinCode">Destination Pincode</label>
                     <input type="text" id="destinationPinCode" name="destinationPinCode" required autocomplete="off">
                 </div>
-                <div>
+                <div style="width: 200px;">
                     <label for="destinationcity">Destination City</label>
                     <input type="text" id="destinationcity" name="destinationcity" style="text-transform: capitalize;"
                         required autocomplete="off">
                 </div>
-                <div>
+                <div style="width: 570px;">
                     <label for="destinationAddress">Destination Address</label>
                     <textarea id="destinationAddress" name="destinationAddress" style="text-transform: capitalize;"
                         required rows="1" autocomplete="off"></textarea>
                 </div>
-                <div>
+                <div style="width: 150px;">
                     <label for="requesteddate">Requested Date</label>
                     <input type="date" id="requesteddate" name="requesteddate">
                 </div>
-                <div>
+                <div style="width: 200px;">
                     <label for="vehicleType">Vehicle Type</label>
                     <select id="vehicleType" name="vehicleType">
                         <option value="" disabled selected>Select Vehicle Type</option>
@@ -206,7 +206,7 @@
                     <button type="button" id="addButton">Add</button>
 
                 </div>
-                <!-- Table to display data from Google Sheet -->
+                <!-- Table to display data from-->
                 <div id="chargesDetailsTableContainer">
                     <table id="chargesDetailsTable">
                         <thead>

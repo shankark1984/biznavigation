@@ -1,0 +1,122 @@
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BizNavigation</title>
+    <link rel="stylesheet" href="assets/css/styles.css">
+    <link rel="stylesheet" href="assets/css/fulltruckload.css">
+    <script src="assets/js/jquery.min.js" defer></script>
+    <script src="assets/js/dompurify.min.js" defer></script>
+    <script src="assets/js/html2canvas.min.js" defer></script>
+    <script src="assets/js/jspdf.umd.min.js" defer></script>
+    <script src="assets/js/quagga.min.js" defer></script>
+    <script src="assets/js/supabase.min.js" defer></script>
+</head>
+
+<body>
+
+    <form id="userForm">
+        <div class="form-header">
+            <h2>Full Truck Load</h2>
+            <input type="hidden" id="tempFormID" name="tempFormID">
+            <input type="hidden" id="partyCode" name="partyCode">
+            <input type="hidden" id="vendorCode" name="vendorCode">
+        </div>
+        <div class="button-group">
+            <button type="button" id="newButton" accesskey="n">New</button>
+            <button type="button" id="modifyButton" accesskey="m">Modify</button>
+            <button type="button" id="deleteButton" accesskey="d">Delete</button>
+            <button type="button" id="reportButton" accesskey="r">Report</button>
+            <button type="button" id="saveButton" accesskey="s">Save</button>
+        </div>
+
+        <div class="formborder">
+            <div class="form-group">
+                <!-- Field Inputs with removed inline styles -->
+                <label for="lrnumber">LR Number</label>
+                <input list="lrNumberSuggestions" id="lrnumber" name="lrnumber" class="two-input-group" placeholder="LR Number" autocomplete="off">
+                <datalist id="lrNumberSuggestions"></datalist>
+
+                <label for="lrdate">LR Date</label>
+                <input type="date" id="lrdate" name="lrdate" required>
+
+                <label for="quotationid">Quotation ID</label>
+                <input type="text" id="quotationid" name="quotationid" class="two-input-group" placeholder="Quotation ID" autocomplete="off">
+
+                <label for="movementType">Movement Type</label>
+                <select id="movementType" name="movementType">
+                    <option value="" disabled selected>Select Movement Type</option>
+                </select>
+
+                <label for="partyName">Customer Name</label>
+                <input list="partySuggestions" id="partyName" name="partyName" required placeholder="Party Name" autocomplete="off">
+                <datalist id="partySuggestions"></datalist>
+
+                <label for="originPinCode">Origin Pincode</label>
+                <input type="text" id="originPinCode" name="originPinCode" required autocomplete="off">
+
+                <label for="orgincity">Origin City</label>
+                <input type="text" id="orgincity" name="orgincity" required autocomplete="off">
+
+                <label for="orginAddress">Origin Address</label>
+                <textarea id="orginAddress" name="orginAddress" required rows="1" autocomplete="off"></textarea>
+
+                <!-- Repeat similar structure for other fields -->
+                <!-- Destination and other fields omitted for brevity -->
+            </div>
+
+            <!-- Tab Navigation -->
+            <div class="tab">
+                <button type="button" class="tablinks" onclick="openTab(event, 'description')">Description</button>
+                <button type="button" class="tablinks" onclick="openTab(event, 'freightCharges')">Freight Charges</button>
+                <button type="button" class="tablinks" onclick="openTab(event, 'vendorCharges')">Vendor Charges</button>
+            </div>
+
+            <!-- Tab Contents -->
+            <div id="description" class="tab-content">
+                <label for="descriptionofGoods">Description of Goods</label>
+                <textarea id="descriptionofGoods" name="descriptionofGoods" required rows="4" autocomplete="off"></textarea>
+            </div>
+
+            <div id="freightCharges" class="tab-content">
+                <div class="form-group">
+                    <label for="chargesType">Charges Type</label>
+                    <select id="chargesType" name="chargesType">
+                        <option value="" disabled selected>Select Charges Type</option>
+                    </select>
+
+                    <label for="frightcharges">Charges</label>
+                    <input type="number" id="frightcharges" name="frightcharges" min="0" step="0.01" placeholder="00.00" onblur="formatCurrency(this)">
+                    
+                    <!-- Other freight charges related fields and table -->
+
+                </div>
+            </div>
+
+            <div id="vendorCharges" class="tab-content">
+                <!-- Vendor charges related form group -->
+                <!-- Fields omitted for brevity -->
+            </div>
+        </div> <!-- Closing formborder -->
+    </form>
+
+    <!-- Defer JavaScript files for faster page load -->
+    <script src="assets/js/server.min.js" defer></script>
+    <script src="assets/js/generalfunction.min.js" defer></script>
+    <script src="assets/js/header.min.js" defer></script>
+    <script src="assets/js/footer.min.js" defer></script>
+    <script src="assets/js/scripts.min.js" defer></script>
+    <script src="assets/js/pincode.min.js" defer></script>
+    <script src="assets/js/fulltruckload.min.js" defer></script>
+    <script src="assets/js/dropdownlist.min.js" defer></script>
+    <script src="assets/js/taxDescription.min.js" defer></script>
+    <script src="assets/js/customerlist.min.js" defer></script>
+    <script src="assets/js/logout.min.js" defer></script>
+    <script src="assets/js/routemaster.min.js" defer></script>
+
+</body>
+
+</html>

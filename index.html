@@ -6,41 +6,34 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BizNavigation</title>
     <link rel="stylesheet" href="assets/css/styles.css">
+    <link rel="stylesheet" href="assets/css/login.css">
     <link rel="manifest" href="/manifest.json">
     <script src="https://unpkg.com/@supabase/supabase-js"></script> <!-- Supabase client -->
 </head>
 
 <body>
 
-    <div class="login-container">
-        <h2 style="color: rgb(190, 132, 132); font-size: 2.5em; background-color: beige;border-radius: 1em;">LOGIN</h2>
+    <div class="login-wrap">
+        <h2
+            style="color: rgb(190, 132, 132); font-size: 2.5em; background-color: beige;border-radius: 1em; text-align: center;">
+            LOGIN</h2>
         <!-- Logo added here -->
-        <div class="logo-container" style="margin: 10px; background-color: white;">
+        <div class="logo-container" style="margin: 10px; background-color: white; text-align: center;">
             <img src="assets/img/applogo.png" alt="Logo" class="logo">
             <div>
                 <h2>BizNavigation</h2>
                 <span style="font-size: 0.5em;">TAKE YOUR BUSINESS TO THE NEXT LEVEL</span>
             </div>
         </div>
-        <form id="loginForm" onsubmit="return false;">
-            <div class="form-group" style="margin: 20px;">
-                <label for="userName">Username</label>
-                <input type="text" id="userName" name="userName" required autocomplete="off"
-                    placeholder="Type your username">
-                <label for="password">Password</label>
-                <input type="password" id="password" name="password" required autocomplete="off"
-                    placeholder="Type your password" onkeydown="checkEnterKey(event)">
-                <a href="" class="" onclick="resetPassword()"><span
-                        style="font-size: 10px; position: bottom;color:blue;">Reset
-                        Password</span></a>
-            </div>
-            <div class="button-group">
-                <button type="button" onclick="login()">Login</button>
+        <div class="form">
+            <input type="text" id="userName" name="userName" required autocomplete="off"
+                placeholder="Type your username">
+            <input type="password" id="password" name="password" required autocomplete="off"
+                placeholder="Type your password" onkeydown="checkEnterKey(event)">
+            <button type="button" onclick="login()">Login</button>
+            <a href="" onclick="resetPassword()"><p>Reset Password</p></a>
 
-                <!-- <button type="button" class="reset-btn" onclick="resetPassword()">Reset Password</button> -->
-            </div>
-
-        </form>
+        </div>
         <p id="errorMessage" style="color: red; display: none;">Invalid username or password. Please try again.</p>
     </div>
     <script>
@@ -52,7 +45,6 @@
     </script>
     <script src="assets/js/server.js"></script>
     <script src="assets/js/login.js"></script>
-
     <script src="assets/js/footer.js"></script>
 </body>
 
