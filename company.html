@@ -25,46 +25,53 @@
 
         <!-- Button Group -->
         <div class="button-group">
-            <button type="button" id="newButton" aria-label="Create a new company record" accesskey="n" >New</button>
-            <button type="button" id="modifyButton" aria-label="Modify an existing company record" disabled accesskey="m">Modify</button>
-            <button type="button" id="deleteButton" aria-label="Delete the company record" disabled accesskey="d">Delete</button>
-            <button type="button" id="reportButton" aria-label="Generate a report for the company" disabled accesskey="r">Report</button>
-            <button type="submit" id="saveButton" aria-label="Save the company details" disabled accesskey="s">Save</button>
+            <button type="button" id="newButton" aria-label="Create a new company record" accesskey="n">New</button>
+            <button type="button" id="modifyButton" aria-label="Modify an existing company record" disabled
+                accesskey="m">Modify</button>
+            <button type="button" id="deleteButton" aria-label="Delete the company record" disabled
+                accesskey="d">Delete</button>
+            <button type="button" id="reportButton" aria-label="Generate a report for the company" disabled
+                accesskey="r">Report</button>
+            <button type="submit" id="saveButton" aria-label="Save the company details" disabled
+                accesskey="s">Save</button>
         </div>
 
         <!-- Company Details Section -->
         <div class="formborder">
-            <fieldset class="form-group">
-                <legend>Company Information</legend>
-
+            <div class="form-group">
                 <!-- Short Code -->
                 <div>
                     <label for="shortCode">Short Code</label>
-                    <input type="text" id="shortCode" name="shortCode" required class="input-small" placeholder="Short Code">
+                    <input type="text" id="shortCode" name="shortCode" required class="input-small"
+                        placeholder="Short Code">
                 </div>
 
                 <!-- Company Name -->
                 <div>
                     <label for="companyName">Company Name</label>
-                    <input type="text" id="companyName" name="companyName" required placeholder="Company Name" style="text-transform: capitalize;">
+                    <input type="text" id="companyName" name="companyName" required placeholder="Company Name"
+                        style="text-transform: capitalize;">
                 </div>
 
                 <!-- CIN No -->
                 <div>
                     <label for="cinNo">CIN No</label>
-                    <input type="text" id="cinNo" name="cinNo" required placeholder="CIN No" style="text-transform: uppercase;">
+                    <input type="text" id="cinNo" name="cinNo" required placeholder="CIN No"
+                        style="text-transform: uppercase;">
                 </div>
 
                 <!-- Udyog Aadhaar No -->
                 <div>
                     <label for="uaNo">UA No</label>
-                    <input type="text" id="uaNo" name="uaNo" required placeholder="Udyog Aadhaar No" style="text-transform: uppercase;">
+                    <input type="text" id="uaNo" name="uaNo" required placeholder="Udyog Aadhaar No"
+                        style="text-transform: uppercase;">
                 </div>
 
                 <!-- Address -->
                 <div>
                     <label for="address">Address</label>
-                    <textarea id="address" name="address" required rows="1" placeholder="Enter address" style="text-transform: capitalize;"></textarea>
+                    <textarea id="address" name="address" required rows="1" placeholder="Enter address"
+                        style="text-transform: capitalize;"></textarea>
                 </div>
 
                 <!-- Pin Code -->
@@ -76,31 +83,36 @@
                 <!-- City -->
                 <div>
                     <label for="city">City</label>
-                    <input type="text" id="city" name="city" required placeholder="City" style="text-transform: capitalize;">
+                    <input type="text" id="city" name="city" required placeholder="City"
+                        style="text-transform: capitalize;">
                 </div>
 
                 <!-- State -->
                 <div>
                     <label for="state">State</label>
-                    <input type="text" id="state" name="state" required placeholder="State" style="text-transform: capitalize;">
+                    <input type="text" id="state" name="state" required placeholder="State"
+                        style="text-transform: capitalize;">
                 </div>
 
                 <!-- Country -->
                 <div>
                     <label for="country">Country</label>
-                    <input type="text" id="country" name="country" required placeholder="Country" style="text-transform: capitalize;">
+                    <input type="text" id="country" name="country" required placeholder="Country"
+                        style="text-transform: capitalize;">
                 </div>
 
                 <!-- Pan Number -->
                 <div>
                     <label for="panNumber">Pan Number</label>
-                    <input type="text" id="panNumber" name="panNumber" required placeholder="Enter Pan Number" style="text-transform: uppercase;">
+                    <input type="text" id="panNumber" name="panNumber" required placeholder="Enter Pan Number"
+                        style="text-transform: uppercase;">
                 </div>
 
                 <!-- GST Number -->
                 <div>
                     <label for="gstNumber">GST Number</label>
-                    <input type="text" id="gstNumber" name="gstNumber" required placeholder="Enter GST Number" style="text-transform: uppercase;">
+                    <input type="text" id="gstNumber" name="gstNumber" required placeholder="Enter GST Number"
+                        style="text-transform: uppercase;">
                 </div>
 
                 <!-- Phone Number -->
@@ -120,7 +132,7 @@
                     <label for="website">Website</label>
                     <input type="url" id="website" name="website" placeholder="http://example.com">
                 </div>
-            </fieldset>
+            </div>
 
             <!-- Tabs for Additional Details -->
             <div class="tab">
@@ -132,13 +144,16 @@
             <div id="branchDetails" class="tab-content">
                 <div class="form-group">
                     <label for="branchDescription">Branch Description</label>
-                    <textarea id="branchDescription" name="branchDescription" required rows="4" placeholder="Describe the branch location" style="text-transform: capitalize;"></textarea>
+                    <textarea id="branchDescription" name="branchDescription" required rows="4"
+                        placeholder="Describe the branch location" style="text-transform: capitalize;"></textarea>
 
                     <label for="branchAddress">Branch Address</label>
-                    <textarea id="branchAddress" name="branchAddress" required rows="2" placeholder="Enter branch address"></textarea>
+                    <textarea id="branchAddress" name="branchAddress" required rows="2"
+                        placeholder="Enter branch address"></textarea>
 
                     <label for="branchPhoneNumber">Branch Phone Number</label>
-                    <input type="text" id="branchPhoneNumber" name="branchPhoneNumber" required placeholder="Branch Phone Number">
+                    <input type="text" id="branchPhoneNumber" name="branchPhoneNumber" required
+                        placeholder="Branch Phone Number">
                 </div>
             </div>
 
@@ -149,7 +164,8 @@
                     <input type="text" id="bankName" name="bankName" required placeholder="Enter bank name">
 
                     <label for="bankAccountNumber">Account Number</label>
-                    <input type="text" id="bankAccountNumber" name="bankAccountNumber" required placeholder="Enter bank account number">
+                    <input type="text" id="bankAccountNumber" name="bankAccountNumber" required
+                        placeholder="Enter bank account number">
 
                     <label for="ifscCode">IFSC Code</label>
                     <input type="text" id="ifscCode" name="ifscCode" required placeholder="Enter IFSC Code">

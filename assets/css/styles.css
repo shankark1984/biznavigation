@@ -258,11 +258,12 @@ label {
     margin: 5px 0;
 }
 
-input[type="text"],
+
 input[type="email"],
 input[type="url"],
 input[type="number"],
-input[type="date"],
+input[type="date"], 
+input[type="text"],
 select,
 textarea {
     width: 100%;
@@ -317,8 +318,8 @@ textarea {
 }
 
 .form-group>div {
-    /* flex: 1; */
-    flex-wrap: wrap;
+    flex: auto;
+    /* flex-wrap: wrap; */
     min-width: auto;
 }
 
@@ -386,7 +387,7 @@ td {
     text-align: left;
     border: 1px solid black;
     padding-left: 5px;
-    padding-right:5px ;
+    padding-right: 5px;
 }
 
 table {
