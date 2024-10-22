@@ -317,8 +317,9 @@ textarea {
 }
 
 .form-group>div {
-    flex: 1;
-    min-width: 200px;
+    /* flex: 1; */
+    flex-wrap: wrap;
+    min-width: auto;
 }
 
 /* Styling the ₹ symbol inside the input */
@@ -338,7 +339,9 @@ input[type="number"] {
 #partyName,
 #lrnumber,
 #vendorName,
-#routedetails {
+#routedetails,
+#valueassignedto,
+#description {
     width: 100%;
     padding: 10px;
     border-radius: 5px;
@@ -379,15 +382,18 @@ datalist {
 
 th,
 td {
-    padding: 10px;
+    padding: 0px;
     text-align: left;
     border: 1px solid black;
+    padding-left: 5px;
+    padding-right:5px ;
 }
 
 table {
     border-collapse: collapse;
-    width: 100%;
+    width: auto;
     font-size: 1em;
+    padding: 0px;
 }
 
 /* Footer Styles */

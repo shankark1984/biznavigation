@@ -34,10 +34,13 @@
             <!-- Tab Navigation -->
             <nav class="tab">
                 <button type="button" class="tablinks" onclick="openTab(event, 'routDetails')">Route Details</button>
-                <button type="button" class="tablinks" onclick="openTab(event, 'missingPinCodeDetails')">Pincode Details</button>
+                <button type="button" class="tablinks" onclick="openTab(event, 'missingPinCodeDetails')">Pincode
+                    Details</button>
+                <button type="button" class="tablinks" onclick="openTab(event, 'dropdownMenuList')">Dropdown
+                    Items</button>
             </nav>
 
-            <!-- Dropdown List Tab Content -->
+            <!-- routDetails List Tab Content -->
             <section id="routDetails" class="tab-content">
                 <div class="form-group">
                     <div>
@@ -69,7 +72,7 @@
                 </table>
             </section>
 
-            <!-- Dropdown List Tab Content -->
+            <!--missingPinCodeDetails Tab Content -->
             <section id="missingPinCodeDetails" class="tab-content">
                 <div class="form-group">
                     <div>
@@ -82,11 +85,13 @@
                     </div>
                     <div>
                         <label for="state">State</label>
-                        <input type="text" id="state" name="state" style="text-transform: capitalize;" autocomplete="off">
+                        <input type="text" id="state" name="state" style="text-transform: capitalize;"
+                            autocomplete="off">
                     </div>
                     <div>
                         <label for="country">Country</label>
-                        <input type="text" id="country" name="country" style="text-transform: capitalize;" autocomplete="off">
+                        <input type="text" id="country" name="country" style="text-transform: capitalize;"
+                            autocomplete="off">
                     </div>
                     <div>
                         <label for="" style="color: white;">.</label>
@@ -101,6 +106,61 @@
                             <th>City</th>
                             <th>State</th>
                             <th>Country</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Rows will be populated dynamically -->
+                    </tbody>
+                </table>
+            </section>
+
+
+            <!--dropdownMenuList Tab Content -->
+            <section id="dropdownMenuList" class="tab-content">
+                <div class="form-group">
+
+                    <div>
+                        <label for="valueassignedto">Value Assigned To</label>
+                        <input list="valueAssignedToSuggestions" id="valueassignedto" name="valueassignedto" required
+                            placeholder="Select Value Assigned To" autocomplete="off">
+                        <datalist id="valueAssignedToSuggestions"></datalist>
+                    </div>
+
+                    <div>
+                        <label for="description">Description</label>
+                        <input list="descriptionSuggestions" id="description" name="description" required
+                            placeholder="Select Description" autocomplete="off">
+                        <datalist id="descriptionSuggestions"></datalist>
+                    </div>
+                    <div>
+                        <label for="condition">Condition</label>
+                        <input type="text" id="condition" name="condition" style="text-transform: capitalize;"
+                            autocomplete="off">
+                    </div>
+                    <div>
+                        <label for="fixedvalue">Fixed Value</label>
+                        <input type="text" id="fixedvalue" name="fixedvalue" style="text-transform: capitalize;"
+                            autocomplete="off">
+                    </div>
+                    <div>
+                        <label for="hsncode">HSN Code</label>
+                        <input type="text" id="hsncode" name="hsncode" style="text-transform: capitalize;"
+                            autocomplete="off">
+                    </div>
+                    <div>
+                        <label for="" style="color: white;">.</label>
+                        <button type="button" onclick="adddropdownMenuList()">Add</button>
+                    </div>
+                </div>
+                <!-- Route Table -->
+                <table id="dropdownMenuListTable" border="1">
+                    <thead>
+                        <tr>
+                            <th>Value Assigned To</th>
+                            <th>Description</th>
+                            <th>Condition</th>
+                            <th>Fixed Value</th>
+                            <th>HSN Code</th>
                         </tr>
                     </thead>
                     <tbody>
