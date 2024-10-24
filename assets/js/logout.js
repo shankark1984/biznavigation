@@ -18,7 +18,7 @@ function checkIdleTime() {
 // Function to log out the user
 function logoutUser() {
     logoutlocalstorage();
-    alert("You have been logged out due to inactivity.");
+    // alert("You have been logged out due to inactivity.");
     // window.location.href = '/logout'; 
     // Redirect to your logout route
 

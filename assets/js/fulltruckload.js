@@ -752,8 +752,6 @@ async function vendorpopulateTable(lrNumber) {
 }
 
 
-
-
 // Function to fetch data from Supabase
 async function vendorfetchSupabaseData() {
     try {
