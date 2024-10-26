@@ -57,12 +57,6 @@
         </div>
         <div class="formborder">
             <div class="form-group" style="text-align: center;">
-                <div style="width: 100px;">
-                    <label for="lrnumber">LR Number</label>
-                    <input list="lrNumberSuggestions" id="lrnumber" name="lrnumber" class="two-input-group"
-                        placeholder="LR Number" autocomplete="off">
-                    <datalist id="lrNumberSuggestions"></datalist>
-                </div>
                 <div>
                     <label for="partyName">Customer Name</label>
                     <input list="partySuggestions" id="partyName" name="partyName" placeholder="Party Name"
@@ -71,32 +65,19 @@
                 </div>
                 <div>
                     <label for="startDate">Start Date</label>
-                    <input type="date" id="startDate" name="startDate">
+                    <input type="date" id="startDate" name="startDate" required>
                 </div>
                 <div>
                     <label for="endDate">End Date</label>
-                    <input type="date" id="endDate" name="endDate">
-                </div>
-                <div style="width: 75px;">
-                    <label for="months">Months</label>
-                    <input type="text" id="months" name="months">
-                </div>
-                <div style="width: 75px;">
-                    <label for="years">Year</label>
-                    <input type="text" id="years" name="years">
-                </div>
-                <div style="width: 75px;">
-                    <label for="fiscalYear">FY</label>
-                    <input type="text" id="fiscalYear" name="fiscalYear">
+                    <input type="date" id="endDate" name="endDate" required>
                 </div>
                 <div>
-                    <label for="getMovementData" style="color: white;">&nbsp;</label> <!-- Blank label for spacing -->
-                    <button id="getMovementData" name="getMovementData">Get Data</button>
+                    <label for="getMovementDatas" style="color: white;">&nbsp;</label> <!-- Blank label for spacing -->
+                    <button id="getMovementDatas" name="getMovementDatas">Get Data</button>
                 </div>
             </div>
         </div>
-        <h1>Full Load Movement Details</h1>
-
+   
         <!-- Table container for scrollable area -->
         <div class="table-container" style="font-size: 10px;">
             <table id="data-table">

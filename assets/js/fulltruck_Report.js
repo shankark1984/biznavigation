@@ -11,19 +11,6 @@ document.getElementById('partyName').addEventListener('blur', function () {
     }, 200); // Timeout to allow suggestion click events to fire before clearing
 });
 
-//Customer name list
-document.getElementById('lrnumber').addEventListener('input', async function (e) {
-    const inputValue = e.target.value.trim().toLowerCase();
-    console.log('Vendor Name ' + inputValue);
-    await loadMovementDetails(inputValue); // Pass the input value to the function
-});
-// Clear the suggestion box when input field loses focus
-document.getElementById('lrnumber').addEventListener('blur', function () {
-    setTimeout(() => {
-        document.getElementById('lrNumberSuggestions').innerHTML = ''; // Clear suggestions on blur
-    }, 200); // Timeout to allow suggestion click events to fire before clearing
-});
-
 
 //Fetch and Load Booking Details
 async function loadMovementDetails(query = '') {
@@ -59,18 +46,30 @@ function populateLRNumberSuggestions() {
 
 
 
-async function fetchData() {
+async function fetchData(startDate, endDate, party = '') {
     let allData = [];
     let page = 0;
     const pageSize = 1000; // Fetch 1,000 rows per page
 
     try {
         while (true) {
-            const { data, error } = await supabaseClient
+            // Build the query
+            let query = supabaseClient
                 .from('fullloadmovementdetails_view')
                 .select('*')
                 .eq('company_id', companyID)
-                .range(page * pageSize, (page + 1) * pageSize - 1); // Fetch rows for the current page
+                .gte('Pickup Date', startDate) // Filter by start date
+                .lte('Pickup Date', endDate)   // Filter by end date;
+
+            // Apply the party name filter only if the party parameter is provided
+            if (party) {
+                query = query.ilike('Customer Name', `%${party}%`);
+            }
+
+            // Fetch rows for the current page
+            query = query.range(page * pageSize, (page + 1) * pageSize - 1);
+            
+            const { data, error } = await query;
 
             if (error) {
                 console.error('Error fetching data:', error);
@@ -96,6 +95,8 @@ async function fetchData() {
         console.error('Unexpected error:', err);
     }
 }
+
+
 
 // Dynamically create table headers
 function createTableHeaders(columnNames) {
@@ -133,7 +134,19 @@ function populateTable(data) {
 }
 
 // Fetch and populate data when the page loads
-window.addEventListener('load', fetchData);
+// window.addEventListener('load', fetchData);
+
+document.getElementById('getMovementDatas').addEventListener('click', async function (event) {
+    event.preventDefault();
+    const startDate = document.getElementById('startDate').value;
+    const endDate = document.getElementById('endDate').value;
+    const customerName=document.getElementById('partyName').value;
+    console.log('date '+ startDate + endDate + customerName);
+    fetchData(startDate, endDate,customerName)
+
+});
+
+
 
 // XLSX download functionality using SheetJS
 document.getElementById('downloadXLS').addEventListener('click', function () {
