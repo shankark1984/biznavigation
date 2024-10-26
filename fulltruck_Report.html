@@ -9,6 +9,41 @@
     <link rel="stylesheet" href="assets/css/party.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://unpkg.com/@supabase/supabase-js"></script> <!-- Supabase client -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
+
+    <style>
+        /* Table scroll styling */
+        .table-container {
+            max-height: 400px;
+            /* Adjust height for vertical scroll */
+            overflow-y: scroll;
+            overflow-x: scroll;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            padding: 8px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+
+        /* Pagination buttons */
+        .pagination {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .pagination button {
+            padding: 8px 16px;
+            margin: 0 5px;
+            cursor: pointer;
+        }
+    </style>
 </head>
 
 <body>
@@ -22,7 +57,7 @@
         </div>
         <div class="formborder">
             <div class="form-group" style="text-align: center;">
-                <div style=" width: 100px;">
+                <div style="width: 100px;">
                     <label for="lrnumber">LR Number</label>
                     <input list="lrNumberSuggestions" id="lrnumber" name="lrnumber" class="two-input-group"
                         placeholder="LR Number" autocomplete="off">
@@ -51,16 +86,36 @@
                     <input type="text" id="years" name="years">
                 </div>
                 <div style="width: 75px;">
-                    <label for="years">FY</label>
-                    <input type="text" id="years" name="years">
+                    <label for="fiscalYear">FY</label>
+                    <input type="text" id="fiscalYear" name="fiscalYear">
                 </div>
                 <div>
-                    <label style="color: white;">.</label>
+                    <label for="getMovementData" style="color: white;">&nbsp;</label> <!-- Blank label for spacing -->
                     <button id="getMovementData" name="getMovementData">Get Data</button>
                 </div>
             </div>
+        </div>
+        <h1>Full Load Movement Details</h1>
+
+        <!-- Table container for scrollable area -->
+        <div class="table-container" style="font-size: 10px;">
+            <table id="data-table">
+                <thead>
+                    <!-- Dynamic headers will be injected here -->
+                </thead>
+                <tbody>
+                    <!-- Dynamic data will be injected here -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Button to download the report as XLS -->
+        <div class="download-report">
+            <button id="downloadXLS">Download XLS</button>
+        </div>
     </form>
 
+    <!-- Script references -->
     <script src="assets/js/server.js"></script>
     <script src="assets/js/generalfunction.js"></script>
     <script src="assets/js/header.js"></script>
@@ -69,8 +124,8 @@
     <script src="assets/js/dropdownlist.js"></script>
     <script src="assets/js/taxDescription.js"></script>
     <script src="assets/js/customerlist.js"></script>
-    <script src="assets/js/logout.js"></script>
     <script src="assets/js/fulltruck_Report.js"></script>
+    <script src="assets/js/logout.js"></script>
 </body>
 
 </html>
