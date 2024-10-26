@@ -148,6 +148,11 @@ function openTab(evt, tabName) {
 
 // Helper function to capitalize first letter of each word
 function capitalize(text) {
+    if (typeof text !== 'string') {
+        console.error('Input must be a string:', text);
+        return ''; // Return an empty string or handle the error as needed
+    }
+
     return text
         .toLowerCase()
         .split(' ')

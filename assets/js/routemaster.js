@@ -240,37 +240,62 @@ async function deletedropdownMenuList(id) {
     fetchPinCode(); // Refresh the table after deleting a route
 }
 
-// Add new route
-async function adddropdownMenuList() {
-    let valueAssignedTo = document.getElementById('valueassignedto').value;
-    let description = document.getElementById('description').value;
-    let condition = document.getElementById('condition').value;
-    let fixedValue = document.getElementById('fixedvalue').value;
-    let hsnCode = document.getElementById('hsncode').value;
+async function addDropdownMenuList() {
+    // Retrieve values from input fields
+    let valueAssignedTo = document.getElementById('valueassignedto').value.trim();
+    let description = document.getElementById('description').value.trim();
+    let condition = document.getElementById('condition').value.trim();
+    let fixedValue = document.getElementById('fixedvalue').value.trim();
+    let hsnCode = document.getElementById('hsncode').value.trim();
 
-    if (!valueassignedto || !description) {
-        alert('Please fill in all fields.');
+    console.log('valueAssignedTo: ' + valueAssignedTo);
+    
+    // Validate required fields
+    if (!valueAssignedTo || !description) {
+        alert('Please fill in all required fields (Value Assigned To and Description).');
         return;
     }
-    valueAssignedTo = capitalize(valueassignedto);
-    description = capitalize(description);
 
+    // Convert numeric fields, set to null if empty
+    fixedValue = fixedValue ? Number(fixedValue) : null; // Convert to number or set to null
+    hsnCode = hsnCode ? Number(hsnCode) : null; // Convert to number or set to null
 
-    country = capitalize(country);
+    // Check if conversion to number was successful
+    if ((fixedValue === null && document.getElementById('fixedvalue').value.trim() !== "") || 
+        (hsnCode === null && document.getElementById('hsncode').value.trim() !== "")) {
+        alert('Please enter valid numeric values for Fixed Value and HSN Code.');
+        return;
+    }
 
+    // Format values to proper case
+    valueAssignedTo = toProperCase(valueAssignedTo);
+    description = toProperCase(description);
+
+    console.log('Inserting:', { valueAssignedTo, description, fixedValue, hsnCode });
+
+    // Database insertion
     const { data, error } = await supabaseClient
         .from('dropdown_list')
-        .insert([
-            { type_of_value: valueAssignedTo, description: description, condition: condition, value: fixedValue, hsn_code: hsnCode, created_by: userLoginID, created_at: localtimeStamp }
-        ]);
+        .insert([{
+            type_of_value: valueAssignedTo,
+            description: description,
+            condition: condition,
+            value: fixedValue,  // Should be a number or null
+            hsn_code: hsnCode,  // Should be a number or null
+            created_by: userLoginID,
+            created_at: localtimeStamp
+        }]);
 
     if (error) {
-        console.error('Error adding route:', error);
+        console.error('Error adding dropdown details:', error);
+        alert('There was an error adding the item. Please try again.'); // User feedback
         return;
     }
 
-    fetchPinCode(); // Refresh the table after adding a new route
+    console.log('Item added successfully:', data);
+    fetchDropdownMenuList(valueAssignedTo, description); // Refresh the table after adding a new route
 }
+
 
 
 //customer list
