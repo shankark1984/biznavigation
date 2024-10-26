@@ -60,20 +60,35 @@ function populateLRNumberSuggestions() {
 
 
 async function fetchData() {
-    try {
-        const { data, error } = await supabaseClient
-            .from('fullloadmovementdetails_view')
-            .select('*')
-            .eq('company_id', companyID);
+    let allData = [];
+    let page = 0;
+    const pageSize = 1000; // Fetch 1,000 rows per page
 
-        if (error) {
-            console.error('Error fetching data:', error);
-            return;
+    try {
+        while (true) {
+            const { data, error } = await supabaseClient
+                .from('fullloadmovementdetails_view')
+                .select('*')
+                .eq('company_id', companyID)
+                .range(page * pageSize, (page + 1) * pageSize - 1); // Fetch rows for the current page
+
+            if (error) {
+                console.error('Error fetching data:', error);
+                break;
+            }
+
+            if (data && data.length > 0) {
+                allData = allData.concat(data); // Append data to the allData array
+                if (data.length < pageSize) break; // If less than pageSize, we’re on the last page
+                page++; // Increment page number for the next batch
+            } else {
+                break; // No more data to fetch
+            }
         }
 
-        if (data && data.length > 0) {
-            createTableHeaders(Object.keys(data[0])); // Pass column names from the first object
-            populateTable(data);
+        if (allData.length > 0) {
+            createTableHeaders(Object.keys(allData[0])); // Pass column names from the first object
+            populateTable(allData);
         } else {
             console.log("No data found for the specified criteria.");
         }
