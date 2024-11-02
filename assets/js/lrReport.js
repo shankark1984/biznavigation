@@ -151,8 +151,10 @@ async function loadMovementDetailsForLR(lrNumber, companyID) {
             invoiceValue = movementDetails.invoice_value == 0 || movementDetails.invoice_value == null ? 'As per Invoice' : movementDetails.invoice_value;
             document.getElementById('invoiceValue').innerText = invoiceValue;
             document.getElementById('paymentType').innerText = 'TBB'; // Adjust this based on actual data
+            document.getElementById('eWayBillNo').innerText = movementDetails.waybillno;
             document.getElementById('quantity').innerText = movementDetails.quantity;
-            document.getElementById('chargeableWeight').innerText = movementDetails.cargo_weight + 'Kgs';
+            document.getElementById('actualWeight').innerText = movementDetails.actual_weight + 'Kgs';
+            document.getElementById('chargeableWeight').innerText = movementDetails.charge_weight + 'Kgs';
 
             if (movementDetails.container_number) {
                 let containerNumber = 'Container Number: ' + movementDetails.container_number;

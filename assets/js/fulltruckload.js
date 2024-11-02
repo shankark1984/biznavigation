@@ -103,6 +103,7 @@ document.getElementById('saveButton').addEventListener('click', async function (
         charge_weight: document.getElementById('chargewt').value,
         description_of_goods: document.getElementById('descriptionofGoods').value,
         payment_type: document.getElementById('paymentType').value,
+        waybillno: document.getElementById('wayBillNo').value,
         created_by: userLoginID,  // Ensure userLoginID is available
         company_id: companyID,  // Ensure companyID is available
         created_at: localtimeStamp,
@@ -139,7 +140,7 @@ document.getElementById('saveButton').addEventListener('click', async function (
 //customer list
 document.getElementById('partyName').addEventListener('input', async function (e) {
     const inputValue = e.target.value.trim().toLowerCase();
-    console.log('Customer Name '+inputValue);
+    console.log('Customer Name ' + inputValue);
     await loadPartyDetails(inputValue); // Pass the input value to the function
 });
 // Clear the suggestion box when input field loses focus
@@ -152,7 +153,7 @@ document.getElementById('partyName').addEventListener('blur', function () {
 //vendor name list
 document.getElementById('vendorName').addEventListener('input', async function (e) {
     const inputValue = e.target.value.trim().toLowerCase();
-    console.log('Vendor Name '+inputValue);
+    console.log('Vendor Name ' + inputValue);
     await loadPartyDetails(inputValue); // Pass the input value to the function
 });
 // Clear the suggestion box when input field loses focus
@@ -165,7 +166,7 @@ document.getElementById('vendorName').addEventListener('blur', function () {
 // Real-time event listener for user input
 document.getElementById('lrnumber').addEventListener('input', async function (e) {
     const inputValue = e.target.value.trim().toLowerCase();
-    console.log('LR Number '+inputValue);
+    console.log('LR Number ' + inputValue);
     await loadMovementDetails(inputValue); // Pass the input value to the function
 });
 
@@ -184,10 +185,10 @@ async function loadMovementDetails(query = '') {
         .eq('company_id', companyID)
         .ilike('lr_number', `%${query}%`) // Use ilike for case-insensitive partial matching
         .order('lr_number', { ascending: false }); // Order by party_name A to Z (ascending)
-        
-        if (data) {
-            console.log(data); // Check this to ensure all data is retrieved
-        }
+
+    if (data) {
+        console.log(data); // Check this to ensure all data is retrieved
+    }
     if (error) {
         console.error('Error fetching movement details:', error);
         return;
@@ -222,6 +223,7 @@ async function loadMovementDetails(query = '') {
         descriptionOfGoods: row.description_of_goods,
         status: row.status,
         completionDate: row.completion_date,
+        waybillno:row.waybillno,
     }));
 
     populateLRNumberSuggestions();
@@ -283,6 +285,7 @@ $("#lrnumber").on("input", async function () {
         $("#chargewt").val(movementData.chargeWT);
         $("#paymentType").val(movementData.paymentType);
         $("#descriptionofGoods").val(movementData.descriptionOfGoods);
+        $("#wayBillNo").val(movementData.waybillno);
 
         populateTable(lrNumber); // Replace with actual LRNumber to match
         vendorpopulateTable(lrNumber); // Replace with actual LRNumber to match

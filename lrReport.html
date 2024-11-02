@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BizNavigation Report</title>
-    
+
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <!-- Bootstrap for layout -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -72,9 +72,10 @@
             <div class="col-4 border p-2">
                 <p style="margin: 0;"><span style="font-weight: bold;">Destination: </span> <span
                         id="destinationCity"></span></p>
-                <p style="margin: 0;"><span style="font-weight: bold;">Mode: </span> <span id="modeType"></span></p>
-                <p style="margin: 0;"><span style="font-weight: bold;">Transit Type: </span> <span
-                        id="transitType"></span></p>
+                <p style="margin: 0;"><span style="font-weight: bold;">Mode: </span> <span id="modeType"></span><span
+                        style="font-weight: bold;"> Transit Type: </span> <span id="transitType"></span></p>
+                <p style="margin: 0;"><span style="font-weight: bold;">Payment Type: </span> <span
+                        id="paymentType"></span></p>
             </div>
 
             <div class="col-4 border p-2">
@@ -82,8 +83,8 @@
                         id="invoiceNumber"></span></p>
                 <p style="margin: 0;"><span style="font-weight: bold;">Invoice Value: </span> <span
                         id="invoiceValue"></span></p>
-                <p style="margin: 0;"><span style="font-weight: bold;">Payment Type: </span> <span
-                        id="paymentType"></span></p>
+                <p style="margin: 0;"><span style="font-weight: bold;">E-Way Bill No: </span> <span
+                        id="eWayBillNo"></span></p>
             </div>
 
             <!-- Freight Information Header -->
@@ -95,7 +96,7 @@
                     <p class="m-0" style="font-weight: bold;font-size: 10px;">Description of Goods (Said to Contain)</p>
                 </div>
                 <div class="col-1 border d-flex align-items-center justify-content-center p-0">
-                    <p class="m-0" style="font-weight: bold;font-size: 10px;">Weight</p>
+                    <p class="m-0" style="font-weight: bold;font-size: 10px;">Actual WT</p>
                 </div>
                 <div class="col-6 border d-flex align-items-center justify-content-center p-0">
                     <p class="m-0" style="font-weight: bold;font-size: 10px;">Freight Details</p>
@@ -110,9 +111,14 @@
                 <div class="col-4 border p-1">
                     <p id="descriptionofGoods"></p>
                 </div>
-                <div class="col-1 border p-1">
-                    <p id="chargeableWeight" class="text-center"></p>
+                <div class="col-1 border m-0">
+                    <p id="actualWeight" class="m-0 text-center"></p>
+                    <div class="col-12 border p-1" style="margin: 0;">
+                        <p class="m-0 text-center" style="font-weight: bold;font-size: 10px;">Charge WT</p>
+                    </div>
+                    <p id="chargeableWeight" class="m-0 text-center"></p>
                 </div>
+
                 <div class="col-6 border p-0" id="totalFreight">
                     <!-- <p id="totalFreight">Freight</p> -->
                 </div>
@@ -125,7 +131,7 @@
                     <p class="text-center mb-2">
                         <span style="font-weight: bold; font-size: 14px;">Caution</span>
                     </p>
-                    <p style="font-size: 11px; margin: 0; height: 26mm;">
+                    <p style="font-size: 9px; margin: 0; height: 24mm;">
                         This consignment will not be diverted, re-routed, or re-booked without the Consignee Bank's
                         written permission and will be delivered at the destination.
                     </p>
@@ -137,7 +143,7 @@
                         <span style="font-weight: bold; font-size: 14px;" id="companyCity">All Disputes Subject to ??
                             Jurisdiction only</span>
                     </p>
-                    <p style="font-size: 11px; margin: 0; height: 20.5mm;">
+                    <p style="font-size: 9px; margin: 0; height: 18.4mm;">
                         The consignment covered by the Lorry Receipt will be stored at the destination under the control
                         of the transport operator and delivered to or to the order of the Consignee bank as mentioned.
                     </p>
@@ -148,11 +154,12 @@
                     <p class="text-center mb-2">
                         <span style="font-weight: bold; font-size: 14px;" id="companyCity">Terms & Conditions</span>
                     </p>
-                    <p style="font-size: 11px; margin: 0; height: 26mm;">
+                    <p style="font-size: 9px; margin: 0; height:24mm;">
                         1. Goods carried at OWNER'S RISK. Unloading to be done by the Consignee.<br>
                         2. Proof Of Delivery will be provided as and when required by you & you can track all the
                         Consignment through our Website:<br>
-                        3. GST to be paid by Consignee.
+                        3. GST to be paid by Consignee. <br>
+                        4. Shipment is picked on a 'said to contain' basis.
                     </p>
                 </div>
             </div>
@@ -171,12 +178,12 @@
                 </div>
             </div>
 
-       
+
 
         </div>
     </div>
-     <!-- Footer -->
-     <div class="col-12 text-center p-0" style="font-weight: bold; font-size: 12px;">
+    <!-- Footer -->
+    <div class="col-12 text-center p-0" style="font-weight: bold; font-size: 12px;">
         <p style="margin: 0;">This is a computer-generated document. No signature is required.</p>
     </div>
     <!-- Custom JavaScript -->
