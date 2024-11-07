@@ -1,4 +1,3 @@
-
 document.getElementById('modifyButton').addEventListener('click', function () {
     enableForm();
     document.getElementById('saveButton').disabled = false;
@@ -31,7 +30,9 @@ async function generateNewLRNumber() {
     const { data: existingCodes, error } = await supabaseClient
         .from('booking_details')
         .select('lr_number')
-        .like('lr_number', `${compshortCode}%`);
+        .like('lr_number', `${compshortCode}%`)
+        .order('lr_number', { ascending: false }) // Sort in descending order
+        .limit(1); // Only get the top record;
 
     if (error) {
         console.error('Error fetching LR numbers:', error);
@@ -388,7 +389,7 @@ function areRequiredFieldsFilled() {
 
 // Function to populate table with data where LRNumber matches
 async function populateTable(lrNumber) {
-    const data = await fetchSupabaseData(); // Fetch the data
+    const data = await fetchSupabaseData(lrNumber); // Fetch the data
     const tableBody = document.querySelector('#chargesDetailsTable tbody');
     const tableFoot = document.querySelector('#chargesDetailsTable tfoot');
 
@@ -494,13 +495,14 @@ async function populateTable(lrNumber) {
 }
 
 // Function to fetch data from Supabase
-async function fetchSupabaseData() {
+async function fetchSupabaseData(lrNumber) {
     try {
         // Fetch data from 'booking_charges' table
         let { data, error } = await supabaseClient
             .from('booking_charges') // Table name
             .select('*') // Fetch all fields
-            .eq('account_type', 'Sale')// Fetch rows filtered by company ID
+            .eq('account_type', 'Sale')
+            .eq('lr_number',lrNumber);// Fetch rows filtered by company ID
 
         if (error) {
             console.error("Error fetching data:", error);
@@ -643,13 +645,12 @@ document.getElementById('reportButton').addEventListener('click', async function
 });
 
 
-
-
-
 async function vendorpopulateTable(lrNumber) {
-    const data = await vendorfetchSupabaseData(); // Fetch the data
+    const data = await vendorfetchSupabaseData(lrNumber); // Fetch the data
     const tableBody = document.querySelector('#vendorchargesDetailsTable tbody');
     const tableFoot = document.querySelector('#vendorchargesDetailsTable tfoot');
+
+    console.log('Vendor Fright Details '+lrNumber);
 
     // Clear existing table rows
     tableBody.innerHTML = '';
@@ -756,13 +757,14 @@ async function vendorpopulateTable(lrNumber) {
 
 
 // Function to fetch data from Supabase
-async function vendorfetchSupabaseData() {
+async function vendorfetchSupabaseData(lrNumber) {
     try {
         // Fetch data from 'booking_charges' table
         let { data, error } = await supabaseClient
             .from('booking_charges') // Table name
             .select('*')// Fetch all fields
-            .eq('account_type', 'Buy')// Fetch rows filtered by company ID
+            .eq('account_type', 'Buy')
+            .eq('lr_number',lrNumber);// Fetch rows filtered by company ID
 
         if (error) {
             console.error("Error fetching data:", error);
