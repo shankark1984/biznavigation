@@ -36,7 +36,7 @@ document.addEventListener("DOMContentLoaded", function () {
             <li>
                 <a href="#">Accounting</a>
                 <div class="dropdown">
-                    <a href="#">Customer Invoicing</a>
+                    <a href="invoice_form.html">Customer Invoicing</a>
                     <a href="#">Vendor Billing</a>
                     <a href="#">Payment Credit</a>
                     <a href="#">Payment Debit</a>

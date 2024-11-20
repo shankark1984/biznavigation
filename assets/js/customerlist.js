@@ -36,6 +36,7 @@ async function loadPartyDetails(query = '') {
         // document.getElementById('saveButton').disabled = true;
         populatePartySuggestions(); // Populate the datalist with party names
         populatevendorSuggestions();
+        billingAddressfetchSupabaseData();
     } catch (error) {
         console.error('Error:', error);
     }
@@ -48,6 +49,7 @@ function populatePartySuggestions() {
         suggestions += `<option data-party-code="${party.partyCode}" value="${party.partyName}"></option>`;
     });
     $("#partySuggestions").html(suggestions);
+    // console.log(suggestions);
 }
 
 
@@ -119,3 +121,22 @@ $(document).ready(function () {
     document.getElementById('newButton').disabled = false;
  
 });
+
+function getPartyCodeFromInput(inputElementId, datalistId) {
+    document.getElementById(inputElementId).addEventListener('input', function (event) {
+        const inputValue = event.target.value;
+        const selectedOption = $(`#${datalistId} option`).filter(function () {
+            return $(this).val() === inputValue;
+        }).first();
+        
+        // Get the data-party-code from the matching option
+        const partyCode = selectedOption.data("party-code");
+
+        console.log("Selected party code:", partyCode);
+        
+        return partyCode; // Optional: return the code if needed
+    });
+}
+
+// Usage
+// getPartyCodeFromInput('partyName', 'partySuggestions');

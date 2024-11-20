@@ -20,8 +20,8 @@
         </div>
         <div class="button-group">
             <button type="button" id="newButton" accesskey="n">New</button>
-            <button type="button" id="modifyButton" accesskey="m" >Modify</button>
-            <button type="button" id="deleteButton"accesskey="d">Delete</button>
+            <button type="button" id="modifyButton" accesskey="m">Modify</button>
+            <button type="button" id="deleteButton" accesskey="d">Delete</button>
             <button type="button" id="reportButton" accesskey="r">Report</button>
             <button type="button" id="saveButton" accesskey="s">Save</button>
         </div>
@@ -39,7 +39,8 @@
                 <div>
                     <label for="partyCode">Party Code</label>
                     <input type="text" id="partyCode" name="partyCode" required class="two-input-group"
-                        placeholder="Party Code" autocomplete="off" disabled style="background-color: #333; color: white;">
+                        placeholder="Party Code" autocomplete="off" disabled
+                        style="background-color: #333; color: white;">
                 </div>
                 <div>
                     <label for="partyName">Party Name</label>
@@ -113,6 +114,57 @@
                 </div>
             </div>
         </div>
+
+        <!-- Tab Navigation -->
+        <div class="tab">
+            <button type="button" class="tablinks" onclick="openTab(event, 'billingAddress')">Billing Address</button>
+            <button type="button" class="tablinks" onclick="openTab(event, 'frightCharges')">Freight
+                Charges</button>
+            <button type="button" class="tablinks" onclick="openTab(event, 'vendorCharges')">Vendor Charges</button>
+        </div>
+
+        <div id="billingAddress" class="tab-content">
+            <div class="form-group">
+                <div>
+                    <label for="contactName">Contact Name</label>
+                    <input type="text" id="contactName" name="contactName" style="text-transform: capitalize;" required
+                        autocomplete="off" placeholder="Contact Name">
+                    <label for="contactNumber">Contact Number</label>
+                    <input type="text" id="contactNumber" name="contactNumber" style="text-transform: capitalize;"
+                        required autocomplete="off" placeholder="Contact Number">
+                    <label for="billAddress">Address</label>
+                    <textarea id="billAddress" name="billAddress" style="text-transform: capitalize;" required rows="1"
+                        autocomplete="off"></textarea>
+                    <label for="city">City</label>
+                    <input type="text" id="city" name="city" style="text-transform: capitalize;" required
+                        autocomplete="off" placeholder="City">
+                    <label for="pincode">Pincode</label>
+                    <input type="text" name="pincode" id="pincode" placeholder="Pincode">
+                    <label for="country">Country</label>
+                    <input type="text" name="country" id="country" placeholder="Country">
+                    <button type="button">Add</button>
+
+                </div>
+                <div id="partyBillingAddress">
+                    <table id="partyBillingAddressTable">
+                        <thead>
+                            <tr>
+                                <th>Contact Name</th>
+                                <th>Contact Number</th>
+                                <th>Address</th>
+                                <th>City</th>
+                                <th>Pincode</th>
+                                <th>Country</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Dynamic rows will be added here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
     </form>
 
     <script src="assets/js/server.js"></script>
@@ -125,6 +177,7 @@
     <script src="assets/js/party-registration.js"></script>
     <script src="assets/js/customerlist.js"></script>
     <script src="assets/js/taxDescription.js"></script>
+    <script src="assets/js/partytab.js"></script>
     <script src="assets/js/logout.js"></script>
 </body>
 

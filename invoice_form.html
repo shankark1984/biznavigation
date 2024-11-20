@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BizNavigation</title>
+    <link rel="stylesheet" href="assets/css/styles.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js"></script> <!-- Supabase client -->
+    <style>
+
+    </style>
+</head>
+
+<body>
+    <form id="userForm">
+        <div class="form-header">
+            <input type="hidden" id="tempFormID" name="tempFormID">
+            <input type="hidden" id="partyCode" name="partyCode">
+            <input type="hidden" id="vendorCode" name="vendorCode">
+        </div>
+        <div class="button-group">
+            <button type="button" id="newButton" accesskey="n">New</button>
+            <button type="button" id="modifyButton" accesskey="m">Modify</button>
+            <button type="button" id="deleteButton" accesskey="d">Delete</button>
+            <button type="button" id="reportButton" accesskey="r">Report</button>
+            <button type="button" id="saveButton" accesskey="s">Save</button>
+        </div>
+        <div class="formborder">
+            <div class="form-group">
+                <div>
+                    <label for="partyName">Customer Name</label>
+                    <input list="partySuggestions" id="partyName" name="partyName" required placeholder="Party Name"
+                        autocomplete="off">
+                    <datalist id="partySuggestions"></datalist>
+                    <textarea id="billingAddress" name="billingAddress" rows="4"></textarea>
+
+                </div>
+            </div>
+        </div>
+    </form>
+
+
+
+    <script src="assets/js/server.js"></script>
+    <script src="assets/js/generalfunction.js"></script>
+    <script src="assets/js/header.js"></script>
+    <script src="assets/js/footer.js"></script>
+    <script src="assets/js/scripts.js"></script>
+    <script src="assets/js/pincode.js"></script>
+    <script src="assets/js/fulltruckload.js"></script>
+    <script src="assets/js/dropdownlist.js"></script>
+    <script src="assets/js/taxDescription.js"></script>
+    <script src="assets/js/customerlist.js"></script>
+    <script src="assets/js/logout.js"></script>
+    <script src="assets/js/routemaster.js"></script>
+    <script src="assets/js/invoice.js"></script>
+
+</body>
+
+</html>

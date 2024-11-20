@@ -168,6 +168,7 @@ document.getElementById('partyName').addEventListener('input', async function (e
     const inputValue = e.target.value.trim().toLowerCase();
     console.log('Customer Name '+inputValue);
     await loadPartyDetails(inputValue); // Pass the input value to the function
+    
 });
 // Clear the suggestion box when input field loses focus
 document.getElementById('partyName').addEventListener('blur', function () {
