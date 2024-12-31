@@ -559,3 +559,33 @@ input[type="password"] {
 .delete-btn:hover {
     background-color: #ff1a1a;
 }
+
+.form-group table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+}
+
+.form-group table th, 
+.form-group table td {
+    padding: 10px;
+    border: 1px solid #ccc;
+}
+
+.form-group table th {
+    background-color: #f4f4f4;
+}
+
+.form-group table tbody tr:nth-child(odd) {
+    background-color: #f9f9f9;
+}
+
+.form-group table tbody tr:nth-child(even) {
+    background-color: #ffffff;
+}
+
+.form-group .table-container {
+    width: 100%;
+    overflow-x: auto;
+    margin-top: 1rem; /* Add spacing for better visual separation */
+}

@@ -119,10 +119,10 @@
             <div class="tab">
                 <button type="button" class="tablinks" onclick="openTab(event, 'billingAddress')"
                     aria-selected="false">Billing Address</button>
-                <button type="button" class="tablinks" onclick="openTab(event, 'freightCharges')"
+                <button type="button" class="tablinks" onclick="openTab(event, 'partyTariff')"
                     aria-selected="false">Freight Charges</button>
-                <button type="button" class="tablinks" onclick="openTab(event, 'vendorCharges')"
-                    aria-selected="false">Vendor Charges</button>
+                <!-- <button type="button" class="tablinks" onclick="openTab(event, 'vendorCharges')"
+                    aria-selected="false">Vendor Charges</button> -->
             </div>
 
             <!-- Billing Address Tab Content -->
@@ -169,8 +169,8 @@
                         <label style="color: white;">.</label>
                         <button type="button" id="addbillingAddress">Add</button>
                     </div>
-                    <div id="freightChargesTableContainer">
-                        <table id="freightChargesTable">
+                    <div id="billingAddressTableContainer" class="table-container">
+                        <table id="billingAddressTable">
                             <thead>
                                 <tr>
                                     <th>Contact Person</th>
@@ -188,83 +188,73 @@
                         </table>
                     </div>
                 </div>
-            </div>
 
-            <!-- Freight Charges Tab Content -->
-            <div id="freightCharges" class="tab-content">
+            </div>
+            <!-- Billing Address Tab Content -->
+            <div id="partyTariff" class="tab-content">
                 <div class="form-group">
                     <div>
-                        <label for="freightChargesType">Charges Type</label>
-                        <select id="freightChargesType" name="freightChargesType">
-                            <option value="" disabled selected>Select Charges Type</option>
-                        </select>
+                        <label for="billingContactPerson">Contact Person.</label>
+                        <input type="text" id="billingContactPerson" name="billingContactPerson" required
+                            style="text-transform: capitalize;">
                     </div>
                     <div>
-                        <label for="freightCharges">Charges</label>
-                        <span class="inr-symbol">&#8377;</span>
-                        <input type="number" id="freightCharges" name="freightCharges" min="0" step="0.01"
-                            placeholder="00.00" onblur="formatCurrency(this)">
+                        <label for="billingContactNumber">Contact Number</label>
+                        <input type="text" id="billingContactNumber" name="billingContactNumber" required>
                     </div>
-                    <button type="button" id="addFreightButton">Add</button>
+                    <div>
+                        <label for="billingAddress">Address</label>
+                        <textarea id="billingAddress" name="billingAddress" required rows="1"
+                            style="text-transform: capitalize;"></textarea>
+                    </div>
+                    <div>
+                        <label for="billingPinCode">Pin Code</label>
+                        <input type="text" id="billingPinCode" name="billingPinCode" required>
+                    </div>
+                    <div>
+                        <label for="billingCity">City</label>
+                        <input type="text" id="billingCity" name="billingCity" required
+                            style="text-transform: capitalize;">
+                    </div>
+                    <div>
+                        <label for="billingState">State</label>
+                        <input type="text" id="billingState" name="billingState" required
+                            style="text-transform: capitalize;">
+                    </div>
+                    <div>
+                        <label for="billingCountry">Country</label>
+                        <input type="text" id="billingCountry" name="billingCountry" required
+                            style="text-transform: capitalize;">
+                    </div>
+                    <div>
+                        <label for="defaultBilling">Default Address</label>
+                        <input type="checkbox" id="defaultBilling">
+                    </div>
+                    <div>
+                        <label style="color: white;">.</label>
+                        <button type="button" id="addbillingAddress">Add</button>
+                    </div>
+                    <div id="billingAddressTableContainer" class="table-container">
+                        <table id="billingAddressTable">
+                            <thead>
+                                <tr>
+                                    <th>Contact Person</th>
+                                    <th>Contact Number</th>
+                                    <th>Address</th>
+                                    <th>Pin Code</th>
+                                    <th>City</th>
+                                    <th>State</th>
+                                    <th>Country</th>
+                                    <th>Default Address</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
-                <div id="freightChargesTableContainer">
-                    <table id="freightChargesTable">
-                        <thead>
-                            <tr>
-                                <th>Charges Type</th>
-                                <th>GST Type</th>
-                                <th>Amount</th>
-                                <th>CGST</th>
-                                <th>SGST</th>
-                                <th>IGST</th>
-                                <th>Total GST</th>
-                                <th>Grand Total</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
 
-            <!-- Vendor Charges Tab Content -->
-            <div id="vendorCharges" class="tab-content">
-                <div class="form-group">
-                    <div>
-                        <label for="vendorChargesType">Charges Type</label>
-                        <select id="vendorChargesType" name="vendorChargesType">
-                            <option value="" disabled selected>Select Charges Type</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label for="vendorCharges">Charges</label>
-                        <span class="inr-symbol">&#8377;</span>
-                        <input type="number" id="vendorCharges" name="vendorCharges" min="0" step="0.01"
-                            placeholder="00.00" onblur="formatCurrency(this)">
-                    </div>
-                    <button type="button" id="addVendorButton">Add</button>
-                </div>
-                <div id="vendorChargesTableContainer">
-                    <table id="vendorChargesTable">
-                        <thead>
-                            <tr>
-                                <th>Charges Type</th>
-                                <th>GST Type</th>
-                                <th>Amount</th>
-                                <th>CGST</th>
-                                <th>SGST</th>
-                                <th>IGST</th>
-                                <th>Total GST</th>
-                                <th>Grand Total</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                        </tbody>
-                    </table>
-                </div>
             </div>
-
-        </div>
     </form>
 
     <!-- External Scripts -->
