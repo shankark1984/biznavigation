@@ -37,7 +37,7 @@ let tax_data = [];
 let lrNumber = '';
 let transitType = '';
 let tempFormID = '';
-
+let partyCode = '';
 let frightCharges = 0;
 let otherCharges = 0;
 let subTotal = 0;

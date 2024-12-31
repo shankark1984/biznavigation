@@ -29,15 +29,103 @@
         </div>
         <div class="formborder">
             <div class="form-group">
+                <!-- Customer Information Section -->
                 <div>
                     <label for="partyName">Customer Name</label>
-                    <input list="partySuggestions" id="partyName" name="partyName" required placeholder="Party Name"
-                        autocomplete="off">
-                    <datalist id="partySuggestions"></datalist>
-                    <textarea id="billingAddress" name="billingAddress" rows="4"></textarea>
+                    <input list="partySuggestions" id="partyName" name="partyName" required
+                        placeholder="Enter Customer Name" autocomplete="off">
+                    <datalist id="partySuggestions">
+                        <!-- Options will be dynamically added -->
+                    </datalist>
 
+                    <label for="billingAddress">Billing Address</label>
+                    <textarea id="billingAddress" name="billingAddress" rows="4"
+                        placeholder="Enter Billing Address"></textarea>
                 </div>
+
+                <!-- Invoice Details Section -->
+                <div>
+                    <label for="invoiceNumber">Invoice Number</label>
+                    <input type="text" id="invoiceNumber" name="invoiceNumber" placeholder="Enter Invoice Number">
+
+                    <label for="movementType">Movement Type</label>
+                    <input type="text" id="movementType" name="movementType" placeholder="Enter Movement Type">
+
+                    <label for="transitType">Transit Type</label>
+                    <input type="text" id="transitType" name="transitType" placeholder="Enter Transit Type">
+                </div>
+
+                <!-- Date and Mode Section -->
+                <div>
+                    <label for="date">Date</label>
+                    <input type="date" id="date" name="date">
+
+                    <label for="modeType">Mode Type</label>
+                    <input type="text" id="modeType" name="modeType" placeholder="Enter Mode Type">
+
+                    <label for="department">Department</label>
+                    <input type="text" id="department" name="department" placeholder="Enter Department">
+                </div>
+
+                <!-- Status and Time Range Section -->
+                <div>
+                    <label for="invoiceStatus">Status</label>
+                    <input type="text" id="invoiceStatus" name="invoiceStatus" placeholder="Enter Status">
+
+                    <label for="startDate">Start Date</label>
+                    <input type="date" id="startDate" name="startDate">
+
+                    <label for="endDate">End Date</label>
+                    <input type="date" id="endDate" name="endDate">
+                </div>
+
+                <!-- Payment and Remarks Section -->
+                <div>
+                    <label for="paymentType">Payment Type</label>
+                    <input type="text" id="paymentType" name="paymentType" placeholder="Enter Payment Type">
+                </div>
+
+                <div>
+                    <label for="invoiceRemarks">Remarks</label>
+                    <input type="text" id="invoiceRemarks" name="invoiceRemarks" placeholder="Enter Remarks">
+                </div>
+
+                <!-- Action Button -->
+                <div>
+                    <label for="getData" style="visibility: hidden;">Action</label>
+                    <button type="button" id="getData">Get Data</button>
+                </div>
+                <!-- Table Section -->
+    <div id="dataTableContainer" style="display: none;">
+        <table class="form-group" id="dataTable">
+            <thead>
+                <tr>
+                    <th>LR Number</th>
+                    <th>Pickup Date</th>
+                    <th>Movement Type</th>
+                    <th>Transit Type</th>
+                    <!-- <th>Customer Code</th> -->
+                    <!-- <th>Customer Name</th> -->
+                    <th>Origin City</th>
+                    <th>Destination City</th>
+                    <th>Vehicle Type</th>
+                    <th>Reference Number</th>
+                    <th>Vehicle Number</th>
+                    <th>Container Number</th>
+                    <th>Mode Type</th>
+                    <th>Quantity</th>
+                    <!-- <th>Payment Type</th> -->
+                    <th>Charge Weight</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Rows will be populated dynamically -->
+            </tbody>
+        </table>
+    </div>
             </div>
+
         </div>
     </form>
 

@@ -4,20 +4,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BizNavigation</title>
+    <title>BizNavigation - Party Registration</title>
     <link rel="stylesheet" href="assets/css/styles.css">
+    <link rel="stylesheet" href="assets/css/fulltruckload.css">
     <link rel="stylesheet" href="assets/css/party.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://unpkg.com/@supabase/supabase-js"></script> <!-- Supabase client -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/2.3.10/purify.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js"></script>
 </head>
 
 <body>
-
     <form id="userForm">
+        <!-- Form Header -->
         <div class="form-header">
             <h2>Party Registration</h2>
             <input type="hidden" id="tempFormID" name="tempFormID">
         </div>
+
+        <!-- Button Group -->
         <div class="button-group">
             <button type="button" id="newButton" accesskey="n">New</button>
             <button type="button" id="modifyButton" accesskey="m">Modify</button>
@@ -27,10 +34,11 @@
         </div>
 
         <div class="formborder">
+            <!-- General Information Section -->
             <div class="form-group">
                 <div>
                     <label for="partyType">Party Type</label>
-                    <select id="partyType" name="partyType" required class="two-input-group">
+                    <select id="partyType" name="partyType" required>
                         <option value="" disabled selected>Select Party Type</option>
                         <option value="Customer">Customer</option>
                         <option value="Vendor">Vendor</option>
@@ -38,19 +46,17 @@
                 </div>
                 <div>
                     <label for="partyCode">Party Code</label>
-                    <input type="text" id="partyCode" name="partyCode" required class="two-input-group"
-                        placeholder="Party Code" autocomplete="off" disabled
+                    <input type="text" id="partyCode" name="partyCode" placeholder="Party Code" disabled
                         style="background-color: #333; color: white;">
                 </div>
                 <div>
                     <label for="partyName">Party Name</label>
-                    <input list="partySuggestions" id="partyName" name="partyName" required placeholder="Party Name"
-                        autocomplete="off">
+                    <input list="partySuggestions" id="partyName" name="partyName" placeholder="Party Name" required>
                     <datalist id="partySuggestions"></datalist>
                 </div>
                 <div>
                     <label for="partyCurrentStatus">Status</label>
-                    <select id="partyCurrentStatus" name="partyCurrentStatus" required class="two-input-group">
+                    <select id="partyCurrentStatus" name="partyCurrentStatus" required>
                         <option value="" disabled selected>Select Current Status</option>
                         <option value="Active">Active</option>
                         <option value="DeActive">De-Active</option>
@@ -62,103 +68,179 @@
                 </div>
                 <div>
                     <label for="partyAddress">Address</label>
-                    <textarea type="text" id="partyAddress" name="partyAddress" style="text-transform: capitalize;"
-                        required rows="1" autocomplete="off"></textarea>
+                    <textarea id="partyAddress" name="partyAddress" required rows="1"
+                        style="text-transform: capitalize;"></textarea>
                 </div>
                 <div>
                     <label for="pinCode">Pin Code</label>
-                    <input type="text" id="pinCode" name="pinCode" required autocomplete="off">
+                    <input type="text" id="pinCode" name="pinCode" required>
                 </div>
                 <div>
                     <label for="city">City</label>
-                    <input type="text" id="city" name="city" style="text-transform: capitalize;" required
-                        autocomplete="off">
+                    <input type="text" id="city" name="city" required style="text-transform: capitalize;">
                 </div>
                 <div>
                     <label for="state">State</label>
-                    <input type="text" id="state" name="state" style="text-transform: capitalize;" required
-                        autocomplete="off">
+                    <input type="text" id="state" name="state" required style="text-transform: capitalize;">
                 </div>
                 <div>
                     <label for="country">Country</label>
-                    <input type="text" id="country" name="country" style="text-transform: capitalize;" required
-                        autocomplete="off">
+                    <input type="text" id="country" name="country" required style="text-transform: capitalize;">
                 </div>
                 <div>
                     <label for="panNumber">Pan Number</label>
-                    <input type="text" id="panNumber" name="panNumber" style="text-transform: uppercase;" required
-                        autocomplete="off">
+                    <input type="text" id="panNumber" name="panNumber" required style="text-transform: uppercase;">
                 </div>
                 <div>
                     <label for="gSTNumber">GST Number</label>
-                    <input type="text" id="gSTNumber" name="gSTNumber" style="text-transform: uppercase;" required
-                        autocomplete="off">
+                    <input type="text" id="gSTNumber" name="gSTNumber" required style="text-transform: uppercase;">
                 </div>
                 <div>
-                    <label for="partyContacperson">Contact Person</label>
-                    <input type="text" id="partyContacperson" name="partyContacperson" required autocomplete="off">
+                    <label for="partyContactPerson">Contact Person</label>
+                    <input type="text" id="partyContactPerson" name="partyContactPerson" required>
                 </div>
                 <div>
                     <label for="partyContactNumber">Phone Number</label>
-                    <input type="text" id="partyContactNumber" name="partyContactNumber" required autocomplete="off">
+                    <input type="text" id="partyContactNumber" name="partyContactNumber" required>
                 </div>
                 <div>
                     <label for="partyEmailID">Email ID</label>
-                    <input type="email" id="partyEmailID" name="partyEmailID" required autocomplete="off">
+                    <input type="email" id="partyEmailID" name="partyEmailID" required>
                 </div>
                 <div>
-                    <label for="defaulttax">Default Tax</label>
-                    <select id="defaulttax" name="defaulttax">
+                    <label for="defaultTax">Default Tax</label>
+                    <select id="defaultTax" name="defaultTax">
                         <option value="" disabled selected>Select Default Tax</option>
                     </select>
                 </div>
             </div>
-        </div>
 
-        <!-- Tab Navigation -->
-        <div class="tab">
-            <button type="button" class="tablinks" onclick="openTab(event, 'billingAddress')">Billing Address</button>
-            <button type="button" class="tablinks" onclick="openTab(event, 'frightCharges')">Freight
-                Charges</button>
-            <button type="button" class="tablinks" onclick="openTab(event, 'vendorCharges')">Vendor Charges</button>
-        </div>
+            <!-- Tab Navigation -->
+            <div class="tab">
+                <button type="button" class="tablinks" onclick="openTab(event, 'billingAddress')"
+                    aria-selected="false">Billing Address</button>
+                <button type="button" class="tablinks" onclick="openTab(event, 'freightCharges')"
+                    aria-selected="false">Freight Charges</button>
+                <button type="button" class="tablinks" onclick="openTab(event, 'vendorCharges')"
+                    aria-selected="false">Vendor Charges</button>
+            </div>
 
-        <div id="billingAddress" class="tab-content">
-            <div class="form-group">
-                <div>
-                    <label for="contactName">Contact Name</label>
-                    <input type="text" id="contactName" name="contactName" style="text-transform: capitalize;" required
-                        autocomplete="off" placeholder="Contact Name">
-                    <label for="contactNumber">Contact Number</label>
-                    <input type="text" id="contactNumber" name="contactNumber" style="text-transform: capitalize;"
-                        required autocomplete="off" placeholder="Contact Number">
-                    <label for="billAddress">Address</label>
-                    <textarea id="billAddress" name="billAddress" style="text-transform: capitalize;" required rows="1"
-                        autocomplete="off"></textarea>
-                    <label for="city">City</label>
-                    <input type="text" id="city" name="city" style="text-transform: capitalize;" required
-                        autocomplete="off" placeholder="City">
-                    <label for="pincode">Pincode</label>
-                    <input type="text" name="pincode" id="pincode" placeholder="Pincode">
-                    <label for="country">Country</label>
-                    <input type="text" name="country" id="country" placeholder="Country">
-                    <button type="button">Add</button>
-
+            <!-- Billing Address Tab Content -->
+            <div id="billingAddress" class="tab-content">
+                <div class="form-group">
+                    <div>
+                        <label for="billingContactPerson">Contact Person</label>
+                        <input type="text" id="billingContactPerson" name="billingContactPerson" required
+                            style="text-transform: capitalize;">
+                    </div>
+                    <div>
+                        <label for="billingContactNumber">Contact Number</label>
+                        <input type="text" id="billingContactNumber" name="billingContactNumber" required>
+                    </div>
+                    <div>
+                        <label for="billingAddress">Address</label>
+                        <textarea id="billingAddress" name="billingAddress" required rows="1"
+                            style="text-transform: capitalize;"></textarea>
+                    </div>
+                    <div>
+                        <label for="billingPinCode">Pin Code</label>
+                        <input type="text" id="billingPinCode" name="billingPinCode" required>
+                    </div>
+                    <div>
+                        <label for="billingCity">City</label>
+                        <input type="text" id="billingCity" name="billingCity" required
+                            style="text-transform: capitalize;">
+                    </div>
+                    <div>
+                        <label for="billingState">State</label>
+                        <input type="text" id="billingState" name="billingState" required
+                            style="text-transform: capitalize;">
+                    </div>
+                    <div>
+                        <label for="billingCountry">Country</label>
+                        <input type="text" id="billingCountry" name="billingCountry" required
+                            style="text-transform: capitalize;">
+                    </div>
+                    <div>
+                        <label for="defaultBilling">Default Address</label>
+                        <input type="checkbox" id="defaultBilling">
+                    </div>
+                    <div>
+                        <label style="color: white;">.</label>
+                        <button type="button" id="addbillingAddress">Add</button>
+                    </div>
                 </div>
-                <div id="partyBillingAddress">
-                    <table id="partyBillingAddressTable">
+            </div>
+
+            <!-- Freight Charges Tab Content -->
+            <div id="freightCharges" class="tab-content">
+                <div class="form-group">
+                    <div>
+                        <label for="freightChargesType">Charges Type</label>
+                        <select id="freightChargesType" name="freightChargesType">
+                            <option value="" disabled selected>Select Charges Type</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="freightCharges">Charges</label>
+                        <span class="inr-symbol">&#8377;</span>
+                        <input type="number" id="freightCharges" name="freightCharges" min="0" step="0.01"
+                            placeholder="00.00" onblur="formatCurrency(this)">
+                    </div>
+                    <button type="button" id="addFreightButton">Add</button>
+                </div>
+                <div id="freightChargesTableContainer">
+                    <table id="freightChargesTable">
                         <thead>
                             <tr>
-                                <th>Contact Name</th>
-                                <th>Contact Number</th>
-                                <th>Address</th>
-                                <th>City</th>
-                                <th>Pincode</th>
-                                <th>Country</th>
+                                <th>Charges Type</th>
+                                <th>GST Type</th>
+                                <th>Amount</th>
+                                <th>CGST</th>
+                                <th>SGST</th>
+                                <th>IGST</th>
+                                <th>Total GST</th>
+                                <th>Grand Total</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <!-- Dynamic rows will be added here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Vendor Charges Tab Content -->
+            <div id="vendorCharges" class="tab-content">
+                <div class="form-group">
+                    <div>
+                        <label for="vendorChargesType">Charges Type</label>
+                        <select id="vendorChargesType" name="vendorChargesType">
+                            <option value="" disabled selected>Select Charges Type</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="vendorCharges">Charges</label>
+                        <span class="inr-symbol">&#8377;</span>
+                        <input type="number" id="vendorCharges" name="vendorCharges" min="0" step="0.01"
+                            placeholder="00.00" onblur="formatCurrency(this)">
+                    </div>
+                    <button type="button" id="addVendorButton">Add</button>
+                </div>
+                <div id="vendorChargesTableContainer">
+                    <table id="vendorChargesTable">
+                        <thead>
+                            <tr>
+                                <th>Charges Type</th>
+                                <th>GST Type</th>
+                                <th>Amount</th>
+                                <th>CGST</th>
+                                <th>SGST</th>
+                                <th>IGST</th>
+                                <th>Total GST</th>
+                                <th>Grand Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
                         </tbody>
                     </table>
                 </div>
@@ -167,6 +249,7 @@
         </div>
     </form>
 
+    <!-- External Scripts -->
     <script src="assets/js/server.js"></script>
     <script src="assets/js/generalfunction.js"></script>
     <script src="assets/js/variable.js"></script>
