@@ -1,11 +1,12 @@
 document.addEventListener('DOMContentLoaded', function () {
     setupPincodeListener('originPinCode', 'orgincity');
     setupPincodeListener('destinationPinCode', 'destinationcity');
-    setupPincodeListener('pinCode', 'city');  // Third pincode listener
+    setupPincodeListener('pinCode', 'city');
+    setupPincodeListener('billingPinCode', 'billingCity', 'billingState', 'billingCountry');
 });
 
 // Fetch city, state, and country based on pin code
-async function setupPincodeListener(pinCodeFieldId, cityFieldId) {
+async function setupPincodeListener(pinCodeFieldId, cityFieldId, stateFieldId = 'state', countryFieldId = 'country') {
     const pincodeInput = document.getElementById(pinCodeFieldId);
     if (!pincodeInput) {
         console.error(`Pincode input not found: ${pinCodeFieldId}`);
@@ -17,11 +18,10 @@ async function setupPincodeListener(pinCodeFieldId, cityFieldId) {
 
         // Validate pin code length and numeric value
         if (pincode.length !== 6 || isNaN(pincode)) {
-            pincodeInput.style.border = '2px solid red'; // Add red border
-            // alert('Please enter a valid 6-digit pin code.');
+            displayError(pincodeInput, 'Please enter a valid 6-digit pin code.');
             return;
         } else {
-            pincodeInput.style.border = ''; // Reset border if valid
+            resetError(pincodeInput);
         }
 
         try {
@@ -33,14 +33,11 @@ async function setupPincodeListener(pinCodeFieldId, cityFieldId) {
 
                 // Update city, state, and country fields
                 updateFieldValue(cityFieldId, postOffice.District);
-                updateFieldValue('state', postOffice.State);
-                updateFieldValue('country', 'India');
+                updateFieldValue(stateFieldId, postOffice.State);
+                updateFieldValue(countryFieldId, 'India');
             } else {
-                // Handle invalid pincode case
-                // alert('Invalid Pincode');
-                clearFields(['city', 'state', 'country']);
-
-                // Check for the pincode in the Supabase table
+                // Clear fields and check Supabase for missing pincode
+                clearFields([cityFieldId, stateFieldId, countryFieldId]);
                 const { data: missingPincode, error } = await supabaseClient
                     .from('missing_pincodes')
                     .select('*')
@@ -48,15 +45,11 @@ async function setupPincodeListener(pinCodeFieldId, cityFieldId) {
 
                 if (missingPincode && missingPincode.length > 0) {
                     const row = missingPincode[0];
-
-                    // Update city, state, and country based on the data
                     updateFieldValue(cityFieldId, row.city);
-                    updateFieldValue('state', row.state);
-                    updateFieldValue('country', row.country);
+                    updateFieldValue(stateFieldId, row.state);
+                    updateFieldValue(countryFieldId, row.country);
                 } else {
-                    pincodeInput.style.border = '2px solid red'; // Add red border
-                    console.error('Pincode not found in missing_pincodes table', error);
-                    alert('Invalid Pincode');
+                    displayError(pincodeInput, 'Invalid Pincode. Not found in the database.');
                 }
             }
         } catch (error) {
@@ -65,15 +58,7 @@ async function setupPincodeListener(pinCodeFieldId, cityFieldId) {
     });
 }
 
-// Utility functions to update field values
-function updateFieldValue(fieldId, value) {
-    const field = document.getElementById(fieldId);
-    if (field) {
-        field.value = value;
-    }
-}
-
-// Helper function to update field value
+// Utility functions
 function updateFieldValue(fieldId, value) {
     const field = document.getElementById(fieldId);
     if (field) {
@@ -83,7 +68,6 @@ function updateFieldValue(fieldId, value) {
     }
 }
 
-// Helper function to clear multiple fields
 function clearFields(fieldIds) {
     fieldIds.forEach(id => {
         const field = document.getElementById(id);
@@ -91,4 +75,25 @@ function clearFields(fieldIds) {
             field.value = '';
         }
     });
+}
+
+function displayError(inputField, message) {
+    inputField.style.border = '2px solid red';
+    let errorElement = inputField.nextElementSibling;
+    if (!errorElement || !errorElement.classList.contains('error-message')) {
+        errorElement = document.createElement('span');
+        errorElement.classList.add('error-message');
+        errorElement.style.color = 'red';
+        errorElement.style.fontSize = '12px';
+        inputField.parentNode.insertBefore(errorElement, inputField.nextSibling);
+    }
+    errorElement.textContent = message;
+}
+
+function resetError(inputField) {
+    inputField.style.border = '';
+    const errorElement = inputField.nextElementSibling;
+    if (errorElement && errorElement.classList.contains('error-message')) {
+        errorElement.remove();
+    }
 }

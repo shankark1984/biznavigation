@@ -35,7 +35,7 @@ async function loadPartyDetails(query = '') {
         }));
 
         // Enable or disable buttons based on data state
-        document.getElementById('saveButton').disabled = false;
+        // document.getElementById('saveButton').disabled = false;
 
         // Populate datalist options
         populatePartySuggestions();

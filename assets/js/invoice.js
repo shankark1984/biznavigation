@@ -15,8 +15,6 @@ document.getElementById('partyName').addEventListener('input', function (event) 
 
 });
 
-
-
 document.getElementById('getData').addEventListener('click', async function () {
     const partyName = document.getElementById('partyName').value.trim();
     const movementType = document.getElementById('movementType').value.trim();

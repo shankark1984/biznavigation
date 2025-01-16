@@ -26,7 +26,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 <div class="dropdown">
                     <a href="#">Enquiry</a>
                     <a href="#">Quotation</a>
-                    <a href="#">International</a>
+                    <a href="InternationalBooking.html">International</a>
                     <a href="#">Domestic</a>
                     <a href="#">Customs Clearance</a>
                     <a href="fulltruckload.html ">FTL or FCL</a>

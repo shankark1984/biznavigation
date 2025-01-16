@@ -23,7 +23,7 @@ async function deleteTableRow(row, rowId) {
 }
 // Function to fetch data from Supabase
 async function billingAddressfetchSupabaseData(partyCode) {
-    let partyCode=getPartyCodeFromInput('partyName', 'partySuggestions');
+    partyCode=getPartyCodeFromInput('partyName', 'partySuggestions');
     try {
         // Fetch data from 'booking_charges' table
         let { data, error } = await supabaseClient

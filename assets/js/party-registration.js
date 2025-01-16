@@ -2,6 +2,7 @@
 const saveButton = document.getElementById('saveButton');
 const modifyButton = document.getElementById('modifyButton');
 const newButton = document.getElementById('newButton');
+const addbillingAddress = document.getElementById('addbillingAddress');
 
 // Modify button event listener
 modifyButton.addEventListener('click', function () {
@@ -16,6 +17,9 @@ newButton.addEventListener('click', function () {
     saveButton.disabled = false; // Enable the Save button
     modifyButton.disabled = true;
     saveButton.textContent = 'Save';
+
+    const tableBody = document.querySelector('#billingAddressTable tbody');
+    tableBody.innerHTML = '';
     clearForm(); // Make sure to define this function
     enableForm();
 });
@@ -52,7 +56,7 @@ function convertDateToNumberAndSum(date) {
 saveButton.addEventListener('click', async function (event) {
     event.preventDefault();
     saveButton.disabled = true;
-    newButton.disabled=true;
+    newButton.disabled = true;
     const partyName = $("#partyName").val();
     let partyCode;
 
@@ -157,22 +161,180 @@ document.getElementById('partyCurrentStatus').addEventListener('change', functio
     }
 });
 
-document.getElementById('partyName').addEventListener('change', function () {
+// document.getElementById('partyName').addEventListener('change', function () {
+//     const partyCode = document.getElementById('partyCode').value;
+//     if (partyCode) { // If partyCode is not null or empty
+//         disableForm();
+//         modifyButton.disabled = false;
+//         saveButton.disabled = true;
+//     }
+// });
+
+// Event listener for partyName selection
+document.getElementById('partyName').addEventListener('change', async function () {
     const partyCode = document.getElementById('partyCode').value;
+
     if (partyCode) { // If partyCode is not null or empty
         disableForm();
+        modifyButton.disabled = false;
+        saveButton.disabled = true;
+
+        // Load table data
+        try {
+            // Fetch data from the database
+            const { data, error } = await supabaseClient
+                .from('billing_address')
+                .select('*')
+                .eq('party_code', partyCode);
+
+            if (error) {
+                throw new Error(`Error fetching billing addresses: ${error.message}`);
+            }
+
+            // Clear existing table rows
+            const tableBody = document.querySelector('#billingAddressTable tbody');
+            tableBody.innerHTML = '';
+
+            // Populate table with fetched data
+            data.forEach((row) => {
+                const newRow = `
+                    <tr data-id="${row.id}">
+                        <td>${row.contact_name || ''}</td>
+                        <td>${row.contact_number || ''}</td>
+                        <td>${row.address || ''}</td>
+                        <td>${row.pincode || ''}</td>
+                        <td>${row.city || ''}</td>
+                        <td>${row.state || ''}</td>
+                        <td>${row.country || ''}</td>
+                        <td>${row.default_active ? "Yes" : "No"}</td>
+                        <td><button class="delete-row" data-id="${row.id}">Delete</button></td>
+                    </tr>
+                `;
+                tableBody.insertAdjacentHTML('beforeend', newRow);
+            });
+
+            if (data.length === 0) {
+                alert('No billing addresses found for this party.');
+            }
+
+        } catch (err) {
+            console.error(err.message);
+            alert(`Failed to load billing addresses. Error: ${err.message}`);
+        }
     }
 });
+
+
+
 //customer list
 document.getElementById('partyName').addEventListener('input', async function (e) {
     const inputValue = e.target.value.trim().toLowerCase();
-    console.log('Customer Name '+inputValue);
+    console.log('Customer Name: ' + inputValue);
     await loadPartyDetails(inputValue); // Pass the input value to the function
-    
+
 });
 // Clear the suggestion box when input field loses focus
 document.getElementById('partyName').addEventListener('blur', function () {
     setTimeout(() => {
         document.getElementById('partySuggestions').innerHTML = ''; // Clear suggestions on blur
     }, 200); // Timeout to allow suggestion click events to fire before clearing
+});
+
+
+addbillingAddress.addEventListener('click', async function (event) {
+    event.preventDefault();
+    addbillingAddress.disabled = true;
+
+    // Get form values
+    const formData = {
+        party_code: $("#partyCode").val(),
+        contact_name: $("#billingContactPerson").val(),
+        contact_number: $("#billingContactNumber").val(),
+        address: $("#billingAddress").val(),
+        pincode: $("#billingPinCode").val(),
+        city: $("#billingCity").val(),
+        state: $("#billingState").val(),
+        country: $("#billingCountry").val(),
+        default_active: $("#defaultBilling").is(":checked") ? true : false, // Convert checkbox value to Boolean
+        company_id: companyID, // Ensure companyID is defined
+        created_by: userLoginID, // Ensure userLoginID is defined
+        created_at: localtimeStamp,
+    };
+
+    // Remove properties that are empty strings
+    Object.keys(formData).forEach(key => {
+        if (formData[key] === "") {
+            formData[key] = null; // Set empty strings to null
+        }
+    });
+
+    try {
+        // Insert data into the database and fetch the inserted row
+        const { data, error } = await supabaseClient
+            .from('billing_address')
+            .insert([formData])
+            .select(); // Ensure the inserted row is returned
+
+        if (error) {
+            throw new Error(`Error saving new party details: ${error.message}`);
+        }
+
+        // Validate response data
+        if (!data || data.length === 0) {
+            throw new Error('No data returned from the database.');
+        }
+
+        console.log('Party details saved successfully:', data);
+        $("#partyCode").val(formData.party_code).prop('disabled', true);
+        alert('Party details saved successfully!');
+
+        // Dynamically add the new entry to the table with a delete button
+        const newRow = `
+            <tr>
+                <td>${formData.contact_name}</td>
+                <td>${formData.contact_number}</td>
+                <td>${formData.address}</td>
+                <td>${formData.pincode}</td>
+                <td>${formData.city}</td>
+                <td>${formData.state}</td>
+                <td>${formData.country}</td>
+                <td>${formData.default_active ? "Yes" : "No"}</td>
+                <td><button class="delete-row" data-id="${data[0].id}">Delete</button></td>
+            </tr>
+        `;
+        $("#billingAddressTable tbody").append(newRow);
+
+    } catch (err) {
+        console.error(err.message);
+        alert(`Failed to save party details. Error: ${err.message}`);
+    } finally {
+        // Re-enable the button
+        addbillingAddress.disabled = true;
+    }
+});
+
+
+// Handle row deletion
+$(document).on("click", ".delete-row", async function () {
+    const row = $(this).closest("tr");
+    const id = $(this).data("id");
+
+    if (confirm("Are you sure you want to delete this row?")) {
+        try {
+            const { error } = await supabaseClient
+                .from('billing_address')
+                .delete()
+                .eq('id', id);
+
+            if (error) {
+                throw new Error(`Error deleting row: ${error.message}`);
+            }
+
+            alert("Row deleted successfully!");
+            row.remove(); // Remove the row from the table
+        } catch (err) {
+            console.error(err.message);
+            alert(`Failed to delete row. Error: ${err.message}`);
+        }
+    }
 });

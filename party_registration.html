@@ -117,16 +117,16 @@
 
             <!-- Tab Navigation -->
             <div class="tab">
-                <button type="button" class="tablinks" onclick="openTab(event, 'billingAddress')"
+                <button type="button" class="tablinks" onclick="openTab(event, 'partyBillingAddress')"
                     aria-selected="false">Billing Address</button>
                 <button type="button" class="tablinks" onclick="openTab(event, 'partyTariff')"
-                    aria-selected="false">Freight Charges</button>
+                    aria-selected="false">Tafiff</button>
                 <!-- <button type="button" class="tablinks" onclick="openTab(event, 'vendorCharges')"
                     aria-selected="false">Vendor Charges</button> -->
             </div>
 
             <!-- Billing Address Tab Content -->
-            <div id="billingAddress" class="tab-content">
+            <div id="partyBillingAddress" class="tab-content">
                 <div class="form-group">
                     <div>
                         <label for="billingContactPerson">Contact Person</label>
@@ -162,7 +162,7 @@
                             style="text-transform: capitalize;">
                     </div>
                     <div>
-                        <label for="defaultBilling">Default Address</label>
+                        <label for="defaultBilling">Default</label>
                         <input type="checkbox" id="defaultBilling">
                     </div>
                     <div>
@@ -181,6 +181,7 @@
                                     <th>State</th>
                                     <th>Country</th>
                                     <th>Default Address</th>
+                                    <th>Delete</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -190,7 +191,7 @@
                 </div>
 
             </div>
-            <!-- Billing Address Tab Content -->
+            <!-- Party Tariff Tab Content -->
             <div id="partyTariff" class="tab-content">
                 <div class="form-group">
                     <div>
@@ -253,14 +254,14 @@
                         </table>
                     </div>
                 </div>
-
             </div>
+        </div>
+
     </form>
 
     <!-- External Scripts -->
     <script src="assets/js/server.js"></script>
     <script src="assets/js/generalfunction.js"></script>
-    <script src="assets/js/variable.js"></script>
     <script src="assets/js/header.js"></script>
     <script src="assets/js/footer.js"></script>
     <script src="assets/js/pincode.js"></script>
@@ -270,6 +271,7 @@
     <script src="assets/js/taxDescription.js"></script>
     <script src="assets/js/partytab.js"></script>
     <script src="assets/js/logout.js"></script>
+
 </body>
 
 </html>
