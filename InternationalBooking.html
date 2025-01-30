@@ -8,94 +8,115 @@
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="assets/css/styles.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Include DOMPurify from CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/2.3.10/purify.min.js"></script>
+    <!-- Include html2canvas from CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <!-- Include jsPDF from CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js"></script> <!-- Supabase client -->
 </head>
 
 <body>
-    <div class="container mt-5">
-        <h2 class="mb-4">Shipping Form</h2>
+    <div class="container mt-1">
+
         <form>
+
+            <div class="form-header">
+                <h2 class="mb-3">International Booking</h2>
+                <input type="hidden" id="tempFormID" name="tempFormID">
+                <input type="hidden" id="partyCode" name="partyCode">
+                <input type="hidden" id="vendorCode" name="vendorCode">
+            </div>
+
+            <!-- Button Group -->
+            <div class="button-group mt-4 d-flex justify-content-start gap-2">
+                <button type="button" class="btn btn-primary" id="newButton" accesskey="n">New</button>
+                <button type="button" class="btn btn-warning" id="modifyButton" accesskey="m">Modify</button>
+                <button type="button" class="btn btn-danger" id="deleteButton" accesskey="d">Delete</button>
+                <button type="button" class="btn btn-info" id="reportButton" accesskey="r">Report</button>
+                <button type="button" class="btn btn-success" id="saveButton" accesskey="s">Save</button>
+            </div>
             <div class="row g-3">
                 <!-- Customer Name -->
-                <div class="col-md-6">
-                    <label for="customerName" class="form-label">Customer Name</label>
-                    <select class="form-select" id="customerName">
-                        <option selected>Choose...</option>
-                        <option value="1">Customer 1</option>
-                        <option value="2">Customer 2</option>
-                    </select>
+                <div class="col-md-4">
+                    <label for="partyName" class="form-label small">Customer Name</label>
+                    <input list="partySuggestions" id="partyName" name="partyName" required placeholder="Party Name"
+                        autocomplete="off">
+                    <datalist id="partySuggestions"></datalist>
                 </div>
 
                 <!-- BL/AWB No -->
-                <div class="col-md-6">
-                    <label for="awbNo" class="form-label">BL/AWB No</label>
-                    <input type="text" class="form-control" id="awbNo" placeholder="Enter BL/AWB No">
+                <div class="col-md-4">
+                    <label for="awbNo" class="form-label small">Docket No</label>
+                    <input list="docketNoSuggestions" id="awbNo" name="awbNo" required placeholder="Enter Docket No"
+                        autocomplete="off" oninput="loadAWBNoDetails(this.value)"><!-- Dynamically loads suggestions -->
+                    <datalist id="docketNoSuggestions"></datalist>
                 </div>
 
                 <!-- Booked Date -->
-                <div class="col-md-6">
-                    <label for="bookedDate" class="form-label">Booked Date</label>
+                <div class="col-md-2">
+                    <label for="bookedDate" class="form-label small">Booked Date</label>
                     <input type="date" class="form-control" id="bookedDate">
                 </div>
 
                 <!-- Status -->
-                <div class="col-md-6">
-                    <label for="status" class="form-label">Status</label>
-                    <input type="text" class="form-control" id="status" placeholder="Enter Status">
+                <div class="col-md-2">
+                    <label for="status" class="form-label small">Status</label>
+                    <input type="text" class="form-control" id="status" placeholder="Enter Status" value="New" readonly>
                 </div>
 
                 <!-- Transaction Type -->
-                <div class="col-md-6">
-                    <label for="transactionType" class="form-label">Transaction Type</label>
-                    <select class="form-select" id="transactionType">
-                        <option selected>Choose...</option>
-                        <option value="1">Type 1</option>
-                        <option value="2">Type 2</option>
-                    </select>
+                <div class="col-md-2">
+                    <label for="transactionType" class="form-label small">Transaction Type</label>
+                    <input list="transactionTypeSuggestions" id="transactionType" name="transactionType" required
+                        placeholder="Enter Transaction Type" autocomplete="off"
+                        oninput="transactionTypeDetails(this.value)"><!-- Dynamically loads suggestions -->
+                    <datalist id="transactionTypeSuggestions"></datalist>
                 </div>
 
-                <!-- Mode -->
-                <div class="col-md-6">
-                    <label for="mode" class="form-label">Mode</label>
-                    <select class="form-select" id="mode">
-                        <option selected>Choose...</option>
-                        <option value="1">Air</option>
-                        <option value="2">Sea</option>
-                    </select>
+                <!-- Transit Type -->
+                <div class="col-md-2">
+                    <label for="transitTypeInternational" class="form-label small">Transit Type</label>
+                    <input list="transitTypeInternationalSuggestions" id="transitTypeInternational"
+                        name="transitTypeInternational" required placeholder="Enter Transit Type" autocomplete="off"
+                        oninput="transitTypeInternationalDetails(this.value)"><!-- Dynamically loads suggestions -->
+                    <datalist id="transitTypeInternationalSuggestions"></datalist>
                 </div>
 
-                <!-- Type -->
-                <div class="col-md-6">
-                    <label for="type" class="form-label">Type</label>
-                    <select class="form-select" id="type">
-                        <option selected>Choose...</option>
-                        <option value="1">Type 1</option>
-                        <option value="2">Type 2</option>
-                    </select>
+                <!-- Mode Type -->
+                <div class="col-md-2">
+                    <label for="modeType" class="form-label small">Mode Type</label>
+                    <input list="modeTypeSuggestions" id="modeType" name="modeType" required
+                        placeholder="Enter Mode Type" autocomplete="off"
+                        oninput="modeTypeDetails(this.value)"><!-- Dynamically loads suggestions -->
+                    <datalist id="modeTypeSuggestions"></datalist>
                 </div>
 
-                <!-- P.O No -->
-                <div class="col-md-6">
-                    <label for="poNo" class="form-label">P.O No</label>
-                    <select class="form-select" id="poNo">
-                        <option selected>Choose...</option>
-                        <option value="1">P.O 1</option>
-                        <option value="2">P.O 2</option>
-                    </select>
+                 <!-- P.O No -->
+                <div class="col-md-2">
+                    <label for="poNo" class="form-label small">P.O No</label>
+                    <input list="poNoSuggestions" id="poNo" name="poNo" required
+                        placeholder="Enter P.O No" autocomplete="off"
+                        oninput="poNoDetails(this.value)"><!-- Dynamically loads suggestions -->
+                    <datalist id="poNoSuggestions"></datalist>
                 </div>
 
                 <!-- Shipping Type -->
-                <div class="col-md-6">
-                    <label for="shippingType" class="form-label">Shipping Type</label>
-                    <select class="form-select" id="shippingType">
-                        <option selected>Choose...</option>
-                        <option value="1">Type 1</option>
-                        <option value="2">Type 2</option>
-                    </select>
+                <div class="col-md-2">
+                    <label for="shippingType" class="form-label small">Shipping Type</label>
+                    <input list="shippingTypeSuggestions" id="shippingType" name="shippingType" required
+                        placeholder="Enter Shipping Type" autocomplete="off"
+                        oninput="shippingTypeDetails(this.value)"><!-- Dynamically loads suggestions -->
+                    <datalist id="shippingTypeSuggestions"></datalist>
                 </div>
 
+
                 <!-- Courier Name -->
-                <div class="col-md-6">
-                    <label for="courierName" class="form-label">Courier Name</label>
+                <div class="col-md-4">
+                    <label for="courierName" class="form-label small">Courier Name</label>
                     <select class="form-select" id="courierName">
                         <option selected>Choose...</option>
                         <option value="1">Courier 1</option>
@@ -104,8 +125,8 @@
                 </div>
 
                 <!-- Service Provider -->
-                <div class="col-md-6">
-                    <label for="serviceProvider" class="form-label">Service Provider</label>
+                <div class="col-md-4">
+                    <label for="serviceProvider" class="form-label small">Service Provider</label>
                     <select class="form-select" id="serviceProvider">
                         <option selected>Choose...</option>
                         <option value="1">Provider 1</option>
@@ -114,14 +135,19 @@
                 </div>
 
                 <!-- Shipper Ref -->
-                <div class="col-md-6">
-                    <label for="shipperRef" class="form-label">Shipper Ref</label>
+                <div class="col-md-4">
+                    <label for="shipperRef" class="form-label small">Shipper Ref</label>
                     <input type="text" class="form-control" id="shipperRef" placeholder="Enter Shipper Ref">
+                </div>
+                <!-- Invoice Value Ref -->
+                <div class="col-md-4">
+                    <label for="invoiceValue" class="form-label small">Invoice Value</label>
+                    <input type="text" class="form-control" id="invoiceValue" placeholder="Enter Invoice Valuef">
                 </div>
 
                 <!-- Pickup Address -->
                 <div class="col-md-6">
-                    <label for="pickupAddress" class="form-label">Pickup Address</label>
+                    <label for="pickupAddress" class="form-label small">Pickup Address</label>
                     <select class="form-select" id="pickupAddress">
                         <option selected>Choose...</option>
                         <option value="1">Address 1</option>
@@ -131,17 +157,35 @@
 
                 <!-- Consignee Name -->
                 <div class="col-md-6">
-                    <label for="consigneeName" class="form-label">Consignee Name</label>
+                    <label for="consigneeName" class="form-label small">Consignee Name</label>
                     <select class="form-select" id="consigneeName">
                         <option selected>Choose...</option>
                         <option value="1">Consignee 1</option>
                         <option value="2">Consignee 2</option>
                     </select>
                 </div>
+                <!-- Delivery Address -->
+                <div class="col-md-6">
+                    <label for="deliveryAddress" class="form-label small">Delivery Address</label>
+                    <select class="form-select" id="pickupAddress">
+                        <option selected>Choose...</option>
+                        <option value="1">Address 1</option>
+                        <option value="2">Address 2</option>
+                    </select>
+                </div>
+                <!-- Commodity Mode -->
+                <div class="col-md-3">
+                    <label for="commodity" class="form-label small">Commodity</label>
+                    <select class="form-select" id="commodity">
+                        <option selected>Choose...</option>
+                        <option value="1">Mode 1</option>
+                        <option value="2">Mode 2</option>
+                    </select>
+                </div>
 
                 <!-- Clearance Mode -->
-                <div class="col-md-6">
-                    <label for="clearanceMode" class="form-label">Clearance Mode</label>
+                <div class="col-md-3">
+                    <label for="clearanceMode" class="form-label small">Clearance Mode</label>
                     <select class="form-select" id="clearanceMode">
                         <option selected>Choose...</option>
                         <option value="1">Mode 1</option>
@@ -150,8 +194,8 @@
                 </div>
 
                 <!-- Origin -->
-                <div class="col-md-6">
-                    <label for="origin" class="form-label">Origin</label>
+                <div class="col-md-3">
+                    <label for="origin" class="form-label small">Origin</label>
                     <select class="form-select" id="origin">
                         <option selected>Choose...</option>
                         <option value="1">Origin 1</option>
@@ -160,8 +204,8 @@
                 </div>
 
                 <!-- Destination -->
-                <div class="col-md-6">
-                    <label for="destination" class="form-label">Destination</label>
+                <div class="col-md-3">
+                    <label for="destination" class="form-label small">Destination</label>
                     <select class="form-select" id="destination">
                         <option selected>Choose...</option>
                         <option value="1">Destination 1</option>
@@ -170,8 +214,8 @@
                 </div>
 
                 <!-- Packing Type -->
-                <div class="col-md-6">
-                    <label for="packingType" class="form-label">Packing Type</label>
+                <div class="col-md-2">
+                    <label for="packingType" class="form-label small">Packing Type</label>
                     <select class="form-select" id="packingType">
                         <option selected>Choose...</option>
                         <option value="1">Type 1</option>
@@ -180,8 +224,8 @@
                 </div>
 
                 <!-- Freight UOM -->
-                <div class="col-md-6">
-                    <label for="freightUOM" class="form-label">Freight UOM</label>
+                <div class="col-md-2">
+                    <label for="freightUOM" class="form-label small">UOM</label>
                     <select class="form-select" id="freightUOM">
                         <option selected>Choose...</option>
                         <option value="1">UOM 1</option>
@@ -190,46 +234,51 @@
                 </div>
 
                 <!-- Quantity -->
-                <div class="col-md-6">
-                    <label for="quantity" class="form-label">Quantity</label>
+                <div class="col-md-1">
+                    <label for="quantity" class="form-label small">Quantity</label>
                     <input type="text" class="form-control" id="quantity" placeholder="Enter Quantity">
                 </div>
 
                 <!-- Volume Calculator Button -->
-                <div class="col-md-6 d-flex align-items-end">
-                    <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#volumeCalculatorModal">
-                        Open Volume Calculator
+                <div class="col-md-1 d-flex align-items-end">
+                    <button type="button" class="btn btn-secondary" data-bs-toggle="modal"
+                        data-bs-target="#volumeCalculatorModal">Vol
                     </button>
                 </div>
 
                 <!-- Actual Weight -->
-                <div class="col-md-6">
-                    <label for="actualWeight" class="form-label">Actual Weight</label>
+                <div class="col-md-1">
+                    <label for="actualWeight" class="form-label small">Act Wt</label>
                     <input type="text" class="form-control" id="actualWeight" placeholder="Enter Actual Weight">
                 </div>
 
                 <!-- Volumetric Weight -->
-                <div class="col-md-6">
-                    <label for="volumetricWeight" class="form-label">Volumetric Weight</label>
+                <div class="col-md-1">
+                    <label for="volumetricWeight" class="form-label small">Vol Wt</label>
                     <input type="text" class="form-control" id="volumetricWeight" placeholder="Enter Volumetric Weight">
                 </div>
 
                 <!-- Chargeable Weight -->
-                <div class="col-md-6">
-                    <label for="chargeableWeight" class="form-label">Chargeable Weight</label>
+                <div class="col-md-1">
+                    <label for="chargeableWeight" class="form-label small">Char Wt</label>
                     <input type="text" class="form-control" id="chargeableWeight" placeholder="Enter Chargeable Weight">
                 </div>
-            </div>
 
-            <!-- Submit Button -->
-            <div class="mt-4">
-                <button type="submit" class="btn btn-primary">Submit</button>
+                <!-- Infomation Weight -->
+                <div class="col-md-12">
+                    <label for="infomation" class="form-label small">Infomation</label>
+                    <input type="text" class="form-control" id="infomation" placeholder="Enter Infomation">
+                </div>
             </div>
         </form>
+
     </div>
 
+
+
     <!-- Volume Calculator Modal -->
-    <div class="modal fade" id="volumeCalculatorModal" tabindex="-1" aria-labelledby="volumeCalculatorModalLabel" aria-hidden="true">
+    <div class="modal fade" id="volumeCalculatorModal" tabindex="-1" aria-labelledby="volumeCalculatorModalLabel"
+        aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
@@ -249,8 +298,19 @@
 
     <!-- Bootstrap JS Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="assets/js/server.js"></script>
+    <script src="assets/js/generalfunction.js"></script>
     <script src="assets/js/header.js"></script>
     <script src="assets/js/footer.js"></script>
+    <script src="assets/js/scripts.js"></script>
+    <script src="assets/js/pincode.js"></script>
+    <script src="assets/js/fulltruckload.js"></script>
+    <script src="assets/js/dropdownlist.js"></script>
+    <script src="assets/js/taxDescription.js"></script>
+    <script src="assets/js/customerlist.js"></script>
+    <script src="assets/js/logout.js"></script>
+    <script src="assets/js/routemaster.js"></script>
+    <script src="assets/js/International_Booking.js"></script>
 </body>
 
 </html>

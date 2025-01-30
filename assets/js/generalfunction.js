@@ -159,3 +159,108 @@ function capitalize(text) {
         .map(word => word.charAt(0).toUpperCase() + word.slice(1))
         .join(' ');
 }
+
+
+// Function to dynamically load Transaction Types based on user input
+async function transactionTypeDetails(query = '') {
+    
+    try {
+        // Query the "dropdown_list" table, filter by "type_of_value" = "Transactiontype"
+        const { data: transactionTypes, error } = await supabaseClient
+            .from('dropdown_list')
+            .select('description')
+            .eq('type_of_value', 'Transactiontype')  // Filter by type_of_value
+            .ilike('description', `${query}%`); // Case-insensitive partial matching on description
+        
+        if (error) {
+            console.error('Error fetching transaction types:', error);
+            return;
+        }
+
+        // Populate the datalist with the fetched descriptions
+        const suggestions = transactionTypes
+            .map(type => `<option value="${type.description}">${type.description}</option>`)
+            .join('');
+        document.getElementById('transactionTypeSuggestions').innerHTML = suggestions; // Update the datalist
+    } catch (error) {
+        console.error('Error loading transaction type details:', error);
+    }
+}
+
+// Function to dynamically load Transit Types International based on user input
+async function transitTypeInternationalDetails(query = '') {
+    
+    try {
+        // Query the "dropdown_list" table, filter by "type_of_value" = "TransitType_i"
+        const { data: transitTypeInternational, error } = await supabaseClient
+            .from('dropdown_list')
+            .select('description')
+            .eq('type_of_value', 'TransitType_i')  // Filter by type_of_value
+            .ilike('description', `%${query}%`); // Case-insensitive partial matching on description
+        
+        if (error) {
+            console.error('Error fetching transaction types:', error);
+            return;
+        }
+
+        // Populate the datalist with the fetched descriptions
+        const suggestions = transitTypeInternational
+            .map(type => `<option value="${type.description}">${type.description}</option>`)
+            .join('');
+        document.getElementById('transitTypeInternationalSuggestions').innerHTML = suggestions; // Update the datalist
+    } catch (error) {
+        console.error('Error loading Transit Type International details:', error);
+    }
+}
+
+// Function to dynamically load Mode Types based on user input
+async function modeTypeDetails(query = '') {
+    
+    try {
+        // Query the "dropdown_list" table, filter by "type_of_value" = "ModeType"
+        const { data: modeType, error } = await supabaseClient
+            .from('dropdown_list')
+            .select('description')
+            .eq('type_of_value', 'ModeType')  // Filter by type_of_value
+            .ilike('description', `%${query}%`); // Case-insensitive partial matching on description
+        
+        if (error) {
+            console.error('Error fetching transaction types:', error);
+            return;
+        }
+
+        // Populate the datalist with the fetched descriptions
+        const suggestions = modeType
+            .map(type => `<option value="${type.description}">${type.description}</option>`)
+            .join('');
+        document.getElementById('modeTypeSuggestions').innerHTML = suggestions; // Update the datalist
+    } catch (error) {
+        console.error('Error loading Mode Type details:', error);
+    }
+}
+
+// Function to dynamically load Shipping Type based on user input
+async function shippingTypeDetails(query = '') {
+    
+    try {
+        // Query the "dropdown_list" table, filter by "type_of_value" = "Shippingtype"
+        const { data: shippingType, error } = await supabaseClient
+            .from('dropdown_list')
+            .select('description')
+            .eq('type_of_value', 'Shippingtype')  // Filter by type_of_value
+            .ilike('description', `%${query}%`); // Case-insensitive partial matching on description
+        
+        if (error) {
+            console.error('Error fetching transaction types:', error);
+            return;
+        }
+
+        // Populate the datalist with the fetched descriptions
+        const suggestions = shippingType
+            .map(type => `<option value="${type.description}">${type.description}</option>`)
+            .join('');
+        document.getElementById('shippingTypeSuggestions').innerHTML = suggestions; // Update the datalist
+    } catch (error) {
+        console.error('Error loading Shipping Type details:', error);
+    }
+}
