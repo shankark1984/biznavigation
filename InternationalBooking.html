@@ -107,7 +107,7 @@
                 <div class="col-md-2">
                     <label for="shippingType" class="form-label small">Shipping Type</label>
                     <input list="shippingTypeSuggestions" id="shippingType" name="shippingType" required
-                        placeholder="Enter Shipping Type" autocomplete="off"
+                        placeholder="Enter Shipping Type" autocomplete="off" value="NA"
                         oninput="shippingTypeDetails(this.value)"><!-- Dynamically loads suggestions -->
                     <datalist id="shippingTypeSuggestions"></datalist>
                 </div>
@@ -122,7 +122,7 @@
                 </div>
 
                 <!-- Service Provider -->
-                <div class="col-md-2">
+                <div class="col-md-3">
                     <label for="serviceProvider" class="form-label small">Service Provider</label>
                     <input list="serviceProviderSuggestions" id="serviceProvider" name="serviceProvider" required
                         placeholder="Enter Service Provider" autocomplete="off"
@@ -130,25 +130,22 @@
                     <datalist id="serviceProviderSuggestions"></datalist>
                 </div>
 
-
-
                 <!-- Shipper Ref -->
                 <div class="col-md-2">
                     <label for="shipperRef" class="form-label small">Shipper Ref</label>
                     <input list="shipperRefSuggestions" id="shipperRef" name="shipperRef" required
                         placeholder="Enter shipper Ref" autocomplete="off"
                         oninput="shipperRefDetails(this.value)"><!-- Dynamically loads suggestions -->
-                    <datalist id="shipperRefSuggestions"></datalist>
                 </div>
 
                 <!-- Invoice Value Ref -->
-                <div class="col-md-4">
+                <div class="col-md-2">
                     <label for="invoiceValue" class="form-label small">Invoice Value</label>
-                    <input type="text" class="form-control" id="invoiceValue" placeholder="Enter Invoice Valuef">
+                    <input type="number" id="invoiceValue" name="invoiceValue" autocomplete="off" value="0.00">
                 </div>
 
                 <!-- Pickup Address -->
-                <div class="col-md-6">
+                <div class="col-md-5">
                     <label for="pickupAddress" class="form-label small">Pickup Address</label>
                     <select class="form-select" id="pickupAddress">
                         <option selected>Choose...</option>
