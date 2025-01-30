@@ -95,12 +95,11 @@
                     <datalist id="modeTypeSuggestions"></datalist>
                 </div>
 
-                 <!-- P.O No -->
+                <!-- P.O No -->
                 <div class="col-md-2">
                     <label for="poNo" class="form-label small">P.O No</label>
-                    <input list="poNoSuggestions" id="poNo" name="poNo" required
-                        placeholder="Enter P.O No" autocomplete="off"
-                        oninput="poNoDetails(this.value)"><!-- Dynamically loads suggestions -->
+                    <input list="poNoSuggestions" id="poNo" name="poNo" required placeholder="Enter P.O No"
+                        autocomplete="off" oninput="poNoDetails(this.value)"><!-- Dynamically loads suggestions -->
                     <datalist id="poNoSuggestions"></datalist>
                 </div>
 
@@ -113,32 +112,35 @@
                     <datalist id="shippingTypeSuggestions"></datalist>
                 </div>
 
-
-                <!-- Courier Name -->
-                <div class="col-md-4">
-                    <label for="courierName" class="form-label small">Courier Name</label>
-                    <select class="form-select" id="courierName">
-                        <option selected>Choose...</option>
-                        <option value="1">Courier 1</option>
-                        <option value="2">Courier 2</option>
-                    </select>
+                <!-- Cargo Carrier -->
+                <div class="col-md-2">
+                    <label for="carrierName" class="form-label small">Carrier</label>
+                    <input list="cargoCarrierSuggestions" id="carrierName" name="carrierName" required
+                        placeholder="Enter Shipping Type" autocomplete="off"
+                        oninput="cargoCarrierDetails(this.value)"><!-- Dynamically loads suggestions -->
+                    <datalist id="cargoCarrierSuggestions"></datalist>
                 </div>
 
                 <!-- Service Provider -->
-                <div class="col-md-4">
+                <div class="col-md-2">
                     <label for="serviceProvider" class="form-label small">Service Provider</label>
-                    <select class="form-select" id="serviceProvider">
-                        <option selected>Choose...</option>
-                        <option value="1">Provider 1</option>
-                        <option value="2">Provider 2</option>
-                    </select>
+                    <input list="serviceProviderSuggestions" id="serviceProvider" name="serviceProvider" required
+                        placeholder="Enter Service Provider" autocomplete="off"
+                        oninput="serviceProviderDetails(this.value)"><!-- Dynamically loads suggestions -->
+                    <datalist id="serviceProviderSuggestions"></datalist>
                 </div>
 
+
+
                 <!-- Shipper Ref -->
-                <div class="col-md-4">
+                <div class="col-md-2">
                     <label for="shipperRef" class="form-label small">Shipper Ref</label>
-                    <input type="text" class="form-control" id="shipperRef" placeholder="Enter Shipper Ref">
+                    <input list="shipperRefSuggestions" id="shipperRef" name="shipperRef" required
+                        placeholder="Enter shipper Ref" autocomplete="off"
+                        oninput="shipperRefDetails(this.value)"><!-- Dynamically loads suggestions -->
+                    <datalist id="shipperRefSuggestions"></datalist>
                 </div>
+
                 <!-- Invoice Value Ref -->
                 <div class="col-md-4">
                     <label for="invoiceValue" class="form-label small">Invoice Value</label>

@@ -163,7 +163,7 @@ function capitalize(text) {
 
 // Function to dynamically load Transaction Types based on user input
 async function transactionTypeDetails(query = '') {
-    
+
     try {
         // Query the "dropdown_list" table, filter by "type_of_value" = "Transactiontype"
         const { data: transactionTypes, error } = await supabaseClient
@@ -171,7 +171,7 @@ async function transactionTypeDetails(query = '') {
             .select('description')
             .eq('type_of_value', 'Transactiontype')  // Filter by type_of_value
             .ilike('description', `${query}%`); // Case-insensitive partial matching on description
-        
+
         if (error) {
             console.error('Error fetching transaction types:', error);
             return;
@@ -189,7 +189,7 @@ async function transactionTypeDetails(query = '') {
 
 // Function to dynamically load Transit Types International based on user input
 async function transitTypeInternationalDetails(query = '') {
-    
+
     try {
         // Query the "dropdown_list" table, filter by "type_of_value" = "TransitType_i"
         const { data: transitTypeInternational, error } = await supabaseClient
@@ -197,7 +197,7 @@ async function transitTypeInternationalDetails(query = '') {
             .select('description')
             .eq('type_of_value', 'TransitType_i')  // Filter by type_of_value
             .ilike('description', `%${query}%`); // Case-insensitive partial matching on description
-        
+
         if (error) {
             console.error('Error fetching transaction types:', error);
             return;
@@ -215,7 +215,7 @@ async function transitTypeInternationalDetails(query = '') {
 
 // Function to dynamically load Mode Types based on user input
 async function modeTypeDetails(query = '') {
-    
+
     try {
         // Query the "dropdown_list" table, filter by "type_of_value" = "ModeType"
         const { data: modeType, error } = await supabaseClient
@@ -223,7 +223,7 @@ async function modeTypeDetails(query = '') {
             .select('description')
             .eq('type_of_value', 'ModeType')  // Filter by type_of_value
             .ilike('description', `%${query}%`); // Case-insensitive partial matching on description
-        
+
         if (error) {
             console.error('Error fetching transaction types:', error);
             return;
@@ -241,7 +241,7 @@ async function modeTypeDetails(query = '') {
 
 // Function to dynamically load Shipping Type based on user input
 async function shippingTypeDetails(query = '') {
-    
+
     try {
         // Query the "dropdown_list" table, filter by "type_of_value" = "Shippingtype"
         const { data: shippingType, error } = await supabaseClient
@@ -249,7 +249,7 @@ async function shippingTypeDetails(query = '') {
             .select('description')
             .eq('type_of_value', 'Shippingtype')  // Filter by type_of_value
             .ilike('description', `%${query}%`); // Case-insensitive partial matching on description
-        
+
         if (error) {
             console.error('Error fetching transaction types:', error);
             return;
@@ -264,3 +264,79 @@ async function shippingTypeDetails(query = '') {
         console.error('Error loading Shipping Type details:', error);
     }
 }
+
+
+// Function to dynamically load Cargo Carrier based on user input
+async function cargoCarrierDetails(query = '') {
+
+    try {
+        // Query the "dropdown_list" table, filter by "type_of_value" = "Cargocarrier"
+        const { data: cargoCarrier, error } = await supabaseClient
+            .from('dropdown_list')
+            .select('description')
+            .eq('type_of_value', 'Cargocarrier')  // Filter by type_of_value
+            .ilike('description', `%${query}%`); // Case-insensitive partial matching on description
+
+        if (error) {
+            console.error('Error fetching Cargo Carrier details:', error);
+            return;
+        }
+
+        // Populate the datalist with the fetched descriptions
+        const suggestions = cargoCarrier
+            .map(type => `<option value="${type.description}">${type.description}</option>`)
+            .join('');
+        document.getElementById('cargoCarrierSuggestions').innerHTML = suggestions; // Update the datalist
+    } catch (error) {
+        console.error('Error loading Cargo Carrier details:', error);
+    }
+}
+
+
+
+// Function to dynamically load Service Provider based on user input
+async function serviceProviderDetails(query = '') {
+    try {
+        // Query the "party_details" table, filter by "party_name" using case-insensitive partial matching
+        const { data: serviceProvider, error } = await supabaseClient
+            .from('party_details')
+            .select('party_name, party_code')
+            .ilike('party_name', `%${query}%`); // Case-insensitive partial matching on party_name
+
+        if (error) {
+            console.error('Error fetching service provider details:', error);
+            return;
+        }
+
+        // Populate the datalist with the fetched service providers
+        const suggestions = serviceProvider
+            .map(provider => `<option value="${provider.party_name}" data-code="${provider.party_code}"> (${provider.party_code})</option>`)
+            .join('');
+        document.getElementById('serviceProviderSuggestions').innerHTML = suggestions; // Update the datalist
+    } catch (error) {
+        console.error('Error loading Service Provider details:', error);
+    }
+}
+
+// Function to validate if the entered service provider is in the suggestions list
+function validateServiceProviderInput() {
+    const input = document.getElementById('serviceProvider');
+    const enteredValue = input.value;
+    const datalist = document.getElementById('serviceProviderSuggestions');
+    const options = Array.from(datalist.getElementsByTagName('option'));
+    
+    const isValid = options.some(option => option.value === enteredValue);
+    
+    if (!isValid) {
+        // Option is not valid, clear the input or handle accordingly
+        input.setCustomValidity('Please select a valid service provider from the list');
+        input.reportValidity(); // Trigger browser validation message
+    } else {
+        input.setCustomValidity(''); // Clear the error if valid
+    }
+}
+
+// Add event listener to the input for validation when the input loses focus (blur event)
+document.getElementById('serviceProvider').addEventListener('blur', validateServiceProviderInput);
+
+
