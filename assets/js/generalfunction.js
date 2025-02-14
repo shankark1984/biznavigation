@@ -168,6 +168,7 @@ async function loadDropdownData(query, typeOfValue, datalistId) {
             .from('dropdown_list')
             .select('description')
             .eq('type_of_value', typeOfValue) // Filter by type_of_value
+            .in('company_id', ['All', companyID])
             .ilike('description', `%${query}%`); // Case-insensitive partial matching on description
 
         if (error) {
@@ -228,6 +229,7 @@ async function serviceProviderDetails(query, typeOfValue, datalistId) {
         const { data: serviceProvider, error } = await supabaseClient
             .from('party_details')
             .select('party_name, party_code')
+            .eq('company_id', companyID)
             .ilike('party_name', `%${query}%`); // Case-insensitive partial matching on party_name
 
         if (error) {
@@ -245,6 +247,46 @@ async function serviceProviderDetails(query, typeOfValue, datalistId) {
     }
 }
 
+async function PartyAddressDetails(query, typeOfValue, datalistId) {
+    console.log('Fetching addresses...' + companyID);
+    
+    if (!query.trim()) {
+        document.getElementById(datalistId).innerHTML = ''; // Clear suggestions if input is empty
+        return;
+    }
+
+    try {
+        const { data: partyAddress, error } = await supabaseClient
+            .from('Party_Address')
+            .select('Address')
+            .eq('Company_ID', companyID) // Ensure companyID is defined
+            .ilike('Address', `%${query}%`);
+
+        if (error) {
+            console.error('Error fetching Party Address details:', error);
+            return;
+        }
+
+        const partyAddressList = partyAddress.map(row => ({
+            PartyAddress: row.Address
+        }));
+
+        partyAddressSuggestions(partyAddressList, datalistId);
+    } catch (error) {
+        console.error('Error loading party address details:', error);
+    }
+}
+
+function partyAddressSuggestions(partyAddressList, datalistId) {
+    const suggestions = partyAddressList
+        .map(pAddress => `<option value="${pAddress.PartyAddress}">${pAddress.PartyAddress}</option>`)
+        .join('');
+
+    document.getElementById(datalistId).innerHTML = suggestions;
+}
+
+
+
 // Initialize dynamic data loading and event listeners
 function initialize() {
     // Load data for different fields
@@ -254,11 +296,9 @@ function initialize() {
     addInputEventListener('shippingType', (query) => loadDropdownData(query, 'Shippingtype', 'shippingTypeSuggestions'), 'shippingTypeSuggestions');
     addInputEventListener('carrierName', (query) => loadDropdownData(query, 'Cargocarrier', 'cargoCarrierSuggestions'), 'cargoCarrierSuggestions');
     addInputEventListener('serviceProvider', (query) => serviceProviderDetails(query, 'party_details', 'serviceProviderSuggestions'), 'serviceProviderSuggestions');
+    // addInputEventListener('PartyAddress', (query) => PartyAddressDetails(query, 'Party_Address', 'PartyAddressSuggestions'), 'PartyAddressSuggestions');
 }
 
 // Call initialize function when the DOM is fully loaded
 document.addEventListener('DOMContentLoaded', initialize);
-
-
-
 

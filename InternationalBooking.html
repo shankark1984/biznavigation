@@ -146,32 +146,46 @@
 
                 <!-- Pickup Address -->
                 <div class="col-md-5">
-                    <label for="pickupAddress" class="form-label small">Pickup Address</label>
-                    <select class="form-select" id="pickupAddress">
-                        <option selected>Choose...</option>
-                        <option value="1">Address 1</option>
-                        <option value="2">Address 2</option>
-                    </select>
+                    <label for="PartyAddress" class="form-label small">Pickup Address</label>
+                    <input list="PartyAddressSuggestions" id="PartyAddress" name="PartyAddress" required
+                        placeholder="Enter Pickup Address" autocomplete="off"
+                        oninput="PartyAddressDetails(this.value, 'Address', 'PartyAddressSuggestions')">
+                    <datalist id="PartyAddressSuggestions"></datalist>
                 </div>
 
                 <!-- Consignee Name -->
-                <div class="col-md-6">
+                <div class="col-md-5">
                     <label for="consigneeName" class="form-label small">Consignee Name</label>
-                    <select class="form-select" id="consigneeName">
-                        <option selected>Choose...</option>
-                        <option value="1">Consignee 1</option>
-                        <option value="2">Consignee 2</option>
-                    </select>
+                    <input list="consigneeNameSuggestions" id="consigneeName" name="consigneeName" required
+                        placeholder="Enter Consignee Name" autocomplete="off"
+                        oninput="consigneeDetails(this.value, 'ConsigneeName', 'consigneeNameSuggestions')"
+                        onchange="updateDeliveryAddress()">
+                    <datalist id="consigneeNameSuggestions"></datalist>
                 </div>
+
                 <!-- Delivery Address -->
                 <div class="col-md-6">
                     <label for="deliveryAddress" class="form-label small">Delivery Address</label>
-                    <select class="form-select" id="pickupAddress">
-                        <option selected>Choose...</option>
-                        <option value="1">Address 1</option>
-                        <option value="2">Address 2</option>
-                    </select>
+                    <input type="text" id="deliveryAddress" name="deliveryAddress" placeholder="Delivery Address"
+                        autocomplete="off">
                 </div>
+
+                <!-- Add New Consignee Modal -->
+                <div id="addConsigneeModal" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+        background: white; padding: 20px; box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2); border-radius: 5px;">
+                    <h3>Add New Consignee</h3>
+                    <input type="text" id="newConsigneeName" placeholder="Consignee Name" required>
+                    <input type="text" id="newConsigneeAddress" placeholder="Consignee Address" required>
+                    <input type="text" id="newContactPerson" placeholder="Contact Person" required>
+                    <input type="text" id="newContactNumber" placeholder="Contact Number" required>
+                    <input type="email" id="newEmailID" placeholder="Email ID" required>
+
+                    <div style="margin-top: 10px;">
+                        <button onclick="addNewConsignee()">Add Consignee</button>
+                        <button onclick="hideModal()">Cancel</button>
+                    </div>
+                </div>
+
                 <!-- Commodity Mode -->
                 <div class="col-md-3">
                     <label for="commodity" class="form-label small">Commodity</label>
