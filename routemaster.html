@@ -38,6 +38,8 @@
                     Details</button>
                 <button type="button" class="tablinks" onclick="openTab(event, 'dropdownMenuList')">Dropdown
                     Items</button>
+                <button type="button" class="tablinks" onclick="openTab(event, 'countryDetails')">Country
+                    Details</button>
             </nav>
 
             <!-- routDetails List Tab Content -->
@@ -169,6 +171,49 @@
                 </table>
             </section>
 
+            <!--Country_Details Tab Content -->
+            <section id="countryDetails" class="tab-content">
+                <div class="form-group">
+
+                    <div>
+                        <label for="countryCode">Country Code</label>
+                        <input list="countryCodeSuggestions" id="countryCode" name="countryCode" required
+                            placeholder="Select Country Code" autocomplete="off">
+                        <datalist id="countryCodeSuggestions"></datalist>
+                    </div>
+
+                    <div>
+                        <label for="countryName">Country Name</label>
+                        <input list="countryNameSuggestions" id="countryName" name="countryName" required
+                            placeholder="Select Country Name" autocomplete="off">
+                        <datalist id="countryNameSuggestions"></datalist>
+                    </div>
+                    <div>
+                        <label for="region">Region</label>
+                        <input type="text" id="region" name="region" style="text-transform: capitalize;"
+                            autocomplete="off">
+                    </div>
+
+                    <div>
+                        <label for="" style="color: white;">.</label>
+                        <button type="button" onclick="addCountryDetails()">Add</button>
+                    </div>
+                </div>
+                <!-- Route Table -->
+                <table id="countryDetailsTable" border="1">
+                    <thead>
+                        <tr>
+                            <th>Country Code</th>
+                            <th>Country Name</th>
+                            <th>Region</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Rows will be populated dynamically -->
+                    </tbody>
+                </table>
+            </section>
+
         </form>
     </main>
 
@@ -187,6 +232,7 @@
         <script src="assets/js/taxDescription.js"></script>
         <!-- <script src="assets/js/customerlist.js"></script> -->
         <script src="assets/js/logout.js"></script>
+        <script src="assets/js/work.js"></script>
     </footer>
 </body>
 

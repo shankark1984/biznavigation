@@ -262,7 +262,7 @@ label {
 input[type="email"],
 input[type="url"],
 input[type="number"],
-input[type="date"], 
+input[type="date"],
 input[type="text"],
 select,
 textarea,
@@ -569,7 +569,7 @@ input[list] {
     text-align: left;
 }
 
-.form-group table th, 
+.form-group table th,
 .form-group table td {
     padding: 10px;
     border: 1px solid #ccc;
@@ -590,7 +590,8 @@ input[list] {
 .form-group .table-container {
     width: 100%;
     overflow-x: auto;
-    margin-top: 1rem; /* Add spacing for better visual separation */
+    margin-top: 1rem;
+    /* Add spacing for better visual separation */
 }
 
 label {
@@ -598,65 +599,123 @@ label {
     align-items: center;
     justify-content: left;
     text-align: left;
-    height: 20%; /* Ensure it centers within its container */
-    font-size: small; /* Adjust size to be smaller */
+    height: 20%;
+    /* Ensure it centers within its container */
+    font-size: small;
+    /* Adjust size to be smaller */
 }
+
 /* Adjust placeholder text */
 ::placeholder {
-    font-size: 0.9rem; /* Adjust size */
-    color: #6c757d; /* Adjust color (lighter shade) */
-    text-align: left; /* Center the placeholder text */
-    opacity: 1; /* Ensure it's fully visible */
+    font-size: 0.9rem;
+    /* Adjust size */
+    color: #6c757d;
+    /* Adjust color (lighter shade) */
+    text-align: left;
+    /* Center the placeholder text */
+    opacity: 1;
+    /* Ensure it's fully visible */
 }
 
 /* For input fields to ensure text is centered */
-input[type="text"], input[type="date"], select {
-    text-align: left; /* Center input and placeholder text */
+input[type="text"],
+input[type="date"],
+select {
+    text-align: left;
+    /* Center input and placeholder text */
 }
 
 /* Smaller input fields */
-input[type="text"], input[type="date"], select, .form-select {
-    height: 30px; /* Adjust height for smaller fields */
-    font-size: 0.85rem; /* Adjust font size for text */
-    padding: 2px 8px; /* Adjust padding */
+input[type="text"],
+input[type="date"],
+select,
+.form-select {
+    height: 30px;
+    /* Adjust height for smaller fields */
+    font-size: 0.85rem;
+    /* Adjust font size for text */
+    padding: 2px 8px;
+    /* Adjust padding */
 }
 
 /* Adjust label and input alignment */
 .form-label {
-    font-size: 0.85rem; /* Smaller label size */
-    text-align: left; /* Center label text */
-    display: block; /* Ensure labels stay above inputs */
+    font-size: 0.85rem;
+    /* Smaller label size */
+    text-align: left;
+    /* Center label text */
+    display: block;
+    /* Ensure labels stay above inputs */
 }
 
 /* Optional: Adjust buttons to match smaller size */
 button.btn {
-    height: 32px; /* Smaller button height */
-    font-size: 0.85rem; /* Smaller button text */
+    height: 32px;
+    /* Smaller button height */
+    font-size: 0.85rem;
+    /* Smaller button text */
 }
 
 /* Adjust row height by controlling spacing */
 .row.g-3 {
-    margin-bottom: 10px; /* Space between rows */
+    margin-bottom: 10px;
+    /* Space between rows */
 }
 
 /* Reduce padding inside the form */
-.form-control, .form-select {
-    height: 30px; /* Adjust field height */
-    font-size: 0.85rem; /* Smaller text size */
-    padding: 4px 8px; /* Compact padding */
+.form-control,
+.form-select {
+    height: 30px;
+    /* Adjust field height */
+    font-size: 0.85rem;
+    /* Smaller text size */
+    padding: 4px 8px;
+    /* Compact padding */
 }
 
 /* Center-align labels */
 .form-label {
-    font-size: 0.85rem; /* Smaller label text */
+    font-size: 0.85rem;
+    /* Smaller label text */
     text-align: left;
-    margin-bottom: 1; /* Remove extra label space */
-    line-height: 1; /* Adjust line spacing for labels */
+    margin-bottom: 1;
+    /* Remove extra label space */
+    line-height: 1;
+    /* Adjust line spacing for labels */
 }
 
 /* Button adjustments for smaller rows */
 button.btn {
-    height: 32px; /* Adjust button height */
-    font-size: 0.85rem; /* Smaller button text */
-    padding: 2px 8px; /* Compact button padding */
+    height: 32px;
+    /* Adjust button height */
+    font-size: 0.85rem;
+    /* Smaller button text */
+    padding: 2px 8px;
+    /* Compact button padding */
+}
+
+#tableContainer {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    max-height: 50vh;
+    /* Adjust height as needed */
+    overflow-y: auto;
+    background-color: white;
+    border-bottom: 2px solid #ddd;
+    z-index: 1000;
+}
+
+#countryDetailsTable {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+#countryDetailsTable thead {
+    /* position: sticky; */
+    top: 0.1;
+    color: white;
+    background-color: rgb(193, 50, 50);
+    z-index: 10;
 }

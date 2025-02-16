@@ -170,21 +170,6 @@
                         autocomplete="off">
                 </div>
 
-                <!-- Add New Consignee Modal -->
-                <div id="addConsigneeModal" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-        background: white; padding: 20px; box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2); border-radius: 5px;">
-                    <h3>Add New Consignee</h3>
-                    <input type="text" id="newConsigneeName" placeholder="Consignee Name" required>
-                    <input type="text" id="newConsigneeAddress" placeholder="Consignee Address" required>
-                    <input type="text" id="newContactPerson" placeholder="Contact Person" required>
-                    <input type="text" id="newContactNumber" placeholder="Contact Number" required>
-                    <input type="email" id="newEmailID" placeholder="Email ID" required>
-
-                    <div style="margin-top: 10px;">
-                        <button onclick="addNewConsignee()">Add Consignee</button>
-                        <button onclick="hideModal()">Cancel</button>
-                    </div>
-                </div>
 
                 <!-- Commodity Mode -->
                 <div class="col-md-3">
@@ -284,6 +269,24 @@
                 </div>
             </div>
         </form>
+
+        <!-- Modal (Outside Main Form) -->
+<div id="addConsigneeModal" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+background: white; padding: 20px; box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2); border-radius: 5px;">
+    <h3>Add New Consignee</h3>
+    <form id="consigneeForm" onsubmit="addNewConsignee(event)">
+        <input type="text" id="newConsigneeName" placeholder="Consignee Name" required>
+        <input type="text" id="newConsigneeAddress" placeholder="Consignee Address" required>
+        <input type="text" id="newContactPerson" placeholder="Contact Person" required>
+        <input type="text" id="newContactNumber" placeholder="Contact Number" required>
+        <input type="email" id="newEmailID" placeholder="Email ID" required>
+
+        <div style="margin-top: 10px;">
+            <button type="submit">Add Consignee</button>
+            <button type="button" onclick="hideModal()">Cancel</button>
+        </div>
+    </form>
+</div>
 
     </div>
 

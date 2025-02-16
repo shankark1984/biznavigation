@@ -123,16 +123,25 @@ function hideModal() {
     document.getElementById('addConsigneeModal').style.display = 'none';
 }
 
-async function addNewConsignee() {
+async function addNewConsignee(event) {
+    event.preventDefault(); // Prevent default form submission
+
     const newConsignee = {
-        ConsigneeName: document.getElementById('newConsigneeName').value,
-        ConsigneeAddress: document.getElementById('newConsigneeAddress').value,
-        ContactPerson: document.getElementById('newContactPerson').value,
-        ContactNumber: document.getElementById('newContactNumber').value,
-        EmailID: document.getElementById('newEmailID').value,
+        ConsigneeName: document.getElementById('newConsigneeName').value.trim(),
+        ConsigneeAddress: document.getElementById('newConsigneeAddress').value.trim(),
+        ContactPerson: document.getElementById('newContactPerson').value.trim(),
+        ContactNumber: document.getElementById('newContactNumber').value.trim(),
+        EmailID: document.getElementById('newEmailID').value.trim(),
         Company_ID: companyID,
-        created_by: userID // Ensure `userID` is defined
+        created_by: userLoginID // Ensure `userID` is defined
     };
+
+    // Ensure required fields are filled
+    if (!newConsignee.ConsigneeName || !newConsignee.ConsigneeAddress || !newConsignee.ContactPerson || 
+        !newConsignee.ContactNumber || !newConsignee.EmailID) {
+        alert('Please fill in all required fields.');
+        return;
+    }
 
     try {
         const { error } = await supabaseClient
@@ -147,11 +156,18 @@ async function addNewConsignee() {
 
         alert('Consignee added successfully!');
         hideModal();
-        consigneeDetails(newConsignee.ConsigneeName, 'ConsigneeName', 'consigneeNameSuggestions'); // Refresh list
+
+        // Update main form input fields after adding new consignee
+        document.getElementById('consigneeName').value = newConsignee.ConsigneeName;
+        document.getElementById('deliveryAddress').value = newConsignee.ConsigneeAddress;
+
+        // Refresh consignee list
+        consigneeDetails(newConsignee.ConsigneeName, 'ConsigneeName', 'consigneeNameSuggestions');
     } catch (error) {
         console.error('Error inserting consignee:', error);
     }
 }
+
 
 // Ensure datalist is always shown, including "Add New Consignee"
 document.getElementById('consigneeName').addEventListener('focus', function () {

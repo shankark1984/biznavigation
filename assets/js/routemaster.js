@@ -249,7 +249,7 @@ async function addDropdownMenuList() {
     let hsnCode = document.getElementById('hsncode').value.trim();
 
     console.log('valueAssignedTo: ' + valueAssignedTo);
-    
+
     // Validate required fields
     if (!valueAssignedTo || !description) {
         alert('Please fill in all required fields (Value Assigned To and Description).');
@@ -261,7 +261,7 @@ async function addDropdownMenuList() {
     hsnCode = hsnCode ? Number(hsnCode) : null; // Convert to number or set to null
 
     // Check if conversion to number was successful
-    if ((fixedValue === null && document.getElementById('fixedvalue').value.trim() !== "") || 
+    if ((fixedValue === null && document.getElementById('fixedvalue').value.trim() !== "") ||
         (hsnCode === null && document.getElementById('hsncode').value.trim() !== "")) {
         alert('Please enter valid numeric values for Fixed Value and HSN Code.');
         return;
@@ -409,3 +409,171 @@ function descriptionSuggestions(dropdownMenuList) {
     });
     document.getElementById('descriptionSuggestions').innerHTML = suggestions;
 }
+
+
+//Country details Tab
+
+let allCountries = [];
+
+// Fetch and populate country details table
+async function fetchCountryDetails() {
+    try {
+        const { data, error } = await supabaseClient.from('Country_Details').select('*');
+        if (error) throw error;
+
+        allCountries = data || [];
+        renderCountryTable(allCountries);
+    } catch (error) {
+        console.error('Error fetching country details:', error);
+        showFlashMessage('Error fetching data!', 'error');
+    }
+}
+
+// Render country details table dynamically
+function renderCountryTable(data) {
+    const tableBody = document.querySelector('#countryDetailsTable tbody');
+    tableBody.innerHTML = data.map(country => `
+        <tr>
+            <td>${country.CountryCode}</td>
+            <td>${country.CountryName}</td>
+            <td>${country.Region}</td>
+            <td><button onclick="deleteCountryDetails(${country.id})">Delete</button></td>
+        </tr>
+    `).join('');
+}
+
+// Show flash message
+function showFlashMessage(message, type = 'success') {
+    const flashMessage = document.createElement('div');
+    flashMessage.className = `flash-message ${type}`;
+    flashMessage.textContent = message;
+
+    Object.assign(flashMessage.style, {
+        position: 'fixed',
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        backgroundColor: type === 'error' ? '#f44336' : '#4CAF50',
+        color: 'white',
+        padding: '15px',
+        borderRadius: '5px',
+        zIndex: '1000',
+        boxShadow: '0px 0px 10px rgba(0, 0, 0, 0.1)',
+        fontSize: '16px',
+        fontWeight: 'bold',
+        textAlign: 'center',
+    });
+
+    document.body.appendChild(flashMessage);
+    setTimeout(() => flashMessage.remove(), 3000);
+}
+
+// Add new country details
+async function addCountryDetails() {
+    const countryCode = document.getElementById('countryCode').value.trim().toUpperCase();
+    const countryName = document.getElementById('countryName').value.trim();
+    const region = document.getElementById('region').value.trim();
+
+    if (!countryCode || !countryName || !region) {
+        showFlashMessage('Please fill in all fields!', 'error');
+        return;
+    }
+
+    try {
+        // Check for duplicate entry
+        const { data: existingCountry } = await supabaseClient
+            .from('Country_Details')
+            .select('CountryCode')
+            .eq('CountryCode', countryCode)
+            .single();
+
+        if (existingCountry) {
+            showFlashMessage('Duplicate Entry!', 'error');
+            return;
+        }
+    } catch (error) {
+        if (error.code !== 'PGRST116') {
+            console.error('Error checking duplicate country code:', error);
+            showFlashMessage('Error checking country code!', 'error');
+            return;
+        }
+    }
+
+    try {
+        // Insert the new record
+        const { error } = await supabaseClient.from('Country_Details').insert([
+            { CountryCode: countryCode, CountryName: countryName, Region: region, created_at: new Date().toISOString() }
+        ]);
+        if (error) throw error;
+
+        showFlashMessage('Country details added successfully!', 'success');
+        fetchCountryDetails(); // Refresh table
+    } catch (error) {
+        console.error('Error adding country details:', error);
+        showFlashMessage('Error adding country details!', 'error');
+    }
+}
+
+// Delete a country details entry with confirmation
+async function deleteCountryDetails(id) {
+    if (!confirm('Are you sure you want to delete this country detail?')) return;
+
+    try {
+        const { error } = await supabaseClient.from('Country_Details').delete().eq('id', id);
+        if (error) throw error;
+
+        showFlashMessage('Country details deleted successfully!', 'success');
+        fetchCountryDetails(); // Refresh table
+    } catch (error) {
+        console.error('Error deleting country details:', error);
+        showFlashMessage('Error deleting country details!', 'error');
+    }
+}
+
+// Load country details for suggestions
+async function loadCountryDetails() {
+    try {
+        const { data, error } = await supabaseClient.from('Country_Details').select('*');
+        if (error) throw error;
+
+        document.getElementById("countrySuggestions").innerHTML = (data || [])
+            .map(row => `<option data-country-code="${row.CountryCode}" value="${row.CountryName}"></option>`)
+            .join('');
+    } catch (error) {
+        console.error('Error fetching country details:', error);
+    }
+}
+
+// Filter country table as user types
+function filterCountryTable() {
+    const nameInput = document.getElementById('countryName').value.toLowerCase();
+    const regionInput = document.getElementById('region').value.toLowerCase();
+
+    const filteredData = allCountries.filter(country =>
+        country.CountryName.toLowerCase().includes(nameInput) &&
+        country.Region.toLowerCase().includes(regionInput)
+    );
+
+    renderCountryTable(filteredData);
+}
+
+// Event listeners for live search
+document.getElementById('countryName').addEventListener('input', filterCountryTable);
+document.getElementById('region').addEventListener('input', filterCountryTable);
+
+// Ensure table is scrollable
+document.addEventListener('DOMContentLoaded', () => {
+    fetchCountryDetails();
+    loadCountryDetails();
+
+    const tableContainer = document.createElement('div');
+    Object.assign(tableContainer.style, {
+        overflowY: 'auto',
+        maxHeight: '60vh',
+        border: '1px solid #ddd'
+    });
+
+    const table = document.getElementById('countryDetailsTable');
+    table.parentNode.insertBefore(tableContainer, table);
+    tableContainer.appendChild(table);
+});
