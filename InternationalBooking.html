@@ -154,7 +154,7 @@
                 </div>
 
                 <!-- Consignee Name -->
-                <div class="col-md-5">
+                <div class="col-md-4">
                     <label for="consigneeName" class="form-label small">Consignee Name</label>
                     <input list="consigneeNameSuggestions" id="consigneeName" name="consigneeName" required
                         placeholder="Enter Consignee Name" autocomplete="off"
@@ -164,10 +164,10 @@
                 </div>
 
                 <!-- Delivery Address -->
-                <div class="col-md-6">
+                <div class="col-md-5">
                     <label for="deliveryAddress" class="form-label small">Delivery Address</label>
-                    <input type="text" id="deliveryAddress" name="deliveryAddress" placeholder="Delivery Address"
-                        autocomplete="off">
+                    <textarea id="deliveryAddress" name="deliveryAddress" placeholder="Delivery Address"
+                        autocomplete="off" rows="1"></textarea>
                 </div>
 
 
@@ -271,22 +271,22 @@
         </form>
 
         <!-- Modal (Outside Main Form) -->
-<div id="addConsigneeModal" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+        <div id="addConsigneeModal" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
 background: white; padding: 20px; box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2); border-radius: 5px;">
-    <h3>Add New Consignee</h3>
-    <form id="consigneeForm" onsubmit="addNewConsignee(event)">
-        <input type="text" id="newConsigneeName" placeholder="Consignee Name" required>
-        <input type="text" id="newConsigneeAddress" placeholder="Consignee Address" required>
-        <input type="text" id="newContactPerson" placeholder="Contact Person" required>
-        <input type="text" id="newContactNumber" placeholder="Contact Number" required>
-        <input type="email" id="newEmailID" placeholder="Email ID" required>
+            <h3>Add New Consignee</h3>
+            <form id="consigneeForm" onsubmit="addNewConsignee(event)">
+                <input type="text" id="newConsigneeName" placeholder="Consignee Name" required>
+                <input type="text" id="newConsigneeAddress" placeholder="Consignee Address" required>
+                <input type="text" id="newContactPerson" placeholder="Contact Person" required>
+                <input type="text" id="newContactNumber" placeholder="Contact Number" required>
+                <input type="email" id="newEmailID" placeholder="Email ID" required>
 
-        <div style="margin-top: 10px;">
-            <button type="submit">Add Consignee</button>
-            <button type="button" onclick="hideModal()">Cancel</button>
+                <div style="margin-top: 10px;">
+                    <button type="submit">Add Consignee</button>
+                    <button type="button" onclick="hideModal()">Cancel</button>
+                </div>
+            </form>
         </div>
-    </form>
-</div>
 
     </div>
 

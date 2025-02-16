@@ -212,15 +212,21 @@ function validateInput(inputId, datalistId) {
 }
 
 // General event listener for inputs to trigger validation and load data
-function addInputEventListener(inputId, queryFunction, datalistId) {
-    document.getElementById(inputId).addEventListener('input', (event) => {
+function addInputEventListener(inputId, callback, datalistId) {
+    const inputElement = document.getElementById(inputId);
+
+    if (!inputElement) return;
+
+    inputElement.addEventListener('input', (event) => {
         const query = event.target.value;
-        queryFunction(query); // Call the respective function to load data based on user input
+        callback(query);
     });
 
-    // Validation on blur (focus loss)
-    document.getElementById(inputId).addEventListener('blur', () => validateInput(inputId, datalistId));
+    inputElement.addEventListener('focus', () => {
+        callback(''); // Trigger search with an empty query to load all options
+    });
 }
+
 
 // Function to dynamically load Service Provider based on user input
 async function serviceProviderDetails(query, typeOfValue, datalistId) {
@@ -249,7 +255,7 @@ async function serviceProviderDetails(query, typeOfValue, datalistId) {
 
 async function PartyAddressDetails(query, typeOfValue, datalistId) {
     console.log('Fetching addresses...' + companyID);
-    
+
     if (!query.trim()) {
         document.getElementById(datalistId).innerHTML = ''; // Clear suggestions if input is empty
         return;
