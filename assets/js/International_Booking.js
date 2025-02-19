@@ -173,49 +173,20 @@ document.getElementById('consigneeName').addEventListener('focus', function () {
     this.setAttribute('list', 'consigneeNameSuggestions');
 });
 
-function transactionTypeDetails(value) {
-    // Your logic to handle the value of the input field
-    console.log(value); // Example action
+function handleDetails(detailType, value) {
+    console.log(`${detailType}: ${value}`);
 }
 
-function transitTypeInternationalDetails(value) {
-    // Your logic to handle the value of the input field
-    console.log(value); // Example action
-}
-function modeTypeDetails(value) {
-    // Your logic to handle the value of the input field
-    console.log(value); // Example action
-}
-function poNoDetails(value) {
-    // Your logic to handle the value of the input field
-    console.log(value); // Example action
-}
-function shippingTypeDetails(value) {
-    // Your logic to handle the value of the input field
-    console.log(value); // Example action
-}
-function cargoCarrierDetails(value) {
-    // Your logic to handle the value of the input field
-    console.log(value); // Example action
-}
+// Example usage:
+handleDetails('transactionType', value);
+handleDetails('transitTypeInternational', value);
+handleDetails('modeType', value);
+handleDetails('poNo', value);
+handleDetails('shippingType', value);
+handleDetails('cargoCarrier', value);
+handleDetails('shipperRef', value);
+handleDetails('PartyAddress', value);
+handleDetails('commodity', value);
+handleDetails('clearanceMode', value);
+handleDetails('packing', value);
 
-function shipperRefDetails(value) {
-    // Your logic to handle the value of the input field
-    console.log(value); // Example action
-}
-function PartyAddressDetails(value) {
-    // Your logic to handle the value of the input field
-    console.log(value); // Example action
-}
-function commodityDetails(value) {
-    // Your logic to handle the value of the input field
-    console.log(value); // Example action
-}
-function clearanceModeDetails(value) {
-    // Your logic to handle the value of the input field
-    console.log(value); // Example action
-}
-function packingDetails(value) {
-    // Your logic to handle the value of the input field
-    console.log(value); // Example action
-}
