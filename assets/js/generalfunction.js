@@ -11,6 +11,14 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 });
 
+document.querySelectorAll('input[type="number"]').forEach(function (input) {
+    input.addEventListener("blur", function () {
+        if (this.value) {
+            this.value = parseFloat(this.value).toFixed(2);
+        }
+    });
+});
+
 // Enable all form inputs
 function enableForm() {
     const inputs = document.querySelectorAll('#userForm input, #userForm select, #userForm textarea');
@@ -194,29 +202,34 @@ function validateInput(inputId, datalistId) {
     const options = Array.from(datalist.getElementsByTagName('option'));
 
     let errorMessageElement = document.getElementById(`${inputId}-error`);
-    if (!errorMessageElement) {
-        errorMessageElement = document.createElement('span');
-        errorMessageElement.id = `${inputId}-error`;
-        errorMessageElement.style.color = 'red';
-        errorMessageElement.style.fontSize = '12px';
-        errorMessageElement.style.marginLeft = '10px';
-        input.parentNode.appendChild(errorMessageElement);
-    }
 
+    // Check if entered value matches any option
     const isValid = options.some(option => option.value === enteredValue);
 
     if (!isValid && enteredValue !== '') {
-
+        if (!errorMessageElement) {
+            errorMessageElement = document.createElement('span');
+            errorMessageElement.id = `${inputId}-error`;
+            errorMessageElement.style.color = 'red';
+            errorMessageElement.style.fontSize = '12px';
+            errorMessageElement.style.marginLeft = '10px';
+            input.parentNode.appendChild(errorMessageElement);
+        }
         errorMessageElement.textContent = 'No valid entry';
-        input.reportValidity(); // Trigger validation message
+        input.setCustomValidity('Invalid selection');
+        input.reportValidity();
         setTimeout(() => input.focus(), 1); // Keep focus on the input field
     } else {
         input.setCustomValidity('');
-        errorMessageElement.textContent = ''; // Clear error message
+        if (errorMessageElement) {
+            errorMessageElement.remove(); // **Remove the error message element**
+        }
     }
 
-    input.reportValidity(); // Trigger browser validation message
+    input.reportValidity();
 }
+
+
 
 // Attach validation event to inputs
 function attachValidation(inputId, datalistId) {
@@ -228,6 +241,7 @@ function attachValidation(inputId, datalistId) {
 
 // Call `attachValidation` for all fields that require validation
 function initializeValidation() {
+    attachValidation('partyName', 'partySuggestions');
     attachValidation('transactionType', 'transactionTypeSuggestions');
     attachValidation('transitTypeInternational', 'transitTypeInternationalSuggestions');
     attachValidation('modeType', 'modeTypeSuggestions');
@@ -238,6 +252,8 @@ function initializeValidation() {
     attachValidation('clearanceMode', 'clearanceModeSuggestions');
     attachValidation('originCountry', 'originCountrySuggestions');
     attachValidation('destinationCountry', 'destinationCountrySuggestions');
+    attachValidation('packingType', 'packingTypeSuggestions');
+    attachValidation('uOMType', 'uOMTypeSuggestions');
 }
 
 // Ensure validation runs when the DOM is fully loaded
@@ -334,6 +350,8 @@ function initialize() {
     addInputEventListener('serviceProvider', (query) => serviceProviderDetails(query, 'party_name', 'serviceProviderSuggestions'), 'serviceProviderSuggestions');
     addInputEventListener('commodity', (query) => loadDropdownData(query, 'Commodity', 'commoditySuggestions'), 'commoditySuggestions');
     addInputEventListener('clearanceMode', (query) => loadDropdownData(query, 'ClearanceMode', 'clearanceModeSuggestions'), 'clearanceModeSuggestions');
+    addInputEventListener('packingType', (query) => loadDropdownData(query, 'PackingType', 'packingTypeSuggestions'), 'packingTypeSuggestions');
+    addInputEventListener('uOMType', (query) => loadDropdownData(query, 'UOMType', 'uOMTypeSuggestions'), 'uOMTypeSuggestions');
 
 }
 

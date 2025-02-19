@@ -4,206 +4,340 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BizNavigation Report</title>
+    <title>International Booking</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/styles.css">
+
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <!-- Bootstrap for layout -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-
-    <!-- Non-responsive layout style for A4 size -->
-    <link rel="stylesheet" href="assets/css/lrReport.css">
-    <!-- External scripts -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/2.3.10/purify.min.js" defer></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.0/dist/JsBarcode.all.min.js" defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@latest"></script>
-
-    <style>
-        /* Additional custom styles for better border visibility */
-        .border {
-            border: 1px solid #dee2e6; /* Adjust the color and width as needed */
-        }
-
-        .p-1 {
-            padding: 0.5rem; /* Adjust padding for better spacing */
-        }
-
-        .p-2 {
-            padding: 1rem; /* Adjust padding for better spacing */
-        }
-
-        .p-3 {
-            padding: 1.5rem; /* Adjust padding for better spacing */
-        }
-
-        /* Specific styles for report sections */
-        #reportContent {
-            margin-bottom: 20px; /* Add space below the report content */
-        }
-    </style>
-
+    <!-- Include DOMPurify from CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/2.3.10/purify.min.js"></script>
+    <!-- Include html2canvas from CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <!-- Include jsPDF from CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js"></script> <!-- Supabase client -->
 </head>
 
-<body>
-    <div class="container mt-3">
-        <!-- Download PDF Button -->
-        <div class="row mb-3">
-            <div class="col-12 text-start">
-                <button class="btn btn-primary" onclick="generatePDF()">Download PDF</button>
+<body class="bg-light">
+    <div class="container mt-2">
+        <div class="card shadow-lg rounded">
+            <div class="card-header bg-primary text-white">
+                <h3 class="mb-0">International Booking</h3>
+                <input type="hidden" id="tempFormID" name="tempFormID">
+                <input type="hidden" id="partyCode" name="partyCode">
+                <input type="hidden" id="vendorCode" name="vendorCode">
             </div>
-        </div>
-
-        <div class="row border p-0" id="reportContent">
-            <!-- Company logo and header -->
-            <div class="col-12 border p-2 d-flex justify-content-between align-items-center text-center">
-                <img src="assets/img/logo/CA0001.png" alt="Company Logo" id="companylogo" class="company-logo" style="height: 90px;" />
-                <div class="company-info text-center">
-                    <h2 id="companyName" class="m-0" style="font-size: 25px; font-weight: bold;"></h2>
-                    <p id="address" class="mb-0" style="font-size: 12px;">Address</p>
-                </div>
-                <div class="text-end border p-2 text-center" style="width: 200px;">
-                    <div id="barcodeContainer" style="width: 200px;">
-                        <p class="m-0" style="font-weight: bold;">LR NUMBER</p>
-                        <svg id="barcodeCanvas"></svg>
+            <div class="card-body">
+                <form>
+                    <!-- Button Group -->
+                    <div class="d-flex justify-content-start gap-2 mb-2">
+                        <button type="button" class="btn btn-primary"><i class="bi bi-file-earmark-plus"></i>
+                            New</button>
+                        <button type="button" class="btn btn-warning"><i class="bi bi-pencil"></i> Modify</button>
+                        <button type="button" class="btn btn-danger"><i class="bi bi-trash"></i> Delete</button>
+                        <button type="button" class="btn btn-info"><i class="bi bi-file-earmark-text"></i>
+                            Report</button>
+                        <button type="button" class="btn btn-success"><i class="bi bi-save"></i> Save</button>
                     </div>
-                    <p class="m-0">Booking Date: <span id="reportDate">07-10-2024</span></p>
-                </div>
-            </div>
 
-            <!-- Locations -->
-            <div class="col-12 p-0 d-flex justify-content-between text-center">
-                <div class="col-6 border p-2">
-                    <h6 style="font-weight: bold; text-align: left;">Pickup Location:</h6>
-                    <p id="pickupAddress" style="font-size: 12px; margin: 0;text-align: left;">Warehouse 1, Chennai</p>
-                </div>
-                <div class="col-6 border p-2">
-                    <h6 style="font-weight: bold; text-align: left;">Delivery Location:</h6>
-                    <p id="deliveryAddress" style="font-size: 12px; margin: 0;text-align: left;">Dock 45, Nellore</p>
-                </div>
-            </div>
+                    <!-- Form Grid -->
+                    <div class="row g-2">
+                        <!-- Customer Name -->
+                        <div class="col-md-4">
+                            <label for="partyName" class="form-label small">Customer Name</label>
+                            <input list="partySuggestions" class="form-control" id="partyName" name="partyName" required
+                                placeholder="Choose..." autocomplete="off">
+                            <datalist id="partySuggestions"></datalist>
+                        </div>
+                        <!-- Docket No -->
+                        <div class="col-md-4">
+                            <label for="awbNo" class="form-label small">Docket No</label>
+                            <input list="docketNoSuggestions" class="form-control" id="awbNo" name="awbNo" required
+                                placeholder="Enter Docket No" autocomplete="off"
+                                oninput="loadAWBNoDetails(this.value)"><!-- Dynamically loads suggestions -->
+                            <datalist id="docketNoSuggestions"></datalist>
+                        </div>
+                        <!-- Booked Date -->
+                        <div class="col-md-2">
+                            <label for="bookedDate" class="form-label small">Booked Date</label>
+                            <input type="date" class="form-control" id="bookedDate">
+                        </div>
+                        <!-- Status -->
+                        <div class="col-md-2">
+                            <label for="status" class="form-label small">Status</label>
+                            <input type="text" class="form-control bg-light" id="status" value="New" readonly>
+                        </div>
+                        <!-- Transaction Type -->
+                        <div class="col-md-2">
+                            <label for="transactionType" class="form-label small">Transaction Type</label>
+                            <input list="transactionTypeSuggestions" class="form-control" id="transactionType"
+                                name="transactionType" required placeholder="Choose..." autocomplete="off"
+                                oninput="transactionTypeDetails(this.value)">
+                            <!-- Dynamically loads suggestions -->
+                            <datalist id="transactionTypeSuggestions"></datalist>
+                        </div>
 
-            <!-- Other Information -->
-            <div class="col-4 border p-2">
-                <p style="margin: 0;"><span style="font-weight: bold;">Origin: </span> <span id="originCity"></span></p>
-                <p style="margin: 0;"><span style="font-weight: bold;">Vehicle No.: </span> <span id="vehicleNumber"></span></p>
-                <p style="margin: 0;"><span style="font-weight: bold;">Vehicle Type: </span> <span id="vehicleType"></span></p>
-            </div>
+                        <!-- Transit Type -->
+                        <div class="col-md-2">
+                            <label for="transitTypeInternational" class="form-label small">Transit Type</label>
+                            <input list="transitTypeInternationalSuggestions" class="form-select"
+                                id="transitTypeInternational" name="transitTypeInternational" required
+                                placeholder="Choose..." autocomplete="off"
+                                oninput="transitTypeInternationalDetails(this.value)"><!-- Dynamically loads suggestions -->
+                            <datalist id="transitTypeInternationalSuggestions"></datalist>
+                        </div>
+                        <!-- Mode Type -->
+                        <div class="col-md-2">
+                            <label for="modeType" class="form-label">Mode Type</label>
+                            <input list="modeTypeSuggestions" class="form-select" id="modeType" name="modeType" required
+                                placeholder="Choose..." autocomplete="off"
+                                oninput="modeTypeDetails(this.value)"><!-- Dynamically loads suggestions -->
+                            <datalist id="modeTypeSuggestions"></datalist>
+                        </div>
 
-            <div class="col-4 border p-2">
-                <p style="margin: 0;"><span style="font-weight: bold;">Destination: </span> <span id="destinationCity"></span></p>
-                <p style="margin: 0;"><span style="font-weight: bold;">Mode: </span> <span id="modeType"></span> <span style="font-weight: bold;">Transit Type: </span> <span id="transitType"></span></p>
-                <p style="margin: 0;"><span style="font-weight: bold;">Payment Type: </span> <span id="paymentType"></span></p>
-            </div>
+                        <!-- P.O No -->
+                        <div class="col-md-3">
+                            <label for="poNo" class="form-label small">P.O No</label>
+                            <input list="poNoSuggestions" class="form-control" id="poNo" name="poNo" required
+                                placeholder="Enter P.O No" autocomplete="off"
+                                oninput="poNoDetails(this.value)"><!-- Dynamically loads suggestions -->
+                            <datalist id="poNoSuggestions"></datalist>
+                        </div>
 
-            <div class="col-4 border p-2">
-                <p style="margin: 0;"><span style="font-weight: bold;">Invoice No: </span> <span id="invoiceNumber"></span></p>
-                <p style="margin: 0;"><span style="font-weight: bold;">Invoice Value: </span> <span id="invoiceValue"></span></p>
-                <p style="margin: 0;"><span style="font-weight: bold;">E-Way Bill No: </span> <span id="eWayBillNo"></span></p>
-            </div>
+                        <!-- Shipping Type -->
+                        <div class="col-md-3">
+                            <label for="shippingType" class="form-label small">Shipping Type</label>
+                            <input list="shippingTypeSuggestions" class="form-select" id="shippingType"
+                                name="shippingType" required placeholder="Choose..." autocomplete="off"
+                                oninput="shippingTypeDetails(this.value)"><!-- Dynamically loads suggestions -->
+                            <datalist id="shippingTypeSuggestions"></datalist>
+                        </div>
 
-            <!-- Freight Information Header -->
-            <div class="col-12 p-0 d-flex justify-content-between text-center">
-                <div class="col-1 border d-flex align-items-center justify-content-center p-0">
-                    <p class="m-0" style="font-weight: bold; font-size: 10px;">No of Packages</p>
-                </div>
-                <div class="col-4 border d-flex align-items-center justify-content-center p-0">
-                    <p class="m-0" style="font-weight: bold; font-size: 10px;">Description of Goods (Said to Contain)</p>
-                </div>
-                <div class="col-1 border d-flex align-items-center justify-content-center p-0">
-                    <p class="m-0" style="font-weight: bold; font-size: 10px;">Actual WT</p>
-                </div>
-                <div class="col-6 border d-flex align-items-center justify-content-center p-0">
-                    <p class="m-0" style="font-weight: bold; font-size: 10px;">Freight Details</p>
-                </div>
-            </div>
+                        <!-- Cargo Carrier -->
+                        <div class="col-md-4">
+                            <label for="carrierName" class="form-label small">Carrier</label>
+                            <input list="cargoCarrierSuggestions" class="form-control" id="carrierName"
+                                name="carrierName" required placeholder="Choose..." autocomplete="off"
+                                oninput="cargoCarrierDetails(this.value)"><!-- Dynamically loads suggestions -->
+                            <datalist id="cargoCarrierSuggestions"></datalist>
+                        </div>
 
-            <!-- Freight Information Content -->
-            <div class="col-12 p-0 d-flex justify-content-between">
-                <div class="col-1 border p-1">
-                    <p id="quantity" class="text-center"></p>
-                </div>
-                <div class="col-4 border p-1">
-                    <p id="descriptionofGoods"></p>
-                </div>
-                <div class="col-1 border m-0">
-                    <p id="actualWeight" class="m-0 text-center"></p>
-                    <div class="col-12 border p-1" style="margin: 0;">
-                        <p class="m-0 text-center" style="font-weight: bold;font-size: 10px;">Charge WT</p>
+                        <!-- Service Provider -->
+                        <div class="col-md-3">
+                            <label for="serviceProvider" class="form-label small">Service Provider</label>
+                            <input list="serviceProviderSuggestions" class="form-control" id="serviceProvider"
+                                name="serviceProvider" required placeholder="Choose..." autocomplete="off"
+                                oninput="serviceProviderDetails(this.value)">
+                            <!-- Dynamically loads suggestions -->
+                            <datalist id="serviceProviderSuggestions"></datalist>
+                        </div>
+
+                        <!-- Shipper Ref -->
+                        <div class="col-md-3">
+                            <label for="shipperRef" class="form-label small">Shipper Ref</label>
+                            <input list="shipperRefSuggestions" class="form-control" id="shipperRef" name="shipperRef"
+                                required placeholder="Enter shipper Ref No." autocomplete="off"
+                                oninput="shipperRefDetails(this.value)"><!-- Dynamically loads suggestions -->
+                        </div>
+                        <!-- Invoice Value Ref -->
+                        <div class="col-md-2">
+                            <label for="invoiceValue" class="form-label small">Invoice Value</label>
+                            <input type="number" class="form-control" id="invoiceValue" name="invoiceValue"
+                                autocomplete="off" value="0.00">
+                        </div>
+                        <!-- Pickup Address -->
+                        <div class="col-md-4">
+                            <label for="PartyAddress" class="form-label small">Pickup Address</label>
+                            <input list="PartyAddressSuggestions" class="form-control" id="PartyAddress"
+                                name="PartyAddress" required placeholder="Enter Pickup Address" autocomplete="off"
+                                oninput="PartyAddressDetails(this.value, 'Address', 'PartyAddressSuggestions')">
+                            <datalist id="PartyAddressSuggestions"></datalist>
+                        </div>
+
+                        <!-- Consignee Name -->
+                        <div class="col-md-3">
+                            <label for="consigneeName" class="form-label small">Consignee Name</label>
+                            <input list="consigneeNameSuggestions" class="form-control" id="consigneeName"
+                                name="consigneeName" required placeholder="Enter Consignee Name" autocomplete="off"
+                                oninput="consigneeDetails(this.value, 'ConsigneeName', 'consigneeNameSuggestions')"
+                                onchange="updateDeliveryAddress()">
+                            <datalist id="consigneeNameSuggestions"></datalist>
+                        </div>
+
+                        <!-- Delivery Address -->
+                        <div class="col-md-5">
+                            <label for="deliveryAddress" class="form-label small">Delivery Address</label>
+                            <textarea class="form-control" id="deliveryAddress" name="deliveryAddress"
+                                placeholder="Delivery Address" autocomplete="off" rows="1"></textarea>
+                        </div>
+
+                        <!-- Commodity Mode -->
+                        <div class="col-md-3">
+                            <label for="commodity" class="form-label small">Commodity</label>
+                            <input list="commoditySuggestions" class="form-control" id="commodity" name="commodity"
+                                required placeholder="Enter Commodity Type" autocomplete="off"
+                                oninput="commodityDetails(this.value)">
+                            <!-- Dynamically loads suggestions -->
+                            <datalist id="commoditySuggestions"></datalist>
+
+                        </div>
+
+                        <!-- Clearance Mode -->
+                        <div class="col-md-3">
+                            <label for="clearanceMode" class="form-label small">Clearance Mode</label>
+                            <input list="clearanceModeSuggestions" class="form-control" id="clearanceMode"
+                                name="clearanceMode" required placeholder="Enter Clearance Mode" autocomplete="off"
+                                oninput="clearanceModeDetails(this.value)">
+                            <!-- Dynamically loads suggestions -->
+                            <datalist id="clearanceModeSuggestions"></datalist>
+                        </div>
+
+                        <!-- Origin Country -->
+                        <div class="col-md-3">
+                            <label for="originCountry" class="form-label small">Origin</label>
+                            <input list="originCountrySuggestions" class="form-control" id="originCountry"
+                                name="originCountry" required placeholder="Enter Origin Country"
+                                autocomplete="new-password""
+                        oninput=" CountryDetails(this.value, 'originCountrySuggestions' , 'originCountry' )">
+                            <!-- Dynamically loads suggestions -->
+                            <datalist id="originCountrySuggestions"></datalist>
+                        </div>
+
+                        <!-- Destination Country-->
+                        <div class="col-md-3">
+                            <label for="destination" class="form-label small">Destination</label>
+                            <input list="destinationCountrySuggestions" class="form-control" id="destinationCountry"
+                                name="destinationCountry" required placeholder="Enter Destination Country"
+                                autocomplete="new-password"
+                                oninput=" CountryDetails(this.value, 'destinationCountrySuggestions' , 'destinationCountry' )">
+                            <!-- Dynamically loads suggestions -->
+                            <datalist id="destinationCountrySuggestions"></datalist>
+                        </div>
+                        <!-- Packing Type -->
+                        <div class="col-md-2">
+                            <label for="packingType" class="form-label small">Packing Type</label>
+                            <input list="packingTypeSuggestions" class="form-control" id="packingType"
+                                name="packingType" required placeholder="Enter Packing Type" autocomplete="off"
+                                oninput="packingDetails(this.value)">
+                            <!-- Dynamically loads suggestions -->
+                            <datalist id="packingTypeSuggestions"></datalist>
+                        </div>
+                        <!-- Freight UOM -->
+                        <div class="col-md-1">
+                            <label for="uOMType" class="form-label small">UOM</label>
+                            <input list="uOMTypeSuggestions" class="form-control" id="uOMType" name="uOMType" required
+                                placeholder="Select UOM" autocomplete="off" oninput="uOMTypeDetails(this.value)">
+                            <!-- Dynamically loads suggestions -->
+                            <datalist id="uOMTypeSuggestions"></datalist>
+                        </div>
+
+                        <!-- Quantity -->
+                        <div class="col-md-2">
+                            <label for="quantity" class="form-label small">Quantity</label>
+                            <input type="number" class="form-control" id="quantity" placeholder="Enter Quantity">
+                        </div>
+
+                        <!-- Volume Calculator Button -->
+                        <div class="col-md-1 d-flex align-items-end">
+                            <button type="button" class="btn btn-secondary" data-bs-toggle="modal"
+                                data-bs-target="#volumeCalculatorModal">Vol
+                            </button>
+                        </div>
+
+                        <!-- Actual Weight -->
+                        <div class="col-md-2">
+                            <label for="actualWeight" class="form-label small">Act Wt</label>
+                            <input type="number" class="form-control" id="actualWeight"
+                                placeholder="Enter Actual Weight">
+                        </div>
+
+                        <!-- Volumetric Weight -->
+                        <div class="col-md-2">
+                            <label for="volumetricWeight" class="form-label small">Vol Wt</label>
+                            <input type="number" class="form-control" id="volumetricWeight"
+                                placeholder="Enter Volumetric Weight">
+                        </div>
+                        <!-- Chargeable Weight -->
+                        <div class="col-md-2">
+                            <label for="chargeableWeight" class="form-label small">Char Wt</label>
+                            <input type="number" class="form-control" id="chargeableWeight"
+                                placeholder="Enter Chargeable Weight">
+                        </div>
+
+                        <!-- Infomation Weight -->
+                        <div class="col-md-12">
+                            <label for="infomation" class="form-label small">Additional Information</label>
+                            <input type="text" class="form-control" id="infomation" placeholder="Enter Infomation">
+                        </div>
+
                     </div>
-                    <p id="chargeableWeight" class="m-0 text-center"></p>
+                </form>
+
+                <!-- Modal (Outside Main Form) -->
+                <div id="addConsigneeModal" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+background: white; padding: 20px; box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2); border-radius: 5px;">
+                    <h3>Add New Consignee</h3>
+                    <form id="consigneeForm" onsubmit="addNewConsignee(event)">
+                        <input type="text" id="newConsigneeName" placeholder="Consignee Name" required>
+                        <input type="text" id="newConsigneeAddress" placeholder="Consignee Address" required>
+                        <input type="text" id="newContactPerson" placeholder="Contact Person" required>
+                        <input type="text" id="newContactNumber" placeholder="Contact Number" required>
+                        <input type="email" id="newEmailID" placeholder="Email ID" required>
+
+                        <div style="margin-top: 10px;">
+                            <button type="submit">Add Consignee</button>
+                            <button type="button" onclick="hideModal()">Cancel</button>
+                        </div>
+                    </form>
                 </div>
 
-                <div class="col-6 border p-0" id="totalFreight">
-                    <!-- <p id="totalFreight">Freight</p> -->
-                </div>
             </div>
 
-            <!-- Payment Information -->
-            <div class="col-12 p-0 d-flex justify-content-between align-items-start">
-                <!-- Caution Section -->
-                <div class="col-3 p-1 border d-flex flex-column">
-                    <p class="text-center mb-2">
-                        <span style="font-weight: bold; font-size: 14px;">Caution</span>
-                    </p>
-                    <p style="font-size: 9px; margin: 0; height: 24mm;">
-                        This consignment will not be diverted, re-routed, or re-booked without the Consignee Bank's
-                        written permission and will be delivered at the destination.
-                    </p>
-                </div>
 
-                <!-- Disputes Section -->
-                <div class="col-5 p-1 border d-flex flex-column">
-                    <p class="text-center mb-2">
-                        <span style="font-weight: bold; font-size: 14px;" id="companyCity">All Disputes Subject to ??
-                            Jurisdiction only</span>
-                    </p>
-                    <p style="font-size: 9px; margin: 0; height: 18.4mm;">
-                        The consignment covered by the Lorry Receipt will be stored at the destination under the control
-                        of the transport operator and delivered to or to the order of the Consignee bank as mentioned.
-                    </p>
-                </div>
-
-                <!-- Terms & Conditions Section -->
-                <div class="col-4 p-1 border d-flex flex-column">
-                    <p class="text-center mb-2">
-                        <span style="font-weight: bold; font-size: 14px;">Terms & Conditions</span>
-                    </p>
-                    <p style="font-size: 9px; margin: 0; height: 24mm;">
-                        1. Goods carried at OWNER'S RISK. Unloading to be done by the Consignee.<br>
-                        2. Proof Of Delivery will be provided as and when required by you & you can track all the
-                        Consignment through our Website:<br>
-                        3. GST to be paid by Consignee. <br>
-                        4. Shipment is picked on a 'said to contain' basis.
-                    </p>
-                </div>
-            </div>
-
-            <!-- Signatures -->
-            <div class="col-12 border p-0 d-flex justify-content-between" style="font-weight: bold;">
-                <!-- Consignor's Signature -->
-                <div class="col-6 p-3 border">
-                    <p style="font-size: 12px;">I hereby agree to the terms & conditions printed overleaf.</p><br>
-                    <p style="font-size: 14px;">Consignor's Signature</p>
-                </div>
-
-                <!-- Receiver's Signature -->
-                <div class="col-6 text-center p-3 border">
-                    <p style="font-size: 14px;">Receiver's Sign. & Stamp</p>
+            <!-- Volume Calculator Modal -->
+            <div class="modal fade" id="volumeCalculatorModal" tabindex="-1"
+                aria-labelledby="volumeCalculatorModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="volumeCalculatorModalLabel">Volume Calculator</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p>Volume Calculator functionality will go here....</p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            <button type="button" class="btn btn-primary">Save Changes</button>
+                        </div>
+                    </div>
                 </div>
             </div>
 
         </div>
     </div>
-    <!-- Footer -->
-    <div class="col-12 text-center p-0" style="font-weight: bold; font-size: 12px;">
-        <p style="margin: 0;">This is a computer-generated document. No signature is required.</p>
     </div>
-    <!-- Custom JavaScript -->
-    <script src="assets/js/variable.js" defer></script>
-    <script src="assets/js/server.js" defer></script>
-    <script src="assets/js/lrReport.js" defer></script>
-    <script src="assets/js/generalfunction.js" defer></script>
+
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="assets/js/server.js"></script>
+    <script src="assets/js/generalfunction.js"></script>
+    <script src="assets/js/header.js"></script>
+    <script src="assets/js/footer.js"></script>
+    <script src="assets/js/scripts.js"></script>
+    <!-- <script src="assets/js/pincode.js"></script> -->
+    <script src="assets/js/fulltruckload.js"></script>
+    <script src="assets/js/dropdownlist.js"></script>
+    <script src="assets/js/taxDescription.js"></script>
+    <script src="assets/js/customerlist.js"></script>
+    <script src="assets/js/logout.js"></script>
+    <!-- <script src="assets/js/routemaster.js"></script> -->
+    <script src="assets/js/International_Booking.js"></script>
+    <!-- <script src="assets/js/work.js"></script> -->
 </body>
 
 </html>

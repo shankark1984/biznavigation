@@ -211,5 +211,11 @@ function commodityDetails(value) {
     // Your logic to handle the value of the input field
     console.log(value); // Example action
 }
-
-
+function clearanceModeDetails(value) {
+    // Your logic to handle the value of the input field
+    console.log(value); // Example action
+}
+function packingDetails(value) {
+    // Your logic to handle the value of the input field
+    console.log(value); // Example action
+}
