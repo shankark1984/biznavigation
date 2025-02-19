@@ -79,7 +79,7 @@ async function consigneeDetails(query, typeOfValue, datalistId) {
             return;
         }
 
-        let suggestions = consignee.map(row => 
+        let suggestions = consignee.map(row =>
             `<option value="${row.ConsigneeName}" data-address="${row.ConsigneeAddress}">${row.ConsigneeName}</option>`
         ).join('');
 
@@ -137,7 +137,7 @@ async function addNewConsignee(event) {
     };
 
     // Ensure required fields are filled
-    if (!newConsignee.ConsigneeName || !newConsignee.ConsigneeAddress || !newConsignee.ContactPerson || 
+    if (!newConsignee.ConsigneeName || !newConsignee.ConsigneeAddress || !newConsignee.ContactPerson ||
         !newConsignee.ContactNumber || !newConsignee.EmailID) {
         alert('Please fill in all required fields.');
         return;
@@ -168,8 +168,48 @@ async function addNewConsignee(event) {
     }
 }
 
-
 // Ensure datalist is always shown, including "Add New Consignee"
 document.getElementById('consigneeName').addEventListener('focus', function () {
     this.setAttribute('list', 'consigneeNameSuggestions');
 });
+
+function transactionTypeDetails(value) {
+    // Your logic to handle the value of the input field
+    console.log(value); // Example action
+}
+
+function transitTypeInternationalDetails(value) {
+    // Your logic to handle the value of the input field
+    console.log(value); // Example action
+}
+function modeTypeDetails(value) {
+    // Your logic to handle the value of the input field
+    console.log(value); // Example action
+}
+function poNoDetails(value) {
+    // Your logic to handle the value of the input field
+    console.log(value); // Example action
+}
+function shippingTypeDetails(value) {
+    // Your logic to handle the value of the input field
+    console.log(value); // Example action
+}
+function cargoCarrierDetails(value) {
+    // Your logic to handle the value of the input field
+    console.log(value); // Example action
+}
+
+function shipperRefDetails(value) {
+    // Your logic to handle the value of the input field
+    console.log(value); // Example action
+}
+function PartyAddressDetails(value) {
+    // Your logic to handle the value of the input field
+    console.log(value); // Example action
+}
+function commodityDetails(value) {
+    // Your logic to handle the value of the input field
+    console.log(value); // Example action
+}
+
+

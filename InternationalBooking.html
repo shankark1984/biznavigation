@@ -73,7 +73,8 @@
                     <label for="transactionType" class="form-label small">Transaction Type</label>
                     <input list="transactionTypeSuggestions" id="transactionType" name="transactionType" required
                         placeholder="Enter Transaction Type" autocomplete="off"
-                        oninput="transactionTypeDetails(this.value)"><!-- Dynamically loads suggestions -->
+                        oninput="transactionTypeDetails(this.value)">
+                    <!-- Dynamically loads suggestions -->
                     <datalist id="transactionTypeSuggestions"></datalist>
                 </div>
 
@@ -126,7 +127,8 @@
                     <label for="serviceProvider" class="form-label small">Service Provider</label>
                     <input list="serviceProviderSuggestions" id="serviceProvider" name="serviceProvider" required
                         placeholder="Enter Service Provider" autocomplete="off"
-                        oninput="serviceProviderDetails(this.value)"><!-- Dynamically loads suggestions -->
+                        oninput="serviceProviderDetails(this.value)">
+                    <!-- Dynamically loads suggestions -->
                     <datalist id="serviceProviderSuggestions"></datalist>
                 </div>
 
@@ -139,13 +141,13 @@
                 </div>
 
                 <!-- Invoice Value Ref -->
-                <div class="col-md-2">
+                <div class="col-md-3">
                     <label for="invoiceValue" class="form-label small">Invoice Value</label>
                     <input type="number" id="invoiceValue" name="invoiceValue" autocomplete="off" value="0.00">
                 </div>
 
                 <!-- Pickup Address -->
-                <div class="col-md-5">
+                <div class="col-md-4">
                     <label for="PartyAddress" class="form-label small">Pickup Address</label>
                     <input list="PartyAddressSuggestions" id="PartyAddress" name="PartyAddress" required
                         placeholder="Enter Pickup Address" autocomplete="off"
@@ -174,42 +176,42 @@
                 <!-- Commodity Mode -->
                 <div class="col-md-3">
                     <label for="commodity" class="form-label small">Commodity</label>
-                    <select class="form-select" id="commodity">
-                        <option selected>Choose...</option>
-                        <option value="1">Mode 1</option>
-                        <option value="2">Mode 2</option>
-                    </select>
+                    <input list="commoditySuggestions" id="commodity" name="commodity" required
+                        placeholder="Enter Commodity Type" autocomplete="off" oninput="commodityDetails(this.value)">
+                    <!-- Dynamically loads suggestions -->
+                    <datalist id="commoditySuggestions"></datalist>
+
                 </div>
 
                 <!-- Clearance Mode -->
                 <div class="col-md-3">
                     <label for="clearanceMode" class="form-label small">Clearance Mode</label>
-                    <select class="form-select" id="clearanceMode">
-                        <option selected>Choose...</option>
-                        <option value="1">Mode 1</option>
-                        <option value="2">Mode 2</option>
-                    </select>
+                    <input list="clearanceModeSuggestions" id="clearanceMode" name="clearanceMode" required
+                        placeholder="Enter Clearance Mode" autocomplete="off" oninput="commodityDetails(this.value)">
+                    <!-- Dynamically loads suggestions -->
+                    <datalist id="clearanceModeSuggestions"></datalist>
                 </div>
 
-                <!-- Origin -->
+                <!-- Origin Country -->
                 <div class="col-md-3">
-                    <label for="origin" class="form-label small">Origin</label>
-                    <select class="form-select" id="origin">
-                        <option selected>Choose...</option>
-                        <option value="1">Origin 1</option>
-                        <option value="2">Origin 2</option>
-                    </select>
+                    <label for="originCountry" class="form-label small">Origin</label>
+                    <input list="originCountrySuggestions" id="originCountry" name="originCountry" required
+                        placeholder="Enter Origin Country" autocomplete="new-password""
+                        oninput=" CountryDetails(this.value, 'originCountrySuggestions' , 'originCountry' )">
+                    <!-- Dynamically loads suggestions -->
+                    <datalist id="originCountrySuggestions"></datalist>
                 </div>
 
-                <!-- Destination -->
+                <!-- Destination Country-->
                 <div class="col-md-3">
                     <label for="destination" class="form-label small">Destination</label>
-                    <select class="form-select" id="destination">
-                        <option selected>Choose...</option>
-                        <option value="1">Destination 1</option>
-                        <option value="2">Destination 2</option>
-                    </select>
+                    <input list="destinationCountrySuggestions" id="destinationCountry" name="destinationCountry"
+                        required placeholder="Enter Destination Country" autocomplete="new-password""
+                        oninput=" CountryDetails(this.value, 'destinationCountrySuggestions' , 'destinationCountry' )">
+                    <!-- Dynamically loads suggestions -->
+                    <datalist id="destinationCountrySuggestions"></datalist>
                 </div>
+
 
                 <!-- Packing Type -->
                 <div class="col-md-2">
@@ -327,6 +329,7 @@ background: white; padding: 20px; box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2); bo
     <script src="assets/js/logout.js"></script>
     <script src="assets/js/routemaster.js"></script>
     <script src="assets/js/International_Booking.js"></script>
+    <!-- <script src="assets/js/work.js"></script> -->
 </body>
 
 </html>

@@ -47,7 +47,8 @@ let iGSTAmount = 0;
 let totalGSTAmount = 0;
 let grandTotal = 0;
 
-
+let selectedOriginCountry = null;
+let selectedDestinationCountry = null;
 
 
 

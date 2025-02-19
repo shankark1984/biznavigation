@@ -193,23 +193,56 @@ function validateInput(inputId, datalistId) {
     const datalist = document.getElementById(datalistId);
     const options = Array.from(datalist.getElementsByTagName('option'));
 
+    let errorMessageElement = document.getElementById(`${inputId}-error`);
+    if (!errorMessageElement) {
+        errorMessageElement = document.createElement('span');
+        errorMessageElement.id = `${inputId}-error`;
+        errorMessageElement.style.color = 'red';
+        errorMessageElement.style.fontSize = '12px';
+        errorMessageElement.style.marginLeft = '10px';
+        input.parentNode.appendChild(errorMessageElement);
+    }
+
     const isValid = options.some(option => option.value === enteredValue);
 
     if (!isValid && enteredValue !== '') {
-        input.setCustomValidity('Please select a valid value from the list');
-    } else if (enteredValue === '') {
-        // Auto-focus the next field if input is empty
-        const nextInput = input.nextElementSibling;
-        if (nextInput && nextInput.tagName.toLowerCase() === 'input') {
-            nextInput.focus();
-        }
-        input.setCustomValidity('');
+
+        errorMessageElement.textContent = 'No valid entry';
+        input.reportValidity(); // Trigger validation message
+        setTimeout(() => input.focus(), 1); // Keep focus on the input field
     } else {
         input.setCustomValidity('');
+        errorMessageElement.textContent = ''; // Clear error message
     }
 
     input.reportValidity(); // Trigger browser validation message
 }
+
+// Attach validation event to inputs
+function attachValidation(inputId, datalistId) {
+    const inputElement = document.getElementById(inputId);
+    if (!inputElement) return;
+
+    inputElement.addEventListener('blur', () => validateInput(inputId, datalistId));
+}
+
+// Call `attachValidation` for all fields that require validation
+function initializeValidation() {
+    attachValidation('transactionType', 'transactionTypeSuggestions');
+    attachValidation('transitTypeInternational', 'transitTypeInternationalSuggestions');
+    attachValidation('modeType', 'modeTypeSuggestions');
+    attachValidation('shippingType', 'shippingTypeSuggestions');
+    attachValidation('carrierName', 'cargoCarrierSuggestions');
+    attachValidation('serviceProvider', 'serviceProviderSuggestions');
+    attachValidation('commodity', 'commoditySuggestions');
+    attachValidation('clearanceMode', 'clearanceModeSuggestions');
+    attachValidation('originCountry', 'originCountrySuggestions');
+    attachValidation('destinationCountry', 'destinationCountrySuggestions');
+}
+
+// Ensure validation runs when the DOM is fully loaded
+document.addEventListener('DOMContentLoaded', initializeValidation);
+
 
 // General event listener for inputs to trigger validation and load data
 function addInputEventListener(inputId, callback, datalistId) {
@@ -226,7 +259,6 @@ function addInputEventListener(inputId, callback, datalistId) {
         callback(''); // Trigger search with an empty query to load all options
     });
 }
-
 
 // Function to dynamically load Service Provider based on user input
 async function serviceProviderDetails(query, typeOfValue, datalistId) {
@@ -291,8 +323,6 @@ function partyAddressSuggestions(partyAddressList, datalistId) {
     document.getElementById(datalistId).innerHTML = suggestions;
 }
 
-
-
 // Initialize dynamic data loading and event listeners
 function initialize() {
     // Load data for different fields
@@ -301,10 +331,57 @@ function initialize() {
     addInputEventListener('modeType', (query) => loadDropdownData(query, 'ModeType', 'modeTypeSuggestions'), 'modeTypeSuggestions');
     addInputEventListener('shippingType', (query) => loadDropdownData(query, 'Shippingtype', 'shippingTypeSuggestions'), 'shippingTypeSuggestions');
     addInputEventListener('carrierName', (query) => loadDropdownData(query, 'Cargocarrier', 'cargoCarrierSuggestions'), 'cargoCarrierSuggestions');
-    addInputEventListener('serviceProvider', (query) => serviceProviderDetails(query, 'party_details', 'serviceProviderSuggestions'), 'serviceProviderSuggestions');
-    // addInputEventListener('PartyAddress', (query) => PartyAddressDetails(query, 'Party_Address', 'PartyAddressSuggestions'), 'PartyAddressSuggestions');
+    addInputEventListener('serviceProvider', (query) => serviceProviderDetails(query, 'party_name', 'serviceProviderSuggestions'), 'serviceProviderSuggestions');
+    addInputEventListener('commodity', (query) => loadDropdownData(query, 'Commodity', 'commoditySuggestions'), 'commoditySuggestions');
+    addInputEventListener('clearanceMode', (query) => loadDropdownData(query, 'ClearanceMode', 'clearanceModeSuggestions'), 'clearanceModeSuggestions');
+
 }
 
 // Call initialize function when the DOM is fully loaded
 document.addEventListener('DOMContentLoaded', initialize);
 
+
+
+async function CountryDetails(query, datalistId, inputId) {
+    try {
+        // Exclude selected country from suggestions
+        const excludedCountry = inputId === 'originCountry' ? selectedDestinationCountry : selectedOriginCountry;
+
+        // Query the "Country_Details" table, filter by "CountryName" using case-insensitive partial matching
+        const { data: countryList, error } = await supabaseClient
+            .from('Country_Details')
+            .select('CountryName, CountryCode') // Assuming CountryCode exists
+            .ilike('CountryName', `%${query}%`); // Case-insensitive partial matching
+
+        if (error) {
+            console.error('Error fetching country details:', error);
+            return;
+        }
+
+        // Filter out the excluded country
+        const filteredCountryList = countryList.filter(country => country.CountryName !== excludedCountry);
+
+        // Populate the datalist with the filtered countries
+        const suggestions = filteredCountryList
+            .map(country => `<option value="${country.CountryName}" data-code="${country.CountryCode}"></option>`)
+            .join('');
+
+        const datalist = document.getElementById(datalistId);
+        if (datalist) {
+            datalist.innerHTML = suggestions; // Update the datalist
+        } else {
+            console.error('Datalist element not found:', datalistId);
+        }
+    } catch (error) {
+        console.error('Error loading country details:', error);
+    }
+}
+
+// Update selected country on change event
+document.getElementById('originCountry').addEventListener('change', (event) => {
+    selectedOriginCountry = event.target.value;
+});
+
+document.getElementById('destinationCountry').addEventListener('change', (event) => {
+    selectedDestinationCountry = event.target.value;
+});

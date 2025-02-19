@@ -268,8 +268,8 @@ async function addDropdownMenuList() {
     }
 
     // Format values to proper case
-    valueAssignedTo = toProperCase(valueAssignedTo);
-    description = toProperCase(description);
+    // valueAssignedTo = toProperCase(valueAssignedTo);
+    // description = toProperCase(description);
 
     console.log('Inserting:', { valueAssignedTo, description, fixedValue, hsnCode });
 
@@ -283,7 +283,8 @@ async function addDropdownMenuList() {
             value: fixedValue,  // Should be a number or null
             hsn_code: hsnCode,  // Should be a number or null
             created_by: userLoginID,
-            created_at: localtimeStamp
+            created_at: localtimeStamp,
+            company_id: companyID
         }]);
 
     if (error) {
