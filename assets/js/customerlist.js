@@ -151,9 +151,22 @@ function getPartyCodeFromInput(inputElementId, datalistId) {
     });
 }
 
-// Run functions on page load
 $(document).ready(function () {
     loadPartyDetails(); // Fetch party details on load
-    document.getElementById('saveButton').disabled = false;
-    document.getElementById('newButton').disabled = false;
+
+    // Ensure buttons exist before modifying them
+    const saveButton = document.getElementById('saveButton');
+    const newButton = document.getElementById('newButton');
+
+    if (saveButton) {
+        saveButton.disabled = false;
+    } else {
+        console.error("Element #saveButton not found!");
+    }
+
+    if (newButton) {
+        newButton.disabled = false;
+    } else {
+        console.error("Element #newButton not found!");
+    }
 });

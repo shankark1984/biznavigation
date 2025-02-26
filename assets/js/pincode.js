@@ -3,6 +3,7 @@ document.addEventListener('DOMContentLoaded', function () {
     setupPincodeListener('destinationPinCode', 'destinationcity');
     setupPincodeListener('pinCode', 'city');
     setupPincodeListener('billingPinCode', 'billingCity', 'billingState', 'billingCountry');
+    setupPincodeListener('branchPinCode', 'branchCity', 'branchState', 'branchCountry');
 });
 
 // Fetch city, state, and country based on pin code

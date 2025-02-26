@@ -1,4 +1,3 @@
-
 @import url('https://fonts.googleapis.com/css2?family=Helvetica+Neue:wght@200&display=swap');
 
 * {
@@ -9,9 +8,11 @@
 
 html {
     background: #95a5a6;
-    background-image: url('http://subtlepatterns2015.subtlepatterns.netdna-cdn.com/patterns/dark_embroidery.png');
+    background-image: url('https://www.toptal.com/designers/subtlepatterns/uploads/escheresque_ste.png');
     font-family: 'Helvetica Neue', Arial, Sans-Serif;
 }
+
+
 
 .login-wrap {
     position: relative;
@@ -95,11 +96,11 @@ html {
     left: 0;
     right: 0;
     background: linear-gradient(to right,
-        #27ae60 0%, #27ae60 20%,
-        #8e44ad 20%, #8e44ad 40%,
-        #3498db 40%, #3498db 60%,
-        #e74c3c 60%, #e74c3c 80%,
-        #f1c40f 80%, #f1c40f 100%);
+            #27ae60 0%, #27ae60 20%,
+            #8e44ad 20%, #8e44ad 40%,
+            #3498db 40%, #3498db 60%,
+            #e74c3c 60%, #e74c3c 80%,
+            #f1c40f 80%, #f1c40f 100%);
     height: 5px;
     border-radius: 5px 5px 0 0;
 }

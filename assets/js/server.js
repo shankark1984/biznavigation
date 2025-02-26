@@ -51,5 +51,7 @@ let selectedOriginCountry = null;
 let selectedDestinationCountry = null;
 
 
-
+let rowIDEdit = null;
+let branchCode = null;
+let bankRowIDEdit=null;
 

@@ -176,7 +176,7 @@ document.getElementById('consigneeName').addEventListener('focus', function () {
 function handleDetails(detailType, value) {
     console.log(`${detailType}: ${value}`);
 }
-
+let value = "example";
 // Example usage:
 handleDetails('transactionType', value);
 handleDetails('transitTypeInternational', value);
@@ -187,6 +187,8 @@ handleDetails('cargoCarrier', value);
 handleDetails('shipperRef', value);
 handleDetails('PartyAddress', value);
 handleDetails('commodity', value);
-handleDetails('clearanceMode', value);
+handleDetails('clearanceModeDetails', value);
 handleDetails('packing', value);
+handleDetails('uOMType', value);
+
 

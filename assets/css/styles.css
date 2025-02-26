@@ -214,11 +214,17 @@ form {
 }
 
 label {
+    font-size: 14px;
+    /* Adjust label text size */
     display: block;
+    /* Make it bold if needed */
     font-weight: bold;
+    /* Ensures proper spacing */
     color: #333;
     margin-bottom: 5px;
+    /* Adds space below labels */
 }
+
 
 input,
 select,
@@ -300,4 +306,34 @@ footer {
     .footer-container {
         flex-direction: column;
     }
+}
+
+/* For Chrome, Safari, Edge, and Opera */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+/* For Firefox */
+input[type="number"] {
+    /* -moz-appearance: textfield; */
+    text-align: right;
+}
+
+input[type="text"],
+input[type="number"],
+input[type="email"],
+input[type="password"],
+input[type="date"],
+input[type="tel"],
+input[list],
+select,
+textarea {
+    font-size: 14px;
+    /* Adjust text size */
+    height: 40px;
+    /* Adjust input height */
+    padding: 8px;
+    /* Adjust inner spacing */
 }
