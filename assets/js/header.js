@@ -15,10 +15,10 @@ document.addEventListener("DOMContentLoaded", function () {
             <li>
                 <a href="#">Master</a>
                 <div class="dropdown">
-                    <a href="company.html">Company</a>
+                    <a href="companyProfile.html" class="menu-item" data-form-id="companyProfile">Company</a>
                     <a href="party_registration.html">Party Registration</a>
                     <a href="#">Employee</a>
-                    <a href="#">User Rules</a>
+                    <a href="UserAccessRules.html">User Rules</a>
                 </div>
             </li>
             <li>

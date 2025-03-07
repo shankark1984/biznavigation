@@ -53,5 +53,10 @@ let selectedDestinationCountry = null;
 
 let rowIDEdit = null;
 let branchCode = null;
-let bankRowIDEdit=null;
+let bankRowIDEdit = null;
+// Global variables for permissions
+let perRead = false
+let perWrite = false
+let perDelete = false
+let perUpdate = false;
 

@@ -4,13 +4,14 @@ document.addEventListener('DOMContentLoaded', function () {
     setupPincodeListener('pinCode', 'city');
     setupPincodeListener('billingPinCode', 'billingCity', 'billingState', 'billingCountry');
     setupPincodeListener('branchPinCode', 'branchCity', 'branchState', 'branchCountry');
+    setupBankListener('branchIFSCCode', 'branchBankName', 'branchAcBankName', 'branchMICRCode', 'branchBankAddress');
 });
 
 // Fetch city, state, and country based on pin code
 async function setupPincodeListener(pinCodeFieldId, cityFieldId, stateFieldId = 'state', countryFieldId = 'country') {
     const pincodeInput = document.getElementById(pinCodeFieldId);
     if (!pincodeInput) {
-        console.error(`Pincode input not found: ${pinCodeFieldId}`);
+        console.warn(`Pincode input not found: ${pinCodeFieldId}`);
         return;
     }
 
@@ -55,6 +56,46 @@ async function setupPincodeListener(pinCodeFieldId, cityFieldId, stateFieldId = 
             }
         } catch (error) {
             console.error('Error fetching data:', error);
+        }
+    });
+}
+
+// Fetch Bank Name, Branch Name, MICR Code and Bank address based on IFSC
+async function setupBankListener(ifscFieldId, bankNameFieldId, branchNameFieldId = 'Branch', micrCodeFieldId = 'MICR', addressFieldId = 'Address') {
+    const ifscCode = document.getElementById(ifscFieldId);
+    if (!ifscCode) {
+        console.error(`IFSC input not found: ${ifscFieldId}`);
+        return;
+    }
+
+    ifscCode.addEventListener('blur', async function () {
+        const ifsc = this.value.trim();
+        console.log('IFSC Code: ' + ifsc + ' | Length: ' + ifsc.length);
+
+        // Validate IFSC code length (should be 11 characters)
+        if (ifsc.length !== 11) {
+            displayError(ifscCode, 'Please enter a valid 11-character IFSC code.');
+            return;
+        } else {
+            resetError(ifscCode);
+        }
+
+        try {
+            const response = await fetch(`https://bank-apis.justinclicks.com/API/V1/IFSC/${ifsc}/`);
+            const data = await response.json();
+
+            if (data && data.BANK) {
+                // Update bank details
+                updateFieldValue(bankNameFieldId, data.BANK || "N/A");
+                updateFieldValue(branchNameFieldId, data.BRANCH || "N/A");
+                updateFieldValue(micrCodeFieldId, data.MICR || "N/A");
+                updateFieldValue(addressFieldId, data.ADDRESS || "N/A");
+            } else {
+                displayError(ifscCode, 'Invalid IFSC Code or API issue.');
+            }
+        } catch (error) {
+            console.error('Error fetching data:', error);
+            displayError(ifscCode, 'Failed to fetch bank details. Please try again.');
         }
     });
 }

@@ -396,10 +396,53 @@ async function CountryDetails(query, datalistId, inputId) {
 }
 
 // Update selected country on change event
-document.getElementById('originCountry').addEventListener('change', (event) => {
-    selectedOriginCountry = event.target.value;
+// document.getElementById('originCountry').addEventListener('change', (event) => {
+//     selectedOriginCountry = event.target.value;
+// });
+
+// document.getElementById('destinationCountry').addEventListener('change', (event) => {
+//     selectedDestinationCountry = event.target.value;
+// });
+
+document.addEventListener('DOMContentLoaded', function () {
+    const originCountry = document.getElementById('originCountry');
+    const destinationCountry = document.getElementById('destinationCountry');
+
+    if (originCountry) {
+        originCountry.addEventListener('change', (event) => {
+            selectedOriginCountry = event.target.value;
+        });
+    } else {
+        console.warn("Element with ID 'originCountry' not found.");
+    }
+
+    if (destinationCountry) {
+        destinationCountry.addEventListener('change', (event) => {
+            selectedDestinationCountry = event.target.value;
+        });
+    } else {
+        console.warn("Element with ID 'destinationCountry' not found.");
+    }
 });
 
-document.getElementById('destinationCountry').addEventListener('change', (event) => {
-    selectedDestinationCountry = event.target.value;
+
+// document.getElementById('website').addEventListener('blur', function () {
+//     let url = this.value.trim();
+//     if (url && !url.startsWith('http://') && !url.startsWith('https://')) {
+//         this.value = 'https://' + url; // Default to HTTPS for security
+//     }
+// });
+
+document.addEventListener('DOMContentLoaded', function () {
+    const websiteInput = document.getElementById('website');
+    if (websiteInput) {
+        websiteInput.addEventListener('blur', function () {
+            let url = this.value.trim();
+            if (url && !url.startsWith('http://') && !url.startsWith('https://')) {
+                this.value = 'https://' + url; // Default to HTTPS for security
+            }
+        });
+    } else {
+        console.warn("Element with ID 'website' not found.");
+    }
 });
