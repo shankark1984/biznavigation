@@ -4,340 +4,589 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dimension Converter</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-            padding: 0;
-            display: flex;
-            flex-direction: column;
-            min-height: 94.85vh;
-            position: relative;
-            background-color: #45a049;
-        }
-
-        .container {
-            max-width: 1000px;
-            margin: 0 auto;
-            padding: 10px;
-            border: black;
-            border-radius: 10px;
-            border-style: groove;
-            flex: 1;
-            background-color: rgba(255, 255, 255, 0.9);
-            /* Semi-transparent background */
-            position: relative;
-            z-index: 1;
-            /* Ensure content is above the watermark */
-            display: flex;
-            flex-direction: column;
-            min-height: 100%;
-        }
-
-        .input-group {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-bottom: 10px;
-        }
-
-        input,
-        select,
-        button {
-            padding: 10px;
-            box-sizing: border-box;
-            flex: 1 1 150px;
-            /* Flex-grow, flex-shrink, flex-basis */
-        }
-
-        input[type="number"] {
-            width: 100%;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-
-        th,
-        td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: center;
-        }
-
-        th {
-            background-color: #f2f2f2;
-        }
-
-        button {
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            cursor: pointer;
-
-        }
-
-        button.delete-btn {
-            background-color: #ff4444;
-
-        }
-
-        button.delete-btn:hover {
-            background-color: #cc0000;
-        }
-
-        button.reset-btn {
-            background-color: #ff9800;
-        }
-
-        button.reset-btn:hover {
-            background-color: #e68900;
-        }
-
-        button:hover {
-            background-color: #45a049;
-        }
-
-        footer {
-            text-align: center;
-            padding: 10px;
-            background-color: #f2f2f2;
-            margin-top: auto;
-            border-top: 1px solid #ddd;
-            border-radius: 0 0 10px 10px;
-            /* Rounded corners at the bottom */
-        }
-
-        /* Watermark Style */
-        body::before {
-            content: "";
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-image: url('assets/img/applogo.png');
-            /* Replace with your logo path */
-            background-repeat: no-repeat;
-            background-position: center;
-            background-size: 30%;
-            /* Adjust the size of the logo */
-            opacity: 10;
-            /* Adjust the opacity of the watermark */
-            z-index: 0;
-            /* Ensure the watermark is behind the container */
-        }
-
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            .input-group {
-                flex-direction: column;
-            }
-
-            input,
-            select,
-            button {
-                width: 100%;
-                flex: 1 1 auto;
-            }
-
-            table {
-                font-size: 14px;
-            }
-
-            th,
-            td {
-                padding: 6px;
-            }
-        }
-
-        @media (max-width: 480px) {
-            h1 {
-                font-size: 24px;
-            }
-
-            h2 {
-                font-size: 20px;
-            }
-
-            table {
-                font-size: 12px;
-            }
-
-            th,
-            td {
-                padding: 4px;
-            }
-        }
-    </style>
+    <title>BizNavigation</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/styles.css">
+    <!-- jQuery and Supabase -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js"></script>
 </head>
 
-<body>
+<body class="bg-light">
+    <div class="container mt-4">
+        <div class="card shadow-lg rounded">
+            <div class="card-header bg-primary text-white">
+                <div class="company-header">
+                    <h3 class="mb-0">Company Registration - (<span id="CompID">companyid</span>)</h3>
+                    <img src="assets/img/logo/CA0001.png" alt="Company Logo" class="company-logo" id="companylogo">
+                </div>
+                <input type="hidden" id="tempFormID" name="tempFormID">
+                <input type="hidden" id="partyCode" name="partyCode">
+                <input type="hidden" id="vendorCode" name="vendorCode">
+            </div>
+            <div class="card-body">
+                <form class="container">
+                    <!-- Button Group -->
+                    <div class="d-flex flex-wrap justify-content-start gap-1 mb-2">
+                        <button type="button" class="btn btn-primary btn-sm" id="newButton"><i
+                                class="bi bi-file-earmark-plus"></i> New</button>
+                        <button type="button" class="btn btn-warning btn-sm" id="modifyButton"><i
+                                class="bi bi-pencil"></i> Modify</button>
+                        <button type="button" class="btn btn-danger btn-sm" id="deleteButton"><i
+                                class="bi bi-trash"></i> Delete</button>
+                        <button type="button" class="btn btn-info btn-sm" id="reportButton"><i
+                                class="bi bi-file-earmark-text"></i> Report</button>
+                        <button type="button" class="btn btn-success btn-sm" id="saveButton"><i class="bi bi-save"></i>
+                            Save</button>
+                    </div>
+                    <div class="row g-1">
+                        <!-- Short Code Section -->
+                        <div class="col-md-4 col-sm-6">
+                            <div class="row align-items-center">
+                                <div class="col-4">
+                                    <label for="shortCode" class="form-label small">Short Code</label>
+                                </div>
+                                <div class="col-8">
+                                    <input type="text" class="form-control" id="shortCode" name="shortCode" required
+                                        placeholder="Short Code">
+                                </div>
+                            </div>
+                        </div>
 
-    <div class="container">
-        <h1 style="text-align: center; background-color:blue; color: white; padding: 0.2em; border-radius: 10px;">
-            Dimension Converter</h1>
-        <div class="input-group">
-            <select id="originalUnitType">
-                <option value="cm">Centimeters (cm)</option>
-                <option value="mm">Millimeters (mm)</option>
-                <option value="m">Meters (m)</option>
-                <option value="in">Inches (in)</option>
-                <option value="ft">Feet (ft)</option>
-            </select>
-            <input type="number" id="length" placeholder="Length">
-            <input type="number" id="width" placeholder="Width">
-            <input type="number" id="height" placeholder="Height">
-            <select id="convertUnitType">
-                <option value="cm">Centimeters (cm)</option>
-                <option value="mm">Millimeters (mm)</option>
-                <option value="m">Meters (m)</option>
-                <option value="in">Inches (in)</option>
-                <option value="ft">Feet (ft)</option>
-            </select>
-            <button onclick="addData()">Add Data</button>
-        </div>
-        <div>
-            <button onclick="exportToExcel()">Download Excel</button>
-            <button onclick="resetData()" class="reset-btn">Reset</button>
-        </div>
-        <h2>Combined Data</h2>
-        <table id="combinedTable">
-            <thead>
-                <tr>
-                    <th>Original Length</th>
-                    <th>Original Width</th>
-                    <th>Original Height</th>
-                    <th>Converted Length</th>
-                    <th>Converted Width</th>
-                    <th>Converted Height</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
-            </tbody>
-        </table>
+                        <!-- Company Name Section -->
+                        <div class="col-md-4 col-sm-6">
+                            <div class="row align-items-center">
+                                <div class="col-4">
+                                    <label for="companyName" class="form-label small">Company Name</label>
+                                </div>
+                                <div class="col-8">
+                                    <input type="text" class="form-control" id="companyName" name="companyName" required
+                                        placeholder="Company Name" style="text-transform: capitalize;">
+                                </div>
+                            </div>
+                        </div>
 
-        <!-- Footer inside the container -->
-        <footer>
-            <p>&copy; 2018 AllEdge Soft & Logic (OPC) Pvt. Ltd., All rights reserved.</p>
-        </footer>
+                        <!-- CIN No Section-->
+                        <div class="col-md-4 col-sm-6">
+                            <div class="row align-items-center">
+                                <div class="col-4">
+                                    <label for="cinNo" class="form-label small">CIN No</label>
+                                </div>
+                                <div class="col-8">
+                                    <input type="text" class="form-control" id="cinNo" name="cinNo" required
+                                        placeholder="CIN No" style="text-transform: uppercase;">
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Udyog Aadhaar No Section-->
+                        <div class="col-md-4 col-sm-6">
+                            <div class="row align-items-center">
+                                <div class="col-4">
+                                    <label for="uaNo" class="form-label small">UA No</label>
+                                </div>
+                                <div class="col-8">
+                                    <input type="text" class="form-control" id="uaNo" name="uaNo" required
+                                        placeholder="Udyog Aadhaar No" style="text-transform: uppercase;">
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Address Section-->
+                        <div class="col-md-4 col-sm-6">
+                            <div class="row align-items-center">
+                                <div class="col-4">
+                                    <label for="address" class="form-label small">Address</label>
+                                </div>
+                                <div class="col-8">
+                                    <textarea class="form-control" id="address" name="address" required rows="1"
+                                        placeholder="Enter address" style="text-transform: capitalize;"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Pin Code Section-->
+                        <div class="col-md-4 col-sm-6">
+                            <div class="row align-items-center">
+                                <div class="col-4">
+                                    <label for="pinCode" class="form-label small">Pin Code</label>
+                                </div>
+                                <div class="col-8">
+                                    <input type="text" class="form-control" id="pinCode" name="pinCode" required
+                                        placeholder="Enter Pin Code">
+                                </div>
+                            </div>
+                        </div>
+                        <!-- City Section-->
+                        <div class="col-md-4 col-sm-6">
+                            <div class="row align-items-center">
+                                <div class="col-4">
+                                    <label for="city" class="form-label small">City</label>
+                                </div>
+                                <div class="col-8">
+                                    <input type="text" class="form-control" id="city" name="city" required
+                                        placeholder="City" style="text-transform: capitalize;">
+                                </div>
+                            </div>
+                        </div>
+                        <!-- State Section-->
+                        <div class="col-md-4 col-sm-6">
+                            <div class="row align-items-center">
+                                <div class="col-4">
+                                    <label for="state" class="form-label small">State</label>
+                                </div>
+                                <div class="col-8">
+                                    <input type="text" class="form-control" id="state" name="state" required
+                                        placeholder="State" style="text-transform: capitalize;">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Country -->
+                        <div class="col-md-4 col-sm-6">
+                            <div class="row align-items-center">
+                                <div class="col-4">
+                                    <label for="country" class="form-label small">Country</label>
+                                </div>
+                                <div class="col-8">
+                                    <input type="text" class="form-control" id="country" name="country" required
+                                        placeholder="Country" style="text-transform: capitalize;">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Pan Number -->
+                        <div class="col-md-4 col-sm-6">
+                            <div class="row align-items-center">
+                                <div class="col-4">
+                                    <label for="panNumber" class="form-label small">Pan Number</label>
+                                </div>
+                                <div class="col-8">
+                                    <input type="text" class="form-control" id="panNumber" name="panNumber" required
+                                        placeholder="Enter Pan Number" style="text-transform: uppercase;">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- GST Number -->
+                        <div class="col-md-4 col-sm-6">
+                            <div class="row align-items-center">
+                                <div class="col-4">
+                                    <label for="gstNumber" class="form-label small">GST Number</label>
+                                </div>
+                                <div class="col-8">
+                                    <input type="text" class="form-control" id="gstNumber" name="gstNumber" required
+                                        placeholder="Enter GST Number" style="text-transform: uppercase;">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Phone Number -->
+                        <div class="col-md-4 col-sm-6">
+                            <div class="row align-items-center">
+                                <div class="col-4">
+                                    <label for="phoneNumber" class="form-label small">Phone Number</label>
+                                </div>
+                                <div class="col-8">
+                                    <input type="text" class="form-control" id="phoneNumber" name="phoneNumber" required
+                                        placeholder="Enter Phone Number">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Email ID -->
+                        <div class="col-md-4 col-sm-6">
+                            <div class="row align-items-center">
+                                <div class="col-4">
+                                    <label for="email" class="form-label small">Email ID</label>
+                                </div>
+                                <div class="col-8">
+                                    <input type="email" class="form-control" id="email" name="email" required
+                                        placeholder="Enter Email ID">
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Website -->
+                        <div class="col-md-4 col-sm-6">
+                            <div class="row align-items-center">
+                                <div class="col-4">
+                                    <label for="website" class="form-label small">Website</label>
+                                </div>
+                                <div class="col-8">
+                                    <input type="url" class="form-control" id="website" name="website"
+                                        placeholder="http://example.com">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tabbed Form -->
+                        <ul class="nav nav-tabs" id="branchTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="branch-tab" data-bs-toggle="tab"
+                                    data-bs-target="#branch" type="button" role="tab">Branch Details</button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="bank-tab" data-bs-toggle="tab" data-bs-target="#bank"
+                                    type="button" role="tab">Bank Details</button>
+                            </li>
+                        </ul>
+
+                        <div class="tab-content p-3 border border-top-0" id="bookingTabsContent">
+                            <!-- Branch Details  -->
+                            <div class="tab-pane fade show active" id="branch" role="tabpanel">
+                                <div class="row g-1">
+                                    <div class="col-md-4 col-sm-6">
+                                        <div class="row align-items-center">
+                                            <div class="col-4">
+                                                <label for="branchCode" class="form-label small">Branch Code</label>
+                                            </div>
+                                            <div class="col-8">
+                                                <input type="text" class="form-control" id="branchCode"
+                                                    placeholder="Enter Branch code">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4 col-sm-6">
+                                        <div class="row align-items-center">
+                                            <div class="col-4">
+                                                <label for="branchAddress" class="form-label small">Address</label>
+                                            </div>
+                                            <div class="col-8">
+                                                <textarea type="text" class="form-control" id="branchAddress"
+                                                    placeholder="Enter branch address"></textarea>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4 col-sm-6">
+                                        <div class="row align-items-center">
+                                            <div class="col-4">
+                                                <label for="branchPinCode" class="form-label small">Pin Code</label>
+                                            </div>
+                                            <div class="col-8">
+                                                <input type="text" class="form-control" id="branchPinCode"
+                                                    placeholder="Enter Pin Code">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4 col-sm-6">
+                                        <div class="row align-items-center">
+                                            <div class="col-4">
+                                                <label for="branchCity" class="form-label small">City</label>
+                                            </div>
+                                            <div class="col-8">
+                                                <input type="text" class="form-control" id="branchCity"
+                                                    placeholder="Enter City">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4 col-sm-6">
+                                        <div class="row align-items-center">
+                                            <div class="col-4">
+                                                <label for="branchState" class="form-label small">State</label>
+                                            </div>
+                                            <div class="col-8">
+                                                <input type="text" class="form-control" id="branchState"
+                                                    placeholder="Enter State">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4 col-sm-6">
+                                        <div class="row align-items-center">
+                                            <div class="col-4">
+                                                <label for="branchCountry" class="form-label small">Country</label>
+                                            </div>
+                                            <div class="col-8">
+                                                <input type="text" class="form-control" id="branchCountry"
+                                                    placeholder="Enter Country">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4 col-sm-6">
+                                        <div class="row align-items-center">
+                                            <div class="col-4">
+                                                <label for="branchPhoneNo" class="form-label small">Phone No</label>
+                                            </div>
+                                            <div class="col-8">
+                                                <input type="text" class="form-control" id="branchPhoneNo"
+                                                    placeholder="Enter Phone No">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4 col-sm-6">
+                                        <div class="row align-items-center">
+                                            <div class="col-4">
+                                                <label for="branchEmailID" class="form-label small">Email ID</label>
+                                            </div>
+                                            <div class="col-8">
+                                                <input type="email" class="form-control" id="branchEmailID"
+                                                    placeholder="Enter Email ID">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4 col-sm-6">
+                                        <div class="row align-items-center">
+                                            <div class="col-4">
+                                                <label for="branchGSTNo" class="form-label small">GST No</label>
+                                            </div>
+                                            <div class="col-8">
+                                                <input type="text" class="form-control" id="branchGSTNo"
+                                                    placeholder="Enter GST No">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4 col-sm-6">
+                                        <div class="row align-items-center">
+                                            <div class="col-4">
+                                                <label for="branchPANNo" class="form-label small">PAN No</label>
+                                            </div>
+                                            <div class="col-8">
+                                                <input type="text" class="form-control" id="branchPANNo"
+                                                    placeholder="Enter PAN No">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4 col-sm-6">
+                                        <div class="row align-items-center">
+                                            <div class="col-4">
+                                                <label class="form-check-label small" for="branchInvYN">Inv YN?</label>
+                                            </div>
+                                            <div class="col-8">
+                                                <input type="checkbox" class="form-check-input" id="branchInvYN">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4 col-sm-6">
+                                        <div class="row align-items-center">
+                                            <div class="col-4">
+                                                <label for="branchStatus" class="form-label small">Status</label>
+                                            </div>
+                                            <div class="col-8">
+                                                <select class="form-control" id="branchStatus">
+                                                    <option value="">Select Status</option>
+                                                    <option value="Active">Active</option>
+                                                    <option value="Inactive">Inactive</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4 col-sm-6">
+                                        <div class="row align-items-center">
+                                            <div class="col-4">
+                                                <label for="branchInactiveDate" class="form-label small">Inactive
+                                                    Date</label>
+                                            </div>
+                                            <div class="col-8">
+                                                <input type="date" class="form-control" id="branchInactiveDate"
+                                                    placeholder="Enter Bank Address">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4 col-sm-6">
+                                        <div class="row align-items-center">
+                                            <div class="col-4">
+                                                <label for="branchScope" class="form-label small">Branch Scope</label>
+                                            </div>
+                                            <div class="col-8">
+                                                <textarea class="form-control" id="branchScope" rows="2"
+                                                    placeholder="Enter branch scope"></textarea>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-2 d-flex align-items-end">
+                                        <button type="submit" class="btn btn-primary" id="branchAddDetails">Add Branch
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Branch Details Table -->
+                                <div class="mt-4 scrollable-table">
+                                    <table class="table table-bordered">
+                                        <thead>
+                                            <tr>
+                                                <th>Select</th>
+                                                <th>Branch Code</th>
+                                                <th>Address</th>
+                                                <th>City</th>
+                                                <th>State</th>
+                                                <th>Country</th>
+                                                <th>Phone No</th>
+                                                <th>Email ID</th>
+                                                <th>Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="branchTableBody">
+                                            <tr>
+                                                <td colspan="9" class="text-center">No branch created</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <!-- Bank Details -->
+                            <div class="tab-pane fade" id="bank" role="tabpanel">
+                                <div class="row g-1">
+                                    <div class="col-md-4 col-sm-6">
+                                        <div class="row align-items-center">
+                                            <div class="col-4">
+                                                <label for="branchAccountNo" class="form-label small">Account No</label>
+                                            </div>
+                                            <div class="col-8">
+                                                <input type="text" class="form-control" id="branchAccountNo" rows="2"
+                                                    placeholder="Enter Account No">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4 col-sm-6">
+                                        <div class="row align-items-center">
+                                            <div class="col-4">
+                                                <label for="branchIFSCCode" class="form-label small">IFSC Code</label>
+                                            </div>
+                                            <div class="col-8">
+                                                <input type="text" class="form-control" id="branchIFSCCode"
+                                                    name="branchIFSCCode" placeholder="Enter IFSC Code" required>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4 col-sm-6">
+                                        <div class="row align-items-center">
+                                            <div class="col-4">
+                                                <label for="branchBankName" class="form-label small">Bank Name</label>
+                                            </div>
+                                            <div class="col-8">
+                                                <input type="text" class="form-control" id="branchBankName" rows="3"
+                                                    placeholder="Enter bank name">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4 col-sm-6">
+                                        <div class="row align-items-center">
+                                            <div class="col-4">
+                                                <label for="branchAcBankName" class="form-label small">Branch
+                                                    Name</label>
+                                            </div>
+                                            <div class="col-8">
+                                                <input type="text" class="form-control" id="branchAcBankName"
+                                                    placeholder="Enter Branch Name">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4 col-sm-6">
+                                        <div class="row align-items-center">
+                                            <div class="col-4">
+                                                <label for="branchMICRCode" class="form-label small">MICR Code</label>
+                                            </div>
+                                            <div class="col-8">
+                                                <input type="text" class="form-control" id="branchMICRCode"
+                                                    placeholder="Enter MICR Code">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4 col-sm-6">
+                                        <div class="row align-items-center">
+                                            <div class="col-4">
+                                                <label for="branchBankAddress" class="form-label small">Bank
+                                                    Address</label>
+                                            </div>
+                                            <div class="col-8">
+                                                <input type="text" class="form-control" id="branchBankAddress"
+                                                    placeholder="Enter Bank Address">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4 col-sm-6">
+                                        <div class="row align-items-center">
+                                            <div class="col-4">
+                                                <label for="branchDefaultBank" class="form-label small">Default
+                                                    Bank</label>
+                                            </div>
+                                            <div class="col-8">
+                                                <select class="form-control" id="branchDefaultBank">
+                                                    <option value="">Select Default Bank</option>
+                                                    <option value="Yes">Yes</option>
+                                                    <option value="No">No</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4 col-sm-6">
+                                        <div class="row align-items-center">
+                                            <div class="col-4">
+                                                <label for="branchAccountStatus" class="form-label small">Status</label>
+                                            </div>
+                                            <div class="col-8">
+                                                <select class="form-control" id="branchAccountStatus">
+                                                    <option value="">Select Status</option>
+                                                    <option value="Active">Active</option>
+                                                    <option value="Inactive">Inactive</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4 col-sm-6">
+                                        <div class="row align-items-center">
+                                            <div class="col-4">
+                                                <label for="bankInactiveDate" class="form-label small">Inactive
+                                                    Date</label>
+                                            </div>
+                                            <div class="col-8">
+                                                <input type="date" class="form-control" id="bankInactiveDate"
+                                                    placeholder="Enter Bank Address">
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-2 d-flex align-items-end">
+                                        <button type="submit" class="btn btn-primary" id="branchBankAddDetails">Add
+                                            Branch
+                                        </button>
+                                    </div>
+
+                                </div>
+                                <!-- Branch Bank Details Table -->
+                                <div class="mt-4 scrollable-table">
+                                    <table class="table table-bordered">
+                                        <thead>
+                                            <tr>
+                                                <th>Select</th>
+                                                <th>Bank Name</th>
+                                                <th>Account No</th>
+                                                <th>IFSC Code</th>
+                                                <th>Branch Name</th>
+                                                <th>MICR Code</th>
+                                                <th>Default Bank</th>
+                                                <th>Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="branchBankTableBody">
+                                            <tr>
+                                                <td colspan="9" class="text-center">No branch created</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script>
-        const combinedData = [];
-
-        function addData() {
-            const length = parseFloat(document.getElementById('length').value);
-            const width = parseFloat(document.getElementById('width').value);
-            const height = parseFloat(document.getElementById('height').value);
-
-            const originalUnitType = document.getElementById('originalUnitType').value;
-            const convertUnitType = document.getElementById('convertUnitType').value;
-
-            if (isNaN(length) || isNaN(width) || isNaN(height)) {
-                alert("Please enter valid numbers for length, width, and height.");
-                return;
-            }
-
-            // Original data
-            const originalRow = [`${length} ${originalUnitType}`, `${width} ${originalUnitType}`, `${height} ${originalUnitType}`];
-
-            // Convert data to the selected unit
-            const lengthConverted = convertUnit(length, originalUnitType, convertUnitType);
-            const widthConverted = convertUnit(width, originalUnitType, convertUnitType);
-            const heightConverted = convertUnit(height, originalUnitType, convertUnitType);
-
-            const convertedRow = [`${lengthConverted.toFixed(4)} ${convertUnitType}`, `${widthConverted.toFixed(4)} ${convertUnitType}`, `${heightConverted.toFixed(4)} ${convertUnitType}`];
-
-            // Combine original and converted data
-            const combinedRow = [...originalRow, ...convertedRow];
-            combinedData.push(combinedRow);
-
-            // Add row to the combined table
-            addRowToTable('combinedTable', combinedRow);
-        }
-
-        function convertUnit(value, fromUnit, toUnit) {
-            const conversions = {
-                cm: { cm: 1, mm: 10, m: 0.01, in: 0.393701, ft: 0.0328084 },
-                mm: { cm: 0.1, mm: 1, m: 0.001, in: 0.0393701, ft: 0.00328084 },
-                m: { cm: 100, mm: 1000, m: 1, in: 39.3701, ft: 3.28084 },
-                in: { cm: 2.54, mm: 25.4, m: 0.0254, in: 1, ft: 0.0833333 },
-                ft: { cm: 30.48, mm: 304.8, m: 0.3048, in: 12, ft: 1 }
-            };
-            return value * conversions[fromUnit][toUnit];
-        }
-
-        function addRowToTable(tableId, rowData) {
-            const table = document.getElementById(tableId).getElementsByTagName('tbody')[0];
-            const newRow = table.insertRow();
-            rowData.forEach(data => {
-                const cell = newRow.insertCell();
-                cell.textContent = data;
-            });
-
-            // Add delete button
-            const deleteCell = newRow.insertCell();
-            const deleteButton = document.createElement('button');
-            deleteButton.textContent = 'Delete';
-            deleteButton.className = 'delete-btn';
-            deleteButton.onclick = function () {
-                deleteRow(tableId, newRow.rowIndex - 1);
-            };
-            deleteCell.appendChild(deleteButton);
-        }
-
-        function deleteRow(tableId, rowIndex) {
-            // Remove row from the table
-            const table = document.getElementById(tableId).getElementsByTagName('tbody')[0];
-            table.deleteRow(rowIndex);
-
-            // Remove corresponding data from the array
-            combinedData.splice(rowIndex, 1);
-        }
-
-        function resetData() {
-            // Clear the data array
-            combinedData.length = 0;
-
-            // Clear the table body
-            document.getElementById('combinedTable').getElementsByTagName('tbody')[0].innerHTML = '';
-        }
-
-        function exportToExcel() {
-            const wb = XLSX.utils.book_new();
-
-            // Combined Data Sheet
-            const combinedWs = XLSX.utils.aoa_to_sheet([
-                ["Original Length", "Original Width", "Original Height", "Converted Length", "Converted Width", "Converted Height"],
-                ...combinedData
-            ]);
-            XLSX.utils.book_append_sheet(wb, combinedWs, "Combined Data");
-
-            // Export to Excel
-            XLSX.writeFile(wb, "Combined_Dimension_Data.xlsx");
-        }
-    </script>
-
-    <script>
-        // Register the service worker
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/service-worker.js')
-                    .then((registration) => {
-                        console.log('Service Worker registered: ', registration);
-                    })
-                    .catch((error) => {
-                        console.log('Service Worker registration failed: ', error);
-                    });
-            });
-        }
-    </script>
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- JavaScript Files -->
+    <script src="assets/js/header.js"></script>
+    <script src="assets/js/footer.js"></script>
+    <script src="assets/js/AccessRules.js"></script>
+    <script src="assets/js/server.js"></script>
+    <script src="assets/js/generalfunction.js"></script>
+    <script src="assets/js/companyProfile.js"></script>
+    <script src="assets/js/branchManagement.js"></script>
+    <script src="assets/js/bankManagement.js"></script>
+    <script src="assets/js/scripts.js"></script>
+    <script src="assets/js/pincode.js"></script>
+    <script src="assets/js/logout.js"></script>
+    <!-- <script src="assets/js/test.js"></script> -->
 
 </body>
 
