@@ -161,14 +161,6 @@ document.getElementById('partyCurrentStatus').addEventListener('change', functio
     }
 });
 
-// document.getElementById('partyName').addEventListener('change', function () {
-//     const partyCode = document.getElementById('partyCode').value;
-//     if (partyCode) { // If partyCode is not null or empty
-//         disableForm();
-//         modifyButton.disabled = false;
-//         saveButton.disabled = true;
-//     }
-// });
 
 // Event listener for partyName selection
 document.getElementById('partyName').addEventListener('change', async function () {
@@ -191,31 +183,38 @@ document.getElementById('partyName').addEventListener('change', async function (
                 throw new Error(`Error fetching billing addresses: ${error.message}`);
             }
 
-            // Clear existing table rows
-            const tableBody = document.querySelector('#billingAddressTable tbody');
-            tableBody.innerHTML = '';
+            // Get table body
+            const tableBody = document.querySelector('#billingAddressTable');
+            tableBody.innerHTML = ''; // Clear existing rows
+
+            if (data.length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="9" class="text-center">No Billing Address Created</td>
+                    </tr>
+                `;
+                return;
+            }
 
             // Populate table with fetched data
             data.forEach((row) => {
-                const newRow = `
-                    <tr data-id="${row.id}">
-                        <td>${row.contact_name || ''}</td>
-                        <td>${row.contact_number || ''}</td>
-                        <td>${row.address || ''}</td>
-                        <td>${row.pincode || ''}</td>
-                        <td>${row.city || ''}</td>
-                        <td>${row.state || ''}</td>
-                        <td>${row.country || ''}</td>
-                        <td>${row.default_active ? "Yes" : "No"}</td>
-                        <td><button class="delete-row" data-id="${row.id}">Delete</button></td>
-                    </tr>
-                `;
-                tableBody.insertAdjacentHTML('beforeend', newRow);
-            });
+                const newRow = document.createElement('tr');
+                newRow.dataset.id = row.id;
 
-            if (data.length === 0) {
-                alert('No billing addresses found for this party.');
-            }
+                newRow.innerHTML = `
+                    <td>${row.contact_name || ''}</td>
+                    <td>${row.contact_number || ''}</td>
+                    <td>${row.address || ''}</td>
+                    <td>${row.pincode || ''}</td>
+                    <td>${row.city || ''}</td>
+                    <td>${row.state || ''}</td>
+                    <td>${row.country || ''}</td>
+                    <td>${row.default_active ? "Yes" : "No"}</td>
+                    <td><button class="delete-row" data-id="${row.id}">Delete</button></td>
+                `;
+
+                tableBody.appendChild(newRow);
+            });
 
         } catch (err) {
             console.error(err.message);
@@ -223,7 +222,6 @@ document.getElementById('partyName').addEventListener('change', async function (
         }
     }
 });
-
 
 
 //customer list

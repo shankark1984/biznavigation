@@ -72,6 +72,7 @@ document.getElementById('modifyButton').addEventListener('click', function () {
     document.getElementById('saveButton').disabled = false; // Enable the Save button
     document.getElementById('modifyButton').disabled = true;
     document.getElementById('saveButton').textContent = 'Update';
+    document.getElementById('shortCode').disabled
 });
 
 // New button event listener
@@ -123,10 +124,17 @@ document.getElementById('saveButton').addEventListener('click', async function (
             alert(`Failed to ${action === 'insert' ? 'save' : 'update'} company: ${response.error.message}`);
         } else {
             alert(`Company ${action === 'insert' ? 'saved' : 'updated'} successfully!`);
+
             if (action === 'insert') {
                 saveButton.textContent = 'Update';
                 document.getElementById('modifyButton').disabled = false;
+
             }
+            disableForm();
+            document.getElementById('saveButton').disabled = true
+            document.getElementById('modifyButton').disabled = false
+            document.getElementById('branchAddDetails').disabled = true
+            document.getElementById('branchBankAddDetails').disabled = true
         }
     } catch (error) {
         console.error('Error saving company:', error);
@@ -214,6 +222,7 @@ document.addEventListener('DOMContentLoaded', () => {
 document.getElementById("modifyButton").addEventListener("click", function () {
     this.disabled = true; // Disable modifyButton
     document.getElementById("branchAddDetails").disabled = false; // Enable branchAddDetails
+    userRoleType();
 });
 
 document.getElementById('website').addEventListener('blur', function () {
@@ -222,3 +231,23 @@ document.getElementById('website').addEventListener('blur', function () {
         this.value = 'https://' + url; // Default to HTTPS for security
     }
 });
+
+
+function userRoleType(address) {
+    if (userType == 1) {
+        document.getElementById('shortCode').disabled = false
+        document.getElementById('companyName').disabled = false
+        document.getElementById('panNumber').disabled = false
+        document.getElementById('gstNumber').disabled = false
+    } else if (userType == 2) {
+        document.getElementById('shortCode').disabled = true
+        document.getElementById('companyName').disabled = true
+        document.getElementById('panNumber').disabled = true
+        document.getElementById('gstNumber').disabled = true
+    } else {
+        document.getElementById('shortCode').disabled = true
+        document.getElementById('companyName').disabled = true
+        document.getElementById('panNumber').disabled = true
+        document.getElementById('gstNumber').disabled = true
+    }
+}

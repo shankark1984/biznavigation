@@ -43,9 +43,9 @@ async function loadTaxData() {
 
 // Populate the <select> dropdown with tax data
 function populateDropdown(tax_data) {
-    const taxSelect = $("#defaulttax"); // Target the <select> element
+    const taxSelect = $("#defaultTax"); // Target the <select> element
     taxSelect.empty();  // Clear existing options
-    
+
     // Add a placeholder option
     taxSelect.append('<option value="" disabled selected>Select Default Tax</option>');
 
@@ -60,7 +60,7 @@ function populateDropdown(tax_data) {
 function vendorpopulateDropdown(tax_data) {
     const taxSelect = $("#vendorDefaultTax"); // Target the <select> element
     taxSelect.empty();  // Clear existing options
-    
+
     // Add a placeholder option
     taxSelect.append('<option value="" disabled selected>Select Default Tax</option>');
 

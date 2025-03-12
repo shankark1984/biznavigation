@@ -29,14 +29,44 @@ async function fetchUserData() {
     }
 }
 
-// Function to fetch form details from Supabase
+// Function to populate datalist when input is focused
+document.getElementById("userID").addEventListener("focus", async function () {
+    const userLoginList = document.getElementById("userLoginList");
+    userLoginList.innerHTML = ""; // Clear existing options
+
+    const users = await fetchUserData();
+    users.forEach(form => {
+        const option = document.createElement("option");
+        option.value = form.user_login_id;
+        userLoginList.appendChild(option);
+    });
+});
+
+// Function to check user type and fetch form details from Supabase
 async function fetchFormDetails() {
     if (cachedForms.length > 0) return cachedForms;
+
     try {
-        const { data, error } = await supabaseClient
-            .from("FormDetails")
-            .select("FormName, FormDescription");
+        // Check user type from user_login table
+        const { data: userData, error: userError } = await supabaseClient
+            .from("user_login")
+            .select("user_type")
+            .eq("user_login_id", userLoginID)  // Ensure userLoginID is defined
+            .single();
+
+        if (userError) throw userError;
+
+        // If user_type is not 1, exclude 'UserAccessRules' from FormDetails
+        let query = supabaseClient.from("FormDetails").select("FormName, FormDescription");
+
+        if (userData.user_type !== 1) {
+            query = query.neq("FormName", "UserAccessRules");
+        }
+
+        const { data, error } = await query;
+
         if (error) throw error;
+
         cachedForms = data;
         return data;
     } catch (err) {
@@ -44,6 +74,20 @@ async function fetchFormDetails() {
         return [];
     }
 }
+
+// Function to populate datalist when input is focused
+document.getElementById("userAccess").addEventListener("focus", async function () {
+    const formNameList = document.getElementById("formNameList");
+    formNameList.innerHTML = ""; // Clear existing options
+
+    const forms = await fetchFormDetails();
+    forms.forEach(form => {
+        const option = document.createElement("option");
+        option.value = form.FormName;
+        formNameList.appendChild(option);
+    });
+});
+
 
 // Function to populate the datalist
 function populateDatalist(list, items, valueKey, textKey) {
@@ -109,9 +153,13 @@ async function fetchUserRoles(userLoginID) {
 async function addUserRole() {
     const userLoginID = userIDInput.value;
     const formID = userAccessInput.value;
-    const form = cachedForms.find(f => f.id == formID);
+    const form = cachedForms.find(f => f.FormName == formID);
+    console.log(userLoginID + ' 1 ' + formID + ' 1 ' + form);
 
     if (!userLoginID || !formID || !form) {
+
+        console.log(userLoginID + ' 2 ' + formID + ' 2 ' + form);
+
         alert("Please select a valid user and form.");
         return;
     }

@@ -18,7 +18,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     <a href="companyProfile.html" class="menu-item" data-form-id="companyProfile">Company</a>
                     <a href="party_registration.html">Party Registration</a>
                     <a href="#">Employee</a>
-                    <a href="UserAccessRules.html">User Rules</a>
+                    <a href="UserAccessRules.html" class="menu-item" data-form-id="UserAccessRules">User Rules</a>
                 </div>
             </li>
             <li>

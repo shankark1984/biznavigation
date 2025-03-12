@@ -121,7 +121,7 @@ function populateFormFields(data, type) {
     const prefix = type === "party" ? "party" : "vendor";
 
     $(`#${prefix}Type`).val(data.partyType);
-    $(`#${prefix}Code`).val(data.partyCode);
+    $("#partyCode").val(data.partyCode);
     $("#partyCurrentStatus").val(data.currentStatus);
     $("#partyDeActiveDate").val(data.deActiveDate);
     $("#partyAddress").val(data.address);

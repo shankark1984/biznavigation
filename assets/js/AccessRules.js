@@ -1,19 +1,13 @@
-// // Initialize Supabase client
-// const supabase = createClient('your-supabase-url', 'your-anon-key');
-
-// // Global variables for permissions
-// let perRead = false, perWrite = false, perDelete = false, perUpdate = false;
-
 // Function to check user permissions
 async function checkAccess(userLoginID, formID) {
-    console.log('U ID ' + userLoginID + " F ID " + formID);
+
     try {
         const { data, error } = await supabaseClient
             .from('UserAccessRules')
             .select('Read, Write, Delete, Update')
             .eq('UserLoginID', userLoginID)
             .eq('FormID', formID)
-            .single(); // Expecting only one result
+            .maybeSingle();  // Allows 0 rows without throwing an error
 
         if (error) {
             console.error('Database error:', error);
