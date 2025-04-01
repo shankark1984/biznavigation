@@ -16,7 +16,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 <a href="#">Master</a>
                 <div class="dropdown">
                     <a href="companyProfile.html" class="menu-item" data-form-id="companyProfile">Company</a>
-                    <a href="party_registration.html">Party Registration</a>
+                    <a href="PartyRegistration.html" class="menu-item" data-form-id="PartyRegistration">Party Registration</a>
                     <a href="#">Employee</a>
                     <a href="UserAccessRules.html" class="menu-item" data-form-id="UserAccessRules">User Rules</a>
                 </div>
@@ -26,7 +26,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 <div class="dropdown">
                     <a href="#">Enquiry</a>
                     <a href="#">Quotation</a>
-                    <a href="InternationalBooking.html">International</a>
+                    <a href="InternationalBooking.html" class="menu-item" data-form-id="InternationalBooking">InternationalBooking</a>
                     <a href="#">Domestic</a>
                     <a href="#">Customs Clearance</a>
                     <a href="fulltruckload.html ">FTL or FCL</a>
@@ -83,3 +83,4 @@ document.addEventListener("DOMContentLoaded", function () {
     `;
     document.body.insertAdjacentHTML('afterbegin', header);
 });
+

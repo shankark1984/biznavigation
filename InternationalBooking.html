@@ -2,14 +2,16 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <title>BizNavigation - International Booking</title>
     <title>International Booking</title>
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
-    <link rel="stylesheet" href="assets/css/styles.css">
 
+    <!-- <link rel="stylesheet" href="assets/css/styles.css"> -->
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <!-- Include DOMPurify from CDN -->
@@ -23,9 +25,9 @@
 </head>
 
 <body class="bg-light">
-    <div class="container mt-2">
+    <div class="container mt-2" id="root">
         <div class="card shadow-lg rounded">
-            <div class="card-header bg-primary text-white">
+            <div class="card-header bg-primary text-white" style="margin-top: 68px;">
                 <h3 class="mb-0">International Booking</h3>
                 <input type="hidden" id="tempFormID" name="tempFormID">
                 <input type="hidden" id="partyCode" name="partyCode">
@@ -55,225 +57,375 @@
                     <!-- Form Grid -->
                     <div class="row g-1">
                         <!-- Customer Name -->
-                        <div class="col-md-4">
-                            <label for="partyName" class="form-label small">Customer Name</label>
-                            <input list="partySuggestions" class="form-control" id="partyName" name="partyName" required
-                                placeholder="Choose..." autocomplete="off">
-                            <datalist id="partySuggestions"></datalist>
+                        <div class="col-md-4 col-sm-6">
+                            <div class="row align-items-center">
+                                <div class="col-4">
+                                    <label for="partyName">Customer Name</label>
+                                </div>
+                                <div class="col-8">
+                                    <input list="partySuggestions" class="form-control" id="partyName" name="partyName"
+                                        required placeholder="Choose..." autocomplete="off">
+                                    <datalist id="partySuggestions"></datalist>
+                                </div>
+                            </div>
                         </div>
                         <!-- Docket No -->
-                        <div class="col-md-4">
-                            <label for="awbNo" class="form-label small">Docket No</label>
-                            <input list="docketNoSuggestions" class="form-control" id="awbNo" name="awbNo" required
-                                placeholder="Enter Docket No" autocomplete="off"
-                                oninput="loadAWBNoDetails(this.value)"><!-- Dynamically loads suggestions -->
-                            <datalist id="docketNoSuggestions"></datalist>
+                        <div class="col-md-4 col-sm-6">
+                            <div class="row align-items-center">
+                                <div class="col-4">
+                                    <label for="awbNo">Docket No</label>
+                                </div>
+                                <div class="col-8">
+                                    <input list="docketNoSuggestions" class="form-control" id="awbNo" name="awbNo"
+                                        required placeholder="Enter Docket No" autocomplete="off"
+                                        oninput="loadAWBNoDetails(this.value)"><!-- Dynamically loads suggestions -->
+                                    <datalist id="docketNoSuggestions"></datalist>
+                                </div>
+                            </div>
                         </div>
                         <!-- Booked Date -->
-                        <div class="col-md-2">
-                            <label for="bookedDate" class="form-label small">Booked Date</label>
-                            <input type="date" class="form-control" id="bookedDate">
+                        <div class="col-md-4 col-sm-6">
+                            <div class="row align-items-center">
+                                <div class="col-4">
+                                    <label for="bookedDate">Booked Date</label>
+                                </div>
+                                <div class="col-8">
+                                    <input type="date" class="form-control" id="bookedDate">
+                                </div>
+                            </div>
                         </div>
                         <!-- Status -->
-                        <div class="col-md-2">
-                            <label for="status" class="form-label small">Status</label>
-                            <input type="text" class="form-control bg-light" id="status" value="New" readonly>
+                        <div class="col-md-4 col-sm-6">
+                            <div class="row align-items-center">
+                                <div class="col-4">
+                                    <label for="status">Status</label>
+                                </div>
+                                <div class="col-8">
+                                    <input type="text" class="form-control bg-light" id="status" value="New" readonly>
+                                </div>
+                            </div>
                         </div>
                         <!-- Transaction Type -->
-                        <div class="col-md-2">
-                            <label for="transactionType" class="form-label small">Transaction Type</label>
-                            <input list="transactionTypeSuggestions" class="form-control" id="transactionType"
-                                name="transactionType" required placeholder="Choose..." autocomplete="off"
-                                oninput="transactionTypeDetails(this.value)">
-                            <!-- Dynamically loads suggestions -->
-                            <datalist id="transactionTypeSuggestions"></datalist>
+                        <div class="col-md-4 col-sm-6">
+                            <div class="row align-items-center">
+                                <div class="col-4">
+                                    <label for="transactionType">Transaction Type</label>
+                                </div>
+                                <div class="col-8">
+                                    <input list="transactionTypeSuggestions" class="form-control" id="transactionType"
+                                        name="transactionType" required placeholder="Choose..." autocomplete="off"
+                                        oninput="transactionTypeDetails(this.value)">
+                                    <!-- Dynamically loads suggestions -->
+                                    <datalist id="transactionTypeSuggestions"></datalist>
+                                </div>
+                            </div>
                         </div>
-
                         <!-- Transit Type -->
-                        <div class="col-md-2">
-                            <label for="transitTypeInternational" class="form-label small">Transit Type</label>
-                            <input list="transitTypeInternationalSuggestions" class="form-select"
-                                id="transitTypeInternational" name="transitTypeInternational" required
-                                placeholder="Choose..." autocomplete="off"
-                                oninput="transitTypeInternationalDetails(this.value)"><!-- Dynamically loads suggestions -->
-                            <datalist id="transitTypeInternationalSuggestions"></datalist>
+                        <div class="col-md-4 col-sm-6">
+                            <div class="row align-items-center">
+                                <div class="col-4">
+                                    <label for="transitTypeInternational" class="form-label small">Transit Type</label>
+                                </div>
+                                <div class="col-8">
+                                    <input list="transitTypeInternationalSuggestions" class="form-select"
+                                        id="transitTypeInternational" name="transitTypeInternational" required
+                                        placeholder="Choose..." autocomplete="off"
+                                        oninput="transitTypeInternationalDetails(this.value)"><!-- Dynamically loads suggestions -->
+                                    <datalist id="transitTypeInternationalSuggestions"></datalist>
+                                </div>
+                            </div>
                         </div>
                         <!-- Mode Type -->
-                        <div class="col-md-2">
-                            <label for="modeType" class="form-label">Mode Type</label>
-                            <input list="modeTypeSuggestions" class="form-select" id="modeType" name="modeType" required
-                                placeholder="Choose..." autocomplete="off"
-                                oninput="modeTypeDetails(this.value)"><!-- Dynamically loads suggestions -->
-                            <datalist id="modeTypeSuggestions"></datalist>
+                        <div class="col-md-4 col-sm-6">
+                            <div class="row align-items-center">
+                                <div class="col-4">
+                                    <label for="modeType" class="form-label">Mode Type</label>
+                                </div>
+                                <div class="col-8">
+                                    <input list="modeTypeSuggestions" class="form-select" id="modeType" name="modeType"
+                                        required placeholder="Choose..." autocomplete="off"
+                                        oninput="modeTypeDetails(this.value)"><!-- Dynamically loads suggestions -->
+                                    <datalist id="modeTypeSuggestions"></datalist>
+                                </div>
+                            </div>
                         </div>
-
                         <!-- P.O No -->
-                        <div class="col-md-3">
-                            <label for="poNo" class="form-label small">P.O No</label>
-                            <input list="poNoSuggestions" class="form-control" id="poNo" name="poNo" required
-                                placeholder="Enter P.O No" autocomplete="off"
-                                oninput="poNoDetails(this.value)"><!-- Dynamically loads suggestions -->
-                            <datalist id="poNoSuggestions"></datalist>
+                        <div class="col-md-4 col-sm-6">
+                            <div class="row align-items-center">
+                                <div class="col-4">
+                                    <label for="poNo" class="form-label small">P.O No</label>
+                                </div>
+                                <div class="col-8">
+                                    <input list="poNoSuggestions" class="form-control" id="poNo" name="poNo" required
+                                        placeholder="Enter P.O No" autocomplete="off"
+                                        oninput="poNoDetails(this.value)"><!-- Dynamically loads suggestions -->
+                                    <datalist id="poNoSuggestions"></datalist>
+                                </div>
+                            </div>
                         </div>
-
                         <!-- Shipping Type -->
-                        <div class="col-md-3">
-                            <label for="shippingType" class="form-label small">Shipping Type</label>
-                            <input list="shippingTypeSuggestions" class="form-select" id="shippingType"
-                                name="shippingType" required placeholder="Choose..." autocomplete="off"
-                                oninput="shippingTypeDetails(this.value)"><!-- Dynamically loads suggestions -->
-                            <datalist id="shippingTypeSuggestions"></datalist>
+                        <div class="col-md-4 col-sm-6">
+                            <div class="row align-items-center">
+                                <div class="col-4">
+                                    <label for="shippingType" class="form-label small">Shipping Type</label>
+                                </div>
+                                <div class="col-8">
+                                    <input list="shippingTypeSuggestions" class="form-select" id="shippingType"
+                                        name="shippingType" required placeholder="Choose..." autocomplete="off"
+                                        oninput="shippingTypeDetails(this.value)"><!-- Dynamically loads suggestions -->
+                                    <datalist id="shippingTypeSuggestions"></datalist>
+                                </div>
+                            </div>
                         </div>
-
                         <!-- Cargo Carrier -->
-                        <div class="col-md-4">
-                            <label for="carrierName" class="form-label small">Carrier</label>
-                            <input list="cargoCarrierSuggestions" class="form-control" id="carrierName"
-                                name="carrierName" required placeholder="Choose..." autocomplete="off"
-                                oninput="cargoCarrierDetails(this.value)"><!-- Dynamically loads suggestions -->
-                            <datalist id="cargoCarrierSuggestions"></datalist>
+                        <div class="col-md-4 col-sm-6">
+                            <div class="row align-items-center">
+                                <div class="col-4">
+                                    <label for="carrierName" class="form-label small">Carrier</label>
+                                </div>
+                                <div class="col-8">
+                                    <input list="cargoCarrierSuggestions" class="form-control" id="carrierName"
+                                        name="carrierName" required placeholder="Choose..." autocomplete="off"
+                                        oninput="cargoCarrierDetails(this.value)"><!-- Dynamically loads suggestions -->
+                                    <datalist id="cargoCarrierSuggestions"></datalist>
+                                </div>
+                            </div>
                         </div>
-
                         <!-- Service Provider -->
-                        <div class="col-md-3">
-                            <label for="serviceProvider" class="form-label small">Service Provider</label>
-                            <input list="serviceProviderSuggestions" class="form-control" id="serviceProvider"
-                                name="serviceProvider" required placeholder="Choose..." autocomplete="off"
-                                oninput="serviceProviderDetails(this.value)">
-                            <!-- Dynamically loads suggestions -->
-                            <datalist id="serviceProviderSuggestions"></datalist>
+                        <div class="col-md-4 col-sm-6">
+                            <div class="row align-items-center">
+                                <div class="col-4">
+                                    <label for="serviceProvider" class="form-label small">Service Provider</label>
+                                </div>
+                                <div class="col-8">
+                                    <input list="serviceProviderSuggestions" class="form-control" id="serviceProvider"
+                                        name="serviceProvider" required placeholder="Choose..." autocomplete="off"
+                                        oninput="serviceProviderDetails(this.value)">
+                                    <!-- Dynamically loads suggestions -->
+                                    <datalist id="serviceProviderSuggestions"></datalist>
+                                </div>
+                            </div>
                         </div>
-
                         <!-- Shipper Ref -->
-                        <div class="col-md-3">
-                            <label for="shipperRef" class="form-label small">Shipper Ref</label>
-                            <input list="shipperRefSuggestions" class="form-control" id="shipperRef" name="shipperRef"
-                                required placeholder="Enter shipper Ref No." autocomplete="off"
-                                oninput="shipperRefDetails(this.value)"><!-- Dynamically loads suggestions -->
+                        <div class="col-md-4 col-sm-6">
+                            <div class="row align-items-center">
+                                <div class="col-4">
+                                    <label for="shipperRef" class="form-label small">Shipper Ref</label>
+                                </div>
+                                <div class="col-8">
+                                    <input list="shipperRefSuggestions" class="form-control" id="shipperRef"
+                                        name="shipperRef" required placeholder="Enter shipper Ref No."
+                                        autocomplete="off"
+                                        oninput="shipperRefDetails(this.value)"><!-- Dynamically loads suggestions -->
+                                </div>
+                            </div>
                         </div>
                         <!-- Invoice Value Ref -->
-                        <div class="col-md-2">
-                            <label for="invoiceValue" class="form-label small">Invoice Value</label>
-                            <input type="number" class="form-control" id="invoiceValue" name="invoiceValue"
-                                autocomplete="off" value="0.00">
+                        <div class="col-md-4 col-sm-6">
+                            <div class="row align-items-center">
+                                <div class="col-4">
+                                    <label for="invoiceValue" class="form-label small">Invoice Value</label>
+                                </div>
+                                <div class="col-8">
+                                    <input type="number" class="form-control" id="invoiceValue" name="invoiceValue"
+                                        autocomplete="off" value="0.00">
+                                </div>
+                            </div>
                         </div>
                         <!-- Pickup Address -->
-                        <div class="col-md-4">
-                            <label for="PartyAddress" class="form-label small">Pickup Address</label>
-                            <input list="PartyAddressSuggestions" class="form-control" id="PartyAddress"
-                                name="PartyAddress" required placeholder="Enter Pickup Address" autocomplete="off"
-                                oninput="PartyAddressDetails(this.value, 'Address', 'PartyAddressSuggestions')">
-                            <datalist id="PartyAddressSuggestions"></datalist>
+                        <div class="col-md-4 col-sm-6">
+                            <div class="row align-items-center">
+                                <div class="col-4">
+                                    <label for="PartyAddress" class="form-label small">Pickup Address</label>
+                                </div>
+                                <div class="col-8">
+                                    <input list="PartyAddressSuggestions" class="form-control" id="PartyAddress"
+                                        name="PartyAddress" required placeholder="Enter Pickup Address"
+                                        autocomplete="off"
+                                        oninput="PartyAddressDetails(this.value, 'Address', 'PartyAddressSuggestions')">
+                                    <datalist id="PartyAddressSuggestions"></datalist>
+                                </div>
+                            </div>
                         </div>
-
                         <!-- Consignee Name -->
-                        <div class="col-md-3">
-                            <label for="consigneeName" class="form-label small">Consignee Name</label>
-                            <input list="consigneeNameSuggestions" class="form-control" id="consigneeName"
-                                name="consigneeName" required placeholder="Enter Consignee Name" autocomplete="off"
-                                oninput="consigneeDetails(this.value, 'ConsigneeName', 'consigneeNameSuggestions')"
-                                onchange="updateDeliveryAddress()">
-                            <datalist id="consigneeNameSuggestions"></datalist>
+                        <div class="col-md-4 col-sm-6">
+                            <div class="row align-items-center">
+                                <div class="col-4">
+                                    <label for="consigneeName" class="form-label small">Consignee Name</label>
+                                </div>
+                                <div class="col-8">
+                                    <input list="consigneeNameSuggestions" class="form-control" id="consigneeName"
+                                        name="consigneeName" required placeholder="Enter Consignee Name"
+                                        autocomplete="off"
+                                        oninput="consigneeDetails(this.value, 'ConsigneeName', 'consigneeNameSuggestions')"
+                                        onchange="updateDeliveryAddress()">
+                                    <datalist id="consigneeNameSuggestions"></datalist>
+                                </div>
+                            </div>
                         </div>
-
                         <!-- Delivery Address -->
-                        <div class="col-md-5">
-                            <label for="deliveryAddress" class="form-label small">Delivery Address</label>
-                            <textarea class="form-control" id="deliveryAddress" name="deliveryAddress"
-                                placeholder="Delivery Address" autocomplete="off"></textarea>
+                        <div class="col-md-4 col-sm-6">
+                            <div class="row align-items-center">
+                                <div class="col-4">
+                                    <label for="deliveryAddress" class="form-label small">Delivery Address</label>
+                                </div>
+                                <div class="col-8">
+                                    <textarea class="form-control" id="deliveryAddress" name="deliveryAddress"
+                                        placeholder="Delivery Address" autocomplete="off"></textarea>
+                                </div>
+                            </div>
                         </div>
-
                         <!-- Commodity Mode -->
-                        <div class="col-md-3">
-                            <label for="commodity" class="form-label small">Commodity</label>
-                            <input list="commoditySuggestions" class="form-control" id="commodity" name="commodity"
-                                required placeholder="Enter Commodity Type" autocomplete="off"
-                                oninput="commodityDetails(this.value)">
-                            <!-- Dynamically loads suggestions -->
-                            <datalist id="commoditySuggestions"></datalist>
-
+                        <div class="col-md-4 col-sm-6">
+                            <div class="row align-items-center">
+                                <div class="col-4">
+                                    <label for="commodity" class="form-label small">Commodity</label>
+                                </div>
+                                <div class="col-8">
+                                    <input list="commoditySuggestions" class="form-control" id="commodity"
+                                        name="commodity" required placeholder="Enter Commodity Type" autocomplete="off"
+                                        oninput="commodityDetails(this.value)">
+                                    <!-- Dynamically loads suggestions -->
+                                    <datalist id="commoditySuggestions"></datalist>
+                                </div>
+                            </div>
                         </div>
-
                         <!-- Clearance Mode -->
-                        <div class="col-md-3">
-                            <label for="clearanceMode" class="form-label small">Clearance Mode</label>
-                            <input list="clearanceModeSuggestions" class="form-control" id="clearanceMode"
-                                name="clearanceMode" required placeholder="Enter Clearance Mode" autocomplete="off"
-                                oninput="clearanceModeDetails(this.value)">
-                            <!-- Dynamically loads suggestions -->
-                            <datalist id="clearanceModeSuggestions"></datalist>
+                        <div class="col-md-4 col-sm-6">
+                            <div class="row align-items-center">
+                                <div class="col-4">
+                                    <label for="clearanceMode" class="form-label small">Clearance Mode</label>
+                                </div>
+                                <div class="col-8">
+                                    <input list="clearanceModeSuggestions" class="form-control" id="clearanceMode"
+                                        name="clearanceMode" required placeholder="Enter Clearance Mode"
+                                        autocomplete="off" oninput="clearanceModeDetails(this.value)">
+                                    <!-- Dynamically loads suggestions -->
+                                    <datalist id="clearanceModeSuggestions"></datalist>
+                                </div>
+                            </div>
                         </div>
-
                         <!-- Origin Country -->
-                        <div class="col-md-3">
-                            <label for="originCountry" class="form-label small">Origin</label>
-                            <input list="originCountrySuggestions" class="form-control" id="originCountry"
-                                name="originCountry" required placeholder="Enter Origin Country"
-                                autocomplete="new-password""
-                        oninput=" CountryDetails(this.value, 'originCountrySuggestions' , 'originCountry' )">
-                            <!-- Dynamically loads suggestions -->
-                            <datalist id="originCountrySuggestions"></datalist>
+                        <div class="col-md-4 col-sm-6">
+                            <div class="row align-items-center">
+                                <div class="col-4">
+                                    <label for="originCountry" class="form-label small">Origin</label>
+                                </div>
+                                <div class="col-8">
+                                    <input list="originCountrySuggestions" class="form-control" id="originCountry"
+                                        name="originCountry" required placeholder="Enter Origin Country"
+                                        autocomplete="new-password""
+                            oninput=" CountryDetails(this.value, 'originCountrySuggestions' , 'originCountry' )">
+                                    <!-- Dynamically loads suggestions -->
+                                    <datalist id="originCountrySuggestions"></datalist>
+                                </div>
+                            </div>
                         </div>
-
                         <!-- Destination Country-->
-                        <div class="col-md-3">
-                            <label for="destination" class="form-label small">Destination</label>
-                            <input list="destinationCountrySuggestions" class="form-control" id="destinationCountry"
-                                name="destinationCountry" required placeholder="Enter Destination Country"
-                                autocomplete="new-password"
-                                oninput=" CountryDetails(this.value, 'destinationCountrySuggestions' , 'destinationCountry' )">
-                            <!-- Dynamically loads suggestions -->
-                            <datalist id="destinationCountrySuggestions"></datalist>
+                        <div class="col-md-4 col-sm-6">
+                            <div class="row align-items-center">
+                                <div class="col-4">
+                                    <label for="destinationCountry" class="form-label small">Destination</label>
+                                </div>
+                                <div class="col-8">
+                                    <input list="destinationCountrySuggestions" class="form-control"
+                                        id="destinationCountry" name="destinationCountry" required
+                                        placeholder="Enter Destination Country" autocomplete="new-password"
+                                        oninput=" CountryDetails(this.value, 'destinationCountrySuggestions' , 'destinationCountry' )">
+                                    <!-- Dynamically loads suggestions -->
+                                    <datalist id="destinationCountrySuggestions"></datalist>
+                                </div>
+                            </div>
                         </div>
                         <!-- Packing Type -->
-                        <div class="col-md-2">
-                            <label for="packingType" class="form-label small">Packing Type</label>
-                            <input list="packingTypeSuggestions" class="form-control" id="packingType"
-                                name="packingType" required placeholder="Enter Packing Type" autocomplete="off"
-                                oninput="packingDetails(this.value)">
-                            <!-- Dynamically loads suggestions -->
-                            <datalist id="packingTypeSuggestions"></datalist>
+                        <div class="col-md-4 col-sm-6">
+                            <div class="row align-items-center">
+                                <div class="col-4">
+                                    <label for="packingType" class="form-label small">Packing Type</label>
+                                </div>
+                                <div class="col-8">
+                                    <input list="packingTypeSuggestions" class="form-control" id="packingType"
+                                        name="packingType" required placeholder="Enter Packing Type" autocomplete="off"
+                                        oninput="packingDetails(this.value)">
+                                    <!-- Dynamically loads suggestions -->
+                                    <datalist id="packingTypeSuggestions"></datalist>
+                                </div>
+                            </div>
                         </div>
                         <!-- Freight UOM -->
-                        <div class="col-md-1">
-                            <label for="uOMType" class="form-label small">UOM</label>
-                            <input list="uOMTypeSuggestions" class="form-control" id="uOMType" name="uOMType" required
-                                placeholder="Select UOM" autocomplete="off" oninput="uOMTypeDetails(this.value)">
-                            <!-- Dynamically loads suggestions -->
-                            <datalist id="uOMTypeSuggestions"></datalist>
+                        <div class="col-md-4 col-sm-6">
+                            <div class="row align-items-center">
+                                <div class="col-4">
+                                    <label for="uOMType" class="form-label small">UOM</label>
+                                </div>
+                                <div class="col-8">
+                                    <input list="uOMTypeSuggestions" class="form-control" id="uOMType" name="uOMType"
+                                        required placeholder="Select UOM" autocomplete="off"
+                                        oninput="uOMTypeDetails(this.value)">
+                                    <!-- Dynamically loads suggestions -->
+                                    <datalist id="uOMTypeSuggestions"></datalist>
+                                </div>
+                            </div>
                         </div>
-
                         <!-- Quantity -->
-                        <div class="col-md-2">
-                            <label for="quantity" class="form-label small">Quantity</label>
-                            <input type="number" class="form-control" id="quantity" placeholder="Enter Quantity">
+                        <div class="col-md-4 col-sm-6">
+                            <div class="row align-items-center">
+                                <div class="col-4">
+                                    <label for="quantity" class="form-label small">Quantity</label>
+                                </div>
+                                <div class="col-8">
+                                    <input type="number" class="form-control" id="quantity"
+                                        placeholder="Enter Quantity">
+                                </div>
+                            </div>
                         </div>
-
-
                         <!-- Actual Weight -->
-                        <div class="col-md-2">
-                            <label for="actualWeight" class="form-label small">Act Wt</label>
-                            <input type="number" class="form-control" id="actualWeight"
-                                placeholder="Enter Actual Weight">
+                        <div class="col-md-4 col-sm-6">
+                            <div class="row align-items-center">
+                                <div class="col-4">
+                                    <label for="actualWeight" class="form-label small">Act Wt</label>
+                                </div>
+                                <div class="col-8">
+                                    <input type="number" class="form-control" id="actualWeight"
+                                        placeholder="Enter Actual Weight">
+                                </div>
+                            </div>
                         </div>
-
                         <!-- Volumetric Weight -->
-                        <div class="col-md-2">
-                            <label for="volumetricWeight" class="form-label small">Vol Wt</label>
-                            <input type="number" class="form-control" id="volumetricWeight"
-                                placeholder="Enter Volumetric Weight">
+                        <div class="col-md-4 col-sm-6">
+                            <div class="row align-items-center">
+                                <div class="col-4">
+                                    <label for="volumetricWeight" class="form-label small">Vol Wt</label>
+                                </div>
+                                <div class="col-8">
+                                    <input type="number" class="form-control" id="volumetricWeight"
+                                        placeholder="Enter Volumetric Weight">
+                                </div>
+                            </div>
                         </div>
                         <!-- Chargeable Weight -->
-                        <div class="col-md-2">
-                            <label for="chargeableWeight" class="form-label small">Char Wt</label>
-                            <input type="number" class="form-control" id="chargeableWeight"
-                                placeholder="Enter Chargeable Weight">
+                        <div class="col-md-4 col-sm-6">
+                            <div class="row align-items-center">
+                                <div class="col-4">
+                                    <label for="chargeableWeight" class="form-label small">Char Wt</label>
+                                </div>
+                                <div class="col-8">
+                                    <input type="number" class="form-control" id="chargeableWeight"
+                                        placeholder="Enter Chargeable Weight">
+                                </div>
+                            </div>
                         </div>
-
-                        <!-- Infomation Weight -->
-                        <div class="col-md-12">
-                            <label for="infomation" class="form-label small">Additional Information</label>
-                            <input type="text" class="form-control" id="infomation" placeholder="Enter Infomation">
+                        <!-- Infomation -->
+                        <div class="col-md-4 col-sm-6">
+                            <div class="row align-items-center">
+                                <div class="col-4">
+                                    <label for="infomation" class="form-label small">Additional Information</label>
+                                </div>
+                                <div class="col-8">
+                                    <input type="text" class="form-control" id="infomation"
+                                        placeholder="Enter Infomation">
+                                </div>
+                            </div>
                         </div>
                         <!-- Tabbed Form -->
                         <div class="col-md-12 mt-3">
@@ -283,7 +435,7 @@
                                         data-bs-target="#freight" type="button" role="tab">Freight</button>
                                 </li>
                                 <li class="nav-item" role="presentation">
-                                    <button class="nav-link" id="status-tab" data-bs-toggle="tab"
+                                    <button class="nav-link" id="volumetric-tab" data-bs-toggle="tab"
                                         data-bs-target="#volumetric" type="button" role="tab">Volumetric</button>
                                 </li>
                                 <li class="nav-item" role="presentation">
@@ -298,11 +450,75 @@
 
                             </ul>
                             <div class="tab-content p-3 border border-top-0" id="bookingTabsContent">
+                                <!-- Freight Tab Start -->
                                 <div class="tab-pane fade show active" id="freight" role="tabpanel">
-                                    <label for="freightDetails" class="form-label small">Freight Details</label>
-                                    <textarea class="form-control" id="freightDetails" rows="3"
-                                        placeholder="Enter Freight Details"></textarea>
+                                    <div class="row g-1 align-items-center">
+                                        <!-- Charges Type -->
+                                        <div class="col-md-3 col-sm-6">
+                                            <div class="row align-items-center">
+                                                <div class="col-5 text-end">
+                                                    <label for="chargesType" class="form-label small">Charges
+                                                        Type:</label>
+                                                </div>
+                                                <div class="col-7">
+                                                    <input list="chargesTypeSuggestions" class="form-control"
+                                                        id="chargesType" name="chargesType" required
+                                                        placeholder="Select Charges Type" autocomplete="off"
+                                                        oninput="chargesTypeDetails(this.value)">
+                                                    <datalist id="chargesTypeSuggestions"></datalist>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- HSN Number -->
+                                        <div class="col-md-2 col-sm-6">
+                                            <div class="row align-items-center">
+                                                <div class="col-4 text-end">
+                                                    <label for="hsnNumber" class="form-label small">HSN:</label>
+                                                </div>
+                                                <div class="col-8">
+                                                    <input type="text" class="form-control" id="hsnNumber"
+                                                        name="hsnNumber">
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Freight Amount -->
+                                        <div class="col-md-3 col-sm-6">
+                                            <div class="row align-items-center">
+                                                <div class="col-4 text-end">
+                                                    <label for="freightAmount" class="form-label small">Amount:</label>
+                                                </div>
+                                                <div class="col-8">
+                                                    <input type="number" class="form-control" id="freightAmount"
+                                                        name="freightAmount">
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Remarks -->
+                                        <div class="col-md-3 col-sm-6">
+                                            <div class="row align-items-center">
+                                                <div class="col-4 text-end">
+                                                    <label for="remarksDetails"
+                                                        class="form-label small">Remarks:</label>
+                                                </div>
+                                                <div class="col-8">
+                                                    <input type="text" class="form-control" id="remarksDetails"
+                                                        name="remarksDetails">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <!-- Add Button -->
+                                        <div class="col-md-1 col-sm-6 d-flex justify-content-end">
+                                            <button type="button" class="btn btn-primary">Add</button>
+                                        </div>
+                                    </div>
                                 </div>
+                                <!-- Freight Tab End -->
+
+
+
                                 <div class="tab-pane fade" id="container-details" role="tabpanel">
                                     <label for="containerDetails" class="form-label small">Container Details</label>
                                     <textarea class="form-control" id="containerDetails" rows="3"
@@ -320,8 +536,6 @@
                                 </div>
                             </div>
                         </div>
-
-
                     </div>
                 </form>
 
@@ -349,12 +563,11 @@ background: white; padding: 20px; box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2); bo
     </div>
     </div>
 
-    <!-- Bootstrap JS Bundle -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="assets/js/server.js"></script>
-    <script src="assets/js/generalfunction.js"></script>
-    <script src="assets/js/header.js"></script>
+    <!-- <script src="assets/js/generalfunction.js"></script> -->
+    <script src="assets/js/navbar.js"></script>
     <script src="assets/js/footer.js"></script>
+    <script src="assets/js/AccessRules.js"></script>
     <script src="assets/js/scripts.js"></script>
     <script src="assets/js/dropdownlist.js"></script>
     <script src="assets/js/taxDescription.js"></script>
@@ -362,7 +575,7 @@ background: white; padding: 20px; box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2); bo
     <script src="assets/js/logout.js"></script>
     <!-- <script src="assets/js/routemaster.js"></script> -->
     <script src="assets/js/International_Booking.js"></script>
-    <script src="assets/js/work.js"></script>
+    <!-- <script src="assets/js/work.js"></script> -->
 </body>
 
 </html>

@@ -1,342 +1,24 @@
-/* General Reset */
-* {
+body,
+html {
+    height: 100%;
     margin: 0;
-    padding: 0;
-    box-sizing: border-box;
 }
 
-body {
-    font-family: Arial, sans-serif;
-    background-color: #46e9fc;
+#root {
     display: flex;
     flex-direction: column;
     min-height: 100vh;
-    padding-top: 75px;
-    /* Adjust for fixed header */
 }
 
-main {
-    flex-grow: 1;
-}
+/* main {
+    flex: 1;
+} */
 
-h1 {
-    text-align: center;
-    color: #333;
-}
-
-/* --- Company Registration Header --- */
-.company-header {
-    display: flex;
-    justify-content: space-between;
-    /* Align company ID left, logo right */
-    align-items: center;
-    /* Vertically center items */
-    margin: 20px 0;
-    /* Spacing */
-}
-
-.company-header h2 {
-    margin: 0;
-    font-size: 24px;
-    color: #333;
-}
-
-.company-logo {
-    height: 50px;
-    /* Adjust logo size */
-    margin-left: 20px;
-    /* Space between text and logo */
-}
-
-/* --- Menu Bar --- */
-.menu-bar {
-    background: #333;
-    color: white;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px 20px;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    z-index: 1000;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-}
-
-/* Logo Container */
-.logo-container {
-    display: flex;
-    align-items: center;
-    padding: 5px 10px;
-    background: whitesmoke;
-    border-radius: 1em;
-}
-
-.logo {
-    max-width: 50px;
-    margin-right: 5px;
-}
-
-.logo-container h2 {
-    font-family: 'Montserrat', sans-serif;
-    font-weight: bold;
-    color: black;
-    margin: 0;
-}
-
-.logo-container span {
-    font-family: 'Open Sans', sans-serif;
-    font-size: 0.8em;
-    color: blue;
-    margin-top: 3px;
-}
-
-/* Menu Items */
-.menu-items {
-    display: flex;
-    list-style: none;
-}
-
-.menu-items li {
-    position: relative;
-    margin-right: 20px;
-}
-
-.menu-items a,
-.dropdown a {
-    color: white;
-    text-decoration: none;
-    padding: 10px;
-    display: block;
-}
-
-.menu-items li:hover .dropdown {
-    display: block;
-}
-
-.dropdown {
-    display: none;
-    position: absolute;
-    background: #444;
-    min-width: 150px;
-    z-index: 1;
-}
-
-.dropdown a:hover {
-    background: #c33535;
-}
-
-/* User Info */
-.user-info {
-    display: flex;
-    align-items: center;
-}
-
-.user-id {
-    color: white;
-    padding-right: 10px;
-}
-
-/* Logout Button */
-.logout-btn {
-    background: #f44336;
-    color: white;
-    border: none;
-    padding: 5px 10px;
-    cursor: pointer;
-    border-radius: 5px;
-    transition: background 0.3s;
-}
-
-.logout-btn:hover {
-    background: #d32f2f;
-}
-
-/* --- Mobile Menu --- */
-.hamburger {
-    display: none;
-    flex-direction: column;
-    cursor: pointer;
-}
-
-.hamburger span {
-    width: 25px;
-    height: 3px;
-    background: white;
-    margin: 3px 0;
-}
-
-/* --- Responsive Menu --- */
-@media (max-width: 768px) {
-    .menu-bar {
-        flex-wrap: wrap;
-    }
-
-    .menu-items,
-    .user-info {
-        display: none;
-        width: 100%;
-    }
-
-    .hamburger {
-        display: flex;
-    }
-
-    .menu-items.active,
-    .user-info.active {
-        display: flex;
-        flex-direction: column;
-        background: #333;
-    }
-
-    .dropdown {
-        position: static;
-        background: #555;
-    }
-
-    .user-info.active {
-        padding: 10px;
-        border-top: 1px solid #555;
-    }
-}
-
-/* --- Buttons --- */
-button {
-    background: #4CAF50;
-    border: none;
-    color: white;
-    padding: 8px 12px;
-    font-size: 16px;
-    cursor: pointer;
-    border-radius: 5px;
-    transition: background 0.3s, transform 0.1s;
-}
-
-button:disabled {
-    background: #c0c0c0;
-    color: #7d7d7d;
-    border: 1px solid #a0a0a0;
-    cursor: not-allowed;
-}
-
-button:active {
-    background: #3e8e41;
-    transform: translateY(2px);
-}
-
-/* --- Forms --- */
-form {
-    max-width: 1000px;
-    margin: 10px auto;
-    padding: 15px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    background: #f9f9f9;
-}
-
-label {
-    font-size: 14px;
-    font-weight: bold;
-    color: #333;
-    margin-bottom: 5px;
-    display: block;
-}
-
-input,
-select,
-textarea {
-    width: 100%;
-    padding: 10px;
-    font-size: 14px;
-    height: 40px;
-    border-radius: 5px;
-    border: 1px solid #02b53e;
-}
-
-textarea {
-    resize: vertical;
-}
-
-/* --- Tables --- */
-table {
-    border-collapse: collapse;
-    width: 100%;
-    font-size: 14px;
-}
-
-th,
-td {
-    padding: 8px;
-    text-align: left;
-    border: 1px solid black;
-}
-
-th {
-    background: #c33535;
-    color: white;
-}
-
-/* --- Footer --- */
 footer {
-    background: #333;
-    color: #fff;
-    padding: 10px;
-    text-align: center;
+    background-color: #212529;
+    color: white;
+    width: 100%;
     margin-top: auto;
-}
-
-.footer-container {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    padding: 0 20px;
-}
-
-.footer-links {
-    list-style: none;
-    display: flex;
-    gap: 15px;
-}
-
-.footer-links a {
-    color: #fff;
-    text-decoration: none;
-    font-size: 14px;
-}
-
-.footer-links a:hover {
-    text-decoration: underline;
-}
-
-.social-icons {
-    display: flex;
-    gap: 15px;
-}
-
-.social-icons a img {
-    width: 24px;
-    height: 24px;
-}
-
-/* --- Responsive Footer --- */
-@media (max-width: 768px) {
-    .footer-container {
-        flex-direction: column;
-    }
-}
-
-/* Remove number input spinners */
-input[type="number"] {
-    /* -moz-appearance: textfield; */
-    text-align: right;
-}
-
-input[type="number"]::-webkit-outer-spin-button,
-input[type="number"]::-webkit-inner-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
 }
 
 /* Scrollable Tables */
@@ -349,4 +31,38 @@ input[type="number"]::-webkit-inner-spin-button {
 .scrollable-table table {
     width: 100%;
     min-width: 600px;
+}
+
+/* --- Tables --- */
+table {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: 14px;
+}
+
+th,
+td {
+    padding: 8px;
+    text-align: center;
+    border: 1px solid black;
+}
+
+th {
+    background: #c33535;
+    color: white;
+}
+
+/* Logout Button */
+.logout-btn {
+    background: #534e4d;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: background 0.3s;
+}
+
+.logout-btn:hover {
+    background: #d32f2f;
 }

@@ -116,12 +116,13 @@ $("#vendorName").on("input", function () {
     }
 });
 
-// Populate form fields with data
 function populateFormFields(data, type) {
     const prefix = type === "party" ? "party" : "vendor";
 
+    console.log(`Populating form for ${type}:`, data); // Debugging
+
     $(`#${prefix}Type`).val(data.partyType);
-    $("#partyCode").val(data.partyCode);
+    $("#partyCode").val(data.partyCode); // Ensure this is properly set
     $("#partyCurrentStatus").val(data.currentStatus);
     $("#partyDeActiveDate").val(data.deActiveDate);
     $("#partyAddress").val(data.address);
@@ -136,6 +137,7 @@ function populateFormFields(data, type) {
     $("#partyEmailID").val(data.emailID);
     $("#defaulttax").val(data.defaultTax);
 }
+
 
 // Function to get party code based on user input
 function getPartyCodeFromInput(inputElementId, datalistId) {

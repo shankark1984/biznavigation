@@ -26,6 +26,7 @@ async function checkAccess(userLoginID, formID) {
         perDelete = data.Delete;
         perUpdate = data.Update;
 
+
         // If at least Read permission is available, return true, else false
         if (perRead) {
             return true;
@@ -46,8 +47,8 @@ document.addEventListener('DOMContentLoaded', function () {
         item.addEventListener('click', async function (e) {
             e.preventDefault(); // Stop default navigation immediately
 
-            let userLoginID = localStorage.getItem('UserLoginID'); // Fetch user ID from session/local storage
-            let formID = this.getAttribute('data-form-id'); // Get FormID from menu item
+            // let userLoginID = localStorage.getItem('UserLoginID'); // Fetch user ID from session/local storage
+            formID = this.getAttribute('data-form-id'); // Get FormID from menu item
             let targetURL = this.getAttribute('href'); // Page URL
 
             console.log('Checking access for UserLoginID:', userLoginID, 'FormID:', formID);
@@ -59,6 +60,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             let hasAccess = await checkAccess(userLoginID, formID);
 
+
             if (hasAccess) {
                 console.log('Access granted, navigating to:', targetURL);
                 window.location.href = targetURL; // Redirect only if access is granted
@@ -68,3 +70,4 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 });
+

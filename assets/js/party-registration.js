@@ -50,8 +50,6 @@ function convertDateToNumberAndSum(date) {
     const sum = digits.reduce((total, digit) => total + parseInt(digit, 10), 0);
     return sum;
 }
-
-
 // Save or update form data
 saveButton.addEventListener('click', async function (event) {
     event.preventDefault();

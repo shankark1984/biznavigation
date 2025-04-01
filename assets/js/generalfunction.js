@@ -19,29 +19,6 @@ document.querySelectorAll('input[type="number"]').forEach(function (input) {
     });
 });
 
-// Enable all form inputs
-function enableForm() {
-    const inputs = document.querySelectorAll('#userForm input, #userForm select, #userForm textarea');
-    inputs.forEach(input => input.disabled = false);
-}
-// Disable all form inputs
-function disableForm() {
-    const inputs = document.querySelectorAll('#userForm input, #userForm select, #userForm textarea');
-    inputs.forEach(input => input.disabled = true);
-}
-// Clear all input fields and select elements
-function clearForm() {
-    const inputs = document.querySelectorAll('#userForm input, #userForm select, #userForm textarea');
-    inputs.forEach(input => {
-        input.value = '';  // Reset the value
-        if (input.type === 'checkbox') {
-            input.checked = false;  // Uncheck if it's a checkbox
-        }
-        if (input.tagName === 'SELECT') {
-            input.selectedIndex = 0;  // Reset the select to the first option
-        }
-    });
-}
 
 async function loadcompanyShortCode() {
     try {
@@ -244,6 +221,7 @@ function initializeValidation() {
     attachValidation('partyName', 'partySuggestions');
     attachValidation('transactionType', 'transactionTypeSuggestions');
     attachValidation('transitTypeInternational', 'transitTypeInternationalSuggestions');
+    attachValidation('movementType', 'movementTypeSuggestions');
     attachValidation('modeType', 'modeTypeSuggestions');
     attachValidation('shippingType', 'shippingTypeSuggestions');
     attachValidation('carrierName', 'cargoCarrierSuggestions');
@@ -352,6 +330,8 @@ function initialize() {
     addInputEventListener('clearanceMode', (query) => loadDropdownData(query, 'ClearanceMode', 'clearanceModeSuggestions'), 'clearanceModeSuggestions');
     addInputEventListener('packingType', (query) => loadDropdownData(query, 'PackingType', 'packingTypeSuggestions'), 'packingTypeSuggestions');
     addInputEventListener('uOMType', (query) => loadDropdownData(query, 'UOMType', 'uOMTypeSuggestions'), 'uOMTypeSuggestions');
+    // addInputEventListener('movementType', (query) => loadDropdownData(query, 'movementType', 'movementTypeSuggestions'), 'movementTypeSuggestions');
+
 
 }
 

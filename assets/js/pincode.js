@@ -4,6 +4,9 @@ document.addEventListener('DOMContentLoaded', function () {
     setupPincodeListener('pinCode', 'city');
     setupPincodeListener('billingPinCode', 'billingCity', 'billingState', 'billingCountry');
     setupPincodeListener('branchPinCode', 'branchCity', 'branchState', 'branchCountry');
+    // setupBankListener('branchIFSCCode', 'branchBankName', 'branchAcBankName', 'branchMICRCode', 'branchBankAddress');
+});
+$(document).on('input', '#branchIFSCCode', function () {
     setupBankListener('branchIFSCCode', 'branchBankName', 'branchAcBankName', 'branchMICRCode', 'branchBankAddress');
 });
 
@@ -139,3 +142,44 @@ function resetError(inputField) {
         errorElement.remove();
     }
 }
+
+
+//Get City Details 
+function fetchCities(inputId, datalistId) {
+    const query = document.getElementById(inputId).value.trim();
+    const datalistElement = document.getElementById(datalistId);
+
+    if (query.length < 2) {
+        datalistElement.innerHTML = '';
+        return;
+    }
+
+    supabaseClient
+        .from('CityDetails')
+        .select('CityName')
+        .ilike('CityName', `${query}%`)
+        .order('CityName', { ascending: true })
+        .limit(10)
+        .then(({ data, error }) => {
+            if (error) {
+                console.error('Error fetching cities:', error);
+                return;
+            }
+
+            datalistElement.innerHTML = '';
+
+            data.forEach(city => {
+                const option = document.createElement('option');
+                option.value = city.CityName;
+                datalistElement.appendChild(option);
+            });
+        });
+}
+
+document.getElementById('originList').addEventListener('input', function () {
+    fetchCities('originList', 'originListDatalist');
+});
+
+document.getElementById('destinationList').addEventListener('input', function () {
+    fetchCities('destinationList', 'destinationListDatalist');
+});

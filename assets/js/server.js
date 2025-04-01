@@ -55,8 +55,15 @@ let rowIDEdit = null;
 let branchCode = null;
 let bankRowIDEdit = null;
 // Global variables for permissions
-let perRead = false
-let perWrite = false
-let perDelete = false
+let formName = '';
+let formID = null;
+let perRead = false;
+let perWrite = false;
+let perDelete = false;
 let perUpdate = false;
-
+//Buttons 
+const newButton = document.getElementById('newButton');
+// const modifyButton = document.getElementById('modifyButton');
+const deleteButton = document.getElementById('deleteButton');
+const reportButton = document.getElementById('reportButton');
+const saveButton = document.getElementById('saveButton');
