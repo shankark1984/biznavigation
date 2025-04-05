@@ -23,3 +23,12 @@ function clearForm() {
         }
     });
 }
+
+function formatCurrency(input) {
+    let value = parseFloat(input.value).toFixed(2);
+    if (!isNaN(value)) {
+        input.value = value;
+    } else {
+        input.value = '0.00';
+    }
+}

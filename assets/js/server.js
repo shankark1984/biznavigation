@@ -67,3 +67,8 @@ const newButton = document.getElementById('newButton');
 const deleteButton = document.getElementById('deleteButton');
 const reportButton = document.getElementById('reportButton');
 const saveButton = document.getElementById('saveButton');
+
+const saveBtnText = document.getElementById('saveButton').textContent.trim().toLowerCase();
+const newBtnText = document.getElementById('newButton').textContent.trim().toLowerCase();
+const deleteBtnText = document.getElementById('deleteButton').textContent.trim().toLowerCase();
+const reportBtnText = document.getElementById('reportButton').textContent.trim().toLowerCase();

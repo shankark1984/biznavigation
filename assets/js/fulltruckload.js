@@ -3,7 +3,7 @@ document.getElementById('modifyButton').addEventListener('click', function () {
     document.getElementById('saveButton').disabled = false;
     document.getElementById('modifyButton').disabled = true;
     document.getElementById('reportButton').disabled = true;
-    document.getElementById('saveButton').textContent = 'Update';
+    saveButton.innerHTML = '<i class="bi bi-save"></i> Update';
     document.getElementById('addButton').disabled = false;
     document.getElementById('VendoraddButton').disabled = false;
 });
@@ -67,7 +67,7 @@ document.getElementById('saveButton').addEventListener('click', async function (
     }
 
     let lrNumber;
-    if (document.getElementById('saveButton').textContent === 'Save') {
+    if (saveBtnText === 'save') {
         lrNumber = await generateNewLRNumber();
     } else {
         lrNumber = document.getElementById('lrnumber').value;
@@ -110,7 +110,7 @@ document.getElementById('saveButton').addEventListener('click', async function (
         created_at: localtimeStamp,
     };
 
-    const action = document.getElementById('saveButton').textContent === 'Save' ? 'add' : 'update';
+    const action = document.getElementById('saveButton').textContent.trim().toLowerCase() === 'save' ? 'add' : 'update';
 
     let response;
     if (action === 'add') {
@@ -131,7 +131,10 @@ document.getElementById('saveButton').addEventListener('click', async function (
     }
 
     disableForm();
-    document.getElementById('saveButton').textContent = 'Update';
+    const saveButton = document.getElementById('saveButton');
+    saveButton.innerHTML = '<i class="bi bi-save"></i> Update';
+
+    // document.getElementById('saveButton').textContent = 'Update';
     document.getElementById('modifyButton').disabled = false;
     document.getElementById('reportButton').disabled = false;
 
@@ -156,6 +159,19 @@ document.getElementById('vendorName').addEventListener('input', async function (
     const inputValue = e.target.value.trim().toLowerCase();
     console.log('Vendor Name ' + inputValue);
     await loadPartyDetails(inputValue); // Pass the input value to the function
+
+    const input = this.value;
+    const options = document.querySelectorAll('#vendorSuggestions option');
+
+    // Find matching option
+    for (let option of options) {
+        if (option.value === input) {
+            const vendorCode = option.getAttribute('data-party-code');
+            document.getElementById('vendorCode').value = vendorCode;
+            console.log('vendorCode : ' + vendorCode);
+            return;
+        }
+    }
 });
 // Clear the suggestion box when input field loses focus
 document.getElementById('vendorName').addEventListener('blur', function () {
@@ -224,7 +240,7 @@ async function loadMovementDetails(query = '') {
         descriptionOfGoods: row.description_of_goods,
         status: row.status,
         completionDate: row.completion_date,
-        waybillno:row.waybillno,
+        waybillno: row.waybillno,
     }));
 
     populateLRNumberSuggestions();
@@ -295,7 +311,7 @@ $("#lrnumber").on("input", async function () {
 
 
         // Populate other fields as necessary
-        saveButton.textContent = 'Update';
+        saveButton.innerHTML = '<i class="bi bi-save"></i> Update';
         disableForm();
 
         if (userType == 1 || userType == 2) {
@@ -502,7 +518,7 @@ async function fetchSupabaseData(lrNumber) {
             .from('booking_charges') // Table name
             .select('*') // Fetch all fields
             .eq('account_type', 'Sale')
-            .eq('lr_number',lrNumber);// Fetch rows filtered by company ID
+            .eq('lr_number', lrNumber);// Fetch rows filtered by company ID
 
         if (error) {
             console.error("Error fetching data:", error);
@@ -546,7 +562,7 @@ document.getElementById('addButton').addEventListener('click', async function (e
     document.getElementById('addButton').disabled = true;
 
     let lrNumber = document.getElementById('lrnumber').value || tempFormID;
-    let taxDesc = document.getElementById('defaulttax').value || 'CGST 0% SGST 0% IGST 0%';
+    let taxDesc = document.getElementById('partyDefaultTax').value || 'CGST 0% SGST 0% IGST 0%';
     let chargesType = document.getElementById('chargesType').value;
 
     // Check for duplicate entry in Supabase
@@ -650,7 +666,7 @@ async function vendorpopulateTable(lrNumber) {
     const tableBody = document.querySelector('#vendorchargesDetailsTable tbody');
     const tableFoot = document.querySelector('#vendorchargesDetailsTable tfoot');
 
-    console.log('Vendor Fright Details '+lrNumber);
+    console.log('Vendor Fright Details ' + lrNumber);
 
     // Clear existing table rows
     tableBody.innerHTML = '';
@@ -764,7 +780,7 @@ async function vendorfetchSupabaseData(lrNumber) {
             .from('booking_charges') // Table name
             .select('*')// Fetch all fields
             .eq('account_type', 'Buy')
-            .eq('lr_number',lrNumber);// Fetch rows filtered by company ID
+            .eq('lr_number', lrNumber);// Fetch rows filtered by company ID
 
         if (error) {
             console.error("Error fetching data:", error);
@@ -890,3 +906,15 @@ document.getElementById('frightcharges').addEventListener('change', async functi
 document.getElementById('vendorFrightcharges').addEventListener('change', async function (event) {
     document.getElementById('VendoraddButton').disabled = false;
 })
+
+function updateChargeWeight() {
+    const actualWt = parseFloat(document.getElementById('actualwt').value) || 0;
+    const volumetricWt = parseFloat(document.getElementById('volumetricwt').value) || 0;
+
+    const chargeWt = Math.max(actualWt, volumetricWt);
+    document.getElementById('chargewt').value = chargeWt.toFixed(2);
+}
+
+// Attach listeners
+document.getElementById('actualwt').addEventListener('input', updateChargeWeight);
+document.getElementById('volumetricwt').addEventListener('input', updateChargeWeight);

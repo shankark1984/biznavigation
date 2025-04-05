@@ -66,3 +66,12 @@ async function fetchDocketDetails(docketNo) {
 // Event listener for selection
 const awbNoInput = document.getElementById('awbNo');
 awbNoInput.addEventListener('change', () => fetchDocketDetails(awbNoInput.value));
+
+document.getElementById('newButton').addEventListener('click', function () {
+    location.reload();
+    enableForm();
+    document.getElementById('saveButton').disabled = false;
+    document.getElementById('modifyButton').disabled = true;
+    document.getElementById('saveButton').textContent = 'Save';
+    clearForm(); // Assuming there's a clearForm function
+});
