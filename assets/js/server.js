@@ -63,7 +63,7 @@ let perDelete = false;
 let perUpdate = false;
 //Buttons 
 const newButton = document.getElementById('newButton');
-// const modifyButton = document.getElementById('modifyButton');
+const modifyButton = document.getElementById('modifyButton');
 const deleteButton = document.getElementById('deleteButton');
 const reportButton = document.getElementById('reportButton');
 const saveButton = document.getElementById('saveButton');

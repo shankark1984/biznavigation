@@ -61,6 +61,11 @@ async function fetchDocketDetails(docketNo) {
     document.getElementById('volumetricWeight').value = data.VolumeWeight;
     document.getElementById('chargeableWeight').value = data.ChargableWeight;
     document.getElementById('infomation').value = data.Infomation;
+    disableForm();
+    deleteButton.disabled = true;
+    saveButton.disabled = true;
+    modifyButton.disabled = false;
+    reportButton.disabled = false;
 }
 
 // Event listener for selection
@@ -70,8 +75,64 @@ awbNoInput.addEventListener('change', () => fetchDocketDetails(awbNoInput.value)
 document.getElementById('newButton').addEventListener('click', function () {
     location.reload();
     enableForm();
-    document.getElementById('saveButton').disabled = false;
-    document.getElementById('modifyButton').disabled = true;
-    document.getElementById('saveButton').textContent = 'Save';
+    saveButton.disabled = false;
+    modifyButton.disabled = true;
+    saveButton.textContent = 'Save';
     clearForm(); // Assuming there's a clearForm function
 });
+
+
+document.getElementById('modifyButton').addEventListener('click', async function () {
+    enableForm();
+    saveButton.disabled = false;
+    modifyButton.disabled = true;
+    deleteButton.disabled = false;
+    saveButton.innerHTML = '<i class="bi bi-save"></i> Update';
+
+    if (userType === 1 || userType === 2) {
+        const { data, error } = await supabaseClient
+            .from('international_booking')
+            .delete()
+            .eq('DocketNo', awbNoInput); // Replace `docketNo` with your variable
+
+        if (error) {
+            console.error("Error deleting record:", error.message);
+        } else {
+            console.log("Record deleted successfully:", data);
+        }
+    }
+
+});
+
+document.getElementById('deleteButton').addEventListener('click', async function () {
+    const awbNoInput = document.getElementById('awbNo');
+    const docketNo = awbNoInput.value.trim();
+
+    // Reset button states
+    saveButton.disabled = false;
+    modifyButton.disabled = true;
+    deleteButton.disabled = true;
+    reportButton.disabled = true;
+    saveButton.innerHTML = '<i class="bi bi-save"></i> Save';
+
+    console.log('userType:', userType, '| DocketNo:', docketNo);
+
+    if (userType === 1 || userType === 2) {
+        const { data, error } = await supabaseClient
+            .from('international_booking')
+            .delete()
+            .eq('DocketNo', docketNo);
+
+        if (error) {
+            console.error("Error deleting record:", error.message);
+        } else {
+            console.log("Record deleted successfully:", data);
+            // Optional: reload page after deletion
+            // location.reload();
+        }
+    } else {
+        console.warn("You do not have permission to delete this record.");
+    }
+});
+
+
