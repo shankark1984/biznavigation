@@ -99,3 +99,22 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log('Report Button:', reportBtnText);
     }
 });
+
+function disablePullToRefresh() {
+    let touchStartY = 0;
+
+    window.addEventListener('touchstart', function (e) {
+        touchStartY = e.touches[0].clientY;
+    }, { passive: false });
+
+    window.addEventListener('touchmove', function (e) {
+        const currentY = e.touches[0].clientY;
+
+        if (window.scrollY === 0 && currentY > touchStartY) {
+            e.preventDefault();
+        }
+    }, { passive: false });
+}
+
+// Call it when the page loads
+window.addEventListener('load', disablePullToRefresh);
