@@ -16,7 +16,7 @@ console.log(localtimeStamp);
 const empCode = localStorage.getItem('EmpCode');
 const userName = localStorage.getItem('UserName');
 const userLoginID = localStorage.getItem('UserLoginID');
-const userType = localStorage.getItem('UserType');
+const userType = parseInt(localStorage.getItem('UserType'), 10);
 const companyID = localStorage.getItem('CompanyID');
 const workingBranch = localStorage.getItem('WorkingBranch');
 
@@ -62,13 +62,40 @@ let perWrite = false;
 let perDelete = false;
 let perUpdate = false;
 //Buttons 
-const newButton = document.getElementById('newButton');
-const modifyButton = document.getElementById('modifyButton');
-const deleteButton = document.getElementById('deleteButton');
-const reportButton = document.getElementById('reportButton');
-const saveButton = document.getElementById('saveButton');
+// const newButton = document.getElementById('newButton');
+// const modifyButton = document.getElementById('modifyButton');
+// const deleteButton = document.getElementById('deleteButton');
+// const reportButton = document.getElementById('reportButton');
+// const saveButton = document.getElementById('saveButton');
 
-const saveBtnText = document.getElementById('saveButton').textContent.trim().toLowerCase();
-const newBtnText = document.getElementById('newButton').textContent.trim().toLowerCase();
-const deleteBtnText = document.getElementById('deleteButton').textContent.trim().toLowerCase();
-const reportBtnText = document.getElementById('reportButton').textContent.trim().toLowerCase();
+// const saveBtnText = document.getElementById('saveButton').textContent.trim().toLowerCase();
+// const newBtnText = document.getElementById('newButton').textContent.trim().toLowerCase();
+// const deleteBtnText = document.getElementById('deleteButton').textContent.trim().toLowerCase();
+// const reportBtnText = document.getElementById('reportButton').textContent.trim().toLowerCase();
+
+document.addEventListener('DOMContentLoaded', () => {
+    const saveButton = document.getElementById('saveButton');
+    const newButton = document.getElementById('newButton');
+    const deleteButton = document.getElementById('deleteButton');
+    const reportButton = document.getElementById('reportButton');
+
+    if (saveButton) {
+        const saveBtnText = saveButton.textContent.trim().toLowerCase();
+        console.log('Save Button:', saveBtnText);
+    }
+
+    if (newButton) {
+        const newBtnText = newButton.textContent.trim().toLowerCase();
+        console.log('New Button:', newBtnText);
+    }
+
+    if (deleteButton) {
+        const deleteBtnText = deleteButton.textContent.trim().toLowerCase();
+        console.log('Delete Button:', deleteBtnText);
+    }
+
+    if (reportButton) {
+        const reportBtnText = reportButton.textContent.trim().toLowerCase();
+        console.log('Report Button:', reportBtnText);
+    }
+});

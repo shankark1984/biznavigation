@@ -1,23 +1,23 @@
-document.addEventListener('DOMContentLoaded', function () {
-    // Array of button IDs to disable
-    const buttonIds = ['newButton', 'modifyButton', 'deleteButton', 'reportButton', 'saveButton'];
+// document.addEventListener('DOMContentLoaded', function () {
+//     // Array of button IDs to disable
+//     const buttonIds = ['newButton', 'modifyButton', 'deleteButton', 'reportButton', 'saveButton'];
 
-    // Disable each button if it exists
-    buttonIds.forEach(id => {
-        const button = document.getElementById(id);
-        if (button) {
-            button.disabled = true;
-        }
-    });
-});
+//     // Disable each button if it exists
+//     buttonIds.forEach(id => {
+//         const button = document.getElementById(id);
+//         if (button) {
+//             button.disabled = true;
+//         }
+//     });
+// });
 
-document.querySelectorAll('input[type="number"]').forEach(function (input) {
-    input.addEventListener("blur", function () {
-        if (this.value) {
-            this.value = parseFloat(this.value).toFixed(2);
-        }
-    });
-});
+// document.querySelectorAll('input[type="number"]').forEach(function (input) {
+//     input.addEventListener("blur", function () {
+//         if (this.value) {
+//             this.value = parseFloat(this.value).toFixed(2);
+//         }
+//     });
+// });
 
 
 async function loadcompanyShortCode() {
@@ -62,88 +62,6 @@ document.addEventListener('DOMContentLoaded', function () {
     loadcompanyShortCode();
 });
 
-function toProperCase(str) {
-    return str
-        .toLowerCase() // Convert the entire string to lowercase
-        .split(' ') // Split the string into an array of words
-        .map(word => word.charAt(0).toUpperCase() + word.slice(1)) // Capitalize the first letter of each word
-        .join(' '); // Join the words back into a single string
-}
-
-// Function to format date as dd-mm-yyyy
-function formatDate(dateString) {
-    let dateObj = new Date(dateString);  // Convert to Date object
-
-    // Ensure the date is valid
-    if (!isNaN(dateObj.getTime())) {
-        let day = ("0" + dateObj.getDate()).slice(-2);  // Ensure two digits for the day
-        let month = ("0" + (dateObj.getMonth() + 1)).slice(-2);  // Get month (0-indexed, add 1)
-        let year = dateObj.getFullYear();  // Get the year
-
-        return `${day}-${month}-${year}`;  // Return formatted date
-    } else {
-        return '';  // Return empty string if date is invalid
-    }
-}
-
-// Function to generate a unique temporary form ID
-function generateTempFormID() {
-    // Generate a random unique identifier, e.g., using current timestamp and random numbers
-    const timestamp = Date.now();
-    const randomNum = Math.floor(Math.random() * 10000); // 4-digit random number
-
-    return `TEMP-${timestamp}-${randomNum}`;
-}
-
-// Assign TempFormID when the form is opened (or page is loaded)
-window.addEventListener('DOMContentLoaded', function () {
-    const tempFormIDElement = document.getElementById('tempFormID');
-    if (tempFormIDElement) {
-        const tempFormID = generateTempFormID(); // Generate tempFormID
-        tempFormIDElement.value = tempFormID; // Set the hidden input value
-        console.log('TempFormID generated: ' + tempFormID); // Log for debugging
-    } else {
-        console.error('tempFormID element not found.');
-    }
-});
-
-function formatCurrency(input) {
-    let value = parseFloat(input.value).toFixed(2);
-    if (!isNaN(value)) {
-        input.value = value;
-    } else {
-        input.value = '0.00';
-    }
-}
-
-// Function to handle tab switching
-function openTab(evt, tabName) {
-    var i, tabcontent, tablinks;
-    tabcontent = document.getElementsByClassName("tab-content");
-    for (i = 0; i < tabcontent.length; i++) {
-        tabcontent[i].style.display = "none";
-    }
-    tablinks = document.getElementsByClassName("tablinks");
-    for (i = 0; i < tablinks.length; i++) {
-        tablinks[i].classList.remove("active");
-    }
-    document.getElementById(tabName).style.display = "block";
-    evt.currentTarget.classList.add("active");
-}
-
-// Helper function to capitalize first letter of each word
-function capitalize(text) {
-    if (typeof text !== 'string') {
-        console.error('Input must be a string:', text);
-        return ''; // Return an empty string or handle the error as needed
-    }
-
-    return text
-        .toLowerCase()
-        .split(' ')
-        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-        .join(' ');
-}
 
 // Helper function to dynamically load data based on query and type_of_value
 async function loadDropdownData(query, typeOfValue, datalistId) {
@@ -254,6 +172,28 @@ function addInputEventListener(inputId, callback, datalistId) {
     });
 }
 
+
+// Initialize dynamic data loading and event listeners
+function initialize() {
+    // Load data for different fields
+    addInputEventListener('transactionType', (query) => loadDropdownData(query, 'Transactiontype', 'transactionTypeSuggestions'), 'transactionTypeSuggestions');
+    addInputEventListener('transitTypeInternational', (query) => loadDropdownData(query, 'TransitType_i', 'transitTypeInternationalSuggestions'), 'transitTypeInternationalSuggestions');
+    addInputEventListener('modeType', (query) => loadDropdownData(query, 'ModeType', 'modeTypeSuggestions'), 'modeTypeSuggestions');
+    addInputEventListener('shippingType', (query) => loadDropdownData(query, 'Shippingtype', 'shippingTypeSuggestions'), 'shippingTypeSuggestions');
+    addInputEventListener('carrierName', (query) => loadDropdownData(query, 'Cargocarrier', 'cargoCarrierSuggestions'), 'cargoCarrierSuggestions');
+    addInputEventListener('serviceProvider', (query) => serviceProviderDetails(query, 'party_name', 'serviceProviderSuggestions'), 'serviceProviderSuggestions');
+    addInputEventListener('commodity', (query) => loadDropdownData(query, 'Commodity', 'commoditySuggestions'), 'commoditySuggestions');
+    addInputEventListener('clearanceMode', (query) => loadDropdownData(query, 'ClearanceMode', 'clearanceModeSuggestions'), 'clearanceModeSuggestions');
+    addInputEventListener('packingType', (query) => loadDropdownData(query, 'PackingType', 'packingTypeSuggestions'), 'packingTypeSuggestions');
+    addInputEventListener('uOMType', (query) => loadDropdownData(query, 'UOMType', 'uOMTypeSuggestions'), 'uOMTypeSuggestions');
+    // addInputEventListener('movementType', (query) => loadDropdownData(query, 'movementType', 'movementTypeSuggestions'), 'movementTypeSuggestions');
+
+
+}
+
+// Call initialize function when the DOM is fully loaded
+document.addEventListener('DOMContentLoaded', initialize);
+
 // Function to dynamically load Service Provider based on user input
 async function serviceProviderDetails(query, typeOfValue, datalistId) {
     try {
@@ -316,113 +256,3 @@ function partyAddressSuggestions(partyAddressList, datalistId) {
 
     document.getElementById(datalistId).innerHTML = suggestions;
 }
-
-// Initialize dynamic data loading and event listeners
-function initialize() {
-    // Load data for different fields
-    addInputEventListener('transactionType', (query) => loadDropdownData(query, 'Transactiontype', 'transactionTypeSuggestions'), 'transactionTypeSuggestions');
-    addInputEventListener('transitTypeInternational', (query) => loadDropdownData(query, 'TransitType_i', 'transitTypeInternationalSuggestions'), 'transitTypeInternationalSuggestions');
-    addInputEventListener('modeType', (query) => loadDropdownData(query, 'ModeType', 'modeTypeSuggestions'), 'modeTypeSuggestions');
-    addInputEventListener('shippingType', (query) => loadDropdownData(query, 'Shippingtype', 'shippingTypeSuggestions'), 'shippingTypeSuggestions');
-    addInputEventListener('carrierName', (query) => loadDropdownData(query, 'Cargocarrier', 'cargoCarrierSuggestions'), 'cargoCarrierSuggestions');
-    addInputEventListener('serviceProvider', (query) => serviceProviderDetails(query, 'party_name', 'serviceProviderSuggestions'), 'serviceProviderSuggestions');
-    addInputEventListener('commodity', (query) => loadDropdownData(query, 'Commodity', 'commoditySuggestions'), 'commoditySuggestions');
-    addInputEventListener('clearanceMode', (query) => loadDropdownData(query, 'ClearanceMode', 'clearanceModeSuggestions'), 'clearanceModeSuggestions');
-    addInputEventListener('packingType', (query) => loadDropdownData(query, 'PackingType', 'packingTypeSuggestions'), 'packingTypeSuggestions');
-    addInputEventListener('uOMType', (query) => loadDropdownData(query, 'UOMType', 'uOMTypeSuggestions'), 'uOMTypeSuggestions');
-    // addInputEventListener('movementType', (query) => loadDropdownData(query, 'movementType', 'movementTypeSuggestions'), 'movementTypeSuggestions');
-
-
-}
-
-// Call initialize function when the DOM is fully loaded
-document.addEventListener('DOMContentLoaded', initialize);
-
-
-
-async function CountryDetails(query, datalistId, inputId) {
-    try {
-        // Exclude selected country from suggestions
-        const excludedCountry = inputId === 'originCountry' ? selectedDestinationCountry : selectedOriginCountry;
-
-        // Query the "Country_Details" table, filter by "CountryName" using case-insensitive partial matching
-        const { data: countryList, error } = await supabaseClient
-            .from('Country_Details')
-            .select('CountryName, CountryCode') // Assuming CountryCode exists
-            .ilike('CountryName', `%${query}%`); // Case-insensitive partial matching
-
-        if (error) {
-            console.error('Error fetching country details:', error);
-            return;
-        }
-
-        // Filter out the excluded country
-        const filteredCountryList = countryList.filter(country => country.CountryName !== excludedCountry);
-
-        // Populate the datalist with the filtered countries
-        const suggestions = filteredCountryList
-            .map(country => `<option value="${country.CountryName}" data-code="${country.CountryCode}"></option>`)
-            .join('');
-
-        const datalist = document.getElementById(datalistId);
-        if (datalist) {
-            datalist.innerHTML = suggestions; // Update the datalist
-        } else {
-            console.error('Datalist element not found:', datalistId);
-        }
-    } catch (error) {
-        console.error('Error loading country details:', error);
-    }
-}
-
-// Update selected country on change event
-// document.getElementById('originCountry').addEventListener('change', (event) => {
-//     selectedOriginCountry = event.target.value;
-// });
-
-// document.getElementById('destinationCountry').addEventListener('change', (event) => {
-//     selectedDestinationCountry = event.target.value;
-// });
-
-document.addEventListener('DOMContentLoaded', function () {
-    const originCountry = document.getElementById('originCountry');
-    const destinationCountry = document.getElementById('destinationCountry');
-
-    if (originCountry) {
-        originCountry.addEventListener('change', (event) => {
-            selectedOriginCountry = event.target.value;
-        });
-    } else {
-        console.warn("Element with ID 'originCountry' not found.");
-    }
-
-    if (destinationCountry) {
-        destinationCountry.addEventListener('change', (event) => {
-            selectedDestinationCountry = event.target.value;
-        });
-    } else {
-        console.warn("Element with ID 'destinationCountry' not found.");
-    }
-});
-
-
-// document.getElementById('website').addEventListener('blur', function () {
-//     let url = this.value.trim();
-//     if (url && !url.startsWith('http://') && !url.startsWith('https://')) {
-//         this.value = 'https://' + url; // Default to HTTPS for security
-//     }
-// });
-
-document.addEventListener('DOMContentLoaded', function () {
-    const websiteInput = document.getElementById('website');
-    if (websiteInput) {
-        websiteInput.addEventListener('blur', function () {
-            let url = this.value.trim();
-            if (url && !url.startsWith('http://') && !url.startsWith('https://')) {
-                this.value = 'https://' + url; // Default to HTTPS for security
-            }
-        });
-    } else {
-        console.warn("Element with ID 'website' not found.");
-    }
-});

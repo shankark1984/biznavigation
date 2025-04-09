@@ -183,3 +183,6 @@ document.getElementById('originList').addEventListener('input', function () {
 document.getElementById('destinationList').addEventListener('input', function () {
     fetchCities('destinationList', 'destinationListDatalist');
 });
+
+
+

@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', function () {
             userInfo.classList.toggle('active');
         });
     } else {
-        console.error('One or more menu elements not found');
+        console.warn('One or more required menu elements were not found. Skipping hamburger toggle setup.');
     }
 
     function loadUserInfo() {
@@ -40,9 +40,6 @@ document.addEventListener('DOMContentLoaded', function () {
     // Load user info when the page loads
     loadUserInfo();
 });
-
-
-
 
 
 // Load Party Details from Supabase
