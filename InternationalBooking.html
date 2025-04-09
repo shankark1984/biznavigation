@@ -272,8 +272,7 @@
                                 <label for="originCountry" class="col-4 col-form-label">Origin</label>
                                 <div class="col-8">
                                     <input list="originCountrySuggestions" class="form-control" id="originCountry"
-                                        name="originCountry" required placeholder="Choose..."
-                                        autocomplete="new-password"
+                                        name="originCountry" required placeholder="Choose..." autocomplete="off"
                                         oninput="CountryDetails(this.value, 'originCountrySuggestions', 'originCountry')">
                                     <datalist id="originCountrySuggestions"></datalist>
                                 </div>
@@ -286,7 +285,7 @@
                                 <div class="col-8">
                                     <input list="destinationCountrySuggestions" class="form-control"
                                         id="destinationCountry" name="destinationCountry" required
-                                        placeholder="Choose..." autocomplete="new-password"
+                                        placeholder="Choose..." autocomplete="off"
                                         oninput="CountryDetails(this.value, 'destinationCountrySuggestions', 'destinationCountry')">
                                     <datalist id="destinationCountrySuggestions"></datalist>
                                 </div>
