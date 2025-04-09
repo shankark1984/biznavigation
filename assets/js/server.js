@@ -99,7 +99,7 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log('Report Button:', reportBtnText);
     }
 });
-
+// Disable all page drag / pull to refresh
 function disablePullToRefresh() {
     let touchStartY = 0;
 
