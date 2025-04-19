@@ -55,6 +55,15 @@
                         <button type="button" class="btn btn-success btn-sm" id="saveButton">
                             <i class="bi bi-save"></i> Save
                         </button>
+                        <!-- Row 2 -->
+                        <div class="col-md-4 col-sm-6" hidden>
+                            <div class="row align-items-center">
+                                <label for="status" class="col-4 col-form-label">Status</label>
+                                <div class="col-8">
+                                    <input type="text" class="form-control bg-light" id="status" value="New" readonly>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Form Grid -->
@@ -90,20 +99,11 @@
                                 </div>
                             </div>
                         </div>
-                        <!-- Row 2 -->
                         <div class="col-md-4 col-sm-6">
                             <div class="row align-items-center">
-                                <label for="status" class="col-4 col-form-label">Status</label>
+                                <label for="movementTypeI" class="col-4 col-form-label">Movement Type</label>
                                 <div class="col-8">
-                                    <input type="text" class="form-control bg-light" id="status" value="New" readonly>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-4 col-sm-6">
-                            <div class="row align-items-center">
-                                <label for="movementType" class="col-4 col-form-label">Movement Type</label>
-                                <div class="col-8">
-                                    <select class="form-control" id="transactionType" name="transactionType" required>
+                                    <select class="form-control" id="movementTypeI" name="movementTypeI" required>
                                         <option value="">Choose...</option>
                                         <option value="Export">Export</option>
                                         <option value="Import">Import</option>
@@ -272,7 +272,8 @@
                                 <label for="originCountry" class="col-4 col-form-label">Origin</label>
                                 <div class="col-8">
                                     <input list="originCountrySuggestions" class="form-control" id="originCountry"
-                                        name="originCountry" required placeholder="Choose..." autocomplete="off"
+                                        name="originCountry" required placeholder="Choose..."
+                                        autocomplete="new-password"
                                         oninput="CountryDetails(this.value, 'originCountrySuggestions', 'originCountry')">
                                     <datalist id="originCountrySuggestions"></datalist>
                                 </div>
@@ -285,7 +286,7 @@
                                 <div class="col-8">
                                     <input list="destinationCountrySuggestions" class="form-control"
                                         id="destinationCountry" name="destinationCountry" required
-                                        placeholder="Choose..." autocomplete="off"
+                                        placeholder="Choose..." autocomplete="new-password"
                                         oninput="CountryDetails(this.value, 'destinationCountrySuggestions', 'destinationCountry')">
                                     <datalist id="destinationCountrySuggestions"></datalist>
                                 </div>
@@ -299,8 +300,7 @@
                                 <label for="packingType" class="col-4 col-form-label">Packing Type</label>
                                 <div class="col-8">
                                     <input list="packingTypeSuggestions" class="form-control" id="packingType"
-                                        name="packingType" required placeholder="Enter Packing Type" autocomplete="off"
-                                        oninput="packingDetails(this.value)">
+                                        name="packingType" required placeholder="Enter Packing Type" autocomplete="off">
                                     <datalist id="packingTypeSuggestions"></datalist>
                                 </div>
                             </div>
@@ -311,8 +311,7 @@
                                 <label for="uOMType" class="col-4 col-form-label">UOM</label>
                                 <div class="col-8">
                                     <input list="uOMTypeSuggestions" class="form-control" id="uOMType" name="uOMType"
-                                        required placeholder="Select UOM" autocomplete="off"
-                                        oninput="uOMTypeDetails(this.value)">
+                                        required placeholder="Select UOM" autocomplete="off">
                                     <datalist id="uOMTypeSuggestions"></datalist>
                                 </div>
                             </div>

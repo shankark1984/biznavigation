@@ -257,6 +257,7 @@ document.getElementById('consigneeName').addEventListener('focus', function () {
 });
 
 
+
 async function saveOrUpdateInternationalBooking() {
     // Get values from HTML fields
     const formData = {
@@ -264,7 +265,7 @@ async function saveOrUpdateInternationalBooking() {
         BookedDate: document.getElementById("bookedDate").value,
         CustomerCode: document.getElementById("partyCode").value,
         CustomerName: document.getElementById("partyName").value,
-        MovementType: document.getElementById("MovementType").value,
+        MovementType: document.getElementById("MovementTypeI").value,
         TransitType: document.getElementById("transitTypeI").value,
         ModeType: document.getElementById("modeTypeI").value,
         Status: document.getElementById("status").value,

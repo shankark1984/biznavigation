@@ -88,10 +88,11 @@ async function loadDropdownData(query, typeOfValue, datalistId) {
     }
 }
 
-// Input validation
 function validateInput(inputId, datalistId) {
     const input = document.getElementById(inputId);
     const datalist = document.getElementById(datalistId);
+    if (!input || !datalist) return;
+
     const enteredValue = input.value.trim();
     const options = Array.from(datalist.options).map(opt => opt.value);
     const errorElementId = `${inputId}-error`;
@@ -114,8 +115,6 @@ function validateInput(inputId, datalistId) {
         input.setCustomValidity('');
         if (errorMessageElement) errorMessageElement.remove();
     }
-
-    input.reportValidity();
 }
 
 // Attaches blur validation
