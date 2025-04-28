@@ -4,63 +4,88 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <title>BizNavigation - Login</title>
-    <!-- <link rel="stylesheet" href="assets/css/login.css"> -->
-    <link rel="manifest" href="/manifest.json">
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Supabase JS -->
     <script src="https://unpkg.com/@supabase/supabase-js"></script>
+
+    <!-- Web Manifest -->
+    <link rel="manifest" href="/manifest.json" />
+
+    <style>
+        body {
+            background: linear-gradient(to right, #4facfe 0%, #00f2fe 100%);
+            min-height: 100vh;
+        }
+
+        .login-card {
+            background: linear-gradient(120deg, #d4fc79 0%, #96e6a1 100%);
+            border-radius: 1rem;
+            padding: 2rem;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            animation: fadeInUp 1s ease;
+        }
+
+        @keyframes fadeInUp {
+            0% {
+                opacity: 0;
+                transform: translateY(50px);
+            }
+
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
 </head>
 
-<body class="d-flex justify-content-center align-items-center vh-100"
-    style="background-image: linear-gradient(to right, #4facfe 0%, #00f2fe 100%);">
+<body class="d-flex justify-content-center align-items-center">
 
-    <!-- Login Card Section -->
-    <div class="card p-4 border-0 shadow-lg"
-        style="width: 100%; max-width: 400px; border-radius: 16px; background-image: linear-gradient(120deg, #d4fc79 0%, #96e6a1 100%);">
-        <div class="text-center">
-            <img src="assets/img/applogo.png" alt="Logo" class="img-fluid" style="max-width: 100px;">
-            <h1 class="fw-bold mt-3" style="color: #5a5a5a;">BizNavigation</h1>
-            <p class="text-secondary">Take your business to the next level</p>
+    <div class="card login-card w-100" style="max-width: 400px;">
+        <div class="text-center mb-4">
+            <img src="assets/img/applogo.png" alt="BizNavigation Logo" class="img-fluid" style="max-width: 100px;">
+            <h1 class="fw-bold mt-3 text-secondary">BizNavigation</h1>
+            <p class="text-muted">Take your business to the next level</p>
         </div>
 
-        <!-- Form Section -->
-        <form>
+        <form id="loginForm">
             <div class="mb-3">
                 <label for="userName" class="form-label">Username</label>
-                <input type="text" class="form-control" id="userName" name="userName" placeholder="Enter your username"
-                    required autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false">
+                <input type="text" class="form-control" id="userName" placeholder="Enter your username"
+                    autocomplete="off" required>
             </div>
+
             <div class="mb-3">
                 <label for="password" class="form-label">Password</label>
-                <input type="password" class="form-control" id="password" name="password" required autocomplete="off"
-                    placeholder="Enter your password" onkeydown="checkEnterKey(event)">
+                <input type="password" class="form-control" id="password" placeholder="Enter your password"
+                    autocomplete="off" required onkeydown="handleEnterKey(event)">
             </div>
-            <button type="button" class="btn btn-primary w-100" onclick="login()">Login</button>
+
+            <button id="loginButton" type="button" class="btn btn-primary w-100" onclick="login()">
+                <span id="loginButtonText">Login</span>
+                <div id="loginSpinner" class="spinner-border spinner-border-sm ms-2 d-none" role="status"></div>
+            </button>
+
             <div class="text-center mt-3">
                 <a href="#" class="text-decoration-none" onclick="resetPassword()">Forgot Password?</a>
             </div>
         </form>
 
-        <!-- Error Message -->
-        <p id="errorMessage" class="text-danger text-center mt-3" style="display: none;">Invalid username or password.
-            Please try again.</p>
+        <p id="errorMessage" class="text-danger text-center mt-3 d-none">
+            Invalid username or password. Please try again.
+        </p>
     </div>
 
-    <script>
-        function checkEnterKey(event) {
-            if (event.key === 'Enter') {
-                login(); // Call login when Enter is pressed
-            }
-        }
-    </script>
+    <!-- Bootstrap Bundle JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Your external login script -->
     <script src="assets/js/server.js"></script>
     <script src="assets/js/login.js"></script>
-
-
-
-
-
 
 </body>
 

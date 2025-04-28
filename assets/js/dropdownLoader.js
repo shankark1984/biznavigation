@@ -44,9 +44,8 @@ document.addEventListener('DOMContentLoaded', () => {
     loadDropdownOptions('Cargocarrier', 'carrierName');
     loadDropdownOptions('ShippingType', 'shippingType');
     loadDropdownOptions('UOMType', 'uomType');
+    // loadDropdownOptions('ChargesType', 'chargesType');
 });
-
-
 
 // Centralized configuration for input and datalist IDs with their corresponding value types
 const fieldMap = {
@@ -59,8 +58,8 @@ const fieldMap = {
     serviceProvider: 'party_name', // special case using serviceProviderDetails
     commodity: 'Commodity',
     clearanceMode: 'ClearanceMode',
-    originCountry: 'Country',
-    destinationCountry: 'Country',
+    // originCountry: 'Country',
+    // destinationCountry: 'Country',
     packingType: 'PackingType',
     uOMType: 'UOMType',
     partyName: 'PartyName' // example: if you're using it for validation
@@ -82,11 +81,19 @@ async function loadDropdownData(query, typeOfValue, datalistId) {
         }
 
         const suggestions = data.map(item => `<option value="${item.description}"></option>`).join('');
-        document.getElementById(datalistId).innerHTML = suggestions;
+
+        const datalist = document.getElementById(datalistId);
+        if (!datalist) {
+            // console.warn(`Datalist element with id "${datalistId}" not found.`);
+            return;
+        }
+
+        datalist.innerHTML = suggestions;
     } catch (err) {
         console.error(`Error loading ${typeOfValue} details:`, err);
     }
 }
+
 
 function validateInput(inputId, datalistId) {
     const input = document.getElementById(inputId);
@@ -108,7 +115,7 @@ function validateInput(inputId, datalistId) {
             input.parentNode.appendChild(errorMessageElement);
         }
         errorMessageElement.textContent = 'No valid entry';
-        input.setCustomValidity('Invalid selection');
+        // input.setCustomValidity('Invalid selection');    
         input.reportValidity();
         setTimeout(() => input.focus(), 1);
     } else {
@@ -132,7 +139,7 @@ function addInputEventListener(inputId, typeOfValue, isCustom = false) {
     if (!input) return;
 
     const loadFunction = isCustom
-        ? (query) => serviceProviderDetails(query, typeOfValue, datalistId)
+        ? (query) => loadPartyDetails(query, typeOfValue, datalistId)
         : (query) => loadDropdownData(query, typeOfValue, datalistId);
 
     input.addEventListener('input', (e) => loadFunction(e.target.value));
@@ -154,3 +161,11 @@ function initialize() {
 }
 
 document.addEventListener('DOMContentLoaded', initialize);
+
+chargesTypeInput.addEventListener('input', function () {
+    const query = chargesTypeInput.value.trim();
+    if (query.length > 0) {
+        loadDropdownOptions('ChargesType', 'chargesTypeList');
+        // loadDropdownData(query, 'Charges', 'chargesTypeList');
+    }
+});

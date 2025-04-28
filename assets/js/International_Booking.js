@@ -4,7 +4,7 @@ async function loadAWBNoDetails(query) {
     const { data, error } = await supabaseClient
         .from('international_booking')
         .select('DocketNo')
-        .ilike('DocketNo', `%${query}%`)
+        .ilike('DocketNo', `${query}%`)
         .limit(10);
 
     if (error) {
@@ -22,28 +22,39 @@ async function loadAWBNoDetails(query) {
     });
 }
 
+// Event listener for selection
+const awbNoInput = document.getElementById('awbNo');
+awbNoInput.addEventListener('change', () => fetchDocketDetails(awbNoInput.value));
+
 async function fetchDocketDetails(docketNo) {
     const { data, error } = await supabaseClient
         .from('international_booking')
         .select('*')
         .eq('DocketNo', docketNo)
-        .single();
+        .maybeSingle();
 
     if (error) {
         console.error('Error fetching docket details:', error);
         return;
     }
 
+    if (!data) {
+        console.log('No record found for this Docket No');
+        return;
+    }
     // Map fields
+    document.getElementById('status').value = data.Status
+    document.getElementById('partyCode').value = data.CustomerCode
     document.getElementById('partyName').value = data.CustomerName;
     document.getElementById('bookedDate').value = data.BookedDate;
     document.getElementById('status').value = data.Status;
-    document.getElementById('movementType').value = data.TransctionType;
+    document.getElementById('movementTypeI').value = data.MovementType;
     document.getElementById('transitTypeI').value = data.TransitType;
     document.getElementById('modeTypeI').value = data.ModeType;
     document.getElementById('poNo').value = data.PONo;
     document.getElementById('shippingType').value = data.ShippingType;
     document.getElementById('carrierName').value = data.CourierName;
+    document.getElementById('vendorCode').value = data.ServiceProviderCode;
     document.getElementById('serviceProvider').value = data.ServiceProviderName;
     document.getElementById('shipperRef').value = data.ShipperRef;
     document.getElementById('invoiceValue').value = data.ConsignmentValue;
@@ -68,40 +79,25 @@ async function fetchDocketDetails(docketNo) {
     reportButton.disabled = false;
 }
 
-// Event listener for selection
-const awbNoInput = document.getElementById('awbNo');
-awbNoInput.addEventListener('change', () => fetchDocketDetails(awbNoInput.value));
 
 document.getElementById('newButton').addEventListener('click', function () {
-    location.reload();
+    clearForm();
     enableForm();
     saveButton.disabled = false;
     modifyButton.disabled = true;
+    deleteButton.disabled = true;
+    reportButton.disabled = true;
     saveButton.innerHTML = '<i class="bi bi-save"></i> Save';
-    clearForm(); // Assuming there's a clearForm function
 });
-
 
 document.getElementById('modifyButton').addEventListener('click', async function () {
     enableForm();
     saveButton.disabled = false;
     modifyButton.disabled = true;
     deleteButton.disabled = false;
+    reportButton.disabled = true;
     saveButton.innerHTML = '<i class="bi bi-save"></i> Update';
-
-    if (userType === 1 || userType === 2) {
-        const { data, error } = await supabaseClient
-            .from('international_booking')
-            .delete()
-            .eq('DocketNo', awbNoInput); // Replace `docketNo` with your variable
-
-        if (error) {
-            console.error("Error deleting record:", error.message);
-        } else {
-            console.log("Record deleted successfully:", data);
-        }
-    }
-
+    document.getElementById('awbNo').disabled = true;
 });
 
 document.getElementById('deleteButton').addEventListener('click', async function () {
@@ -134,7 +130,6 @@ document.getElementById('deleteButton').addEventListener('click', async function
         console.warn("You do not have permission to delete this record.");
     }
 });
-
 
 async function consigneeDetails(query, typeOfValue, datalistId) {
     console.log('Fetching consignee...' + companyID);
@@ -256,22 +251,21 @@ document.getElementById('consigneeName').addEventListener('focus', function () {
     this.setAttribute('list', 'consigneeNameSuggestions');
 });
 
-
-
 async function saveOrUpdateInternationalBooking() {
-    // Get values from HTML fields
+    // Get the button type: "save" or "update"
+    const actionType = document.getElementById("saveButton").textContent.trim();
+    console.log('Action Type:', actionType);
     const formData = {
         DocketNo: document.getElementById("awbNo").value,
         BookedDate: document.getElementById("bookedDate").value,
         CustomerCode: document.getElementById("partyCode").value,
         CustomerName: document.getElementById("partyName").value,
-        MovementType: document.getElementById("MovementTypeI").value,
+        MovementType: document.getElementById("movementTypeI").value,
         TransitType: document.getElementById("transitTypeI").value,
         ModeType: document.getElementById("modeTypeI").value,
         Status: document.getElementById("status").value,
         ServiceProviderCode: document.getElementById("vendorCode").value,
         ServiceProviderName: document.getElementById("serviceProvider").value,
-        CourierCode: document.getElementById("carrierCode").value,
         CourierName: document.getElementById("carrierName").value,
         Consignee: document.getElementById("consigneeName").value,
         ShipperRef: document.getElementById("shipperRef").value,
@@ -290,48 +284,32 @@ async function saveOrUpdateInternationalBooking() {
         AcutalWeight: parseFloat(document.getElementById("actualWeight").value) || 0,
         VolumeWeight: parseFloat(document.getElementById("volumetricWeight").value) || 0,
         ChargableWeight: parseFloat(document.getElementById("chargeableWeight").value) || 0,
-        // BasicFrightAmt: parseFloat(document.getElementById("BasicFrightAmt").value) || 0,
-        // FSCAmt: parseFloat(document.getElementById("FSCAmt").value) || 0,
-        // OtherAmt: parseFloat(document.getElementById("OtherAmt").value) || 0,
-        // TotalAmount: parseFloat(document.getElementById("TotalAmount").value) || 0,
         CurrencyType: "INR",
         Infomation: document.getElementById("infomation").value,
         PONo: document.getElementById("poNo").value,
-        // InvoiceStatus: document.getElementById("InvoiceStatus").value,
-        // InvoiceNumber: document.getElementById("InvoiceNumber").value,
-        // InvAmdNo: document.getElementById("InvAmdNo").value,
-        // FrightType: document.getElementById("FrightType").value,
         ShippingType: document.getElementById("shippingType").value,
         company_id: companyID,
         CreatedBy: userLoginID
     };
 
-    const { data: existing, error: checkError } = await supabaseClient
-        .from("international_booking")
-        .select("DocketNo")
-        .eq("DocketNo", formData.DocketNo)
-        .single();
-
-    if (checkError && checkError.code !== 'PGRST116') {
-        console.error("Error checking existing DocketNo:", checkError.message);
-        return;
-    }
-
     let result;
 
-    if (existing) {
-        // Update existing
+    if (actionType === "Save") {
+        // Insert new record
+        const { data, error } = await supabaseClient
+            .from("international_booking")
+            .insert([formData]);
+        result = { data, error };
+    } else if (actionType === "Update") {
+        // Update existing record
         const { data, error } = await supabaseClient
             .from("international_booking")
             .update(formData)
             .eq("DocketNo", formData.DocketNo);
         result = { data, error };
     } else {
-        // Insert new
-        const { data, error } = await supabaseClient
-            .from("international_booking")
-            .insert([formData]);
-        result = { data, error };
+        alert("Invalid action type!");
+        return;
     }
 
     if (result.error) {
@@ -350,4 +328,5 @@ document.getElementById('saveButton').addEventListener('click', function () {
     modifyButton.disabled = false;
     reportButton.disabled = false;
     saveButton.innerHTML = '<i class="bi bi-save"></i> Update';
+    deleteButton.disabled = true;
 });

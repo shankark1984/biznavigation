@@ -33,7 +33,6 @@
                 <input type="hidden" id="tempFormID" name="tempFormID">
                 <input type="hidden" id="partyCode" name="partyCode">
                 <input type="hidden" id="vendorCode" name="vendorCode">
-                <input type="hidden" name="carrierCode" id="carrierCode">
             </div>
 
             <div class="card-body">
@@ -191,8 +190,7 @@
                                 <label for="shipperRef" class="col-4 col-form-label">Shipper Ref</label>
                                 <div class="col-8">
                                     <input list="shipperRefSuggestions" class="form-control" id="shipperRef"
-                                        name="shipperRef" required autocomplete="off"
-                                        oninput="shipperRefDetails(this.value)">
+                                        name="shipperRef" required autocomplete="off">
                                 </div>
                             </div>
                         </div>
@@ -398,11 +396,12 @@
                                         <!-- Charges Type -->
                                         <div class="col-md-3 col-sm-4">
                                             <div class="d-flex align-items-center">
-                                                <label for="chargesType" class="form-label small me-1 mb-0"
+                                                <label for="chargesTypeInput" class="form-label small me-1 mb-0"
                                                     style="white-space: nowrap;">Charges:</label>
-                                                <select class="form-control" id="chargesType" name="chargesType">
-                                                    <option value="" disabled selected>Type</option>
-                                                </select>
+                                                <input class="form-control" id="chargesTypeInput" name="chargesTypeInput"
+                                                    list="chargesTypeList" placeholder="Charges Type"
+                                                    autocomplete="off">
+                                                <datalist id="chargesTypeList"></datalist>
                                             </div>
                                         </div>
                                         <!-- HSN -->
@@ -445,10 +444,35 @@
 
                                         <!-- Add Button -->
                                         <div class="col-md-1 col-sm-2">
-                                            <button type="button" class="btn btn-sm btn-primary w-100">Add</button>
+                                            <button type="button" class="btn btn-sm btn-primary w-100"
+                                                id="addFreightRow">Add</button>
+                                            <!-- <button type="button" class="btn btn-sm btn-primary w-100">Add</button> -->
                                         </div>
                                     </div>
-
+                                    <!-- Freight Charges Table -->
+                                    <div class="table-responsive mt-3">
+                                        <table class="table table-bordered table-sm" id="freightTable">
+                                            <thead class="table-light">
+                                                <tr class="text-center">
+                                                    <th>Charges Type</th>
+                                                    <th>HSN No</th>
+                                                    <th>Remarks</th>
+                                                    <th>Tax Rate</th>
+                                                    <th>Quantity</th>
+                                                    <th>Basic Amount</th>
+                                                    <th>SGST Amt</th>
+                                                    <th>CGST Amt</th>
+                                                    <th>IGST Amt</th>
+                                                    <th>Total GST Amt</th>
+                                                    <th>Grand Total</th>
+                                                    <th>Action</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <!-- Dynamically added rows will appear here -->
+                                            </tbody>
+                                        </table>
+                                    </div>
                                 </div>
                                 <!-- Container Details Tab -->
                                 <div class="tab-pane fade" id="container-details" role="tabpanel">
@@ -544,6 +568,7 @@
     <script src="assets/js/International_Booking.js"></script>
     <script src="assets/js/dropdownLoader.js"></script>
     <script src="assets/js/utils.js"></script>
+    <script src="assets/js/Old.js"></script>
     <!-- <script src="assets/js/generalfunction.js"></script> -->
 
 

@@ -23,14 +23,14 @@ async function deleteTableRow(row, rowId) {
 }
 // Function to fetch data from Supabase
 async function billingAddressfetchSupabaseData(partyCode) {
-    partyCode=getPartyCodeFromInput('partyName', 'partySuggestions');
+    partyCode = getPartyCodeFromInput('partyName', 'partySuggestions');
     try {
         // Fetch data from 'booking_charges' table
         let { data, error } = await supabaseClient
             .from('billing_address') // Table name
             .select('*')// Fetch all fields
-            .eq('party_code', )
-            .eq('company_id',companyID);// Fetch rows filtered by company ID
+            .eq('party_code',)
+            .eq('company_id', companyID);// Fetch rows filtered by company ID
 
         if (error) {
             console.error("Error fetching data:", error);
@@ -50,7 +50,7 @@ async function vendorpopulateTable(lrNumber) {
     const tableBody = document.querySelector('#vendorchargesDetailsTable tbody');
     const tableFoot = document.querySelector('#vendorchargesDetailsTable tfoot');
 
-    console.log('Vendor Fright Details '+lrNumber);
+    console.log('Vendor Fright Details ' + lrNumber);
 
     // Clear existing table rows
     tableBody.innerHTML = '';

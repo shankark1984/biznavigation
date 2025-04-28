@@ -74,3 +74,18 @@ function vendorpopulateDropdown(tax_data) {
 document.addEventListener('DOMContentLoaded', function () {
     loadTaxData();
 });
+
+// Populate the <select> dropdown with tax data
+function vendorpopulateDropdown(tax_data) {
+    const taxSelect = $("#defaultTax"); // Target the <select> element
+    taxSelect.empty();  // Clear existing options
+
+    // Add a placeholder option
+    taxSelect.append('<option value="" disabled selected>Select Default Tax</option>');
+
+    // Loop through tax_data and create <option> elements
+    tax_data.forEach(tax => {
+        const option = `<option value="${tax.taxDescription}">${tax.taxDescription}</option>`;
+        taxSelect.append(option);
+    });
+}

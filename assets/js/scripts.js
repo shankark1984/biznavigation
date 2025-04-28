@@ -1,20 +1,10 @@
 document.addEventListener('DOMContentLoaded', function () {
-    const hamburger = document.querySelector('.hamburger');
+
     const menuBar = document.querySelector('.menu-bar');
     const menuItems = document.querySelector('.menu-items');
     const userInfo = document.querySelector('.user-info');
     const logoutBtn = document.querySelector('.logout-btn');
     const userLoginIDSpan = document.getElementById('userLoginID');
-
-    if (hamburger && menuBar && menuItems && userInfo) {
-        hamburger.addEventListener('click', function () {
-            menuBar.classList.toggle('active');
-            menuItems.classList.toggle('active');
-            userInfo.classList.toggle('active');
-        });
-    } else {
-        console.warn('One or more required menu elements were not found. Skipping hamburger toggle setup.');
-    }
 
     function loadUserInfo() {
         const userLoginID = localStorage.getItem('UserLoginID');

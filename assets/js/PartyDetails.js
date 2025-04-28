@@ -215,6 +215,7 @@ saveButton.addEventListener('click', async function (event) {
         newButton.disabled = false;
         return;
     }
+    console.log('GST Type:', $("#defaultTax").val());
 
     // Get form values
     const formData = {
@@ -231,7 +232,7 @@ saveButton.addEventListener('click', async function (event) {
         country: $("#country").val(),
         pan_number: $("#panNumber").val(),
         gst_number: $("#gSTNumber").val(),
-        default_tax: $("#defaulttax").val() || 'CGST 0% SGST 0% IGST 0%',
+        default_tax: $("#defaultTax").val() || 'CGST 0% SGST 0% IGST 0%',
         current_status: $("#partyCurrentStatus").val(),
         deactive_date: $("#partyDeActiveDate").val() || null,
         company_id: companyID,

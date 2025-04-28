@@ -1,23 +1,19 @@
 // Function to load party details from Supabase
 async function loadPartyDetails(query = '') {
     try {
-        const { data: partyDetailsData, error } = await supabaseClient
+        const { data, error } = await supabaseClient
             .from('party_details')
             .select('*')
-            .eq('company_id', companyID) // Filter by company ID
-            .ilike('party_name', `%${query}%`) // Case-insensitive partial matching
-            .order('party_name', { ascending: true }); // Order by party_name (ascending)
+            .eq('company_id', companyID)
+            .ilike('party_name', `%${query}%`)
+            .order('party_name', { ascending: true });
 
-        if (error) {
-            console.error('Error fetching party details:', error);
-            return;
-        }
+        if (error) throw error;
 
-        // Map the data to match the form format
-        partyDetails = partyDetailsData.map(row => ({
+        partyDetails = data.map(row => ({
             partyType: row.party_type,
             partyCode: row.party_code,
-            vendorCode: row.party_code, // Assuming vendorCode maps to party_code
+            vendorCode: row.party_code,
             partyName: row.party_name,
             currentStatus: row.current_status,
             deActiveDate: row.deactive_date,
@@ -34,141 +30,151 @@ async function loadPartyDetails(query = '') {
             defaultTax: row.default_tax,
         }));
 
-        // Enable or disable buttons based on data state
-        // document.getElementById('saveButton').disabled = false;
-
-        // Populate datalist options
-        populatePartySuggestions();
-        populateVendorSuggestions();
-
-        // Additional functions to fetch related data
-        billingAddressfetchSupabaseData();
+        populateSuggestions();
     } catch (error) {
-        console.error('Error loading party details:', error);
+        console.error('Error loading party details:', error.message);
     }
 }
 
 // Function to fetch billing address from Supabase
 async function billingAddressfetchSupabaseData() {
     try {
-        console.log(partyCode + companyID);
-        const { data: billingData, error } = await supabaseClient
+        const { data, error } = await supabaseClient
             .from('billing_address')
             .select('address, city, pincode, country')
             .eq('party_code', partyCode)
-            .eq('company_id', companyID); // Match by party_code and company_id
+            .eq('company_id', companyID);
 
-        if (error) {
-            console.error('Error fetching billing address:', error);
-            return;
-        }
+        if (error) throw error;
 
-        if (billingData && billingData.length > 0) {
-            // Assuming only one record for the given party_code and company_id
-            const billingInfo = billingData[0];
-
-            // Populate the input fields with billing address data
-            $("#billingAddress").val(billingInfo.address || '');
-            $("#billingCity").val(billingInfo.city || '');
-            $("#billingPinCode").val(billingInfo.pincode || '');
-            $("#billingCountry").val(billingInfo.country || '');
-        } else {
-            console.warn('No billing address found for the given party code.');
+        if (data?.length) {
+            const { address, city, pincode, country } = data[0];
+            $("#billingAddress").val(address || '');
+            $("#billingCity").val(city || '');
+            $("#billingPinCode").val(pincode || '');
+            $("#billingCountry").val(country || '');
         }
     } catch (error) {
-        console.error('Error in billingAddressfetchSupabaseData:', error);
+        console.error('Error fetching billing address:', error.message);
     }
 }
 
-// Populate the datalist with party names
-function populatePartySuggestions() {
-    let suggestions = partyDetails
-        .map(party => `<option data-party-code="${party.partyCode}" value="${party.partyName}"></option>`)
-        .join('');
-    $("#partySuggestions").html(suggestions);
-}
-
-// Populate the datalist with vendor names
-function populateVendorSuggestions() {
-    let vendorSuggestions = partyDetails
-        .map(vendor => `<option data-party-code="${vendor.vendorCode}" value="${vendor.partyName}"></option>`)
-        .join('');
-    $("#vendorSuggestions").html(vendorSuggestions);
-}
-
-// Handle party name input and populate form
-$("#partyName").on("input", function () {
-    const partyName = $(this).val();
-    const partyData = partyDetails.find(party => party.partyName === partyName);
-
-    if (partyData) {
-        populateFormFields(partyData, "party");
+// Populate both party and vendor suggestions
+function populateSuggestions() {
+    if (!partyDetails?.length) {
+        console.warn('No party details to display');
+        return;
     }
-});
 
-// Handle vendor name input and populate form
-$("#vendorName").on("input", function () {
-    const vendorName = $(this).val();
-    const vendorData = partyDetails.find(party => party.partyName === vendorName);
+    const options = partyDetails.map(({ partyCode, partyName }) =>
+        `<option data-party-code="${partyCode}" value="${partyName}"></option>`
+    ).join('');
 
-    if (vendorData) {
-        populateFormFields(vendorData, "vendor");
-    }
-});
+    $("#partySuggestions").html(options);
+    $("#vendorSuggestions").html(options);
 
-function populateFormFields(data, type) {
-    const prefix = type === "party" ? "party" : "vendor";
-
-    console.log(`Populating form for ${type}:`, data); // Debugging
-
-    $(`#${prefix}Type`).val(data.partyType);
-    $("#partyCode").val(data.partyCode); // Ensure this is properly set
-    $("#partyCurrentStatus").val(data.currentStatus);
-    $("#partyDeActiveDate").val(data.deActiveDate);
-    $("#partyAddress").val(data.address);
-    $("#pinCode").val(data.pinCode);
-    $("#city").val(data.city);
-    $("#state").val(data.state);
-    $("#country").val(data.country);
-    $("#panNumber").val(data.panNumber);
-    $("#gSTNumber").val(data.gSTNumber);
-    $("#partyContacperson").val(data.contactPerson);
-    $("#partyContactNumber").val(data.contactNumber);
-    $("#partyEmailID").val(data.emailID);
-    $("#defaulttax").val(data.defaultTax);
 }
 
-
-// Function to get party code based on user input
-function getPartyCodeFromInput(inputElementId, datalistId) {
-    document.getElementById(inputElementId).addEventListener('input', function (event) {
-        const inputValue = event.target.value;
-        const selectedOption = $(`#${datalistId} option`).filter(function () {
-            return $(this).val() === inputValue;
-        }).first();
-
-        // Get the data-party-code from the matching option
-        const partyCode = selectedOption.data("party-code");
-        console.log("Selected party code:", partyCode);
+// Handle input and populate form
+function handleInput(inputSelector, type) {
+    $(inputSelector).on("input", function () {
+        const name = $(this).val();
+        const data = partyDetails.find(p => p.partyName === name);
+        if (data) populateFormFields(data, type);
     });
 }
 
+// Populate form fields
+function populateFormFields(data, type) {
+    const prefix = type === "party" ? "party" : "vendor";
+    console.log(`Populating form for ${type}:`, data);
+
+    const fieldMapping = {
+        [`${prefix}Type`]: data.partyType,
+        [`${prefix}Code`]: data.partyCode,
+        [`${prefix}CurrentStatus`]: data.currentStatus,
+        [`${prefix}DeActiveDate`]: data.deActiveDate,
+        [`${prefix}Address`]: data.address,
+        [`${prefix}PinCode`]: data.pinCode,
+        [`${prefix}City`]: data.city,
+        [`${prefix}State`]: data.state,
+        [`${prefix}Country`]: data.country,
+        [`${prefix}PanNumber`]: data.panNumber,
+        [`${prefix}GSTNumber`]: data.gSTNumber,
+        [`${prefix}ContactPerson`]: data.contactPerson,
+        [`${prefix}ContactNumber`]: data.contactNumber,
+        [`${prefix}EmailID`]: data.emailID,
+        [`defaulttax`]: data.defaultTax
+    };
+    loadPartyDetails();
+    for (const [id, value] of Object.entries(fieldMapping)) {
+        $(`#${id}`).val(value || '');
+    }
+
+    if (type === "party") billingAddressfetchSupabaseData();
+}
+
+// Link datalist input to get party code
+function getPartyCodeFromInput(inputElementId, datalistId) {
+    $(`#${inputElementId}`).on('input', function () {
+        const value = $(this).val();
+        const option = $(`#${datalistId} option`).filter(function () {
+            return $(this).val() === value;
+        }).first();
+
+        const partyCode = option.data('party-code');
+        console.log(`Party Code for ${value}:`, partyCode); // For debugging
+    });
+}
+
+// Document ready
 $(document).ready(function () {
-    loadPartyDetails(); // Fetch party details on load
+    loadPartyDetails();
+    handleInput("#partyName", "party");
+    handleInput("#serviceProvider", "vendor");
 
-    // Ensure buttons exist before modifying them
-    const saveButton = document.getElementById('saveButton');
-    const newButton = document.getElementById('newButton');
-
-    if (saveButton) {
-        saveButton.disabled = false;
-    } else {
-        console.error("Element #saveButton not found!");
-    }
-
-    if (newButton) {
-        newButton.disabled = false;
-    } else {
-        console.error("Element #newButton not found!");
-    }
+    ["saveButton", "newButton"].forEach(id => {
+        const button = document.getElementById(id);
+        if (button) button.disabled = false;
+        else console.error(`Element #${id} not found!`);
+    });
 });
+
+
+async function PartyAddressDetails(query, typeOfValue, datalistId) {
+    console.log('Fetching addresses...' + companyID);
+
+    if (!query.trim()) {
+        document.getElementById(datalistId).innerHTML = ''; // Clear suggestions if input is empty
+        return;
+    }
+
+    try {
+        const { data: partyAddress, error } = await supabaseClient
+            .from('Party_Address')
+            .select('Address')
+            .eq('Company_ID', companyID) // Ensure companyID is defined
+            .ilike('Address', `%${query}%`);
+
+        if (error) {
+            console.error('Error fetching Party Address details:', error);
+            return;
+        }
+
+        const partyAddressList = partyAddress.map(row => ({
+            PartyAddress: row.Address
+        }));
+
+        partyAddressSuggestions(partyAddressList, datalistId);
+    } catch (error) {
+        console.error('Error loading party address details:', error);
+    }
+}
+
+function partyAddressSuggestions(partyAddressList, datalistId) {
+    const suggestions = partyAddressList
+        .map(pAddress => `<option value="${pAddress.PartyAddress}">${pAddress.PartyAddress}</option>`)
+        .join('');
+
+    document.getElementById(datalistId).innerHTML = suggestions;
+}
