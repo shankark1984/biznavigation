@@ -23,6 +23,13 @@
 
     <!-- Local CSS (commented out as in original) -->
     <!-- <link rel="stylesheet" href="assets/css/styles.css"> -->
+    <style>
+        /* Hide the 12th column (Tax Type) in both header and body */
+        #freightTable th:nth-child(13),
+        #freightTable td:nth-child(13) {
+            display: none;
+        }
+    </style>
 </head>
 
 <body class="bg-light">
@@ -398,9 +405,9 @@
                                             <div class="d-flex align-items-center">
                                                 <label for="chargesTypeInput" class="form-label small me-1 mb-0"
                                                     style="white-space: nowrap;">Charges:</label>
-                                                <input class="form-control" id="chargesTypeInput" name="chargesTypeInput"
-                                                    list="chargesTypeList" placeholder="Charges Type"
-                                                    autocomplete="off">
+                                                <input class="form-control" id="chargesTypeInput"
+                                                    name="chargesTypeInput" list="chargesTypeList"
+                                                    placeholder="Charges Type" autocomplete="off">
                                                 <datalist id="chargesTypeList"></datalist>
                                             </div>
                                         </div>
@@ -466,11 +473,25 @@
                                                     <th>Total GST Amt</th>
                                                     <th>Grand Total</th>
                                                     <th>Action</th>
+                                                    <th>Tax Type</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 <!-- Dynamically added rows will appear here -->
                                             </tbody>
+                                            <tfoot>
+                                                <tr id="totalsRow">
+                                                    <th colspan="5" class="text-end">Totals:</th>
+                                                    <th class="text-end" id="totalFreight">0.00</th>
+                                                    <th class="text-end" id="totalSGST">0.00</th>
+                                                    <th class="text-end" id="totalCGST">0.00</th>
+                                                    <th class="text-end" id="totalIGST">0.00</th>
+                                                    <th class="text-end" id="totalGST">0.00</th>
+                                                    <th class="text-end" id="totalGrand">0.00</th>
+                                                    <th></th><!-- for delete button column -->
+                                                    <th style="display:none;"></th><!-- taxType column is hidden -->
+                                                </tr>
+                                            </tfoot>
                                         </table>
                                     </div>
                                 </div>

@@ -152,3 +152,21 @@ document.addEventListener('DOMContentLoaded', function () {
         console.warn("Element with ID 'website' not found.");
     }
 });
+
+
+// Function to toggle edit mode for delete buttons
+// This function enables or disables the delete buttons based on the edit mode state    
+let isEditMode = false;
+
+function toggleEditMode(enable) {
+    isEditMode = enable;
+    document.querySelectorAll('.delete-row').forEach(btn => {
+        btn.disabled = enable;
+        enable ? btn.classList.add('disabled') : btn.classList.remove('disabled');
+    });
+    // Call this when entering edit/save mode:
+    // toggleEditMode(true);
+    // Call this when done:
+    // toggleEditMode(false);
+}
+

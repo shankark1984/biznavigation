@@ -89,3 +89,66 @@ function vendorpopulateDropdown(tax_data) {
         taxSelect.append(option);
     });
 }
+
+async function fetchTaxDetails(taxType) {
+    try {
+        const { data, error } = await supabaseClient
+            .from('tax_details')
+            .select('id, tax_rate')
+            .eq('tax_description', taxType)
+            .single(); // because we expect only 1 match
+
+        if (error) {
+            console.error('Error fetching tax details:', error.message);
+            return null;
+        }
+
+        if (data) {
+            console.log('Fetched Tax Details:', data);
+            return {
+                taxId: data.id,
+                taxRate: data.tax_rate
+            };
+        } else {
+            console.warn('No tax details found for:', taxType);
+            return null;
+        }
+    } catch (err) {
+        console.error('Unexpected Error:', err);
+        return null;
+    }
+}
+
+
+
+// Function to handle the change event of the tax dropdown 
+const taxInput = document.getElementById('partyDefaultTax');
+const partyCodeIn = document.getElementById('partyCode'); // e.g. <select> or <input>
+console.log("partyCodeIn", partyCodeIn);
+async function onChargeTypeOrPartyChange() {
+    const partyCode = partyCodeIn.value.trim();
+    if (!partyCode) {
+        taxInput.value = '';
+        return;
+    }
+
+    try {
+        // Fetch the party's default_tax
+        const { data, error } = await supabaseClient
+            .from('party_details')
+            .select('default_tax')
+            .eq('party_code', partyCode)
+            .single();
+
+        if (error) {
+            console.error('Error loading default tax:', error.message);
+            taxInput.value = '';
+        } else {
+            // Populate the default tax dropdown/text input
+            taxInput.value = data.default_tax ?? '';
+        }
+    } catch (err) {
+        console.error('Unexpected error:', err);
+        taxInput.value = '';
+    }
+}

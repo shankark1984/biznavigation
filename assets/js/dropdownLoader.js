@@ -169,3 +169,83 @@ chargesTypeInput.addEventListener('input', function () {
         // loadDropdownData(query, 'Charges', 'chargesTypeList');
     }
 });
+
+// Handler receives the event, not the value directly:
+async function onChargeTypeChange(event) {
+    const descriptionType = event.target.value;
+    const hsnInput = document.getElementById('hsnNumber');
+
+    if (!descriptionType) {
+        hsnInput.value = '';
+        return;
+    }
+
+    try {
+        const { data, error } = await supabaseClient
+            .from('dropdown_list')
+            .select('hsn_code')
+            .eq('description', descriptionType)
+            .single();
+
+        if (error) {
+            console.error('Error loading HSN code:', error.message);
+            hsnInput.value = '';
+        } else {
+            hsnInput.value = data.hsn_code ?? '';
+        }
+    } catch (err) {
+        console.error('Unexpected error:', err);
+        hsnInput.value = '';
+    }
+}
+
+function setupChargeTypeValidation() {
+    const chargeInput = document.getElementById('chargesTypeInput');
+    const addBtn = document.getElementById('addFreightRow');
+    const tableBody = document.querySelector('#freightTable tbody');
+
+    // 1) Inject CSS for .invalid
+    const style = document.createElement('style');
+    style.textContent = `
+      #chargesTypeInput.invalid {
+        border-color: #dc3545 !important;
+        box-shadow: 0 0 0 0.2rem rgba(220,53,69,.25);
+      }
+    `;
+    document.head.appendChild(style);
+
+    // 2) Validation logic
+    function validate() {
+        const sel = chargeInput.value.trim();
+        if (!sel) {
+            chargeInput.classList.remove('invalid');
+            addBtn.disabled = false;
+            return;
+        }
+        // get existing charge types
+        const existing = Array.from(tableBody.querySelectorAll('tr td:first-child'))
+            .map(td => td.textContent.trim());
+        if (existing.includes(sel)) {
+            chargeInput.classList.add('invalid');
+            addBtn.disabled = true;
+        } else {
+            chargeInput.classList.remove('invalid');
+            addBtn.disabled = false;
+        }
+    }
+
+    // 3) Wire it up
+    chargeInput.addEventListener('change', validate);
+
+    // 4) Also re-validate whenever table changes (in case rows are added/removed)
+    const observer = new MutationObserver(validate);
+    observer.observe(tableBody, { childList: true });
+
+    // initial validation
+    validate();
+    // call once on page load
+    // setupChargeTypeValidation();
+}
+
+
+

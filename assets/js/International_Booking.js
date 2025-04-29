@@ -24,7 +24,13 @@ async function loadAWBNoDetails(query) {
 
 // Event listener for selection
 const awbNoInput = document.getElementById('awbNo');
-awbNoInput.addEventListener('change', () => fetchDocketDetails(awbNoInput.value));
+// awbNoInput.addEventListener('change', () => fetchDocketDetails(awbNoInput.value));
+
+document.getElementById('awbNo').addEventListener('change', function () {
+    fetchDocketDetails(awbNoInput.value)
+    loadFreightCharges();
+    setupChargeTypeValidation();
+});
 
 async function fetchDocketDetails(docketNo) {
     const { data, error } = await supabaseClient
@@ -77,6 +83,7 @@ async function fetchDocketDetails(docketNo) {
     saveButton.disabled = true;
     modifyButton.disabled = false;
     reportButton.disabled = false;
+    document.getElementById('addFreightRow').disabled = true;
 }
 
 
@@ -88,6 +95,11 @@ document.getElementById('newButton').addEventListener('click', function () {
     deleteButton.disabled = true;
     reportButton.disabled = true;
     saveButton.innerHTML = '<i class="bi bi-save"></i> Save';
+    document.getElementById('addFreightRow').disabled = false;
+    const table = document.getElementById('freightTable');
+    const tbody = table.querySelector('tbody');
+    tbody.innerHTML = '';
+    recalcTotals(); // Reset totals
 });
 
 document.getElementById('modifyButton').addEventListener('click', async function () {
@@ -98,6 +110,8 @@ document.getElementById('modifyButton').addEventListener('click', async function
     reportButton.disabled = true;
     saveButton.innerHTML = '<i class="bi bi-save"></i> Update';
     document.getElementById('awbNo').disabled = true;
+    document.getElementById('addFreightRow').disabled = false;
+    toggleEditMode(false);
 });
 
 document.getElementById('deleteButton').addEventListener('click', async function () {
@@ -329,4 +343,7 @@ document.getElementById('saveButton').addEventListener('click', function () {
     reportButton.disabled = false;
     saveButton.innerHTML = '<i class="bi bi-save"></i> Update';
     deleteButton.disabled = true;
+    saveFreightCharges();
+    document.getElementById('addFreightRow').disabled = true;
+    toggleEditMode(true);
 });
