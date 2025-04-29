@@ -1,3 +1,4 @@
+
 // Initialize Supabase
 const { createClient } = supabase;
 // Initialize Supabase
@@ -25,16 +26,16 @@ window.addEventListener('online', () => {
     try {
         const { data, error } = await supabaseClient.from('company_profile').select('*').limit(1);
         if (error) {
-            console.error("Supabase error:", error.message);
+            console.error("Database server error:", error.message);
             if (!navigator.onLine) {
                 console.log("No network!");
             }
         } else {
-            console.log("Connected to Supabase successfully!");
+            console.log("Connected to database server successfully!");
         }
     } catch (err) {
         console.error("Unexpected error:", err);
-        alert("Error connecting to Supabase.");
+        alert("Error connecting to database server.");
     }
 })();
 
@@ -114,22 +115,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (saveButton) {
         const saveBtnText = saveButton.textContent.trim().toLowerCase();
-        console.log('Save Button:', saveBtnText);
+        // console.log('Save Button:', saveBtnText);
     }
 
     if (newButton) {
         const newBtnText = newButton.textContent.trim().toLowerCase();
-        console.log('New Button:', newBtnText);
+        // console.log('New Button:', newBtnText);
     }
 
     if (deleteButton) {
         const deleteBtnText = deleteButton.textContent.trim().toLowerCase();
-        console.log('Delete Button:', deleteBtnText);
+        // console.log('Delete Button:', deleteBtnText);
     }
 
     if (reportButton) {
         const reportBtnText = reportButton.textContent.trim().toLowerCase();
-        console.log('Report Button:', reportBtnText);
+        // console.log('Report Button:', reportBtnText);
     }
 });
 // Disable all page drag / pull to refresh

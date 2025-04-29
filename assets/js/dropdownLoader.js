@@ -1,7 +1,7 @@
 async function loadDropdownOptions(filterValue, dropdownId) {
     const selectElement = document.getElementById(dropdownId);
     if (!selectElement) {
-        console.warn(`Dropdown with ID "${dropdownId}" not found. Skipping.`);
+        // console.log(`Dropdown with ID "${dropdownId}" not found. Skipping.`);
         return;
     }
     try {
@@ -18,7 +18,7 @@ async function loadDropdownOptions(filterValue, dropdownId) {
 
         const selectElement = document.getElementById(dropdownId);
         if (!selectElement) {
-            console.error(`Dropdown with ID "${dropdownId}" not found.`);
+            console.log(`Dropdown with ID "${dropdownId}" not found.`);
             return;
         }
 

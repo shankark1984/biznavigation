@@ -1,7 +1,7 @@
 // Fetch tax data from Supabase
 async function loadTaxData() {
     try {
-        console.log("Fetching tax description data from Supabase..."); // For debugging
+        // console.log("Fetching tax description data from Supabase..."); // For debugging
 
         // Query the 'tax_details' table in Supabase
         let { data, error } = await supabaseClient
@@ -124,7 +124,7 @@ async function fetchTaxDetails(taxType) {
 // Function to handle the change event of the tax dropdown 
 const taxInput = document.getElementById('partyDefaultTax');
 const partyCodeIn = document.getElementById('partyCode'); // e.g. <select> or <input>
-console.log("partyCodeIn", partyCodeIn);
+
 async function onChargeTypeOrPartyChange() {
     const partyCode = partyCodeIn.value.trim();
     if (!partyCode) {

@@ -274,8 +274,6 @@ function recalcTotals() {
     });
 }
 
-
-
 // Event listeners
 document.getElementById('addFreightRow').addEventListener('click', addFreightRow);
 document.getElementById('chargesTypeInput').addEventListener('change', onChargeTypeChange);
