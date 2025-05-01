@@ -606,6 +606,40 @@
                                             <button type="button" class="btn btn-sm btn-primary w-100"
                                                 id="addVolumetricRow">Add</button>
                                         </div>
+                                        <div class="table-responsive mt-3">
+                                            <table class="table table-sm table-bordered text-center align-middle"
+                                                id="volumetricTable">
+                                                <thead class="table-light">
+                                                    <tr>
+                                                        <th>Packing Type</th>
+                                                        <th>Length (cm)</th>
+                                                        <th>Width (cm)</th>
+                                                        <th>Height (cm)</th>
+                                                        <th>Quantity</th>
+                                                        <th>Actual Wt (kgs)</th>
+                                                        <th>Total Actual Wt</th>
+                                                        <th>Volume Wt</th>
+                                                        <th>Total Vol Wt</th>
+                                                        <th>Chargable Wt</th>
+                                                        <th>Action</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody></tbody>
+                                                <tfoot class="table-light">
+                                                    <tr>
+                                                        <th colspan="4" class="text-end">Total</th>
+                                                        <th id="totalQuantity">0</th>
+                                                        <th id="totalActualWt">0</th>
+                                                        <th id="totalActualWtSum">0</th>
+                                                        <th id="totalVolumeWt">0</th>
+                                                        <th id="totalVolWtSum">0</th>
+                                                        <th id="totalChargableWt">0</th>
+                                                        <th></th>
+                                                    </tr>
+                                                </tfoot>
+
+                                            </table>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -695,6 +729,7 @@
     <script src="assets/js/utils.js"></script>
     <script src="assets/js/International_Booking_ChargesTab.js"></script>
     <script src="assets/js/International_Booking.js"></script>
+    <script src="assets/js/VolumetricCalculator.js"></script>
 
 
 </body>
