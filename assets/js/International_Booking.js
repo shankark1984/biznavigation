@@ -26,10 +26,15 @@ async function loadAWBNoDetails(query) {
 const awbNoInput = document.getElementById('awbNo');
 // awbNoInput.addEventListener('change', () => fetchDocketDetails(awbNoInput.value));
 
-document.getElementById('awbNo').addEventListener('change', function () {
-    fetchDocketDetails(awbNoInput.value)
-    loadFreightCharges();
-    setupChargeTypeValidation();
+document.getElementById('awbNo').addEventListener('change', async function () {
+    try {
+        await fetchDocketDetails(awbNoInput.value);  // Wait for fetch to complete
+        await loadFreightCharges();                        // Then load charges
+        await setupChargeTypeValidation();                 // Then setup validation
+    } catch (error) {
+        console.error('Error loading AWB details:', error);
+        alert('Failed to load docket details. Please try again.');
+    }
 });
 
 async function fetchDocketDetails(docketNo) {
@@ -49,6 +54,7 @@ async function fetchDocketDetails(docketNo) {
         return;
     }
     // Map fields
+    document.getElementById('tempFormID').value = data.id;
     document.getElementById('status').value = data.Status
     document.getElementById('partyCode').value = data.CustomerCode
     document.getElementById('partyName').value = data.CustomerName;
@@ -268,6 +274,7 @@ document.getElementById('consigneeName').addEventListener('focus', function () {
 async function saveOrUpdateInternationalBooking() {
     // Get the button type: "save" or "update"
     const actionType = document.getElementById("saveButton").textContent.trim();
+    const updateID = document.getElementById('tempFormID').value;
     console.log('Action Type:', actionType);
     const formData = {
         DocketNo: document.getElementById("awbNo").value,
@@ -312,14 +319,24 @@ async function saveOrUpdateInternationalBooking() {
         // Insert new record
         const { data, error } = await supabaseClient
             .from("international_booking")
-            .insert([formData]);
+            .insert([formData])
+            .select(); // Ensure it returns inserted rows
+
         result = { data, error };
+        console.log("Insert result:", result);
+
+        if (data && data.length > 0) {
+            const insertedID = data[0].id; // Assuming "id" is the primary key
+            console.log("Inserted ID:", insertedID);
+            document.getElementById("tempFormID").value = insertedID;
+        }
+
     } else if (actionType === "Update") {
         // Update existing record
         const { data, error } = await supabaseClient
             .from("international_booking")
             .update(formData)
-            .eq("DocketNo", formData.DocketNo);
+            .eq("id", updateID);
         result = { data, error };
     } else {
         alert("Invalid action type!");
@@ -347,3 +364,4 @@ document.getElementById('saveButton').addEventListener('click', function () {
     document.getElementById('addFreightRow').disabled = true;
     toggleEditMode(true);
 });
+

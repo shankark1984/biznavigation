@@ -7,6 +7,7 @@ const freightElements = {
     remarksDetails: document.getElementById('remarksDetails'),
     partyDefaultTax: document.getElementById('partyDefaultTax'),
     freightTable: document.querySelector('#freightTable tbody'),
+    tempFormID: document.getElementById('tempFormID'),
     totalElements: {
         freight: document.getElementById('totalFreight'),
         sgst: document.getElementById('totalSGST'),
@@ -77,7 +78,7 @@ async function addFreightRow() {
     const chargeableWeight = parseFloat(document.getElementById('chargeableWeight').value);
     const uOMType = document.getElementById('uOMType').value;
 
-    console.log("chargeableWeight", chargeableWeight + uOMType);
+    // console.log("chargeableWeight", chargeableWeight + uOMType);
     // Validation
     if (!awbNoValue) return alert('AWB No cannot be empty!');
     if (!chargesType) return alert('Charges Type cannot be empty!');
@@ -131,6 +132,7 @@ freightElements.freightTable.addEventListener('click', (e) => {
 
 async function saveFreightCharges() {
     const awbNoValue = freightElements.awbNo.value.trim();
+
     if (!awbNoValue) return alert('AWB No (Docket No) cannot be empty!');
 
     const rows = Array.from(freightElements.freightTable.querySelectorAll('tr'));
@@ -153,16 +155,18 @@ async function saveFreightCharges() {
             const chargesType = cells[0].textContent.trim();
 
             if (existingChargesTypes.has(chargesType)) {
-                console.log(`Skipping duplicate ChargesType: ${chargesType}`);
+                // console.log(`Skipping duplicate ChargesType: ${chargesType}`);
                 continue;
             }
 
             const taxTypeText = cells[12].textContent.trim();
             const taxDetails = await fetchTaxDetails(taxTypeText);
+            const tempFormID = document.getElementById('tempFormID')?.value; // Assuming this is a hidden input field
 
             insertData.push({
                 DocketNo: awbNoValue,
                 ChargesType: chargesType,
+                ID_IB: tempFormID,
                 Remarks: cells[2].textContent.trim(),
                 HSNCode: cells[1].textContent.trim(),
                 Quantity: cells[4].textContent.trim() || "0 Nos",
@@ -195,6 +199,8 @@ async function saveFreightCharges() {
 
 async function loadFreightCharges() {
     const awbNoValue = freightElements.awbNo.value.trim();
+    const tempFormID = freightElements.tempFormID.value.trim(); // Assuming this is a hidden input field
+    if (!tempFormID) return alert('Please select a valid Temp Form ID!');
     if (!awbNoValue) return alert('Please select a valid AWB No!');
 
     freightElements.freightTable.innerHTML = ''; // Clear table
@@ -203,16 +209,9 @@ async function loadFreightCharges() {
         const { data, error } = await supabaseClient
             .from('InternationalBookingCharges')
             .select('*')
-            .eq('DocketNo', awbNoValue);
+            .eq('ID_IB', tempFormID);
 
         if (error) throw error;
-
-        // if (!data.length) {
-        //     freightElements.freightTable.innerHTML = `
-        //         <tr><td colspan="12" class="text-center">No charges found for selected AWB No.</td></tr>
-        //     `;
-        //     return;
-        // }
 
         data.forEach(item => {
             const row = document.createElement('tr');
@@ -304,10 +303,12 @@ tbody.addEventListener('click', async function (e) {
 
     try {
         // 2. Call Supabase delete
+        const tempFormID = freightElements.tempFormID.value.trim(); // Assuming this is a hidden input field
+
         const { error } = await supabaseClient
             .from('InternationalBookingCharges')
             .delete()
-            .match({ DocketNo: docketNo, ChargesType: chargesType });
+            .match({ ID_IB: tempFormID, DocketNo: docketNo, ChargesType: chargesType });
 
         if (error) {
             console.error('Delete error:', error.message);

@@ -36,6 +36,47 @@ async function loadPartyDetails(query = '') {
     }
 }
 
+// Handle invalid input not in datalist
+function validateInputAgainstDatalist(input, datalistId, errorElementId) {
+    const datalist = document.getElementById(datalistId);
+    if (!datalist) return;
+
+    const isValid = Array.from(datalist.options).some(option => option.value === input.value);
+    let errorMessageElement = document.getElementById(errorElementId);
+
+    if (!isValid) {
+        if (!errorMessageElement) {
+            errorMessageElement = document.createElement('span');
+            errorMessageElement.id = errorElementId;
+            errorMessageElement.style.cssText = 'color:red; font-size:12px; margin-left:10px;';
+            input.parentNode.appendChild(errorMessageElement);
+        }
+        errorMessageElement.textContent = 'No valid entry';
+        input.setCustomValidity('Invalid selection'); // ✅ Required
+        input.reportValidity?.();
+        setTimeout(() => input.focus(), 1);
+    } else {
+        input.setCustomValidity?.(''); // ✅ Clear previous errors
+        if (errorMessageElement) errorMessageElement.remove();
+    }
+}
+
+
+const partyInput = document.getElementById('partyName');
+if (partyInput) {
+    partyInput.addEventListener('change', () => {
+        validateInputAgainstDatalist(partyInput, 'partySuggestions', 'partyNameError');
+    });
+}
+
+const vendorInput = document.getElementById('serviceProvider');
+if (vendorInput) {
+    vendorInput.addEventListener('change', () => {
+        validateInputAgainstDatalist(vendorInput, 'vendorSuggestions', 'partyNameError');
+    });
+}
+
+
 // Function to fetch billing address from Supabase
 async function billingAddressfetchSupabaseData() {
     try {
@@ -62,7 +103,7 @@ async function billingAddressfetchSupabaseData() {
 // Populate both party and vendor suggestions
 function populateSuggestions() {
     if (!partyDetails?.length) {
-        console.warn('No party details to display');
+        // console.warn('No party details to display');
         return;
     }
 

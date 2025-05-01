@@ -44,6 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
     loadDropdownOptions('Cargocarrier', 'carrierName');
     loadDropdownOptions('ShippingType', 'shippingType');
     loadDropdownOptions('UOMType', 'uomType');
+    loadDropdownOptions('ChargesType', 'chargesTypeList');
     // loadDropdownOptions('ChargesType', 'chargesType');
 });
 
@@ -61,6 +62,7 @@ const fieldMap = {
     // originCountry: 'Country',
     // destinationCountry: 'Country',
     packingType: 'PackingType',
+    tabpackingType: 'PackingType',
     uOMType: 'UOMType',
     partyName: 'PartyName' // example: if you're using it for validation
 };
@@ -95,17 +97,26 @@ async function loadDropdownData(query, typeOfValue, datalistId) {
 }
 
 
-function validateInput(inputId, datalistId) {
+function validateInput(inputId, datalistId = null) {
     const input = document.getElementById(inputId);
-    const datalist = document.getElementById(datalistId);
-    if (!input || !datalist) return;
-
-    const enteredValue = input.value.trim();
-    const options = Array.from(datalist.options).map(opt => opt.value);
     const errorElementId = `${inputId}-error`;
     let errorMessageElement = document.getElementById(errorElementId);
 
-    const isValid = options.includes(enteredValue);
+    if (!input) return;
+
+    const enteredValue = input.value.trim();
+    let isValid = false;
+
+    if (input.tagName === 'SELECT') {
+        // For <select> elements
+        isValid = Array.from(input.options).some(opt => opt.value === enteredValue);
+    } else if (datalistId) {
+        // For <input> + <datalist>
+        const datalist = document.getElementById(datalistId);
+        if (!datalist) return;
+        const options = Array.from(datalist.options).map(opt => opt.value);
+        isValid = options.includes(enteredValue);
+    }
 
     if (!isValid && enteredValue !== '') {
         if (!errorMessageElement) {
@@ -115,22 +126,23 @@ function validateInput(inputId, datalistId) {
             input.parentNode.appendChild(errorMessageElement);
         }
         errorMessageElement.textContent = 'No valid entry';
-        // input.setCustomValidity('Invalid selection');    
-        input.reportValidity();
+        input.reportValidity?.();
         setTimeout(() => input.focus(), 1);
     } else {
-        input.setCustomValidity('');
+        input.setCustomValidity?.('');
         if (errorMessageElement) errorMessageElement.remove();
     }
 }
 
+
 // Attaches blur validation
-function attachValidation(inputId, datalistId) {
+function attachValidation(inputId, datalistId = null) {
     const input = document.getElementById(inputId);
     if (input) {
         input.addEventListener('blur', () => validateInput(inputId, datalistId));
     }
 }
+
 
 // Event listener for dynamic loading
 function addInputEventListener(inputId, typeOfValue, isCustom = false) {
@@ -138,19 +150,25 @@ function addInputEventListener(inputId, typeOfValue, isCustom = false) {
     const datalistId = `${inputId}Suggestions`;
     if (!input) return;
 
+    const isSelect = input.tagName === 'SELECT';
+
     const loadFunction = isCustom
         ? (query) => loadPartyDetails(query, typeOfValue, datalistId)
         : (query) => loadDropdownData(query, typeOfValue, datalistId);
 
-    input.addEventListener('input', (e) => loadFunction(e.target.value));
-    input.addEventListener('focus', () => {
-        loadFunction('');
-        const value = input.value;
-        input.value = '';
-        input.value = value;
-    }); // Load all on focus
-    attachValidation(inputId, datalistId);
+    if (!isSelect) {
+        input.addEventListener('input', (e) => loadFunction(e.target.value));
+        input.addEventListener('focus', () => {
+            loadFunction('');
+            const value = input.value;
+            input.value = '';
+            input.value = value;
+        });
+    }
+
+    attachValidation(inputId, isSelect ? null : datalistId);
 }
+
 
 // Initialize all listeners and validation
 function initialize() {
@@ -162,44 +180,65 @@ function initialize() {
 
 document.addEventListener('DOMContentLoaded', initialize);
 
-chargesTypeInput.addEventListener('input', function () {
-    const query = chargesTypeInput.value.trim();
-    if (query.length > 0) {
-        loadDropdownOptions('ChargesType', 'chargesTypeList');
-        // loadDropdownData(query, 'Charges', 'chargesTypeList');
-    }
-});
-
 // Handler receives the event, not the value directly:
 async function onChargeTypeChange(event) {
-    const descriptionType = event.target.value;
+    const input = event.target;
+    const descriptionType = input.value;
     const hsnInput = document.getElementById('hsnNumber');
+    const datalistId = input.getAttribute('list');
+    const datalist = document.getElementById(datalistId);
+    const options = Array.from(datalist?.options || []);
+    const isValid = options.some(option => option.value === descriptionType);
+
+    const errorElementId = 'description-error-message';
+
+    let errorMessageElement = document.getElementById(errorElementId);
+
+    // Handle invalid input not in datalist
+    if (!isValid && descriptionType !== '') {
+        if (!errorMessageElement) {
+            errorMessageElement = document.createElement('span');
+            errorMessageElement.id = errorElementId;
+            errorMessageElement.style.cssText = 'color:red; font-size:12px; margin-left:10px;';
+            input.parentNode.appendChild(errorMessageElement);
+        }
+        errorMessageElement.textContent = 'No valid entry';
+        input.reportValidity?.();
+        setTimeout(() => input.focus(), 1);
+    } else {
+        input.setCustomValidity?.('');
+        if (errorMessageElement) errorMessageElement.remove();
+    }
 
     if (!descriptionType) {
         hsnInput.value = '';
         return;
     }
 
+    // Fetch HSN code from Supabase
     try {
         const { data, error } = await supabaseClient
             .from('dropdown_list')
             .select('hsn_code')
             .eq('description', descriptionType)
-            .single();
+            .maybeSingle();
 
         if (error) {
             console.error('Error loading HSN code:', error.message);
             hsnInput.value = '';
-        } else {
+        } else if (data) {
             hsnInput.value = data.hsn_code ?? '';
+        } else {
+            hsnInput.value = '';  // data is null (no match found)
         }
     } catch (err) {
         console.error('Unexpected error:', err);
         hsnInput.value = '';
+        input.focus();  // <-- Optional: handle unexpected error with focus
     }
 }
 
-function setupChargeTypeValidation() {
+async function setupChargeTypeValidation() {
     const chargeInput = document.getElementById('chargesTypeInput');
     const addBtn = document.getElementById('addFreightRow');
     const tableBody = document.querySelector('#freightTable tbody');

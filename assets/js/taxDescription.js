@@ -37,7 +37,7 @@ async function loadTaxData() {
         vendorpopulateDropdown(tax_data);
     } catch (error) {
         console.error("Error fetching data from Supabase:", error.message);
-        alert("Failed to load tax data. Please try again later.");
+        // alert("Failed to load tax data. Please try again later.");
     }
 }
 
@@ -104,7 +104,7 @@ async function fetchTaxDetails(taxType) {
         }
 
         if (data) {
-            console.log('Fetched Tax Details:', data);
+            // console.log('Fetched Tax Details:', data);
             return {
                 taxId: data.id,
                 taxRate: data.tax_rate
