@@ -109,6 +109,7 @@ document.addEventListener("DOMContentLoaded", function () {
                             <li><a class="dropdown-item" href="#">Docket Master</a></li>
                             <li><a class="dropdown-item" href="#">Reset Database</a></li>
                             <li><a class="dropdown-item" href="routemaster.html">Route Master</a></li>
+                            <li><a class="dropdown-item" href="ApplicationSettings.html">Application Settings</a></li>
                         </ul>
                     </li>
                 </ul>

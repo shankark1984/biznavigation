@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BizNavigation - Route Details</title>
+
+    <!-- Bootstrap & Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet" />
+
+    <!-- Scripts at end for faster loading -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/2.3.10/purify.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js"></script>
+
+    <!-- Optional Custom CSS (externalize if needed) -->
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+
+        label {
+            font-weight: 500;
+        }
+
+        input:required {
+            border-left: 3px solid #198754;
+            /* green */
+        }
+
+        #scroll-wrapper {
+            scrollbar-width: thin;
+            scrollbar-color: #ccc transparent;
+        }
+
+        #scroll-wrapper::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        #scroll-wrapper::-webkit-scrollbar-thumb {
+            background-color: #aaa;
+            border-radius: 4px;
+        }
+
+        .card-header {
+            margin-top: 0 !important;
+            padding-top: 0rem !important;
+            padding-bottom: 0rem !important;
+            font-size: 1.1rem;
+        }
+
+        #setting-parameters-container .card:first-child {
+            margin-top: 0 !important;
+        }
+
+        .form-label {
+            font-weight: 500;
+        }
+
+        .toggle-icon {
+            transition: transform 0.3s ease;
+        }
+
+        .collapsing+.toggle-icon,
+        .collapse.show+.toggle-icon {
+            transform: rotate(180deg);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container mt-2" id="root">
+        <div class="card shadow-lg rounded">
+            <div class="card-header bg-primary text-white">
+                <h3 class="mb-0">Application Settings</h3>
+                <input type="hidden" id="tempFormID" />
+                <input type="hidden" id="partyCode" />
+                <input type="hidden" id="vendorCode" />
+            </div>
+
+            <div class="card-body">
+                <form>
+                    <div class="col-12 mt-3">
+                        <ul class="nav nav-tabs" id="bookingTabs" role="tablist">
+                            <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab"
+                                    data-bs-target="#routeDetails" type="button" role="tab">Route Details</button></li>
+                            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab"
+                                    data-bs-target="#missingPinCode" type="button" role="tab">Pincode</button></li>
+                            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab"
+                                    data-bs-target="#dropdownListdetails" type="button" role="tab">Dropdown List
+                                    Details</button></li>
+                            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab"
+                                    data-bs-target="#countryDetails" type="button" role="tab">Country Details</button>
+                            </li>
+                            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab"
+                                    data-bs-target="#SettingParameters" type="button" role="tab">Setting
+                                    Parameters</button>
+                            </li>
+                            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#status"
+                                    type="button" role="tab">Add More..</button></li>
+                        </ul>
+
+                        <div class="tab-content p-3 border border-top-0" id="bookingTabsContent">
+                            <!-- Add/Edit Route Details -->
+                            <div class="tab-pane fade show active" id="routeDetails" role="tabpanel">
+                                <div class="row g-2">
+                                    <div class="col-md-4 col-sm-6">
+                                        <label for="routeDescription" class="form-label">Route Description</label>
+                                        <input type="text" list="routeSuggestions" class="form-control text-capitalize"
+                                            id="routeDescription" name="routeDescription" placeholder="Choose..."
+                                            autocomplete="off" />
+                                        <datalist id="routeSuggestions">
+                                            <!-- Options will be populated by JS -->
+                                        </datalist>
+                                    </div>
+
+                                    <div class="col-md-4 col-sm-6">
+                                        <label for="distance" class="form-label">Distance (Kms)</label>
+                                        <input type="number" class="form-control" id="distance" name="distance">
+                                    </div>
+
+                                    <div class="col-md-1 col-sm-1 d-flex flex-column justify-content-end">
+                                        <button type="button" class="btn btn-sm btn-primary w-100"
+                                            id="addRouteDetails">Add</button>
+                                    </div>
+
+                                    <div class="table-responsive mt-3">
+                                        <table class="table table-sm table-bordered text-center align-middle"
+                                            id="routeTable">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th>Route Description</th>
+                                                    <th>Distance (Kms)</th>
+                                                    <th>Action</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <!-- Data will be inserted here -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Add Missing Pincode -->
+                            <div class="tab-pane fade" id="missingPinCode" role="tabpanel">
+                                <div class="row g-2">
+                                    <div class="col-md-2 col-sm-6">
+                                        <label for="missingPincode" class="form-label">Missing Pincode</label>
+                                        <input type="text" list="pincodeSuggestions"
+                                            class="form-control text-capitalize" id="missingPincode"
+                                            placeholder="Choose..." autocomplete="off" />
+                                        <datalist id="pincodeSuggestions">
+                                            <!-- Options will be populated by JS -->
+                                        </datalist>
+                                    </div>
+
+                                    <div class="col-md-3 col-sm-6">
+                                        <label for="missingCity" class="form-label">City</label>
+                                        <input type="text" class="form-control" id="missingCity" />
+                                    </div>
+
+                                    <div class="col-md-3 col-sm-6">
+                                        <label for="missingState" class="form-label">State</label>
+                                        <input type="text" class="form-control" id="missingState" />
+                                    </div>
+
+                                    <div class="col-md-3 col-sm-6">
+                                        <label for="missingCountry" class="form-label">Country</label>
+                                        <input type="text" class="form-control" id="missingCountry" />
+                                    </div>
+
+                                    <div class="col-md-1 col-sm-1 d-flex flex-column justify-content-end">
+                                        <button type="button" class="btn btn-sm btn-primary w-100"
+                                            id="addMissingPincode">Add</button>
+                                    </div>
+
+                                    <div class="table-responsive mt-3">
+                                        <table class="table table-sm table-bordered text-center align-middle"
+                                            id="missingPincodeTable">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th>Missing Pincode</th>
+                                                    <th>City</th>
+                                                    <th>State</th>
+                                                    <th>Country</th>
+                                                    <th>Action</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <!-- Data will be inserted here -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            <!--  Dropdown List Details -->
+                            <div class="tab-pane fade" id="dropdownListdetails" role="tabpanel">
+                                <div class="row g-2">
+                                    <div class="col-md-2 col-sm-6">
+                                        <label for="valueassignedto" class="form-label">Value Assigned To</label>
+                                        <input type="text" list="valueAssignedToSuggestions"
+                                            class="form-control text-capitalize" id="valueassignedto"
+                                            placeholder="Choose..." autocomplete="off" />
+                                        <datalist id="valueAssignedToSuggestions">
+                                            <!-- Options will be populated by JS -->
+                                        </datalist>
+                                    </div>
+
+                                    <div class="col-md-3 col-sm-6">
+                                        <label for="description" class="form-label">Description</label>
+                                        <input type="text" class="form-control" list="descriptionSuggestions"
+                                            id="description" name="description" required
+                                            placeholder="Select Description" autocomplete="off">
+                                        <datalist id="descriptionSuggestions"></datalist>
+                                    </div>
+
+                                    <div class="col-md-2 col-sm-6">
+                                        <label for="condition" class="form-label">Condition</label>
+                                        <input type="text" class="form-control" id="condition" name="condition"
+                                            style="text-transform: capitalize;" autocomplete="off">
+                                    </div>
+
+                                    <div class="col-md-2 col-sm-6">
+                                        <label for="fixedvalue" class="form-label">Fixed Value</label>
+                                        <input type="number" class="form-control" id="fixedvalue" name="fixedvalue"
+                                            style="text-transform: capitalize;" autocomplete="off">
+                                    </div>
+
+                                    <div class="col-md-2 col-sm-6">
+                                        <label for="hsncode" class="form-label">HSN Code</label>
+                                        <input type="text" class="form-control" id="hsncode" name="hsncode"
+                                            style="text-transform: capitalize;" autocomplete="off">
+                                    </div>
+
+                                    <div class="col-md-1 col-sm-1 d-flex flex-column justify-content-end">
+                                        <button type="button" class="btn btn-sm btn-primary w-100"
+                                            id="addDropdownMenuList">Add</button>
+                                    </div>
+
+                                    <div class="table-responsive mt-3" style="max-height: 300px; overflow-y: auto;">
+                                        <table class="table table-sm table-bordered text-center align-middle"
+                                            id="dropdownMenuTable">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th>Value Assigned To</th>
+                                                    <th>Description</th>
+                                                    <th>Condition</th>
+                                                    <th>Fixed Value</th>
+                                                    <th>HSN Code</th>
+                                                    <th>Action</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <!-- Data will be inserted here -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!--  Add Country Details -->
+                            <div class="tab-pane fade" id="countryDetails" role="tabpanel">
+                                <div class="row g-2">
+                                    <div class="col-md-2 col-sm-6">
+                                        <label for="countryCode" class="form-label">Country Code</label>
+                                        <input type="text" list="countryCodeSuggestions"
+                                            class="form-control text-capitalize" id="countryCode"
+                                            placeholder="Choose..." autocomplete="off" />
+                                        <datalist id="countryCodeSuggestions">
+                                            <!-- Options will be populated by JS -->
+                                        </datalist>
+                                    </div>
+
+                                    <div class="col-md-3 col-sm-6">
+                                        <label for="countryName" class="form-label">Country Name</label>
+                                        <input type="text" class="form-control" list="countryNameSuggestions"
+                                            id="countryName" name="countryName" required placeholder="Choose..."
+                                            autocomplete="off">
+                                        <datalist id="countryNameSuggestions"></datalist>
+                                    </div>
+
+                                    <div class="col-md-2 col-sm-6">
+                                        <label for="region" class="form-label">Region</label>
+                                        <input type="text" class="form-control" id="region" name="region"
+                                            style="text-transform: capitalize;" autocomplete="off">
+                                    </div>
+
+                                    <div class="col-md-1 col-sm-1 d-flex flex-column justify-content-end">
+                                        <button type="button" class="btn btn-sm btn-primary w-100"
+                                            id="addCountry">Add</button>
+                                    </div>
+
+                                    <div class="table-responsive mt-3" style="max-height: 300px; overflow-y: auto;">
+                                        <table class="table table-sm table-bordered text-center align-middle"
+                                            id="countryMenuTable">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th>Country Code</th>
+                                                    <th>Country Name</th>
+                                                    <th>Region</th>
+                                                    <th>Action</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <!-- Data will be inserted here -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Setting Parameters -->
+                            <div class="tab-pane fade" id="SettingParameters" role="tabpanel">
+                                <div class="container mt-4">
+                                    <div id="scroll-wrapper" class="overflow-auto border rounded"
+                                        style="max-height: 70vh;">
+                                        <div id="setting-parameters-container" class="p-3"></div>
+                                    </div>
+
+                                    <div class="text-end mt-3">
+                                        <button id="saveSettingsBtn" class="btn btn-success">Save Settings</button>
+                                    </div>
+                                </div>
+
+                            </div>
+
+
+                            <!-- Other Tab Contents (e.g., #missingPinCode, #dropdownList-details, etc.) go here if needed -->
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Local Scripts -->
+    <script src="assets/js/server.js"></script>
+    <script src="assets/js/navbar.js"></script>
+    <script src="assets/js/footer.js"></script>
+    <script src="assets/js/AccessRules.js"></script>
+    <script src="assets/js/scripts.js"></script>
+    <script src="assets/js/taxDescription.js"></script>
+    <script src="assets/js/logout.js"></script>
+    <script src="assets/js/dropdownLoader.js"></script>
+    <script src="assets/js/utils.js"></script>
+    <script src="assets/js/RouteDetails.js"></script>
+    <script src="assets/js/MissingPincode.js"></script>
+    <script src="assets/js/DropdownListDetails.js"></script>
+    <script src="assets/js/CountryDetails.js"></script>
+    <script src="assets/js/SettingParameters.js"></script>
+</body>
+
+</html>
