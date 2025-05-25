@@ -1,0 +1,24 @@
+/*  accordion icon --------------------------------------------------- */
+[data-sp-accordion] button[aria-expanded="true"] .toggle-icon {
+    transform: rotate(45deg);
+    color: red;
+}
+
+[data-sp-accordion] .toggle-icon {
+    transition: transform .25s ease, color .25s ease;
+}
+
+/*  busy-button spinner ---------------------------------------------- */
+button[data-busy] {
+    pointer-events: none;
+    /* stops extra clicks */
+    opacity: .6;
+}
+
+button[data-busy] .spinner {
+    display: inline-block;
+}
+
+button .spinner {
+    display: none;
+}

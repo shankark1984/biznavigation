@@ -215,8 +215,8 @@
                                     <div class="col-md-3 col-sm-6">
                                         <label for="description" class="form-label">Description</label>
                                         <input type="text" class="form-control" list="descriptionSuggestions"
-                                            id="description" name="description" required
-                                            placeholder="Select Description" autocomplete="off">
+                                            id="description" name="description" placeholder="Select Description"
+                                            autocomplete="off">
                                         <datalist id="descriptionSuggestions"></datalist>
                                     </div>
 
@@ -280,7 +280,7 @@
                                     <div class="col-md-3 col-sm-6">
                                         <label for="countryName" class="form-label">Country Name</label>
                                         <input type="text" class="form-control" list="countryNameSuggestions"
-                                            id="countryName" name="countryName" required placeholder="Choose..."
+                                            id="countryName" name="countryName" placeholder="Choose..."
                                             autocomplete="off">
                                         <datalist id="countryNameSuggestions"></datalist>
                                     </div>
@@ -315,7 +315,229 @@
                                 </div>
                             </div>
                             <!-- Setting Parameters -->
+
+
                             <div class="tab-pane fade" id="SettingParameters" role="tabpanel">
+                                <div class="container mt-4">
+                                    <div id="scroll-wrapper" class="overflow-auto border rounded"
+                                        style="max-height: 70vh;">
+
+                                        <!-- 👇 NEW — accordion wrapper -->
+                                        <div id="accordion-settings">
+                                            <!-- ====== International - CBM Volume ====== -->
+                                            <div class="card mb-3 shadow-sm">
+                                                <div class="card-header d-flex justify-content-between align-items-center bg-primary text-white fw-bold py-2"
+                                                    data-bs-toggle="collapse" data-bs-target="#group-collapse-1"
+                                                    aria-expanded="false" aria-controls="group-collapse-1"
+                                                    style="cursor:pointer;">
+                                                    <span>International - CBM Volume</span>
+                                                    <span class="toggle-icon rotate-icon">+</span>
+                                                </div>
+                                                <div class="collapse" id="group-collapse-1"
+                                                    data-bs-parent="#accordion-settings">
+                                                    <div class="card-body">
+                                                        <div class="row g-2">
+                                                            <div class="col-12 col-md-2">
+                                                                <label for="airFreightInternational"
+                                                                    class="form-label">By Air Freight</label>
+                                                                <input type="number" class="form-control"
+                                                                    id="airFreightInternational"
+                                                                    name="airFreightInternational" min="0" step="1">
+                                                            </div>
+                                                            <div class="col-12 col-md-2">
+                                                                <label for="courierInternational" class="form-label">By
+                                                                    Courier</label>
+                                                                <input type="number" class="form-control"
+                                                                    id="courierInternational"
+                                                                    name="courierInternational" min="0" step="1">
+                                                            </div>
+                                                            <div class="col-12 col-md-2">
+                                                                <label for="seaFreightInternational"
+                                                                    class="form-label">By Sea Freight</label>
+                                                                <input type="number" class="form-control"
+                                                                    id="seaFreightInternational"
+                                                                    name="seaFreightInternational" min="0" step="1">
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- ====== Domestic Volume in Cubic Centimetres ====== -->
+                                            <div class="card mb-3 shadow-sm">
+                                                <div class="card-header d-flex justify-content-between align-items-center bg-primary text-white fw-bold py-2"
+                                                    data-bs-toggle="collapse" data-bs-target="#group-collapse-2"
+                                                    aria-expanded="false" aria-controls="group-collapse-2"
+                                                    style="cursor:pointer;">
+                                                    <span>Domestic Volume in Cubic Centimetres</span>
+                                                    <span class="toggle-icon rotate-icon">+</span>
+                                                </div>
+                                                <div class="collapse" id="group-collapse-2"
+                                                    data-bs-parent="#accordion-settings">
+                                                    <div class="card-body">
+                                                        <div class="row g-2">
+                                                            <div class="col-12 col-md-2">
+                                                                <label for="airDomestic" class="form-label">By
+                                                                    Air</label>
+                                                                <input type="number" class="form-control"
+                                                                    id="airDomestic" name="airDomestic" min="0"
+                                                                    step="1">
+                                                            </div>
+                                                            <div class="col-12 col-md-2">
+                                                                <label for="roadDomestic" class="form-label">By
+                                                                    Road</label>
+                                                                <input type="number" class="form-control"
+                                                                    id="roadDomestic" name="roadDomestic" min="0"
+                                                                    step="1">
+                                                            </div>
+                                                            <div class="col-12 col-md-2">
+                                                                <label for="courierDomestic" class="form-label">By
+                                                                    Courier</label>
+                                                                <input type="number" class="form-control"
+                                                                    id="courierDomestic" name="courierDomestic" min="0"
+                                                                    step="1">
+                                                            </div>
+                                                            <div class="col-12 col-md-2">
+                                                                <label for="railDomestic" class="form-label">By
+                                                                    Rail</label>
+                                                                <input type="number" class="form-control"
+                                                                    id="railDomestic" name="railDomestic" min="0"
+                                                                    step="1">
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- ====== Domestic – CFT ====== -->
+                                            <div class="card mb-3 shadow-sm">
+                                                <div class="card-header d-flex justify-content-between align-items-center bg-primary text-white fw-bold py-2"
+                                                    data-bs-toggle="collapse" data-bs-target="#group-collapse-3"
+                                                    aria-expanded="false" aria-controls="group-collapse-3"
+                                                    style="cursor:pointer;">
+                                                    <span>Domestic - CFT</span>
+                                                    <span class="toggle-icon rotate-icon">+</span>
+                                                </div>
+                                                <div class="collapse" id="group-collapse-3"
+                                                    data-bs-parent="#accordion-settings">
+                                                    <div class="card-body">
+                                                        <div class="row g-2">
+                                                            <div class="col-12 col-md-2">
+                                                                <label for="airDomesticCFT" class="form-label">By
+                                                                    Air-CFT</label>
+                                                                <input type="number" class="form-control"
+                                                                    id="airDomesticCFT" name="airDomesticCFT" min="0"
+                                                                    step="1">
+                                                            </div>
+                                                            <div class="col-12 col-md-2">
+                                                                <label for="roadDomesticCFT" class="form-label">By
+                                                                    Road-CFT</label>
+                                                                <input type="number" class="form-control"
+                                                                    id="roadDomesticCFT" name="roadDomesticCFT" min="0"
+                                                                    step="1">
+                                                            </div>
+                                                            <div class="col-12 col-md-2">
+                                                                <label for="courierDomesticCFT" class="form-label">By
+                                                                    Courier-CFT</label>
+                                                                <input type="number" class="form-control"
+                                                                    id="courierDomesticCFT" name="courierDomesticCFT"
+                                                                    min="0" step="1">
+                                                            </div>
+                                                            <div class="col-12 col-md-2">
+                                                                <label for="railDomesticCFT" class="form-label">By
+                                                                    Rail-CFT</label>
+                                                                <input type="number" class="form-control"
+                                                                    id="railDomesticCFT" name="railDomesticCFT" min="0"
+                                                                    step="1">
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- ====== LR / GCN / AWB & Invoice Format ====== -->
+                                            <div class="card mb-3 shadow-sm">
+                                                <div class="card-header d-flex justify-content-between align-items-center bg-primary text-white fw-bold py-2"
+                                                    data-bs-toggle="collapse" data-bs-target="#group-collapse-4"
+                                                    aria-expanded="false" aria-controls="group-collapse-4"
+                                                    style="cursor:pointer;">
+                                                    <span>LR / GCN / AWB and Invoice Format</span>
+                                                    <span class="toggle-icon rotate-icon">+</span>
+                                                </div>
+                                                <div class="collapse" id="group-collapse-4"
+                                                    data-bs-parent="#accordion-settings">
+                                                    <div class="card-body">
+                                                        <div class="row g-2">
+                                                            <div class="col-12 col-md-2">
+                                                                <label for="shipmentNumberFormat" class="form-label">LR
+                                                                    / GCN / AWB – Format</label>
+                                                                <input type="text" class="form-control"
+                                                                    id="shipmentNumberFormat"
+                                                                    name="shipmentNumberFormat">
+                                                            </div>
+                                                            <div class="col-12 col-md-2">
+                                                                <label for="invoiceNumberFormat"
+                                                                    class="form-label">Invoice No Format</label>
+                                                                <input type="text" class="form-control"
+                                                                    id="invoiceNumberFormat" name="invoiceNumberFormat">
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- ====== Fixed Charges ====== -->
+                                            <div class="card mb-3 shadow-sm">
+                                                <div class="card-header d-flex justify-content-between align-items-center bg-primary text-white fw-bold py-2"
+                                                    data-bs-toggle="collapse" data-bs-target="#group-collapse-5"
+                                                    aria-expanded="false" aria-controls="group-collapse-5"
+                                                    style="cursor:pointer;">
+                                                    <span>Fixed Charges</span>
+                                                    <span class="toggle-icon rotate-icon">+</span>
+                                                </div>
+                                                <div class="collapse" id="group-collapse-5"
+                                                    data-bs-parent="#accordion-settings">
+                                                    <div class="card-body">
+                                                        <div class="row g-2">
+                                                            <div class="col-12 col-md-2">
+                                                                <label for="codAmount" class="form-label">COD
+                                                                    Amount</label>
+                                                                <input type="number" class="form-control" id="codAmount"
+                                                                    name="codAmount" min="0" step="1">
+                                                            </div>
+                                                            <div class="col-12 col-md-2">
+                                                                <label for="fovAmount" class="form-label">FOV Amount
+                                                                    (%)</label>
+                                                                <div class="input-group">
+                                                                    <input type="number" class="form-control"
+                                                                        id="fovAmount" name="fovAmount" min="0"
+                                                                        max="100" step="0.01">
+                                                                    <span class="input-group-text">%</span>
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-12 col-md-2">
+                                                                <label for="docketCharges" class="form-label">Docket
+                                                                    Charges</label>
+                                                                <input type="number" class="form-control"
+                                                                    id="docketCharges" name="docketCharges" min="0"
+                                                                    step="1">
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div><!-- /#accordion-settings -->
+
+                                    </div><!-- /#scroll-wrapper -->
+
+                                    <div class="text-end mt-3">
+                                        <button id="saveSettingsBtn" class="btn btn-success">Save Settings</button>
+                                    </div>
+                                </div>
+                            </div>
+
+
+                            <!-- <div class="tab-pane fade" id="SettingParameters" role="tabpanel">
                                 <div class="container mt-4">
                                     <div id="scroll-wrapper" class="overflow-auto border rounded"
                                         style="max-height: 70vh;">
@@ -327,7 +549,7 @@
                                     </div>
                                 </div>
 
-                            </div>
+                            </div> -->
 
 
                             <!-- Other Tab Contents (e.g., #missingPinCode, #dropdownList-details, etc.) go here if needed -->
