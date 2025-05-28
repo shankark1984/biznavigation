@@ -160,13 +160,19 @@ let isEditMode = false;
 
 function toggleEditMode(enable) {
     isEditMode = enable;
-    document.querySelectorAll('.delete-row').forEach(btn => {
+
+    document.querySelectorAll('.delete-row, .remove-row').forEach(btn => {
         btn.disabled = enable;
-        enable ? btn.classList.add('disabled') : btn.classList.remove('disabled');
+        if (enable) {
+            btn.classList.add('disabled');
+        } else {
+            btn.classList.remove('disabled');
+        }
     });
-    // Call this when entering edit/save mode:
-    // toggleEditMode(true);
-    // Call this when done:
-    // toggleEditMode(false);
+
+    // Usage:
+    // toggleEditMode(true);  // Enter edit/save mode: disables delete/remove
+    // toggleEditMode(false); // Exit edit/save mode: enables delete/remove
 }
+
 

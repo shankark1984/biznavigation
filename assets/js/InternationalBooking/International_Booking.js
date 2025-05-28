@@ -30,6 +30,7 @@ document.getElementById('awbNo').addEventListener('change', async function () {
     try {
         await fetchDocketDetails(awbNoInput.value);  // Wait for fetch to complete
         await loadFreightCharges();                        // Then load charges
+        await loadVolumetricDetails();                    // Then load volumetric rows
         await setupChargeTypeValidation();                 // Then setup validation
     } catch (error) {
         console.error('Error loading AWB details:', error);
@@ -117,6 +118,13 @@ document.getElementById('modifyButton').addEventListener('click', async function
     saveButton.innerHTML = '<i class="bi bi-save"></i> Update';
     document.getElementById('awbNo').disabled = true;
     document.getElementById('addFreightRow').disabled = false;
+
+    document.getElementById('chargeableWeight').disabled = true;
+    document.getElementById('totalActualWtV').disabled = true;
+    document.getElementById('volumeWtV').disabled = true;
+    document.getElementById('totalvolumeWtV').disabled = true;
+    document.getElementById('chargableWtV').disabled = true;
+
     toggleEditMode(false);
 });
 
@@ -361,7 +369,23 @@ document.getElementById('saveButton').addEventListener('click', function () {
     saveButton.innerHTML = '<i class="bi bi-save"></i> Update';
     deleteButton.disabled = true;
     saveFreightCharges();
+    saveNewVolumetricRows();
     document.getElementById('addFreightRow').disabled = true;
     toggleEditMode(true);
 });
 
+document.addEventListener("DOMContentLoaded", function () {
+    const actualWeightInput = document.getElementById("actualWeight");
+    const volumetricWeightInput = document.getElementById("volumetricWeight");
+    const chargeableWeightInput = document.getElementById("chargeableWeight");
+
+    function updateChargeableWeight() {
+        const actual = parseFloat(actualWeightInput.value) || 0;
+        const volumetric = parseFloat(volumetricWeightInput.value) || 0;
+        const chargeable = Math.max(actual, volumetric);
+        chargeableWeightInput.value = chargeable.toFixed(2);
+    }
+
+    actualWeightInput.addEventListener("input", updateChargeableWeight);
+    volumetricWeightInput.addEventListener("input", updateChargeableWeight);
+});

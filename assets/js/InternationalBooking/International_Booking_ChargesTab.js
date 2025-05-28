@@ -143,7 +143,8 @@ async function saveFreightCharges() {
         const { data: existingData, error: fetchError } = await supabaseClient
             .from('InternationalBookingCharges')
             .select('ChargesType')
-            .eq('DocketNo', awbNoValue);
+            .eq('ID_IB', freightElements.tempFormID.value.trim());
+        
 
         if (fetchError) throw fetchError;
 
