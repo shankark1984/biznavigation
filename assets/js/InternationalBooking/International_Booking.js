@@ -1,3 +1,6 @@
+loadSuggestions('partySuggestions', 'PartyDetails', companyID);
+loadSuggestions('vendorSuggestions', 'PartyDetails', companyID);
+
 async function loadAWBNoDetails(query) {
     if (!query) return;
 
@@ -28,10 +31,13 @@ const awbNoInput = document.getElementById('awbNo');
 
 document.getElementById('awbNo').addEventListener('change', async function () {
     try {
-        await fetchDocketDetails(awbNoInput.value);  // Wait for fetch to complete
-        await loadFreightCharges();                        // Then load charges
-        await loadVolumetricDetails();                    // Then load volumetric rows
-        await setupChargeTypeValidation();                 // Then setup validation
+        await fetchDocketDetails(awbNoInput.value);// Wait for fetch to complete
+        await setupChargeTypeValidation();
+        const tempFormID = freightElements.tempFormID.value.trim();
+        if (!tempFormID.includes('TEMP')) {
+            await loadFreightCharges();                        // Then load charges
+            await loadVolumetricDetails(); // Then load volumetric rows
+        }
     } catch (error) {
         console.error('Error loading AWB details:', error);
         alert('Failed to load docket details. Please try again.');
@@ -67,7 +73,7 @@ async function fetchDocketDetails(docketNo) {
     document.getElementById('poNo').value = data.PONo;
     document.getElementById('shippingType').value = data.ShippingType;
     document.getElementById('carrierName').value = data.CourierName;
-    document.getElementById('vendorCode').value = data.ServiceProviderCode;
+    document.getElementById('serviceProviderCode').value = data.ServiceProviderCode;
     document.getElementById('serviceProvider').value = data.ServiceProviderName;
     document.getElementById('shipperRef').value = data.ShipperRef;
     document.getElementById('invoiceValue').value = data.ConsignmentValue;

@@ -57,7 +57,7 @@ const workingBranch = localStorage.getItem('WorkingBranch');
 
 
 // Arrays to store the fetched data for different types
-let partyDetails = [];
+let partyDetails = []
 let vehicleTypeData = [];
 let bankNameData = [];
 let bloodGroupData = [];

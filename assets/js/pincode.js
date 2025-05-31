@@ -14,7 +14,7 @@ $(document).on('input', '#branchIFSCCode', function () {
 async function setupPincodeListener(pinCodeFieldId, cityFieldId, stateFieldId = 'state', countryFieldId = 'country') {
     const pincodeInput = document.getElementById(pinCodeFieldId);
     if (!pincodeInput) {
-        console.warn(`Pincode input not found: ${pinCodeFieldId}`);
+        // console.warn(`Pincode input not found: ${pinCodeFieldId}`);
         return;
     }
 

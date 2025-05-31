@@ -2,10 +2,15 @@
 const addButton = document.getElementById('addOrUpdateTariff');
 addButton.addEventListener('click', () => addOrUpdateTariff());
 
+
+$(document).on('click', '.editTariff', function () {
+    const tariffId = $(this).data('id');
+    editTariffDetails(tariffId);
+});
 async function fetchTariffs(partyCode) {
     const tableBody = document.getElementById('tariffTableBody');
     tableBody.innerHTML = '';
-
+    console.log('Fetching tariffs for party code:', partyCode);
     const { data, error } = await supabaseClient
         .from('PartyTariff')
         .select('*')
@@ -39,10 +44,17 @@ async function fetchTariffs(partyCode) {
             <td>${tariff.Rate}</td>
             <td>${tariff.TariffType}</td>
             <td>
-                <button class="btn btn-warning btn-sm" onclick="editTariff(${tariff.id})">Edit</button>
+                                <button type="button"
+                            class="btn btn-sm btn-outline-primary me-1 editTariff"
+                            data-id="${tariff.id}">
+                        <i class="bi bi-pencil-square"></i> Edit
+                    </button>
+        
             </td>
         `;
         tableBody.appendChild(row);
+
+        toggleButtons(".editTariff", false); //Disable edit and delete buttons
     });
 }
 
@@ -103,7 +115,7 @@ async function addOrUpdateTariff(isEdit = false, tariffId = null) {
     fetchTariffs(partyCode);
 }
 
-function editTariff(tariffId) {
+function editTariffDetails(tariffId) {
     supabaseClient
         .from('PartyTariff')
         .select('*')

@@ -176,3 +176,138 @@ function toggleEditMode(enable) {
 }
 
 
+/**
+ * Load suggestions into a datalist element from a Supabase table.
+ *
+ * @param {string} datalistId - The ID of the datalist element.
+ * @param {string} tableName - Supabase table to fetch data from.
+ * @param {string} companyId - The company_id to filter records.
+ * @param {string} valueField - The field to use as the value (default: 'PartyName').
+ * @param {string} displayField - The field to display alongside value (default: 'PartyCode').
+ * 
+ *    Example usage for PartyDetails
+    loadSuggestions('partySuggestions', 'PartyDetails', 123);
+    Example for loading vendors
+    loadSuggestions('vendorSuggestions', 'VendorList', 123, 'VendorName', 'VendorCode');
+ */
+const suggestionMaps = {}; // Cache for displayField → valueField mappings
+
+async function loadSuggestions(
+    datalistId,
+    tableName,
+    companyId,
+    valueField = 'PartyCode',
+    displayField = 'PartyName'
+) {
+    const datalist = document.getElementById(datalistId);
+    if (!datalist) {
+        console.error(`Datalist with ID "${datalistId}" not found.`);
+        return;
+    }
+
+    const { data, error } = await supabaseClient
+        .from(tableName)
+        .select(`${valueField}, ${displayField}`)
+        .eq('company_id', companyId)
+        .order(displayField, { ascending: true });
+
+    if (error) {
+        console.error(`Error loading suggestions from ${tableName}:`, error);
+        return;
+    }
+
+    // Clear old options
+    datalist.innerHTML = '';
+    const map = {};
+
+    data.forEach(item => {
+        const option = document.createElement('option');
+        option.value = item[displayField];
+        datalist.appendChild(option);
+        map[item[displayField]] = item[valueField];
+    });
+
+    suggestionMaps[datalistId] = map;
+
+    // Attach input event to update partyCodes
+    attachPartyCodeFiller('partyNameReg', datalistId, 'partyCodes');
+}
+
+function attachPartyCodeFiller(inputId, datalistId, codeFieldId) {
+    const input = document.getElementById(inputId);
+    const codeField = document.getElementById(codeFieldId);
+
+    if (!input || !codeField) return;
+
+    input.addEventListener('input', () => {
+        const typedValue = input.value;
+        const code = suggestionMaps[datalistId]?.[typedValue] || '';
+        codeField.value = code;
+    });
+}
+
+// Function to validate a form with custom rules 
+// Function to validate a single field based on a test function and message
+function validateField(selector, testFn, message) {
+    const $el = $(selector);
+    const value = $el.val().trim();
+    const $feedback = $el.next('.invalid-feedback');
+    const isValid = testFn(value);
+
+    if (!isValid) {
+        $el.addClass('is-invalid');
+        if (!$feedback.length) {
+            $el.after(`<div class="invalid-feedback">${message}</div>`);
+        }
+    } else {
+        $el.removeClass('is-invalid');
+        $feedback.remove();
+    }
+
+    return isValid;
+}
+// Function to validate a form based on an array of rules
+// Each rule should have a selector, a test function, and a message
+function validateForm(rules) {
+    return rules.map(rule =>
+        validateField(rule.selector, rule.test, rule.message)
+    ).every(Boolean);
+}
+// Function to disable buttons based on a selector
+function disableButtons(selector, disableParents = true) {
+    const $buttons = $(selector);
+
+    if ($buttons.length > 0) {
+        $buttons.each(function () {
+            $(this).attr("disabled", "disabled").prop("disabled", true);
+            if (disableParents) {
+                $(this).closest("form, fieldset").prop("disabled", true);
+            }
+        });
+        console.log(`Disabled buttons matching: "${selector}"`);
+    } else {
+        console.warn(`No buttons found for selector: "${selector}"`);
+    }
+}
+// Function to enable or disable buttons based on a selector
+function toggleButtons(selector, shouldEnable = true, toggleParents = true) {
+    // Wait a short time to ensure DOM is updated
+    setTimeout(() => {
+        const $buttons = $(selector);
+
+        if ($buttons.length === 0) {
+            // console.warn(`No buttons found for selector: "${selector}"`);
+            return;
+        }
+
+        $buttons.each(function () {
+            $(this).prop('disabled', !shouldEnable);
+
+            if (toggleParents) {
+                $(this).closest("form, fieldset").prop('disabled', !shouldEnable);
+            }
+        });
+
+        // console.log(`${shouldEnable ? 'Enabled' : 'Disabled'} buttons for: "${selector}"`);
+    }, 100); // Adjust delay as needed
+}

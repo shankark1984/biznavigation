@@ -45,7 +45,6 @@ document.addEventListener('DOMContentLoaded', () => {
     loadDropdownOptions('ShippingType', 'shippingType');
     loadDropdownOptions('UOMType', 'uomType');
     loadDropdownOptions('ChargesType', 'chargesTypeList');
-    // loadDropdownOptions('ChargesType', 'chargesType');
 });
 
 // Centralized configuration for input and datalist IDs with their corresponding value types
@@ -144,30 +143,36 @@ function attachValidation(inputId, datalistId = null) {
 }
 
 
-// Event listener for dynamic loading
-function addInputEventListener(inputId, typeOfValue, isCustom = false) {
+// Event listener for dynamic <input> / <select> loading
+function addInputEventListener(inputId, typeOfValue) {
     const input = document.getElementById(inputId);
     const datalistId = `${inputId}Suggestions`;
     if (!input) return;
 
     const isSelect = input.tagName === 'SELECT';
 
-    const loadFunction = isCustom
-        ? (query) => loadPartyDetails(query, typeOfValue, datalistId)
-        : (query) => loadDropdownData(query, typeOfValue, datalistId);
+    // Wrap the loader so we can call it with any query string
+    const loadFunction = (query = '') =>
+        loadDropdownData(query, typeOfValue, datalistId);
 
     if (!isSelect) {
-        input.addEventListener('input', (e) => loadFunction(e.target.value));
+        // Live filtering while the user types
+        input.addEventListener('input', e => loadFunction(e.target.value));
+
+        // Pre-load *all* options when the field first gains focus
         input.addEventListener('focus', () => {
             loadFunction('');
-            const value = input.value;
+            // Trick to keep the caret at the end after reload
+            const v = input.value;
             input.value = '';
-            input.value = value;
+            input.value = v;
         });
     }
 
+    // Hook up any custom validation you already have
     attachValidation(inputId, isSelect ? null : datalistId);
 }
+
 
 
 // Initialize all listeners and validation

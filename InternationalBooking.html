@@ -40,7 +40,7 @@
                 <h3 class="mb-0">International Booking</h3>
                 <input type="hidden" id="tempFormID" name="tempFormID">
                 <input type="hidden" id="partyCode" name="partyCode">
-                <input type="hidden" id="vendorCode" name="vendorCode">
+                <input type="hidden" id="serviceProviderCode" name="serviceProviderCode">
             </div>
 
             <div class="card-body">
@@ -218,9 +218,9 @@
                             <div class="row align-items-center">
                                 <label for="PartyAddress" class="col-4 col-form-label">Pickup Address</label>
                                 <div class="col-8">
-                                    <input list="PartyAddressSuggestions" class="form-control" id="PartyAddress"
-                                        name="PartyAddress" required autocomplete="off"
-                                        oninput="PartyAddressDetails(this.value, 'Address', 'PartyAddressSuggestions')">
+                                    <textarea list="PartyAddressSuggestions" class="form-control" id="PartyAddress"
+                                        name="PartyAddress" required autocomplete="off" rows="1"
+                                        oninput="PartyAddressDetails(this.value, 'Address', 'PartyAddressSuggestions')"></textarea>
                                     <datalist id="PartyAddressSuggestions"></datalist>
                                 </div>
                             </div>
@@ -703,7 +703,6 @@
     <script src="assets/js/AccessRules.js"></script>
     <script src="assets/js/scripts.js"></script>
     <script src="assets/js/taxDescription.js"></script>
-    <script src="assets/js/customerlist.js"></script>
     <script src="assets/js/logout.js"></script>
     <script src="assets/js/dropdownLoader.js"></script>
     <script src="assets/js/utils.js"></script>
