@@ -17,7 +17,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
-    <script src="https://unpkg.com/@supabase/supabase-js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+
 
     <!-- Optional Custom CSS (externalize if needed) -->
     <style>
@@ -97,6 +98,9 @@
                                     Details</button></li>
                             <li class="nav-item"><button class="nav-link" data-bs-toggle="tab"
                                     data-bs-target="#countryDetails" type="button" role="tab">Country Details</button>
+                            </li>
+                            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab"
+                                    data-bs-target="#cityDetails" type="button" role="tab">City Details</button>
                             </li>
                             <li class="nav-item"><button class="nav-link" data-bs-toggle="tab"
                                     data-bs-target="#SettingParameters" type="button" role="tab">Setting
@@ -199,6 +203,7 @@
                                     </div>
                                 </div>
                             </div>
+
                             <!--  Dropdown List Details -->
                             <div class="tab-pane fade" id="dropdownListdetails" role="tabpanel">
                                 <div class="row g-2">
@@ -314,9 +319,71 @@
                                     </div>
                                 </div>
                             </div>
+
+                            <!--  Add City Details -->
+                            <div class="tab-pane fade" id="cityDetails" role="tabpanel">
+                                <div class="row g-2">
+                                    <div class="col-md-2 col-sm-6">
+                                        <label for="cityName" class="form-label">City Name</label>
+                                        <input type="text" list="cityNameSuggestions"
+                                            class="form-control text-capitalize" id="cityName" placeholder="Choose..."
+                                            autocomplete="off" />
+                                        <datalist id="cityNameSuggestions">
+                                            <!-- Options will be populated by JS -->
+                                        </datalist>
+                                    </div>
+
+                                    <div class="col-md-3 col-sm-6">
+                                        <label for="stateName" class="form-label">State</label>
+                                        <input type="text" class="form-control" list="stateNameSuggestions"
+                                            id="stateName" name="stateName" placeholder="Choose..." autocomplete="off">
+                                        <datalist id="stateNameSuggestions"></datalist>
+                                    </div>
+
+                                    <div class="col-md-2 col-sm-6">
+                                        <label for="zoneName" class="form-label">Zone</label>
+                                        <input type="text" class="form-control" id="zoneName" name="zoneName"
+                                            list="zoneNameSuggestions" style="text-transform: capitalize;"
+                                            autocomplete="off">
+                                        <datalist id="zoneNameSuggestions"></datalist> <!-- ← NEW -->
+                                    </div>
+
+                                    <div class="col-md-2 col-sm-6">
+                                        <label for="cityCountryName" class="form-label">Country</label>
+                                        <input type="text" class="form-control" id="cityCountryName"
+                                            name="cityCountryName" list="cityCountryNameSuggestions"
+                                            style="text-transform: capitalize;" autocomplete="off">
+                                        <datalist id="cityCountryNameSuggestions"></datalist> <!-- ← NEW -->
+                                    </div>
+
+                                    <div class="col-md-1 col-sm-1 d-flex flex-column justify-content-end">
+                                        <button type="button" class="btn btn-sm btn-primary w-100"
+                                            id="addCityDetails">Add</button>
+                                    </div>
+
+                                    <div class="table-responsive mt-3" style="max-height: 300px; overflow-y: auto;">
+                                        <table class="table table-sm table-bordered text-center align-middle"
+                                            id="cityDetailsTable">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th>S.No.</th>
+                                                    <th>City Name</th>
+                                                    <th>State</th>
+                                                    <th>Zone</th>
+                                                    <th>Country</th>
+                                                    <th>Action</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <!-- Data will be inserted here -->
+                                            </tbody>
+                                        </table>
+
+                                    </div>
+                                </div>
+                            </div>
+
                             <!-- Setting Parameters -->
-
-
                             <div class="tab-pane fade" id="SettingParameters" role="tabpanel">
                                 <div class="container mt-4">
                                     <div id="scroll-wrapper" class="overflow-auto border rounded"
@@ -575,6 +642,7 @@
     <script src="assets/js/ApplicationSettings/MissingPincode.js"></script>
     <script src="assets/js/ApplicationSettings/DropdownListDetails.js"></script>
     <script src="assets/js/ApplicationSettings/CountryDetails.js"></script>
+    <script src="assets/js/ApplicationSettings/CityDetails.js"></script>
     <script src="assets/js/ApplicationSettings/SettingParameters.js"></script>
 </body>
 

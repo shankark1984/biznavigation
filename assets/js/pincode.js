@@ -177,7 +177,7 @@ function fetchCities(inputId, datalistId) {
 }
 
 document.getElementById('originList').addEventListener('input', function () {
-    fetchCities('originList', 'originListDatalist');
+    fetchCities('originList', 'originListDatalist1');
 });
 
 document.getElementById('destinationList').addEventListener('input', function () {

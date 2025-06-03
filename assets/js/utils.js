@@ -311,3 +311,20 @@ function toggleButtons(selector, shouldEnable = true, toggleParents = true) {
         // console.log(`${shouldEnable ? 'Enabled' : 'Disabled'} buttons for: "${selector}"`);
     }, 100); // Adjust delay as needed
 }
+function enforceUppercaseOnly(inputElement) {
+    if (!inputElement) return;
+
+    // Force uppercase and filter non-uppercase letters
+    inputElement.addEventListener('input', function () {
+        const cursorPos = this.selectionStart;
+        this.value = this.value.toUpperCase().replace(/[^A-Z]/g, '');
+        this.setSelectionRange(cursorPos, cursorPos);
+    });
+
+    // Prevent pasting lowercase or invalid characters
+    inputElement.addEventListener('paste', function (e) {
+        e.preventDefault();
+        const text = (e.clipboardData || window.clipboardData).getData('text');
+        document.execCommand('insertText', false, text.toUpperCase().replace(/[^A-Z]/g, ''));
+    });
+}
