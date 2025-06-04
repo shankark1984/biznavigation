@@ -1,35 +1,39 @@
-
 // Initialize Supabase
 const { createClient } = supabase;
-// Initialize Supabase
-const SUPABASE_URL = 'https://qfdrugniulwovfaijgkr.supabase.co'; // Your Supabase URL
+const SUPABASE_URL = 'https://qfdrugniulwovfaijgkr.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFmZHJ1Z25pdWx3b3ZmYWlqZ2tyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mjg1OTA4MjIsImV4cCI6MjA0NDE2NjgyMn0.Jnh7qgfwZlU-REZIML3cub8FHSfdkpZkDQUFgpIjo74'; // Your Supabase Anon Key
-
-
 const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-console.log(supabaseClient._restUrl);
 
-// Alert user if offline on page load
-if (!navigator.onLine) {
-    alert("No network!");
+
+// Handle network status
+function handleNetworkChange() {
+    if (navigator.onLine) {
+        console.log("Back online");
+    } else {
+        console.log("No network!");
+        alert("No network!");
+    }
 }
 
+// Initial network check
+handleNetworkChange();
+
 // Monitor network changes
-window.addEventListener('offline', () => {
-    console.log("No network!");
-});
-window.addEventListener('online', () => {
-    console.log("Back online");
-});
+window.addEventListener('online', handleNetworkChange);
+window.addEventListener('offline', handleNetworkChange);
 
 // Test Supabase connection
-(async () => {
+async function testSupabaseConnection() {
     try {
-        const { data, error } = await supabaseClient.from('company_profile').select('*').limit(1);
+        const { data, error } = await supabaseClient
+            .from('company_profile')
+            .select('*')
+            .limit(1);
+
         if (error) {
             console.error("Database server error:", error.message);
             if (!navigator.onLine) {
-                console.log("No network!");
+                console.log("Likely due to no internet.");
             }
         } else {
             console.log("Connected to database server successfully!");
@@ -38,7 +42,10 @@ window.addEventListener('online', () => {
         console.error("Unexpected error:", err);
         alert("Error connecting to database server.");
     }
-})();
+}
+
+// Run connection test
+testSupabaseConnection();
 
 
 const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;

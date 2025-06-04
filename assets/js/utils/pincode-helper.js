@@ -186,16 +186,33 @@ async function handleInput(e, datalistEl) {
 }
 
 // Attach listeners
-originInput.addEventListener('input', debounce(e => handleInput(e, originDatalist), 300));
-destinationInput.addEventListener('input', debounce(e => handleInput(e, destinationDatalist), 300));
+if (originInput && destinationInput) {
+    originInput.addEventListener('input', debounce(e => handleInput(e, originDatalist), 300));
+    destinationInput.addEventListener('input', debounce(e => handleInput(e, destinationDatalist), 300));
+} else {
+    // console.warn('One or both input elements not found on this page.');
+}
+
+// originInput.addEventListener('input', debounce(e => handleInput(e, originDatalist), 300));
+// destinationInput.addEventListener('input', debounce(e => handleInput(e, destinationDatalist), 300));
 
 // Update suggestions if movement/transit type changes
-[movementTypeSel, transitTypeSel].forEach(sel =>
-    sel.addEventListener('change', () => {
-        originInput.dispatchEvent(new Event('input'));
-        destinationInput.dispatchEvent(new Event('input'));
-    })
-);
+[movementTypeSel, transitTypeSel].forEach(sel => {
+    if (sel) {
+        sel.addEventListener('change', () => {
+            originInput?.dispatchEvent(new Event('input'));
+            destinationInput?.dispatchEvent(new Event('input'));
+        });
+    }
+});
+
+
+// [movementTypeSel, transitTypeSel].forEach(sel =>
+//     sel.addEventListener('change', () => {
+//         originInput.dispatchEvent(new Event('input'));
+//         destinationInput.dispatchEvent(new Event('input'));
+//     })
+// );
 // 👇 Validate value matches one from datalist
 function validateAgainstDatalist(inputEl, datalistEl, errorMessage = 'Invalid entry!') {
     const inputValue = inputEl.value.trim().toLowerCase();
@@ -210,16 +227,18 @@ function validateAgainstDatalist(inputEl, datalistEl, errorMessage = 'Invalid en
 }
 
 // 👇 Attach blur + input listeners for validation
-originInput.addEventListener('blur', () => {
-    validateAgainstDatalist(originInput, originDatalist);
-});
-destinationInput.addEventListener('blur', () => {
-    validateAgainstDatalist(destinationInput, destinationDatalist);
-});
+if (originInput && destinationInput) {
+    originInput.addEventListener('blur', () => {
+        validateAgainstDatalist(originInput, originDatalist);
+    });
+    destinationInput.addEventListener('blur', () => {
+        validateAgainstDatalist(destinationInput, destinationDatalist);
+    });
+    // 👇 Clear error as user types
+    originInput.addEventListener('input', () => resetError(originInput));
+    destinationInput.addEventListener('input', () => resetError(destinationInput));
+}
 
-// 👇 Clear error as user types
-originInput.addEventListener('input', () => resetError(originInput));
-destinationInput.addEventListener('input', () => resetError(destinationInput));
 
 // Fetch currency suggestions from Supabase
 async function fetchCurrencySuggestions(term, limit = 10) {
@@ -253,17 +272,19 @@ function updateCurrencyDatalist(datalistEl, items) {
     });
 }
 
-currencyInput.addEventListener('input', debounce(async function (e) {
-    const term = e.target.value.trim();
-    const currencies = await fetchCurrencySuggestions(term);
-    updateCurrencyDatalist(currencyDatalist, currencies);
-}, 300));
+if (currencyInput || currencyDatalist) {
+    currencyInput.addEventListener('input', debounce(async function (e) {
+        const term = e.target.value.trim();
+        const currencies = await fetchCurrencySuggestions(term);
+        updateCurrencyDatalist(currencyDatalist, currencies);
+    }, 300));
 
-currencyInput.addEventListener('blur', () => {
-    validateAgainstDatalist(currencyInput, currencyDatalist, 'Invalid currency code!');
-});
-currencyInput.addEventListener('input', () => resetError(currencyInput));
+    currencyInput.addEventListener('blur', () => {
+        validateAgainstDatalist(currencyInput, currencyDatalist, 'Invalid currency code!');
+    });
+    currencyInput.addEventListener('input', () => resetError(currencyInput));
 
-document.addEventListener('DOMContentLoaded', () => {
-    enforceUppercaseOnly(document.getElementById('currencyList'));
-});
+    document.addEventListener('DOMContentLoaded', () => {
+        enforceUppercaseOnly(document.getElementById('currencyList'));
+    });
+}
