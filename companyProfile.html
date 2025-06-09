@@ -154,7 +154,7 @@
 
                     <div class="tab-content p-3 border border-top-0" id="branchTabsContent">
                         <!-- Branch Details -->
-                        <div class="tab-pane fade " id="branch" role="tabpanel" aria-labelledby="branch-tab">
+                        <div class="tab-pane fade show active" id="branch" role="tabpanel" aria-labelledby="branch-tab">
                             <div class="row g-1">
                                 <div class="col-md-1 col-sm-6">
                                     <label for="branchCode" class="form-label small">Branch Code</label>
@@ -269,7 +269,7 @@
                         </div>
 
                         <!-- Bank Details -->
-                        <div class="tab-pane fade show active" id="bank" role="tabpanel" aria-labelledby="bank-tab">
+                        <div class="tab-pane fade" id="bank" role="tabpanel" aria-labelledby="bank-tab">
                             <div class="row g-1">
                                 <div class="col-md-2 col-sm-6">
                                     <label for="branchAccountNo" class="form-label small">Account No</label>
@@ -367,19 +367,17 @@
 
     <!-- JavaScript Files -->
     <script src="https://unpkg.com/@supabase/supabase-js"></script>
-    <script src="assets/js/server.js"></script>
-    <script src="assets/js/navbar.js"></script>
-    <script src="assets/js/footer.js"></script>
-    <script src="assets/js/AccessRules.js"></script>
-
+    <script src="assets/js/utils/server.js"></script>
+    <script src="assets/js/utils/navbar.js"></script>
+    <script src="assets/js/utils/footer.js"></script>
+    <script src="assets/js/UserAccessRules/AccessRules.js"></script>
     <script src="assets/js/CompanyProfile/bankManagement.js"></script>
     <script src="assets/js/CompanyProfile/branchManagement.js"></script>
     <script src="assets/js/CompanyProfile/companyProfile.js"></script>
-
     <script src="assets/js/utils/pincode-helper.js"></script>
-    <script src="assets/js/logout.js"></script>
-    <!-- <script src="assets/js/test.js"></script> -->
-    <!-- <script src="assets/js/scripts.js"></script> -->
+    <script src="assets/js/utils/logout.js"></script>
+
+
 
     <script>
         // Initialize first tab on load

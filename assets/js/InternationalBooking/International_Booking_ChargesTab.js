@@ -144,7 +144,7 @@ async function saveFreightCharges() {
             .from('InternationalBookingCharges')
             .select('ChargesType')
             .eq('ID_IB', freightElements.tempFormID.value.trim());
-        
+
 
         if (fetchError) throw fetchError;
 
@@ -191,7 +191,7 @@ async function saveFreightCharges() {
             .insert(insertData);
 
         if (error) throw error;
-        console.log('Charges saved successfully!');
+        // console.log('Charges saved successfully!');
     } catch (error) {
         console.error('Error:', error.message);
         alert(error.message || 'An error occurred while saving charges.');

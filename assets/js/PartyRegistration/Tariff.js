@@ -18,7 +18,7 @@ $(document).on('click', '.editTariff', function () {
 const fieldIds = [
     'partyCodes', 'effectiveDate', 'movementType', 'transitType',
     'modeType', 'shippingType', 'containerType', 'carrierName',
-    'originList', 'destinationList', 'uomType', 'minimumWeight',
+    'originList', 'portOfLoading', 'destinationList', 'portOfDischarge', 'uomType', 'minimumWeight',
     'uptoWeight', 'rate', 'tariffType', 'currencyCode'
 ];
 
@@ -31,7 +31,9 @@ const tariffFieldMap = {
     containerType: 'ContainerType',
     carrierName: 'Carrier',
     originList: 'Origin',
+    portOfLoading: 'PortofLoading',
     destinationList: 'Destination',
+    portOfDischarge: 'PortofDischarge',
     uomType: 'UOM',
     minimumWeight: 'MinimumWtKgs',
     uptoWeight: 'UptoWeightKgs',
@@ -75,7 +77,9 @@ async function fetchTariffs(partyCode) {
             <td>${tariff.ContainerType || 'N/A'}</td>
             <td>${tariff.Carrier}</td>
             <td>${tariff.Origin}</td>
+            <td>${tariff.PortofLoading}</td>
             <td>${tariff.Destination}</td>
+            <td>${tariff.PortofDischarge}</td>
             <td>${tariff.UOM}</td>
             <td>${tariff.MinimumWtKgs}</td>
             <td>${tariff.UptoWeightKgs}</td>
@@ -114,7 +118,9 @@ async function addOrUpdateTariffDetails(isEdit = false, tariffId = null) {
         ContainerType: fieldValues.containerType,
         Carrier: fieldValues.carrierName,
         Origin: fieldValues.originList,
+        PortofLoading: fieldValues.portOfLoading, // Assuming PortofLoading is same as Origin
         Destination: fieldValues.destinationList,
+        PortofDischarge: fieldValues.portOfDischarge, // Assuming PortofDischarge is same as Destination
         UOM: fieldValues.uomType,
         MinimumWtKgs: fieldValues.minimumWeight,
         UptoWeightKgs: fieldValues.uptoWeight,
@@ -139,8 +145,15 @@ async function addOrUpdateTariffDetails(isEdit = false, tariffId = null) {
             .eq('ContainerType', payload.ContainerType)
             .eq('Carrier', payload.Carrier)
             .eq('Origin', payload.Origin)
+            .eq('PortofLoading', payload.PortofLoading)
+            .eq('PortofDischarge', payload.PortofDischarge)
             .eq('Destination', payload.Destination)
-            .eq('TariffType', payload.TariffType);
+            .eq('TariffType', payload.TariffType)
+            .eq('UOM', payload.UOM)
+            .eq('MinimumWtKgs', payload.MinimumWtKgs)
+            .eq('UptoWeightKgs', payload.UptoWeightKgs)
+            .eq('Rate', payload.Rate)
+            .eq('CurrencyCode', payload.CurrencyCode);
 
         if (isEdit && tariffId) {
             duplicateQuery = duplicateQuery.neq('id', tariffId);  // exclude current row when editing
@@ -299,7 +312,9 @@ async function fetchFilteredTariffs(partyCode) {
       <td>${tariff.ContainerType || 'N/A'}</td>
       <td>${tariff.Carrier}</td>
       <td>${tariff.Origin}</td>
+      <td>${tariff.PortofLoading}</td>
       <td>${tariff.Destination}</td>
+      <td>${tariff.PortofDischarge}</td>
       <td>${tariff.UOM}</td>
       <td>${tariff.MinimumWtKgs}</td>
       <td>${tariff.UptoWeightKgs}</td>
@@ -335,3 +350,107 @@ filterFields.forEach(id => {
     }
 });
 
+//traiff calculation from table "PartyTariff" where PartyCode = 'partyCode' and 
+// EffectiveDate = 'effectiveDate' and MovementType = 'movementType' and 
+// TransitType = 'transitType' and ModeType = 'modeType' and 
+// ShippingType = 'shippingType' and ContainerType = 'containerType' and 
+// Carrier = 'carrierName' and Origin = 'originList' and Destination = 'destinationList' and 
+// TariffType = 'tariffType'
+async function calculateTariff() {
+    const partyCode = document.getElementById('partyCodes').value;
+    const effectiveDate = document.getElementById('bookedDate').value;
+    const movementType = document.getElementById('movementTypeI').value;
+    const transitType = document.getElementById('transitTypeI').value;
+    const modeType = document.getElementById('modeTypeI').value;
+    const shippingType = document.getElementById('shippingType').value;
+    const containerType = document.getElementById('containerType').value;
+    const carrierName = document.getElementById('carrierName').value;
+    const originList = document.getElementById('originList').value;
+    const destinationList = document.getElementById('destinationList').value;
+    const tariffType = document.getElementById('tariffType').value;
+
+    if (!partyCode || !effectiveDate ||
+        !movementType || !transitType || !modeType ||
+        !shippingType || !containerType || !carrierName ||
+        !originList || !destinationList || !tariffType) {
+        alert('Please fill in all fields to calculate tariff.');
+        return;
+    }
+    const query = supabaseClient
+        .from('PartyTariff')
+        .select('Rate')
+        .eq('PartyCode', partyCode)
+        .eq('EffectiveDate', effectiveDate)
+        .eq('MovementType', movementType)
+        .eq('TransitType', transitType)
+        .eq('ModeType', modeType)
+        .eq('ShippingType', shippingType)
+        .eq('ContainerType', containerType)
+        .eq('Carrier', carrierName)
+        .eq('Origin', originList)
+        .eq('Destination', destinationList)
+        .eq('TariffType', tariffType);
+    const { data, error } = await query;
+    if (error) {
+        console.error('Error fetching tariff:', error);
+        alert('Failed to fetch tariff. Check console for details.');
+        return;
+    }
+    if (!data || data.length === 0) {
+        alert('No tariff found for the specified criteria.');
+        return;
+    }
+    const rate = data[0].Rate;
+    if (!rate) {
+        alert('No rate found for the specified criteria.');
+        return;
+    }
+    // Display the calculated tariff rate
+    alert(`Calculated Tariff Rate: ${rate}`);
+    // Optionally, you can set this rate in a specific field
+    const rateField = document.getElementById('rate');
+    if (rateField) {
+        rateField.value = rate;
+    }
+    // Optionally, you can also scroll to the rate field
+    rateField.scrollIntoView({ behavior: 'smooth' });
+    // Optionally, you can focus on the rate field
+    rateField.focus();
+    // Optionally, you can highlight the rate field
+    rateField.classList.add('highlight-field');
+    setTimeout(() => rateField.classList.remove('highlight-field'), 1000);
+
+
+}
+
+async function fetchPortList(term = '', limit = 20) {
+    const { data, error } = await supabaseClient
+        .from('PortsDetails')
+        .select('PortName, PortCode, PortCountry')
+        .ilike('PortName', `%${term}%`)
+        .order('PortName')
+        .limit(limit);
+
+    if (error) {
+        console.error('Error fetching ports:', error.message);
+        return [];
+    }
+
+    return data;
+}
+
+function populateDatalist(datalistId, ports) {
+    const datalist = document.getElementById(datalistId);
+    datalist.innerHTML = '';
+    ports.forEach(port => {
+        const option = document.createElement('option');
+        option.value = `${port.PortName} (${port.PortCode}) - ${port.PortCountry}`;
+        datalist.appendChild(option);
+    });
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+    const ports = await fetchPortList();
+    populateDatalist('portOfLoadingDatalist', ports);
+    populateDatalist('portOfDischargeDatalist', ports);
+});

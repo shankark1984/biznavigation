@@ -104,20 +104,8 @@ let perWrite = false;
 let perDelete = false;
 let perUpdate = false;
 
+let insertedID = null;
 
-
-
-//Buttons 
-// const newButton = document.getElementById('newButton');
-// const modifyButton = document.getElementById('modifyButton');
-// const deleteButton = document.getElementById('deleteButton');
-// const reportButton = document.getElementById('reportButton');
-// const saveButton = document.getElementById('saveButton');
-
-// const saveBtnText = document.getElementById('saveButton').textContent.trim().toLowerCase();
-// const newBtnText = document.getElementById('newButton').textContent.trim().toLowerCase();
-// const deleteBtnText = document.getElementById('deleteButton').textContent.trim().toLowerCase();
-// const reportBtnText = document.getElementById('reportButton').textContent.trim().toLowerCase();
 
 document.addEventListener('DOMContentLoaded', () => {
     const saveButton = document.getElementById('saveButton');
@@ -164,3 +152,5 @@ function disablePullToRefresh() {
 
 // Call it when the page loads
 window.addEventListener('load', disablePullToRefresh);
+
+

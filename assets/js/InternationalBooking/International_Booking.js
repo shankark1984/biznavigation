@@ -34,9 +34,12 @@ document.getElementById('awbNo').addEventListener('change', async function () {
         await fetchDocketDetails(awbNoInput.value);// Wait for fetch to complete
         await setupChargeTypeValidation();
         const tempFormID = freightElements.tempFormID.value.trim();
+        console.log('tempFormID:', tempFormID);
         if (!tempFormID.includes('TEMP')) {
+            console.log('Loading AWB details for ID:', tempFormID);
             await loadFreightCharges();                        // Then load charges
             await loadVolumetricDetails(); // Then load volumetric rows
+            await fetchContainerDetails(tempFormID); // Then fetch container details
         }
     } catch (error) {
         console.error('Error loading AWB details:', error);
@@ -112,6 +115,8 @@ document.getElementById('newButton').addEventListener('click', function () {
     const table = document.getElementById('freightTable');
     const tbody = table.querySelector('tbody');
     tbody.innerHTML = '';
+    const tableBody = document.querySelector('#containerDetailsTable tbody');
+    tableBody.innerHTML = ''; // Clear existing rows
     recalcTotals(); // Reset totals
 });
 
@@ -299,7 +304,7 @@ async function saveOrUpdateInternationalBooking() {
         TransitType: document.getElementById("transitTypeI").value,
         ModeType: document.getElementById("modeTypeI").value,
         Status: document.getElementById("status").value,
-        ServiceProviderCode: document.getElementById("vendorCode").value,
+        ServiceProviderCode: document.getElementById("serviceProviderCode").value,
         ServiceProviderName: document.getElementById("serviceProvider").value,
         CourierName: document.getElementById("carrierName").value,
         Consignee: document.getElementById("consigneeName").value,
@@ -324,7 +329,8 @@ async function saveOrUpdateInternationalBooking() {
         PONo: document.getElementById("poNo").value,
         ShippingType: document.getElementById("shippingType").value,
         company_id: companyID,
-        CreatedBy: userLoginID
+        CreatedBy: userLoginID,
+        created_at: localtimeStamp
     };
 
     let result;
@@ -337,11 +343,11 @@ async function saveOrUpdateInternationalBooking() {
             .select(); // Ensure it returns inserted rows
 
         result = { data, error };
-        console.log("Insert result:", result);
+        // console.log("Insert result:", result);
 
         if (data && data.length > 0) {
-            const insertedID = data[0].id; // Assuming "id" is the primary key
-            console.log("Inserted ID:", insertedID);
+            insertedID = data[0].id; // Assuming "id" is the primary key
+            // console.log("Inserted ID:", insertedID);
             document.getElementById("tempFormID").value = insertedID;
         }
 
@@ -356,7 +362,7 @@ async function saveOrUpdateInternationalBooking() {
         alert("Invalid action type!");
         return;
     }
-
+    // console.log("Inserted ID:", insertedID);
     if (result.error) {
         console.error("Save/Update failed:", result.error.message);
         alert("Failed to save data: " + result.error.message);
@@ -366,18 +372,21 @@ async function saveOrUpdateInternationalBooking() {
     }
 }
 
-document.getElementById('saveButton').addEventListener('click', function () {
-    saveOrUpdateInternationalBooking();
-    disableForm();
+document.getElementById('saveButton').addEventListener('click', async function () {
+    await saveOrUpdateInternationalBooking();
+
     saveButton.disabled = true;
     modifyButton.disabled = false;
     reportButton.disabled = false;
     saveButton.innerHTML = '<i class="bi bi-save"></i> Update';
     deleteButton.disabled = true;
-    saveFreightCharges();
-    saveNewVolumetricRows();
+    await saveFreightCharges();
+    await saveNewVolumetricRows();
+    await saveContainerDetails();
     document.getElementById('addFreightRow').disabled = true;
+    disableForm();
     toggleEditMode(true);
+    insertedID = null; // Reset insertedID after save
 });
 
 document.addEventListener("DOMContentLoaded", function () {
@@ -394,4 +403,23 @@ document.addEventListener("DOMContentLoaded", function () {
 
     actualWeightInput.addEventListener("input", updateChargeableWeight);
     volumetricWeightInput.addEventListener("input", updateChargeableWeight);
+});
+
+document.addEventListener('DOMContentLoaded', function () {
+    document.getElementById('modeTypeI').addEventListener('change', async function () {
+        const modeType = this.value;
+        const containerElement = document.getElementById('containerType');
+
+        if (!containerElement) {
+            console.error('Element with id="containerType" not found.');
+            return;
+        }
+        if (modeType === 'FTL') {
+            await loadDropdownOptions('VehicleType', 'containerType');
+        } else if (modeType === 'FCL') {
+            await loadDropdownOptions('ContainerType', 'containerType');
+        } else {
+            containerElement.innerHTML = ''; // Clear options if modeType is neither FTL nor FCL
+        }
+    });
 });

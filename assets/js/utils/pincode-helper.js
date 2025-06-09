@@ -193,8 +193,6 @@ if (originInput && destinationInput) {
     // console.warn('One or both input elements not found on this page.');
 }
 
-// originInput.addEventListener('input', debounce(e => handleInput(e, originDatalist), 300));
-// destinationInput.addEventListener('input', debounce(e => handleInput(e, destinationDatalist), 300));
 
 // Update suggestions if movement/transit type changes
 [movementTypeSel, transitTypeSel].forEach(sel => {
@@ -207,13 +205,6 @@ if (originInput && destinationInput) {
 });
 
 
-// [movementTypeSel, transitTypeSel].forEach(sel =>
-//     sel.addEventListener('change', () => {
-//         originInput.dispatchEvent(new Event('input'));
-//         destinationInput.dispatchEvent(new Event('input'));
-//     })
-// );
-// 👇 Validate value matches one from datalist
 function validateAgainstDatalist(inputEl, datalistEl, errorMessage = 'Invalid entry!') {
     const inputValue = inputEl.value.trim().toLowerCase();
     const options = Array.from(datalistEl.options).map(opt => opt.value.toLowerCase());
@@ -288,3 +279,23 @@ if (currencyInput || currencyDatalist) {
         enforceUppercaseOnly(document.getElementById('currencyList'));
     });
 }
+// ✅ Attach event to input for dynamic suggestions
+document.addEventListener('DOMContentLoaded', () => {
+    const input = document.getElementById('portCountryName');
+    const datalist = document.getElementById('countryNameSuggestions');
+
+    if (!input || !datalist) return; // 🔒 Prevents the error if elements are missing
+
+    let debounceTimeout;
+
+    input.addEventListener('input', () => {
+        clearTimeout(debounceTimeout);
+        const term = input.value.trim();
+
+        debounceTimeout = setTimeout(async () => {
+            if (term.length < 2) return;
+            const countries = await fetchCountrySuggestions(term);
+            updateDatalist(datalist, countries, 'CountryName');
+        }, 300);
+    });
+});

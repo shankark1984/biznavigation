@@ -319,12 +319,17 @@
                                     <label for="containerType" class="form-label">Container Type</label>
                                     <select id="containerType" class="form-select"></select>
                                 </div>
-
                                 <div class="col-md-2">
                                     <label for="originList" class="form-label">Origin</label>
                                     <input type="text" id="originList" list="originListDatalist" class="form-control"
                                         required autocomplete="off">
                                     <datalist id="originListDatalist"></datalist>
+                                </div>
+                                <div class="col-md-2">
+                                    <label for="portOfLoading" class="form-label">Port of Loading</label>
+                                    <input type="text" id="portOfLoading" list="portOfLoadingDatalist"
+                                        class="form-control" required autocomplete="off">
+                                    <datalist id="portOfLoadingDatalist"></datalist>
                                 </div>
 
                                 <div class="col-md-2">
@@ -332,6 +337,12 @@
                                     <input type="text" id="destinationList" list="destinationListDatalist"
                                         autocomplete="off" class="form-control" required>
                                     <datalist id="destinationListDatalist"></datalist>
+                                </div>
+                                <div class="col-md-2">
+                                    <label for="portOfDischarge" class="form-label">Port of Discharge</label>
+                                    <input type="text" id="portOfDischarge" list="portOfDischargeDatalist"
+                                        class="form-control" required autocomplete="off">
+                                    <datalist id="portOfDischargeDatalist"></datalist>
                                 </div>
 
                                 <div class="col-md-2">
@@ -390,7 +401,9 @@
                                             <th>Container Type</th>
                                             <th>Carrier</th>
                                             <th>Origin</th>
+                                            <th>Port of Loading</th>
                                             <th>Destination</th>
+                                            <th>Port of Discharge</th>
                                             <th>UOM</th>
                                             <th>Min Weight</th>
                                             <th>Up To Weight</th>
@@ -420,20 +433,18 @@
     <script src="https://unpkg.com/@supabase/supabase-js"></script>
 
     <!-- Application Scripts -->
-    <script src="assets/js/navbar.js"></script>
-    <script src="assets/js/footer.js"></script>
-    <script src="assets/js/AccessRules.js"></script>
-    <script src="assets/js/server.js"></script>
-    <script src="assets/js/utils.js"></script>
-    <script src="assets/js/scripts.js"></script>
-    <!-- <script src="assets/js/pincode.js"></script> -->
+    <script src="assets/js/utils/navbar.js"></script>
+    <script src="assets/js/utils/footer.js"></script>
+    <script src="assets/js/UserAccessRules/AccessRules.js"></script>
+    <script src="assets/js/utils/server.js"></script>
+    <script src="assets/js/utils/utils.js"></script>
     <script src="assets/js/utils/pincode-helper.js"></script>
     <script src="assets/js/taxDescription.js"></script>
     <script src="assets/js/PartyRegistration/PartyBillingAddress.js"></script>
     <script src="assets/js/PartyRegistration/Tariff.js"></script>
     <script src="assets/js/PartyRegistration/PartyRegistration.js"></script>
-    <script src="assets/js/dropdownLoader.js"></script>
-    <script src="assets/js/logout.js"></script>
+    <script src="assets/js/utils/dropdownLoader.js"></script>
+    <script src="assets/js/utils/logout.js"></script>
 
     <!-- Form Validation -->
     <script>

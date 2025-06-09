@@ -22,3 +22,53 @@ button[data-busy] .spinner {
 button .spinner {
     display: none;
 }
+
+body {
+    background-color: #f8f9fa
+}
+
+label {
+    font-weight: 500
+}
+
+input:required {
+    border-left: 3px solid #198754
+}
+
+#scroll-wrapper {
+    scrollbar-width: thin;
+    scrollbar-color: #ccc transparent
+}
+
+.card-header {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    font-size: 1.1rem
+}
+
+#setting-parameters-container .card:first-child {
+    margin-top: 0 !important
+}
+
+.form-label {
+    font-weight: 500
+}
+
+.toggle-icon {
+    transition: transform .3s ease
+}
+
+.collapsing+.toggle-icon,
+.collapse.show+.toggle-icon {
+    transform: rotate(180deg)
+}
+
+#scroll-wrapper::-webkit-scrollbar {
+    width: 8px
+}
+
+#scroll-wrapper::-webkit-scrollbar-thumb {
+    background-color: #aaa;
+    border-radius: 4px
+}

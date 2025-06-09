@@ -2,87 +2,30 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BizNavigation - Route Details</title>
 
-    <!-- Bootstrap & Icons -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet" />
+    <!-- Combined and minified CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
 
-    <!-- Scripts at end for faster loading -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/2.3.10/purify.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+    <!-- Preload critical resources -->
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" as="script">
+    <link rel="preload" href="https://code.jquery.com/jquery-3.6.0.min.js" as="script">
 
-
-    <!-- Optional Custom CSS (externalize if needed) -->
-    <style>
-        body {
-            background-color: #f8f9fa;
-        }
-
-        label {
-            font-weight: 500;
-        }
-
-        input:required {
-            border-left: 3px solid #198754;
-            /* green */
-        }
-
-        #scroll-wrapper {
-            scrollbar-width: thin;
-            scrollbar-color: #ccc transparent;
-        }
-
-        #scroll-wrapper::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        #scroll-wrapper::-webkit-scrollbar-thumb {
-            background-color: #aaa;
-            border-radius: 4px;
-        }
-
-        .card-header {
-            margin-top: 0 !important;
-            padding-top: 0rem !important;
-            padding-bottom: 0rem !important;
-            font-size: 1.1rem;
-        }
-
-        #setting-parameters-container .card:first-child {
-            margin-top: 0 !important;
-        }
-
-        .form-label {
-            font-weight: 500;
-        }
-
-        .toggle-icon {
-            transition: transform 0.3s ease;
-        }
-
-        .collapsing+.toggle-icon,
-        .collapse.show+.toggle-icon {
-            transform: rotate(180deg);
-        }
-    </style>
+    <!-- Inline critical CSS -->
+    <link rel="stylesheet" href="assets/css/global.css">
 </head>
 
 <body>
-    <div class="container mt-2" id="root">
+    <div class="container mt-4 pt-5" id="root">
         <div class="card shadow-lg rounded">
             <div class="card-header bg-primary text-white">
                 <h3 class="mb-0">Application Settings</h3>
-                <input type="hidden" id="tempFormID" />
-                <input type="hidden" id="partyCode" />
-                <input type="hidden" id="vendorCode" />
+                <input type="hidden" id="tempFormID">
+                <input type="hidden" id="partyCode">
+                <input type="hidden" id="vendorCode">
             </div>
 
             <div class="card-body">
@@ -92,6 +35,8 @@
                             <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab"
                                     data-bs-target="#routeDetails" type="button" role="tab">Route Details</button></li>
                             <li class="nav-item"><button class="nav-link" data-bs-toggle="tab"
+                                    data-bs-target="#portDetails" type="button" role="tab">Port Details</button></li>
+                            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab"
                                     data-bs-target="#missingPinCode" type="button" role="tab">Pincode</button></li>
                             <li class="nav-item"><button class="nav-link" data-bs-toggle="tab"
                                     data-bs-target="#dropdownListdetails" type="button" role="tab">Dropdown List
@@ -100,40 +45,33 @@
                                     data-bs-target="#countryDetails" type="button" role="tab">Country Details</button>
                             </li>
                             <li class="nav-item"><button class="nav-link" data-bs-toggle="tab"
-                                    data-bs-target="#cityDetails" type="button" role="tab">City Details</button>
-                            </li>
+                                    data-bs-target="#cityDetails" type="button" role="tab">City Details</button></li>
                             <li class="nav-item"><button class="nav-link" data-bs-toggle="tab"
                                     data-bs-target="#SettingParameters" type="button" role="tab">Setting
-                                    Parameters</button>
-                            </li>
-                            <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#status"
-                                    type="button" role="tab">Add More..</button></li>
+                                    Parameters</button></li>
+                            <li class="nav-item d-none"><button class="nav-link" data-bs-toggle="tab"
+                                    data-bs-target="#status" type="button" role="tab">Add More..</button></li>
                         </ul>
 
                         <div class="tab-content p-3 border border-top-0" id="bookingTabsContent">
-                            <!-- Add/Edit Route Details -->
+                            <!-- Route Details Tab -->
                             <div class="tab-pane fade show active" id="routeDetails" role="tabpanel">
                                 <div class="row g-2">
                                     <div class="col-md-4 col-sm-6">
                                         <label for="routeDescription" class="form-label">Route Description</label>
                                         <input type="text" list="routeSuggestions" class="form-control text-capitalize"
                                             id="routeDescription" name="routeDescription" placeholder="Choose..."
-                                            autocomplete="off" />
-                                        <datalist id="routeSuggestions">
-                                            <!-- Options will be populated by JS -->
-                                        </datalist>
+                                            autocomplete="off">
+                                        <datalist id="routeSuggestions"></datalist>
                                     </div>
-
                                     <div class="col-md-4 col-sm-6">
                                         <label for="distance" class="form-label">Distance (Kms)</label>
                                         <input type="number" class="form-control" id="distance" name="distance">
                                     </div>
-
                                     <div class="col-md-1 col-sm-1 d-flex flex-column justify-content-end">
                                         <button type="button" class="btn btn-sm btn-primary w-100"
                                             id="addRouteDetails">Add</button>
                                     </div>
-
                                     <div class="table-responsive mt-3">
                                         <table class="table table-sm table-bordered text-center align-middle"
                                             id="routeTable">
@@ -144,46 +82,103 @@
                                                     <th>Action</th>
                                                 </tr>
                                             </thead>
-                                            <tbody>
-                                                <!-- Data will be inserted here -->
-                                            </tbody>
+                                            <tbody></tbody>
                                         </table>
                                     </div>
                                 </div>
                             </div>
-                            <!-- Add Missing Pincode -->
+                            <!-- Port Details Tab -->
+                            <div class="tab-pane fade" id="portDetails" role="tabpanel">
+                                <div class="row g-2">
+                                    <!-- Country Name -->
+                                    <div class="col-md-2 col-sm-6">
+                                        <label for="portCountryName" class="form-label">Country Name</label>
+                                        <input type="text" id="portCountryName" name="portCountryName"
+                                            class="form-control" list="countryNameSuggestions" placeholder="Choose..."
+                                            autocomplete="off">
+                                        <datalist id="countryNameSuggestions"></datalist>
+                                    </div>
+                                    <div class="col-md-2 col-sm-6">
+                                        <label for="portCode" class="form-label">Port Code</label>
+                                        <input type="text" id="portCode" name="portCode"
+                                            class="form-control text-uppercase" autocomplete="off">
+                                    </div>
+
+                                    <!-- Port Name -->
+                                    <div class="col-md-5 col-sm-6">
+                                        <label for="portName" class="form-label">Port Name</label>
+                                        <input type="text" id="portName" name="portName"
+                                            class="form-control text-capitalize" list="portSuggestions"
+                                            placeholder="Choose..." autocomplete="off">
+                                        <datalist id="portSuggestions"></datalist>
+                                    </div>
+
+                                    <!-- Port Type -->
+                                    <div class="col-md-2 col-sm-6">
+                                        <label for="portPort" class="form-label">Port Type</label>
+                                        <select id="portPort" name="portPort" class="form-control">
+                                            <option value="">Select Port Type</option>
+                                            <option value="Seaport">Seaport</option>
+                                            <option value="Airport">Airport</option>
+                                            <option value="Dryport">Dryport</option>
+                                            <option value="Inland Port">Inland Port</option>
+                                            <option value="Railway Station">Railway Station</option>
+                                        </select>
+                                    </div>
+                                    <!-- Add Button -->
+                                    <div class="col-md-1 col-sm-6 d-flex flex-column justify-content-end">
+                                        <button type="button" id="addPortDetails"
+                                            class="btn btn-sm btn-primary w-100">Add</button>
+                                    </div>
+                                </div>
+                                <!-- ✅ Message Display Section -->
+                                <div id="formMessage" class="mt-2"></div>
+
+                                <!-- Table Section -->
+                                <div class="table-responsive mt-3">
+                                    <table class="table table-sm table-bordered text-center align-middle"
+                                        id="portTable">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>S No.</th>
+                                                <th>Country Name</th>
+                                                <th>Port Code</th>
+                                                <th>Port Name</th>
+                                                <th>Port Type</th>
+                                                <th>Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="portTableBody"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- Missing Pincode Tab -->
                             <div class="tab-pane fade" id="missingPinCode" role="tabpanel">
                                 <div class="row g-2">
                                     <div class="col-md-2 col-sm-6">
                                         <label for="missingPincode" class="form-label">Missing Pincode</label>
                                         <input type="text" list="pincodeSuggestions"
                                             class="form-control text-capitalize" id="missingPincode"
-                                            placeholder="Choose..." autocomplete="off" />
-                                        <datalist id="pincodeSuggestions">
-                                            <!-- Options will be populated by JS -->
-                                        </datalist>
+                                            placeholder="Choose..." autocomplete="off">
+                                        <datalist id="pincodeSuggestions"></datalist>
                                     </div>
-
                                     <div class="col-md-3 col-sm-6">
                                         <label for="missingCity" class="form-label">City</label>
-                                        <input type="text" class="form-control" id="missingCity" />
+                                        <input type="text" class="form-control" id="missingCity">
                                     </div>
-
                                     <div class="col-md-3 col-sm-6">
                                         <label for="missingState" class="form-label">State</label>
-                                        <input type="text" class="form-control" id="missingState" />
+                                        <input type="text" class="form-control" id="missingState">
                                     </div>
-
                                     <div class="col-md-3 col-sm-6">
                                         <label for="missingCountry" class="form-label">Country</label>
-                                        <input type="text" class="form-control" id="missingCountry" />
+                                        <input type="text" class="form-control" id="missingCountry">
                                     </div>
-
                                     <div class="col-md-1 col-sm-1 d-flex flex-column justify-content-end">
                                         <button type="button" class="btn btn-sm btn-primary w-100"
                                             id="addMissingPincode">Add</button>
                                     </div>
-
                                     <div class="table-responsive mt-3">
                                         <table class="table table-sm table-bordered text-center align-middle"
                                             id="missingPincodeTable">
@@ -196,27 +191,22 @@
                                                     <th>Action</th>
                                                 </tr>
                                             </thead>
-                                            <tbody>
-                                                <!-- Data will be inserted here -->
-                                            </tbody>
+                                            <tbody></tbody>
                                         </table>
                                     </div>
                                 </div>
                             </div>
 
-                            <!--  Dropdown List Details -->
+                            <!-- Dropdown List Details Tab -->
                             <div class="tab-pane fade" id="dropdownListdetails" role="tabpanel">
                                 <div class="row g-2">
                                     <div class="col-md-2 col-sm-6">
                                         <label for="valueassignedto" class="form-label">Value Assigned To</label>
                                         <input type="text" list="valueAssignedToSuggestions"
                                             class="form-control text-capitalize" id="valueassignedto"
-                                            placeholder="Choose..." autocomplete="off" />
-                                        <datalist id="valueAssignedToSuggestions">
-                                            <!-- Options will be populated by JS -->
-                                        </datalist>
+                                            placeholder="Choose..." autocomplete="off">
+                                        <datalist id="valueAssignedToSuggestions"></datalist>
                                     </div>
-
                                     <div class="col-md-3 col-sm-6">
                                         <label for="description" class="form-label">Description</label>
                                         <input type="text" class="form-control" list="descriptionSuggestions"
@@ -224,31 +214,26 @@
                                             autocomplete="off">
                                         <datalist id="descriptionSuggestions"></datalist>
                                     </div>
-
                                     <div class="col-md-2 col-sm-6">
                                         <label for="condition" class="form-label">Condition</label>
                                         <input type="text" class="form-control" id="condition" name="condition"
-                                            style="text-transform: capitalize;" autocomplete="off">
+                                            style="text-transform:capitalize" autocomplete="off">
                                     </div>
-
                                     <div class="col-md-2 col-sm-6">
                                         <label for="fixedvalue" class="form-label">Fixed Value</label>
                                         <input type="number" class="form-control" id="fixedvalue" name="fixedvalue"
-                                            style="text-transform: capitalize;" autocomplete="off">
+                                            style="text-transform:capitalize" autocomplete="off">
                                     </div>
-
                                     <div class="col-md-2 col-sm-6">
                                         <label for="hsncode" class="form-label">HSN Code</label>
                                         <input type="text" class="form-control" id="hsncode" name="hsncode"
-                                            style="text-transform: capitalize;" autocomplete="off">
+                                            style="text-transform:capitalize" autocomplete="off">
                                     </div>
-
                                     <div class="col-md-1 col-sm-1 d-flex flex-column justify-content-end">
                                         <button type="button" class="btn btn-sm btn-primary w-100"
                                             id="addDropdownMenuList">Add</button>
                                     </div>
-
-                                    <div class="table-responsive mt-3" style="max-height: 300px; overflow-y: auto;">
+                                    <div class="table-responsive mt-3" style="max-height:300px;overflow-y:auto">
                                         <table class="table table-sm table-bordered text-center align-middle"
                                             id="dropdownMenuTable">
                                             <thead class="table-light">
@@ -261,27 +246,22 @@
                                                     <th>Action</th>
                                                 </tr>
                                             </thead>
-                                            <tbody>
-                                                <!-- Data will be inserted here -->
-                                            </tbody>
+                                            <tbody></tbody>
                                         </table>
                                     </div>
                                 </div>
                             </div>
 
-                            <!--  Add Country Details -->
+                            <!-- Country Details Tab -->
                             <div class="tab-pane fade" id="countryDetails" role="tabpanel">
                                 <div class="row g-2">
                                     <div class="col-md-2 col-sm-6">
                                         <label for="countryCode" class="form-label">Country Code</label>
                                         <input type="text" list="countryCodeSuggestions"
                                             class="form-control text-capitalize" id="countryCode"
-                                            placeholder="Choose..." autocomplete="off" />
-                                        <datalist id="countryCodeSuggestions">
-                                            <!-- Options will be populated by JS -->
-                                        </datalist>
+                                            placeholder="Choose..." autocomplete="off">
+                                        <datalist id="countryCodeSuggestions"></datalist>
                                     </div>
-
                                     <div class="col-md-3 col-sm-6">
                                         <label for="countryName" class="form-label">Country Name</label>
                                         <input type="text" class="form-control" list="countryNameSuggestions"
@@ -289,19 +269,16 @@
                                             autocomplete="off">
                                         <datalist id="countryNameSuggestions"></datalist>
                                     </div>
-
                                     <div class="col-md-2 col-sm-6">
                                         <label for="region" class="form-label">Region</label>
                                         <input type="text" class="form-control" id="region" name="region"
-                                            style="text-transform: capitalize;" autocomplete="off">
+                                            style="text-transform:capitalize" autocomplete="off">
                                     </div>
-
                                     <div class="col-md-1 col-sm-1 d-flex flex-column justify-content-end">
                                         <button type="button" class="btn btn-sm btn-primary w-100"
                                             id="addCountry">Add</button>
                                     </div>
-
-                                    <div class="table-responsive mt-3" style="max-height: 300px; overflow-y: auto;">
+                                    <div class="table-responsive mt-3" style="max-height:300px;overflow-y:auto">
                                         <table class="table table-sm table-bordered text-center align-middle"
                                             id="countryMenuTable">
                                             <thead class="table-light">
@@ -312,56 +289,47 @@
                                                     <th>Action</th>
                                                 </tr>
                                             </thead>
-                                            <tbody>
-                                                <!-- Data will be inserted here -->
-                                            </tbody>
+                                            <tbody></tbody>
                                         </table>
                                     </div>
                                 </div>
                             </div>
 
-                            <!--  Add City Details -->
+                            <!-- City Details Tab -->
                             <div class="tab-pane fade" id="cityDetails" role="tabpanel">
                                 <div class="row g-2">
                                     <div class="col-md-2 col-sm-6">
                                         <label for="cityName" class="form-label">City Name</label>
                                         <input type="text" list="cityNameSuggestions"
                                             class="form-control text-capitalize" id="cityName" placeholder="Choose..."
-                                            autocomplete="off" />
-                                        <datalist id="cityNameSuggestions">
-                                            <!-- Options will be populated by JS -->
-                                        </datalist>
+                                            autocomplete="off">
+                                        <datalist id="cityNameSuggestions"></datalist>
                                     </div>
-
                                     <div class="col-md-3 col-sm-6">
                                         <label for="stateName" class="form-label">State</label>
                                         <input type="text" class="form-control" list="stateNameSuggestions"
                                             id="stateName" name="stateName" placeholder="Choose..." autocomplete="off">
                                         <datalist id="stateNameSuggestions"></datalist>
                                     </div>
-
                                     <div class="col-md-2 col-sm-6">
                                         <label for="zoneName" class="form-label">Zone</label>
                                         <input type="text" class="form-control" id="zoneName" name="zoneName"
-                                            list="zoneNameSuggestions" style="text-transform: capitalize;"
+                                            list="zoneNameSuggestions" style="text-transform:capitalize"
                                             autocomplete="off">
-                                        <datalist id="zoneNameSuggestions"></datalist> <!-- ← NEW -->
+                                        <datalist id="zoneNameSuggestions"></datalist>
                                     </div>
-
                                     <div class="col-md-2 col-sm-6">
                                         <label for="cityCountryName" class="form-label">Country</label>
                                         <input type="text" class="form-control" id="cityCountryName"
                                             name="cityCountryName" list="cityCountryNameSuggestions"
-                                            style="text-transform: capitalize;" autocomplete="off">
-                                        <datalist id="cityCountryNameSuggestions"></datalist> <!-- ← NEW -->
+                                            style="text-transform:capitalize" autocomplete="off">
+                                        <datalist id="cityCountryNameSuggestions"></datalist>
                                     </div>
-
                                     <div class="col-md-1 col-sm-1 d-flex flex-column justify-content-end">
                                         <button type="button" class="btn btn-sm btn-primary w-100"
                                             id="addCityDetails">Add</button>
                                     </div>
-
-                                    <div class="table-responsive mt-3" style="max-height: 300px; overflow-y: auto;">
+                                    <div class="table-responsive mt-3" style="max-height:300px;overflow-y:auto">
                                         <table class="table table-sm table-bordered text-center align-middle"
                                             id="cityDetailsTable">
                                             <thead class="table-light">
@@ -374,29 +342,24 @@
                                                     <th>Action</th>
                                                 </tr>
                                             </thead>
-                                            <tbody>
-                                                <!-- Data will be inserted here -->
-                                            </tbody>
+                                            <tbody></tbody>
                                         </table>
-
                                     </div>
                                 </div>
                             </div>
 
-                            <!-- Setting Parameters -->
+                            <!-- Setting Parameters Tab -->
                             <div class="tab-pane fade" id="SettingParameters" role="tabpanel">
                                 <div class="container mt-4">
                                     <div id="scroll-wrapper" class="overflow-auto border rounded"
-                                        style="max-height: 70vh;">
-
-                                        <!-- 👇 NEW — accordion wrapper -->
+                                        style="max-height:70vh">
                                         <div id="accordion-settings">
-                                            <!-- ====== International - CBM Volume ====== -->
+                                            <!-- International - CBM Volume -->
                                             <div class="card mb-3 shadow-sm">
                                                 <div class="card-header d-flex justify-content-between align-items-center bg-primary text-white fw-bold py-2"
                                                     data-bs-toggle="collapse" data-bs-target="#group-collapse-1"
                                                     aria-expanded="false" aria-controls="group-collapse-1"
-                                                    style="cursor:pointer;">
+                                                    style="cursor:pointer">
                                                     <span>International - CBM Volume</span>
                                                     <span class="toggle-icon rotate-icon">+</span>
                                                 </div>
@@ -405,7 +368,8 @@
                                                     <div class="card-body">
                                                         <div class="row g-2">
                                                             <div class="col-12 col-md-2">
-                                                                <label for="airInternational" class="form-label">By Air
+                                                                <label for="airInternational" class="form-label">By
+                                                                    Air
                                                                     Freight</label>
                                                                 <input type="number" class="form-control"
                                                                     id="airInternational" name="airInternational"
@@ -419,7 +383,8 @@
                                                                     name="courierInternational" min="0" step="1">
                                                             </div>
                                                             <div class="col-12 col-md-2">
-                                                                <label for="seaInternational" class="form-label">By Sea
+                                                                <label for="seaInternational" class="form-label">By
+                                                                    Sea
                                                                     Freight</label>
                                                                 <input type="number" class="form-control"
                                                                     id="seaInternational" name="seaInternational"
@@ -430,12 +395,12 @@
                                                 </div>
                                             </div>
 
-                                            <!-- ====== Domestic Volume in Cubic Centimetres ====== -->
+                                            <!-- Domestic Volume in Cubic Centimetres -->
                                             <div class="card mb-3 shadow-sm">
                                                 <div class="card-header d-flex justify-content-between align-items-center bg-primary text-white fw-bold py-2"
                                                     data-bs-toggle="collapse" data-bs-target="#group-collapse-2"
                                                     aria-expanded="false" aria-controls="group-collapse-2"
-                                                    style="cursor:pointer;">
+                                                    style="cursor:pointer">
                                                     <span>Domestic Volume in Cubic Centimetres</span>
                                                     <span class="toggle-icon rotate-icon">+</span>
                                                 </div>
@@ -476,12 +441,12 @@
                                                 </div>
                                             </div>
 
-                                            <!-- ====== Domestic – CFT ====== -->
+                                            <!-- Domestic - CFT -->
                                             <div class="card mb-3 shadow-sm">
                                                 <div class="card-header d-flex justify-content-between align-items-center bg-primary text-white fw-bold py-2"
                                                     data-bs-toggle="collapse" data-bs-target="#group-collapse-3"
                                                     aria-expanded="false" aria-controls="group-collapse-3"
-                                                    style="cursor:pointer;">
+                                                    style="cursor:pointer">
                                                     <span>Domestic - CFT</span>
                                                     <span class="toggle-icon rotate-icon">+</span>
                                                 </div>
@@ -522,12 +487,12 @@
                                                 </div>
                                             </div>
 
-                                            <!-- ====== LR / GCN / AWB & Invoice Format ====== -->
+                                            <!-- LR / GCN / AWB & Invoice Format -->
                                             <div class="card mb-3 shadow-sm">
                                                 <div class="card-header d-flex justify-content-between align-items-center bg-primary text-white fw-bold py-2"
                                                     data-bs-toggle="collapse" data-bs-target="#group-collapse-4"
                                                     aria-expanded="false" aria-controls="group-collapse-4"
-                                                    style="cursor:pointer;">
+                                                    style="cursor:pointer">
                                                     <span>LR / GCN / AWB and Invoice Format</span>
                                                     <span class="toggle-icon rotate-icon">+</span>
                                                 </div>
@@ -537,7 +502,7 @@
                                                         <div class="row g-2">
                                                             <div class="col-12 col-md-2">
                                                                 <label for="shipmentNumberFormat" class="form-label">LR
-                                                                    / GCN / AWB – Format</label>
+                                                                    / GCN / AWB - Format</label>
                                                                 <input type="text" class="form-control"
                                                                     id="shipmentNumberFormat"
                                                                     name="shipmentNumberFormat">
@@ -553,12 +518,12 @@
                                                 </div>
                                             </div>
 
-                                            <!-- ====== Fixed Charges ====== -->
+                                            <!-- Fixed Charges -->
                                             <div class="card mb-3 shadow-sm">
                                                 <div class="card-header d-flex justify-content-between align-items-center bg-primary text-white fw-bold py-2"
                                                     data-bs-toggle="collapse" data-bs-target="#group-collapse-5"
                                                     aria-expanded="false" aria-controls="group-collapse-5"
-                                                    style="cursor:pointer;">
+                                                    style="cursor:pointer">
                                                     <span>Fixed Charges</span>
                                                     <span class="toggle-icon rotate-icon">+</span>
                                                 </div>
@@ -593,33 +558,13 @@
                                                     </div>
                                                 </div>
                                             </div>
-                                        </div><!-- /#accordion-settings -->
-
-                                    </div><!-- /#scroll-wrapper -->
-
+                                        </div>
+                                    </div>
                                     <div class="text-end mt-3">
                                         <button id="saveSettingsBtn" class="btn btn-success">Save Settings</button>
                                     </div>
                                 </div>
                             </div>
-
-
-                            <!-- <div class="tab-pane fade" id="SettingParameters" role="tabpanel">
-                                <div class="container mt-4">
-                                    <div id="scroll-wrapper" class="overflow-auto border rounded"
-                                        style="max-height: 70vh;">
-                                        <div id="setting-parameters-container" class="p-3"></div>
-                                    </div>
-
-                                    <div class="text-end mt-3">
-                                        <button id="saveSettingsBtn" class="btn btn-success">Save Settings</button>
-                                    </div>
-                                </div>
-
-                            </div> -->
-
-
-                            <!-- Other Tab Contents (e.g., #missingPinCode, #dropdownList-details, etc.) go here if needed -->
                         </div>
                     </div>
                 </form>
@@ -627,23 +572,32 @@
         </div>
     </div>
 
+    <!-- Deferred JS loading -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" defer></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/2.3.10/purify.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js" defer></script>
 
-    <!-- Local Scripts -->
-    <script src="assets/js/server.js"></script>
-    <script src="assets/js/navbar.js"></script>
-    <script src="assets/js/footer.js"></script>
-    <script src="assets/js/AccessRules.js"></script>
-    <script src="assets/js/scripts.js"></script>
-    <script src="assets/js/taxDescription.js"></script>
-    <script src="assets/js/logout.js"></script>
-    <script src="assets/js/dropdownLoader.js"></script>
-    <script src="assets/js/utils.js"></script>
-    <script src="assets/js/ApplicationSettings/RouteDetails.js"></script>
-    <script src="assets/js/ApplicationSettings/MissingPincode.js"></script>
-    <script src="assets/js/ApplicationSettings/DropdownListDetails.js"></script>
-    <script src="assets/js/ApplicationSettings/CountryDetails.js"></script>
-    <script src="assets/js/ApplicationSettings/CityDetails.js"></script>
-    <script src="assets/js/ApplicationSettings/SettingParameters.js"></script>
+    <!-- Local scripts with defer -->
+    <script src="assets/js/utils/navbar.js" defer></script>
+    <script src="assets/js/utils/footer.js" defer></script>
+    <script src="assets/js/utils/server.js" defer></script>
+    <script src="assets/js/UserAccessRules/AccessRules.js" defer></script>
+    <script src="assets/js/taxDescription.js" defer></script>
+    <script src="assets/js/utils/dropdownLoader.js" defer></script>
+    <script src="assets/js/utils/utils.js" defer></script>
+    <script src="assets/js/utils/pincode-helper.js" defer></script>
+    <script src="assets/js/ApplicationSettings/RouteDetails.js" defer></script>
+    <script src="assets/js/ApplicationSettings/MissingPincode.js" defer></script>
+    <script src="assets/js/ApplicationSettings/DropdownListDetails.js" defer></script>
+    <script src="assets/js/ApplicationSettings/CountryDetails.js" defer></script>
+    <script src="assets/js/ApplicationSettings/CityDetails.js" defer></script>
+    <script src="assets/js/ApplicationSettings/SettingParameters.js" defer></script>
+    <script src="assets/js/ApplicationSettings/PortDetails.js"></script>
+    <script src="assets/js/utils/logout.js" defer></script>
 </body>
 
 </html>

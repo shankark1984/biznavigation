@@ -4,26 +4,28 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <title>BizNavigation</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
-    <link rel="stylesheet" href="assets/css/styles.css">
+
+    <!-- Bootstrap & Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet" />
+    <link rel="stylesheet" href="assets/css/styles.css" />
 </head>
 
 <body class="bg-light">
-    <div class="container mt-2" id="root">
+    <div class="container mt-5 pt-3" id="root">
         <div class="card shadow-lg rounded">
-            <div class="card-header bg-primary text-white" style="margin-top: 68px;">
+            <div class="card-header bg-primary text-white">
                 <h3 class="mb-0">User Access Rules</h3>
-                <input type="hidden" id="tempFormID" name="tempFormID">
-                <input type="hidden" id="partyCode" name="partyCode">
-                <input type="hidden" id="vendorCode" name="vendorCode">
+                <input type="hidden" id="tempFormID" name="tempFormID" />
+                <input type="hidden" id="partyCode" name="partyCode" />
+                <input type="hidden" id="vendorCode" name="vendorCode" />
             </div>
+
             <div class="card-body">
-                <form class="container">
+                <form>
                     <!-- Button Group -->
-                    <div class="d-flex flex-wrap justify-content-start gap-1 mb-2">
+                    <div class="d-flex flex-wrap gap-2 mb-3">
                         <button type="button" class="btn btn-primary btn-sm" id="newButton"><i
                                 class="bi bi-file-earmark-plus"></i> New</button>
                         <button type="button" class="btn btn-warning btn-sm" id="modifyButton"><i
@@ -35,93 +37,71 @@
                         <button type="button" class="btn btn-success btn-sm" id="saveButton"><i class="bi bi-save"></i>
                             Save</button>
                     </div>
-                    <div class="row g-1">
-                        <!-- User Login ID -->
+
+                    <!-- User Info -->
+                    <div class="row g-2">
                         <div class="col-md-4 col-sm-6">
-                            <div class="row align-items-center">
-                                <div class="col-4">
-                                    <label for="userID" class="form-label small">User Login ID</label>
-                                </div>
-                                <div class="col-8">
-                                    <input type="text" class="form-control" id="userID" name="userID" required
-                                        autocomplete="off" placeholder="User Login ID" list="userLoginList">
-                                    <!-- Datalist for User Login IDs -->
-                                    <datalist id="userLoginList"></datalist>
-                                </div>
-                            </div>
+                            <label for="userID" class="form-label small">User Login ID</label>
+                            <input type="text" class="form-control" id="userID" name="userID" required
+                                autocomplete="new-password" placeholder="User Login ID" list="userLoginList" />
+                            <datalist id="userLoginList"></datalist>
                         </div>
 
-                        <!-- User Name -->
                         <div class="col-md-4 col-sm-6">
-                            <div class="row align-items-center">
-                                <div class="col-4">
-                                    <label for="userName" class="form-label small">User Name</label>
-                                </div>
-                                <div class="col-8">
-                                    <input type="text" class="form-control" id="userName" name="userName" required
-                                        disabled placeholder="User Name">
-                                </div>
-                            </div>
+                            <label for="userName" class="form-label small">User Name</label>
+                            <input type="text" class="form-control" id="userName" name="userName"
+                                placeholder="User Name" disabled />
                         </div>
-
                     </div>
-                    <!-- New Row for User Access -->
-                    <div class="row g-1 mt-2">
-                        <!-- User Access -->
+
+                    <!-- Form Access -->
+                    <div class="row g-2 mt-2">
                         <div class="col-md-4 col-sm-6">
-                            <div class="row align-items-center">
-                                <div class="col-4">
-                                    <label for="userAccess" class="form-label small">Form Name</label>
-                                </div>
-                                <div class="col-8">
-                                    <input type="text" class="form-control" id="userAccess" name="userAccess" required
-                                        autocomplete="off" placeholder="User Access" list="formNameList">
-                                    <datalist id="formNameList"></datalist>
-                                </div>
-                            </div>
+                            <label for="userAccess" class="form-label small">Form Name</label>
+                            <input type="text" class="form-control" id="userAccess" name="userAccess" required
+                                autocomplete="off" placeholder="Form Name" list="formNameList" />
+                            <datalist id="formNameList"></datalist>
                         </div>
-
                     </div>
-                    <!-- New Row for Checkboxes and Add Role Button -->
-                    <div class="row g-1 mt-2">
-                        <!-- Role Checkboxes -->
-                        <div class="col-3 col-md-1 d-flex align-items-center justify-content-center">
+
+                    <!-- Role Checkboxes & Add Button -->
+                    <div class="row g-2 align-items-center mt-2">
+                        <div class="col-3 col-md-1 text-center">
                             <div class="form-check">
-                                <input type="checkbox" class="form-check-input" id="roleRead">
-                                <label class="form-check-label small ms-1" for="roleRead">Read</label>
+                                <input type="checkbox" class="form-check-input" id="roleRead" />
+                                <label for="roleRead" class="form-check-label small">Read</label>
                             </div>
                         </div>
-                        <div class="col-3 col-md-1 d-flex align-items-center justify-content-center">
+                        <div class="col-3 col-md-1 text-center">
                             <div class="form-check">
-                                <input type="checkbox" class="form-check-input" id="roleWrite">
-                                <label class="form-check-label small ms-1" for="roleWrite">Write</label>
+                                <input type="checkbox" class="form-check-input" id="roleWrite" />
+                                <label for="roleWrite" class="form-check-label small">Write</label>
                             </div>
                         </div>
-                        <div class="col-3 col-md-1 d-flex align-items-center justify-content-center">
+                        <div class="col-3 col-md-1 text-center">
                             <div class="form-check">
-                                <input type="checkbox" class="form-check-input" id="roleDelete">
-                                <label class="form-check-label small ms-1" for="roleDelete">Delete</label>
+                                <input type="checkbox" class="form-check-input" id="roleDelete" />
+                                <label for="roleDelete" class="form-check-label small">Delete</label>
                             </div>
                         </div>
-                        <div class="col-3 col-md-1 d-flex align-items-center justify-content-center">
+                        <div class="col-3 col-md-1 text-center">
                             <div class="form-check">
-                                <input type="checkbox" class="form-check-input" id="roleUpdate">
-                                <label class="form-check-label small ms-1" for="roleUpdate">Update</label>
+                                <input type="checkbox" class="form-check-input" id="roleUpdate" />
+                                <label for="roleUpdate" class="form-check-label small">Update</label>
                             </div>
                         </div>
 
-                        <!-- Add Role Button -->
-                        <div class="col-12 col-md-2 mt-2 mt-md-0 d-flex align-items-center justify-content-center">
+                        <div class="col-12 col-md-2 mt-2 mt-md-0 text-center">
                             <button type="button" class="btn btn-primary w-100" id="addUserRole">Add Role</button>
                         </div>
                     </div>
 
-                    <!-- User Roles Details Table -->
-                    <div class="mt-4 scrollable-table">
-                        <table class="table table-striped">
+                    <!-- Roles Table -->
+                    <div class="mt-4 table-responsive">
+                        <table class="table table-striped align-middle">
                             <thead class="table-light">
                                 <tr>
-                                    <th>From Name</th>
+                                    <th>Form Name</th>
                                     <th>Read</th>
                                     <th>Write</th>
                                     <th>Delete</th>
@@ -141,19 +121,19 @@
         </div>
     </div>
 
-    <!-- Combined JS -->
+    <!-- Scripts (Order matters: jQuery, Supabase, then app scripts) -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://unpkg.com/@supabase/supabase-js"></script>
-    <script src="assets/js/navbar.js"></script>
-    <script src="assets/js/footer.js"></script>
-    <script src="assets/js/AccessRules.js"></script>
-    <script src="assets/js/server.js"></script>
-    <script src="assets/js/generalfunction.js"></script>
-    <script src="assets/js/scripts.js"></script>
-    <script src="assets/js/logout.js"></script>
-    <script src="assets/js/UserAccessRules.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
-
+    <!-- Custom JS -->
+    <script src="assets/js/utils/navbar.js"></script>
+    <script src="assets/js/utils/footer.js"></script>
+    <script src="assets/js/UserAccessRules/AccessRules.js"></script>
+    <script src="assets/js/utils/server.js"></script>
+    <!-- <script src="assets/js/scripts.js"></script> -->
+    <script src="assets/js/utils/logout.js"></script>
+    <script src="assets/js/UserAccessRules/UserAccessRules.js"></script>
 </body>
 
 </html>
