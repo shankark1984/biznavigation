@@ -1,114 +1,84 @@
-// Enable all form inputs
+// ✅ Enable all form inputs
 function enableForm() {
     document.querySelectorAll('input, select, textarea, option').forEach(el => el.disabled = false);
 }
-// Disable all form inputs, selects, textareas, and options
+
+// ✅ Disable all form inputs
 function disableForm() {
     document.querySelectorAll('input, select, textarea, option').forEach(el => el.disabled = true);
 }
 
-// Clear all input fields and select elements
+// ✅ Clear all input fields including selects, checkboxes, and textareas
 function clearForm() {
-    const inputs = document.querySelectorAll("input, select, textarea");
-
-    inputs.forEach(input => {
+    document.querySelectorAll("input, select, textarea").forEach(input => {
         if (input.type === "checkbox" || input.type === "radio") {
-            input.checked = false; // Uncheck checkboxes and radio buttons
+            input.checked = false;
         } else {
-            input.value = ""; // Clear text inputs and textareas
+            input.value = "";
         }
 
         if (input.tagName === "SELECT") {
-            input.selectedIndex = 0; // Reset <select> dropdowns to first option
+            input.selectedIndex = 0;
         }
     });
 }
 
+// ✅ Format currency to 2 decimal places or fallback to 0.00
 function formatCurrency(input) {
-    let value = parseFloat(input.value).toFixed(2);
-    if (!isNaN(value)) {
-        input.value = value;
-    } else {
-        input.value = '0.00';
-    }
+    const value = parseFloat(input.value);
+    input.value = isNaN(value) ? '0.00' : value.toFixed(2);
 }
 
+// ✅ Convert string to Proper Case (first letter uppercase for each word)
 function toProperCase(str) {
-    return str
-        .toLowerCase() // Convert the entire string to lowercase
-        .split(' ') // Split the string into an array of words
-        .map(word => word.charAt(0).toUpperCase() + word.slice(1)) // Capitalize the first letter of each word
-        .join(' '); // Join the words back into a single string
-}
-
-// Function to format date as dd-mm-yyyy
-function formatDate(dateString) {
-    let dateObj = new Date(dateString);  // Convert to Date object
-
-    // Ensure the date is valid
-    if (!isNaN(dateObj.getTime())) {
-        let day = ("0" + dateObj.getDate()).slice(-2);  // Ensure two digits for the day
-        let month = ("0" + (dateObj.getMonth() + 1)).slice(-2);  // Get month (0-indexed, add 1)
-        let year = dateObj.getFullYear();  // Get the year
-
-        return `${day}-${month}-${year}`;  // Return formatted date
-    } else {
-        return '';  // Return empty string if date is invalid
-    }
-}
-
-// Function to generate a unique temporary form ID
-function generateTempFormID() {
-    // Generate a random unique identifier, e.g., using current timestamp and random numbers
-    const timestamp = Date.now();
-    const randomNum = Math.floor(Math.random() * 10000); // 4-digit random number
-
-    return `TEMP-${timestamp}-${randomNum}`;
-}
-
-// Assign TempFormID when the form is opened (or page is loaded)
-window.addEventListener('DOMContentLoaded', function () {
-    const tempFormIDElement = document.getElementById('tempFormID');
-    if (tempFormIDElement) {
-        const tempFormID = generateTempFormID(); // Generate tempFormID
-        tempFormIDElement.value = tempFormID; // Set the hidden input value
-        console.log('TempFormID generated: ' + tempFormID); // Log for debugging
-    } else {
-        console.error('tempFormID element not found.');
-    }
-});
-
-
-// Function to handle tab switching
-function openTab(evt, tabName) {
-    var i, tabcontent, tablinks;
-    tabcontent = document.getElementsByClassName("tab-content");
-    for (i = 0; i < tabcontent.length; i++) {
-        tabcontent[i].style.display = "none";
-    }
-    tablinks = document.getElementsByClassName("tablinks");
-    for (i = 0; i < tablinks.length; i++) {
-        tablinks[i].classList.remove("active");
-    }
-    document.getElementById(tabName).style.display = "block";
-    evt.currentTarget.classList.add("active");
-}
-
-// Helper function to capitalize first letter of each word
-function capitalize(text) {
-    if (typeof text !== 'string') {
-        console.error('Input must be a string:', text);
-        return ''; // Return an empty string or handle the error as needed
-    }
-
-    return text
-        .toLowerCase()
+    return str.toLowerCase()
         .split(' ')
         .map(word => word.charAt(0).toUpperCase() + word.slice(1))
         .join(' ');
 }
 
-// Country Details
+// ✅ Format date string as dd-mm-yyyy
+function formatDate(dateString) {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return '';
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}-${month}-${year}`;
+}
+
+// ✅ Generate a temporary form ID using timestamp and random number
+function generateTempFormID() {
+    return `TEMP-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+}
+
+// ✅ Set tempFormID on page load
+window.addEventListener('DOMContentLoaded', () => {
+    const tempFormIDElement = document.getElementById('tempFormID');
+    if (tempFormIDElement) {
+        const tempFormID = generateTempFormID();
+        tempFormIDElement.value = tempFormID;
+        console.log('TempFormID generated:', tempFormID);
+    }
+});
+
+// ✅ Tab switching logic
+function openTab(evt, tabName) {
+    document.querySelectorAll(".tab-content").forEach(tab => tab.style.display = "none");
+    document.querySelectorAll(".tablinks").forEach(link => link.classList.remove("active"));
+
+    document.getElementById(tabName).style.display = "block";
+    evt.currentTarget.classList.add("active");
+}
+
+// ✅ Capitalize first letter of each word safely
+function capitalize(text) {
+    if (typeof text !== 'string') return '';
+    return text.toLowerCase().split(' ')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+}
+
+// ✅ Load country suggestions based on partial input
 async function CountryDetails(inputValue, datalistId, inputId) {
     if (!inputValue) return;
 
@@ -117,80 +87,45 @@ async function CountryDetails(inputValue, datalistId, inputId) {
             .from('Country_Details')
             .select('CountryCode, CountryName, Region')
             .ilike('CountryName', `%${inputValue}%`)
-            .order('CountryName', { ascending: true });
+            .order('CountryName');
 
-        if (error) {
-            console.error('Supabase query error:', error);
-            return;
-        }
+        if (error) return console.error('Supabase query error:', error);
 
         const datalist = document.getElementById(datalistId);
-        datalist.innerHTML = ''; // Clear old options
-
+        datalist.innerHTML = '';
         data.forEach(country => {
             const option = document.createElement('option');
             option.value = country.CountryName;
             datalist.appendChild(option);
         });
-
     } catch (err) {
         console.error('Unexpected error:', err);
     }
 }
 
-
-document.addEventListener('DOMContentLoaded', function () {
+// ✅ Add protocol if missing in website field
+document.addEventListener('DOMContentLoaded', () => {
     const websiteInput = document.getElementById('website');
-    if (websiteInput) {
-        websiteInput.addEventListener('blur', function () {
-            let url = this.value.trim();
-            if (url && !url.startsWith('http://') && !url.startsWith('https://')) {
-                this.value = 'https://' + url; // Default to HTTPS for security
-            }
-        });
-    } else {
-        // console.warn("Element with ID 'website' not found.");
-    }
-});
-
-
-// Function to toggle edit mode for delete buttons
-// This function enables or disables the delete buttons based on the edit mode state    
-let isEditMode = false;
-
-function toggleEditMode(enable) {
-    isEditMode = enable;
-
-    document.querySelectorAll('.delete-row, .remove-row').forEach(btn => {
-        btn.disabled = enable;
-        if (enable) {
-            btn.classList.add('disabled');
-        } else {
-            btn.classList.remove('disabled');
+    websiteInput?.addEventListener('blur', function () {
+        const url = this.value.trim();
+        if (url && !/^https?:\/\//i.test(url)) {
+            this.value = 'https://' + url;
         }
     });
+});
 
-    // Usage:
-    // toggleEditMode(true);  // Enter edit/save mode: disables delete/remove
-    // toggleEditMode(false); // Exit edit/save mode: enables delete/remove
+// ✅ Toggle edit mode and disable/enable delete buttons
+let isEditMode = false;
+function toggleEditMode(enable) {
+    isEditMode = enable;
+    document.querySelectorAll('.delete-row, .remove-row').forEach(btn => {
+        btn.disabled = enable;
+        btn.classList.toggle('disabled', enable);
+    });
 }
 
-
-/**
- * Load suggestions into a datalist element from a Supabase table.
- *
- * @param {string} datalistId - The ID of the datalist element.
- * @param {string} tableName - Supabase table to fetch data from.
- * @param {string} companyId - The company_id to filter records.
- * @param {string} valueField - The field to use as the value (default: 'PartyName').
- * @param {string} displayField - The field to display alongside value (default: 'PartyCode').
- * 
- *    Example usage for PartyDetails
-    loadSuggestions('partySuggestions', 'PartyDetails', 123);
-    Example for loading vendors
-    loadSuggestions('vendorSuggestions', 'VendorList', 123, 'VendorName', 'VendorCode');
- */
-const suggestionMaps = {}; // Cache for displayField → valueField mappings
+// ✅ Load suggestions from Supabase and populate datalist with mapping
+const suggestionMaps = {}; // Global map for datalist values
 
 async function loadSuggestions(
     datalistId,
@@ -200,10 +135,7 @@ async function loadSuggestions(
     displayField = 'PartyName'
 ) {
     const datalist = document.getElementById(datalistId);
-    if (!datalist) {
-        console.error(`Datalist with ID "${datalistId}" not found.`);
-        return;
-    }
+    if (!datalist) return;
 
     const { data, error } = await supabaseClient
         .from(tableName)
@@ -212,11 +144,10 @@ async function loadSuggestions(
         .order(displayField, { ascending: true });
 
     if (error) {
-        console.error(`Error loading suggestions from ${tableName}:`, error);
+        console.error(`Error loading ${tableName}:`, error);
         return;
     }
 
-    // Clear old options
     datalist.innerHTML = '';
     const map = {};
 
@@ -229,25 +160,28 @@ async function loadSuggestions(
 
     suggestionMaps[datalistId] = map;
 
-    // Attach input event to update partyCodes
-    attachPartyCodeFiller('partyNameReg', datalistId, 'partyCodes');
+    // Attach mapping function
+    attachPartyCodeFiller('partyName', datalistId, 'partyCode');
+    attachPartyCodeFiller('serviceProvider', 'vendorSuggestions', 'serviceProviderCode');
 }
 
+
+// ✅ Auto-fill party code based on selected party name
 function attachPartyCodeFiller(inputId, datalistId, codeFieldId) {
     const input = document.getElementById(inputId);
     const codeField = document.getElementById(codeFieldId);
-
     if (!input || !codeField) return;
 
     input.addEventListener('input', () => {
-        const typedValue = input.value;
-        const code = suggestionMaps[datalistId]?.[typedValue] || '';
+        const typedValue = input.value.trim();
+        const map = suggestionMaps[datalistId] || {};
+        const code = map[typedValue] || '';
         codeField.value = code;
     });
 }
 
-// Function to validate a form with custom rules 
-// Function to validate a single field based on a test function and message
+
+// ✅ Validate individual field with test function
 function validateField(selector, testFn, message) {
     const $el = $(selector);
     const value = $el.val().trim();
@@ -256,9 +190,7 @@ function validateField(selector, testFn, message) {
 
     if (!isValid) {
         $el.addClass('is-invalid');
-        if (!$feedback.length) {
-            $el.after(`<div class="invalid-feedback">${message}</div>`);
-        }
+        if (!$feedback.length) $el.after(`<div class="invalid-feedback">${message}</div>`);
     } else {
         $el.removeClass('is-invalid');
         $feedback.remove();
@@ -266,65 +198,104 @@ function validateField(selector, testFn, message) {
 
     return isValid;
 }
-// Function to validate a form based on an array of rules
-// Each rule should have a selector, a test function, and a message
+
+// ✅ Validate form based on multiple validation rules
 function validateForm(rules) {
     return rules.map(rule =>
         validateField(rule.selector, rule.test, rule.message)
     ).every(Boolean);
 }
-// Function to disable buttons based on a selector
+
+// ✅ Disable buttons and optionally parent containers
 function disableButtons(selector, disableParents = true) {
     const $buttons = $(selector);
-
-    if ($buttons.length > 0) {
+    if ($buttons.length) {
         $buttons.each(function () {
-            $(this).attr("disabled", "disabled").prop("disabled", true);
-            if (disableParents) {
-                $(this).closest("form, fieldset").prop("disabled", true);
-            }
+            $(this).prop("disabled", true);
+            if (disableParents) $(this).closest("form, fieldset").prop("disabled", true);
         });
-        console.log(`Disabled buttons matching: "${selector}"`);
+        console.log(`Disabled buttons: "${selector}"`);
     } else {
-        console.warn(`No buttons found for selector: "${selector}"`);
+        console.warn(`No buttons for selector: "${selector}"`);
     }
 }
-// Function to enable or disable buttons based on a selector
+
+// ✅ Toggle button enable/disable with optional delay and parent toggle
 function toggleButtons(selector, shouldEnable = true, toggleParents = true) {
-    // Wait a short time to ensure DOM is updated
     setTimeout(() => {
         const $buttons = $(selector);
-
-        if ($buttons.length === 0) {
-            // console.warn(`No buttons found for selector: "${selector}"`);
-            return;
-        }
-
         $buttons.each(function () {
             $(this).prop('disabled', !shouldEnable);
-
-            if (toggleParents) {
-                $(this).closest("form, fieldset").prop('disabled', !shouldEnable);
-            }
+            if (toggleParents) $(this).closest("form, fieldset").prop('disabled', !shouldEnable);
         });
-
-        // console.log(`${shouldEnable ? 'Enabled' : 'Disabled'} buttons for: "${selector}"`);
-    }, 100); // Adjust delay as needed
+    }, 100);
 }
+
+// ✅ Force input to uppercase letters only (no numbers/symbols)
 function enforceUppercaseOnly(inputElement) {
     if (!inputElement) return;
 
-    // Force uppercase and filter non-uppercase letters
     inputElement.addEventListener('input', function () {
         const cursorPos = this.selectionStart;
         this.value = this.value.toUpperCase().replace(/[^A-Z]/g, '');
         this.setSelectionRange(cursorPos, cursorPos);
     });
 
-    // Prevent pasting lowercase or invalid characters
     inputElement.addEventListener('paste', function (e) {
         e.preventDefault();
         const text = (e.clipboardData || window.clipboardData).getData('text');
         document.execCommand('insertText', false, text.toUpperCase().replace(/[^A-Z]/g, ''));
     });
+}
+
+// ✅ Fetch ports from Supabase filtered by name
+async function fetchPortList(term = '', limit = 20) {
+    const { data, error } = await supabaseClient
+        .from('PortsDetails')
+        .select('PortName, PortCode, PortCountry')
+        .ilike('PortName', `%${term}%`)
+        .order('PortName')
+        .limit(limit);
+
+    if (error) {
+        console.error('Error fetching ports:', error.message);
+        return [];
+    }
+
+    return data;
+}
+
+// ✅ Populate datalist with port data
+function populateDatalist(datalistId, ports) {
+    const datalist = document.getElementById(datalistId);
+    datalist.innerHTML = '';
+    ports.forEach(port => {
+        const option = document.createElement('option');
+        option.value = `${port.PortName} (${port.PortCode}) - ${port.PortCountry}`;
+        datalist.appendChild(option);
+    });
+}
+//convertCurrency
+// ✅ Convert currency using external API
+// Note: This function uses a free API with limited requests. Consider using a paid service for production.
+async function convertCurrency({ amount, from = 'INR', to = 'INR' }) {
+    if (!amount || from === to) return amount;
+
+    const apiKey = 'tg31lpk5smo4matn3tj4i8rrh58bn3sct63909f2og8aaertivioa8';
+    const url = `https://anyapi.io/api/v1/exchange/convert?apiKey=${apiKey}&base=${from}&to=${to}&amount=${amount}`;
+
+    try {
+        const response = await fetch(url);
+        const data = await response.json();
+
+        if (data && data.converted) {
+            return data.converted;
+        } else {
+            console.warn("Currency conversion failed:", data);
+            return null;
+        }
+    } catch (error) {
+        console.error("Error during currency conversion:", error);
+        return null;
+    }
 }

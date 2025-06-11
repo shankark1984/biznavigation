@@ -135,9 +135,9 @@ async function onChargeTypeOrPartyChange() {
     try {
         // Fetch the party's default_tax
         const { data, error } = await supabaseClient
-            .from('party_details')
-            .select('default_tax')
-            .eq('party_code', partyCode)
+            .from('PartyDetails')
+            .select('DefaultTax')
+            .eq('PartyCode', partyCode)
             .single();
 
         if (error) {

@@ -7,48 +7,153 @@
     <title>BizNavigation - Login</title>
 
     <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
     <!-- Supabase JS -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-
-
     <!-- Web Manifest -->
     <link rel="manifest" href="/manifest.json" />
 
     <style>
         body {
-            background: linear-gradient(to right, #4facfe 0%, #00f2fe 100%);
+            background: linear-gradient(135deg, #667eea, #764ba2);
             min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            position: relative;
         }
 
         .login-card {
-            background: linear-gradient(120deg, #d4fc79 0%, #96e6a1 100%);
+            background: rgba(255, 255, 255, 0.1);
             border-radius: 1rem;
             padding: 2rem;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-            animation: fadeInUp 1s ease;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            color: #fff;
+            animation: fadeInUp 0.8s ease-in-out;
         }
 
         @keyframes fadeInUp {
-            0% {
+            from {
                 opacity: 0;
-                transform: translateY(50px);
+                transform: translateY(40px);
             }
 
-            100% {
+            to {
                 opacity: 1;
                 transform: translateY(0);
             }
         }
+
+        .form-control {
+            border-radius: 10px;
+            border: none;
+            padding: 0.75rem;
+            background-color: rgba(255, 255, 255, 0.3);
+            color: #fff;
+        }
+
+        .form-control::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .form-label {
+            color: #f0f0f0;
+            font-weight: 500;
+        }
+
+        .btn-primary {
+            background-color: #6c63ff;
+            border: none;
+            border-radius: 10px;
+            padding: 0.75rem;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+
+        .btn-primary:hover {
+            background-color: #574b90;
+            box-shadow: 0 0 15px rgba(108, 99, 255, 0.6);
+        }
+
+        .text-muted,
+        .text-secondary {
+            color: rgba(255, 255, 255, 0.8) !important;
+        }
+
+        .text-danger {
+            font-weight: 500;
+        }
+
+        a.text-decoration-none {
+            color: #fce38a;
+            font-weight: 500;
+        }
+
+        a.text-decoration-none:hover {
+            text-decoration: underline;
+        }
+
+        img {
+            filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.5));
+        }
+
+        /* Background animation circles */
+        .background-blur {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: -1;
+        }
+
+        .background-blur div {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(100px);
+        }
+
+        .blur-1 {
+            width: 300px;
+            height: 300px;
+            background: #ff9a9e;
+            top: -100px;
+            left: -100px;
+        }
+
+        .blur-2 {
+            width: 200px;
+            height: 200px;
+            background: #fad0c4;
+            bottom: -100px;
+            right: -50px;
+        }
+
+        .blur-3 {
+            width: 250px;
+            height: 250px;
+            background: #a1c4fd;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
     </style>
 </head>
 
-<body class="d-flex justify-content-center align-items-center">
+<body>
+
+    <div class="background-blur">
+        <div class="blur-1"></div>
+        <div class="blur-2"></div>
+        <div class="blur-3"></div>
+    </div>
 
     <div class="card login-card w-100" style="max-width: 400px;">
         <div class="text-center mb-4">
-            <img src="assets/img/applogo.png" alt="BizNavigation Logo" class="img-fluid" style="max-width: 100px;">
+            <img src="assets/img/applogo.png" alt="BizNavigation Logo" class="img-fluid" style="max-width: 100px;" />
             <h1 class="fw-bold mt-3 text-secondary">BizNavigation</h1>
             <p class="text-muted">Take your business to the next level</p>
         </div>
@@ -57,13 +162,13 @@
             <div class="mb-3">
                 <label for="userName" class="form-label">Username</label>
                 <input type="text" class="form-control" id="userName" placeholder="Enter your username"
-                    autocomplete="off" required>
+                    autocomplete="off" required />
             </div>
 
             <div class="mb-3">
                 <label for="password" class="form-label">Password</label>
                 <input type="password" class="form-control" id="password" placeholder="Enter your password"
-                    autocomplete="off" required onkeydown="handleEnterKey(event)">
+                    autocomplete="off" required onkeydown="handleEnterKey(event)" />
             </div>
 
             <button id="loginButton" type="button" class="btn btn-primary w-100" onclick="login()">
@@ -84,7 +189,7 @@
     <!-- Bootstrap Bundle JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
-    <!-- Your external login script -->
+    <!-- External login handling script -->
     <script src="assets/js/utils/server.js"></script>
     <script src="assets/js/utils/login.js"></script>
 

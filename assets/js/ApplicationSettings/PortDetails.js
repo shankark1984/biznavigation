@@ -1,13 +1,27 @@
 document.addEventListener('DOMContentLoaded', () => {
+
+    const userLoginID = localStorage.getItem("userLoginID");
+    const localtimeStamp = new Date().toISOString();
+
+    const isEditableUser = userType === 1 || userType === 2;
     const getField = id => document.getElementById(id);
+
     const formFields = {
         country: getField('portCountryName'),
         code: getField('portCode'),
         name: getField('portName'),
         type: getField('portPort'),
     };
+
     const messageDiv = getField('formMessage');
     const addPortButton = getField('addPortDetails');
+    const actionColumnHeader = document.getElementById('portActionColumn');
+
+    if (!isEditableUser) {
+        addPortButton.disabled = true;
+        addPortButton.classList.add('disabled');
+        if (actionColumnHeader) actionColumnHeader.style.display = 'none';
+    }
 
     const showMessage = (text, isError = true) => {
         messageDiv.textContent = text;
@@ -15,90 +29,60 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const clearForm = () => {
-        formFields.country.value = '';
-        formFields.code.value = '';
-        formFields.name.value = '';
-        formFields.type.value = '';
+        Object.values(formFields).forEach(field => field.value = '');
     };
 
     const loadPortTable = async () => {
-        const { data, error } = await supabaseClient
-            .from('PortsDetails')
-            .select('*')
-            .order('PortCode', { ascending: true });
+        const { data, error } = await supabaseClient.from('PortsDetails').select('*').order('PortCode');
+        if (error) return console.error('Load error:', error);
 
-        if (error) {
-            console.error('Error loading port table:', error.message || error);
-            return;
-        }
+        const tbody = getField('portTableBody');
+        tbody.innerHTML = '';
 
-        const tableBody = getField('portTableBody');
-        tableBody.innerHTML = '';
+        data.forEach((row, i) => {
+            const actions = isEditableUser ? `
+        <button class="btn btn-sm btn-primary edit-btn">Edit</button>
+        <button class="btn btn-sm btn-danger delete-btn">Delete</button>
+      ` : '';
 
-        data.forEach((port, index) => {
-            tableBody.innerHTML += `
-                <tr data-code="${port.PortCode}">
-                    <td>${index + 1}</td>
-                    <td>${port.PortCountry}</td>
-                    <td>${port.PortCode}</td>
-                    <td>${port.PortName}</td>
-                    <td>${port.PortType}</td>
-                    <td>
-                        <button type="button" class="btn btn-sm btn-primary edit-btn">Edit</button>
-                        <button type="button" class="btn btn-sm btn-danger delete-btn">Delete</button>
-                    </td>
-                </tr>
-            `;
+            tbody.innerHTML += `
+        <tr data-code="${row.PortCode}">
+          <td>${i + 1}</td>
+          <td>${row.PortCountry}</td>
+          <td>${row.PortCode}</td>
+          <td>${row.PortName}</td>
+          <td>${row.PortType}</td>
+          <td style="${!isEditableUser ? 'display: none;' : ''}">${actions}</td>
+        </tr>`;
         });
 
-        document.querySelectorAll('.edit-btn').forEach(button => {
-            button.addEventListener('click', async function () {
-                const row = this.closest('tr');
-                const portCode = row.dataset.code;
-                await fillFormForEdit(portCode);
+        if (isEditableUser) {
+            document.querySelectorAll('.edit-btn').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const code = btn.closest('tr').dataset.code;
+                    const { data } = await supabaseClient.from('PortsDetails').select('*').eq('PortCode', code).maybeSingle();
+                    if (data) {
+                        formFields.country.value = data.PortCountry || '';
+                        formFields.code.value = data.PortCode || '';
+                        formFields.name.value = data.PortName || '';
+                        formFields.type.value = data.PortType || '';
+                        showMessage(`Editing port: ${code}`, false);
+                    }
+                });
             });
-        });
 
-        document.querySelectorAll('.delete-btn').forEach(button => {
-            button.addEventListener('click', async function () {
-                const portCode = this.closest('tr').dataset.code;
-                if (!confirm(`Are you sure you want to delete port: ${portCode}?`)) return;
-
-                const { error } = await supabaseClient
-                    .from('PortsDetails')
-                    .delete()
-                    .eq('PortCode', portCode);
-
-                if (error) {
-                    console.error('Delete failed:', error.message || error);
-                    showMessage('Failed to delete port.', true);
-                } else {
-                    showMessage('Port deleted successfully.', false);
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const code = btn.closest('tr').dataset.code;
+                    if (!confirm(`Delete ${code}?`)) return;
+                    const { error } = await supabaseClient.from('PortsDetails').delete().eq('PortCode', code);
+                    if (error) return showMessage('Delete failed.', true);
+                    showMessage('Deleted successfully.', false);
                     await loadPortTable();
                     clearForm();
-                }
+                });
             });
-        });
-    };
-
-    const fillFormForEdit = async portCode => {
-        const { data, error } = await supabaseClient
-            .from('PortsDetails')
-            .select('*')
-            .eq('PortCode', portCode)
-            .maybeSingle();
-
-        if (error || !data) {
-            showMessage('Failed to load port for editing.', true);
-            return;
         }
-
-        formFields.country.value = data.PortCountry || '';
-        formFields.code.value = data.PortCode || '';
-        formFields.name.value = data.PortName || '';
-        formFields.type.value = data.PortType || '';
-
-        showMessage(`Editing port: ${portCode}`, false);
     };
 
     addPortButton.addEventListener('click', async () => {
@@ -107,21 +91,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const portName = formFields.name.value.trim();
         const portType = formFields.type.value;
 
-        if (!portCountryName || !portCode || !portName || !portType) {
-            showMessage('Please fill in all fields.', true);
-            return;
-        }
+        if (!portCountryName || !portCode || !portName || !portType)
+            return showMessage('All fields are required.', true);
 
         try {
-            const { data: existing, error: fetchError } = await supabaseClient
-                .from('PortsDetails')
-                .select('PortCode')
-                .eq('PortCode', portCode)
-                .limit(1)
-                .maybeSingle();
-
-            if (fetchError) throw fetchError;
-
+            const { data: existing } = await supabaseClient.from('PortsDetails').select('PortCode').eq('PortCode', portCode).maybeSingle();
             const payload = {
                 PortName: portName,
                 PortType: portType,
@@ -130,50 +104,37 @@ document.addEventListener('DOMContentLoaded', () => {
                 [`${existing ? 'updated' : 'created'}_at`]: localtimeStamp,
             };
 
-            const query = existing
-                ? supabaseClient.from('PortsDetails').update(payload).eq('PortCode', portCode)
-                : supabaseClient.from('PortsDetails').insert([{ PortCode: portCode, ...payload }]);
+            const { error } = existing
+                ? await supabaseClient.from('PortsDetails').update(payload).eq('PortCode', portCode)
+                : await supabaseClient.from('PortsDetails').insert([{ PortCode: portCode, ...payload }]);
 
-            const { error } = await query;
             if (error) throw error;
-
-            showMessage(`Port details ${existing ? 'updated' : 'added'} successfully!`, false);
+            showMessage(`${existing ? 'Updated' : 'Added'} successfully!`, false);
             clearForm();
             await loadPortTable();
-
         } catch (err) {
-            console.error('Error saving port details:', err.message || err);
-            showMessage('Failed to save port details. Please try again.', true);
+            showMessage('Error saving port details.', true);
+            console.error(err);
         }
     });
 
-    // Initial load
-    loadPortTable();
-});
-
-document.addEventListener('DOMContentLoaded', () => {
+    // Filter Feature
     ['portCountryName', 'portCode', 'portName', 'portPort'].forEach(id => {
         document.getElementById(id).addEventListener('input', filterPortTable);
     });
+
+    function filterPortTable() {
+        const country = formFields.country.value.toLowerCase();
+        const code = formFields.code.value.toLowerCase();
+        const name = formFields.name.value.toLowerCase();
+        const type = formFields.type.value.toLowerCase();
+
+        document.querySelectorAll('#portTableBody tr').forEach(row => {
+            const [, c, pcode, pname, ptype] = [...row.cells].map(c => c.textContent.toLowerCase());
+            const visible = (!country || c.includes(country)) && (!code || pcode.includes(code)) && (!name || pname.includes(name)) && (!type || ptype.includes(type));
+            row.style.display = visible ? '' : 'none';
+        });
+    }
+
+    loadPortTable();
 });
-
-function filterPortTable() {
-    const country = document.getElementById('portCountryName').value.toLowerCase();
-    const code = document.getElementById('portCode').value.toLowerCase();
-    const name = document.getElementById('portName').value.toLowerCase();
-    const type = document.getElementById('portPort').value.toLowerCase();
-
-    const rows = document.querySelectorAll('#portTableBody tr');
-
-    rows.forEach(row => {
-        const [, cName, pCode, pName, pType] = [...row.cells].map(cell => cell.textContent.toLowerCase());
-
-        const match =
-            (!country || cName.includes(country)) &&
-            (!code || pCode.includes(code)) &&
-            (!name || pName.includes(name)) &&
-            (!type || pType.includes(type));
-
-        row.style.display = match ? '' : 'none';
-    });
-}

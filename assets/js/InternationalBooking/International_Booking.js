@@ -1,5 +1,5 @@
-loadSuggestions('partySuggestions', 'PartyDetails', companyID);
-loadSuggestions('vendorSuggestions', 'PartyDetails', companyID);
+loadSuggestions('partySuggestions', 'PartyDetails', companyID, 'PartyCode', 'PartyName');
+loadSuggestions('vendorSuggestions', 'PartyDetails', companyID, 'PartyCode', 'PartyName');
 
 async function loadAWBNoDetails(query) {
     if (!query) return;
@@ -422,4 +422,9 @@ document.addEventListener('DOMContentLoaded', function () {
             containerElement.innerHTML = ''; // Clear options if modeType is neither FTL nor FCL
         }
     });
+});
+document.addEventListener('DOMContentLoaded', async () => {
+    const ports = await fetchPortList();
+    populateDatalist('portOfLoadingDatalist', ports);
+    populateDatalist('portOfDischargeDatalist', ports);
 });
