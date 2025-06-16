@@ -37,7 +37,7 @@ branchBankAddBtn.addEventListener('click', async function () {
             bankRowIDEdit = null; // Reset after update
         } else {
             // Insert new record
-            response = await supabaseClient
+            response = await this.client
                 .from('CompanyBankDetails')
                 .insert([bankData]);
 
@@ -76,7 +76,7 @@ async function loadBanks() {
         const { data, error } = await supabaseClient
             .from('CompanyBankDetails')
             .select('*')
-            .eq('CompanyID', companyID)
+            .eq('CompanyID', CompanyID)
             .eq('BranchCode', branchCode);
 
         if (error) throw error;

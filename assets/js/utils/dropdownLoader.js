@@ -8,7 +8,7 @@ async function loadDropdownOptions(filterValue, dropdownId) {
         const { data, error } = await supabaseClient
             .from('dropdown_list')
             .select('description')
-            .in('company_id', ['All', companyID])
+            .in('company_id', ['All', CompanyID])
             .ilike('type_of_value', `%${filterValue}%`);
 
         if (error) {
@@ -61,7 +61,7 @@ const fieldMap = {
     // originCountry: 'Country',
     // destinationCountry: 'Country',
     packingType: 'PackingType',
-    tabpackingType: 'PackingType',
+    tabPackingType: 'PackingType',
     uOMType: 'UOMType',
     partyName: 'PartyName' // example: if you're using it for validation
 };
@@ -73,7 +73,7 @@ async function loadDropdownData(query, typeOfValue, datalistId) {
             .from('dropdown_list')
             .select('description')
             .eq('type_of_value', typeOfValue)
-            .in('company_id', ['All', companyID])
+            .in('company_id', ['All', CompanyID])
             .ilike('description', `%${query}%`);
 
         if (error) {
@@ -291,5 +291,69 @@ async function setupChargeTypeValidation() {
     // setupChargeTypeValidation();
 }
 
+async function fetchDefaultTax(partyCode) {
+    if (!partyCode) {
+        console.warn("Party code is required to fetch default tax.");
+        return;
+    }
 
+    try {
+        const { data, error } = await supabaseClient
+            .from('PartyDetails')
+            .select('DefaultTax')
+            .eq('PartyCode', partyCode)
+            .single(); // Only one expected row
 
+        if (error) throw error;
+
+        if (data?.DefaultTax) {
+            console.log("Default Tax:", data.DefaultTax);
+            return data.DefaultTax;
+        } else {
+            console.warn("No DefaultTax found for PartyCode:", partyCode);
+            return null;
+        }
+    } catch (error) {
+        console.error('Error fetching DefaultTax:', error.message);
+        return null;
+    }
+}
+// Example usage
+// fetchDefaultTax('somePartyCode').then(tax => console.log("Fetched Tax:", tax));
+
+async function PartyAddressDetails(query, typeOfValue, datalistId) {
+    const datalist = document.getElementById(datalistId);
+
+    if (!query.trim()) {
+        datalist.innerHTML = ''; // Clear suggestions if input is empty
+        return;
+    }
+
+    try {
+        const { data, error } = await supabaseClient
+            .from('PartyPickupAddress')
+            .select('Address')
+            .eq('company_ID', CompanyID)
+            .ilike('Address', `%${query}%`)
+            .order('Address', { ascending: true });
+
+        if (error) throw error;
+
+        if (Array.isArray(data) && data.length > 0) {
+            updateAddressSuggestions(data, datalist);
+        } else {
+            datalist.innerHTML = '';
+        }
+
+    } catch (err) {
+        console.error('Error fetching party addresses:', err.message || err);
+    }
+}
+
+function updateAddressSuggestions(addresses, datalist) {
+    datalist.innerHTML = addresses
+        .map(({ Address }) => `<option value="${Address}">${Address}</option>`)
+        .join('');
+}
+// Example usage
+// PartyAddressDetails('some query', 'PartyPickupAddress', 'partyAddressSuggestions');

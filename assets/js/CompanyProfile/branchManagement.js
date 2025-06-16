@@ -72,7 +72,7 @@ async function loadBranches() {
         const { data, error } = await supabaseClient
             .from('CompanyBranchDetails')
             .select('*')
-            .eq('CompanyID', companyID);
+            .eq('CompanyID', CompanyID);
 
         if (error) throw error;
 

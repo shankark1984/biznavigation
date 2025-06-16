@@ -17,7 +17,7 @@ function updateTotals() {
     document.getElementById("totalActualWtSum").textContent = totalActualWtSum.toFixed(2);
     document.getElementById("totalVolumeWt").textContent = totalVolumeWt.toFixed(2);
     document.getElementById("totalVolWtSum").textContent = totalVolWtSum.toFixed(2);
-    document.getElementById("totalChargableWt").textContent = totalChargableWt.toFixed(2);
+    document.getElementById("totalChargeableWt").textContent = totalChargableWt.toFixed(2);
 
     document.getElementById("quantity").value = totalQuantity.toFixed(2);
     document.getElementById("actualWeight").value = totalActualWt.toFixed(2);
@@ -26,16 +26,16 @@ function updateTotals() {
 }
 
 document.getElementById("addVolumetricRow").addEventListener("click", function () {
-    const packingType = document.getElementById("tabpackingType").value.trim();
-    const length = parseFloat(document.getElementById("lenghtCM").value) || 0;
+    const packingType = document.getElementById("tabPackingType").value.trim();
+    const length = parseFloat(document.getElementById("lengthCM").value) || 0;
     const width = parseFloat(document.getElementById("widthCM").value) || 0;
     const height = parseFloat(document.getElementById("heightCM").value) || 0;
     const quantity = parseInt(document.getElementById("quantityV").value) || 0;
     const actualWt = parseFloat(document.getElementById("actualWtV").value) || 0;
     const totalActualWt = parseFloat(document.getElementById("totalActualWtV").value) || 0;
     const volumeWt = parseFloat(document.getElementById("volumeWtV").value) || 0;
-    const totalVolWt = parseFloat(document.getElementById("totalvolumeWtV").value) || 0;
-    const chargableWt = parseFloat(document.getElementById("chargableWtV").value) || 0;
+    const totalVolWt = parseFloat(document.getElementById("totalVolumeWtV").value) || 0;
+    const chargableWt = parseFloat(document.getElementById("chargeableWtV").value) || 0;
 
     if (!packingType) {
         alert("Packing Type is required.");
@@ -96,16 +96,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     /* ---------- Element cache ---------- */
     const el = {
-        qty: $('quantityV'),
-        act: $('actualWtV'),
-        len: $('lenghtCM'),
+        trn: $('transitTypeI'),
+        len: $('lengthCM'),
         wid: $('widthCM'),
         hgt: $('heightCM'),
-        trn: $('transitTypeI'),
+        qty: $('quantityV'),
+        act: $('actualWtV'),
         totAct: $('totalActualWtV'),
         volWt: $('volumeWtV'),
-        totVol: $('totalvolumeWtV'),
-        chg: $('chargableWtV'),
+        totVol: $('totalVolumeWtV'),
+        chg: $('chargeableWtV'),
+        uOMType: $('uOMType'),
     };
 
     if (Object.values(el).some(e => !e)) {
@@ -159,7 +160,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function recalc() {
-        const { qty, act, len, wid, hgt, totAct, volWt, totVol, chg } = el;
+        const { qty, act, len, wid, hgt, totAct, volWt, totVol, chg, uOMType } = el;
         const q = num(qty.value);
         const a = num(act.value);
         const l = num(len.value);
@@ -173,11 +174,42 @@ document.addEventListener('DOMContentLoaded', () => {
         let chargeable = Math.max(totalActual, totalVolWt);
         if (minCWT && chargeable < minCWT) chargeable = minCWT;
 
+        // Apply rounding rules based on uOMType
+        let finalChargeable = chargeable;
+        const uom = uOMType?.value?.trim()?.toLowerCase();
+
+        switch (uom) {
+            case 'kgs':
+            case 'tons':
+                finalChargeable = Math.ceil(chargeable);
+                break;
+            case 'gms':
+                if (Number.isInteger(chargeable)) {
+                    finalChargeable = chargeable;
+                } else {
+                    const decimal = chargeable - Math.floor(chargeable);
+                    if (decimal <= 0.5) {
+                        finalChargeable = Math.floor(chargeable) + 0.5;
+                    } else {
+                        finalChargeable = Math.ceil(chargeable);
+                    }
+                }
+                break;
+            case 'fixed':
+                finalChargeable = totalActual;
+                break;
+            default:
+                // Leave chargeable as is (2 decimal precision)
+                finalChargeable = chargeable;
+        }
+
         totAct.value = totalActual.toFixed(2);
         volWt.value = pieceVolWt.toFixed(2);
         totVol.value = totalVolWt.toFixed(2);
-        chg.value = chargeable.toFixed(2);
+        chg.value = finalChargeable.toFixed(2);
     }
+
+
 
     let rafID = 0;
     const onInput = () => {

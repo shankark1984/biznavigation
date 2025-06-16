@@ -1,4 +1,4 @@
-// Utility functions
+// ---------- Utility Functions ----------
 function getValue(id) {
     return document.getElementById(id)?.value?.trim();
 }
@@ -15,13 +15,80 @@ function debounce(func, delay) {
     };
 }
 
+// ---------- Populate Edit Form ----------
+function populateEditForm(existingData) {
+    if (!existingData) {
+        console.warn("No data provided to populate form.");
+        return;
+    }
+
+    const fields = [
+        'partyCode', 'bookedDate', 'movementTypeI', 'transitTypeI', 'modeTypeI',
+        'ContainerType', 'carrierName', 'shippingType',
+        'originCountry', 'portOfLoading', 'destinationCountry', 'portOfDischarge',
+        'chargeableWeight'
+    ];
+
+    fields.forEach(field => {
+        document.getElementById(field).value = existingData[field] || '';
+    });
+
+    setTimeout(() => fetchTariffRate(), 100);
+}
+
+// ---------- Fetch Default Tax ----------
+async function fetchDefaultTax(partyCode) {
+    const { data, error } = await supabaseClient
+        .from('PartyDetails')
+        .select('DefaultTax')
+        .eq('PartyCode', partyCode)
+        .single();
+
+    if (error) {
+        console.warn('Failed to fetch DefaultTax:', error.message);
+        return null;
+    }
+
+    return data?.DefaultTax ?? null;
+}
+
+// ---------- Update Freight Amount ----------
+async function updatefreightAmount(value, currencyCode = '') {
+    const freightAmount = document.getElementById('freightAmount');
+    const currencyCodeInput = document.getElementById('currencyCode');
+    const baseCurrency = currencyCode || 'INR';
+    const targetCurrency = 'INR';
+
+    if (freightAmount) {
+        freightAmount.value = value?.toFixed(2) ?? '';
+        if (!value) freightAmount.focus();
+    }
+
+    if (currencyCodeInput) {
+        currencyCodeInput.value = targetCurrency;
+    }
+
+    if (value && baseCurrency !== targetCurrency) {
+        const currencyConvertedAmt = await convertCurrency({
+            amount: value,
+            from: baseCurrency,
+            to: targetCurrency
+        });
+
+        if (currencyConvertedAmt != null) {
+            console.log("Converted Amount:", currencyConvertedAmt);
+        }
+    }
+}
+
+// ---------- Fetch Tariff Rate ----------
 async function fetchTariffRate() {
-    // Required fields
     const partyCode = getValue('partyCode');
     const bookedDate = getValue('bookedDate');
     const chargeType = getValue('chargesTypeInput');
 
     if (chargeType !== "Freight Amount") return;
+
     if (!partyCode || !bookedDate) {
         alert('Party Code and Booked Date are required');
         return;
@@ -31,7 +98,6 @@ async function fetchTariffRate() {
         return;
     }
 
-    // Optional fields
     const movementType = getValue('movementTypeI');
     const transitType = getValue('transitTypeI');
     const modeType = getValue('modeTypeI');
@@ -39,15 +105,13 @@ async function fetchTariffRate() {
     const carrier = getValue('carrierName');
     const shippingType = getValue('shippingType');
     const origin = getValue('originCountry');
-    const portOfLoading = getValue('portOfLoading');
+    const portOfLoading = getValue('portOfLoading') || 'NA';
     const destination = getValue('destinationCountry');
-    const portOfDischarge = getValue('portOfDischarge');
+    const portOfDischarge = getValue('portOfDischarge') || 'NA';
     const chargeableWeight = parseFloat(getValue('chargeableWeight') || 0);
     const currencyCode = getValue('currencyCode');
 
-
     try {
-        // Build query dynamically
         let query = supabaseClient
             .from('PartyTariff')
             .select('*')
@@ -74,14 +138,10 @@ async function fetchTariffRate() {
         if (data?.length) {
             const tariff = data[0];
             const rate = parseFloat(tariff.Rate);
-            const total = tariff.UOM === "Fixed"
-                ? rate
-                : rate * chargeableWeight;
-
+            const total = tariff.UOM === "Fixed" ? rate : rate * chargeableWeight;
             updatefreightAmount(total, tariff.CurrencyCode);
-
         } else {
-            alert("No matching tariff found. Please enter rate manually.");
+            console.warn("No tariff found for the given criteria.");
             updatefreightAmount(null);
         }
     } catch (error) {
@@ -90,37 +150,7 @@ async function fetchTariffRate() {
     }
 }
 
-async function updatefreightAmount(value, currencyCode = '') {
-    const freightAmount = document.getElementById('freightAmount');
-    const currencyCodeInput = document.getElementById('currencyCode');
-
-    const baseCurrency = currencyCode || 'INR'; // Change this if your base currency varies
-    const targetCurrency = 'INR';
-
-    if (freightAmount) {
-        freightAmount.value = value?.toFixed(2) ?? '';
-        if (!value) freightAmount.focus();
-    }
-
-    if (currencyCodeInput) {
-        currencyCodeInput.value = targetCurrency;
-    }
-
-    // Reuse conversion logic
-    const currencyConvertedAmt = await convertCurrency({
-        amount: value,
-        from: baseCurrency,
-        to: targetCurrency
-    });
-
-    if (currencyConvertedAmt != null) {
-        console.log("Converted Amount:", currencyConvertedAmt);
-        // You can now use currencyConvertedAmt elsewhere
-    }
-}
-
-
-
+// ---------- Populate Container Types ----------
 function populateContainerTypes() {
     const table = document.getElementById('containerDetailsTable');
     const containerTypeField = document.getElementById('ContainerType');
@@ -129,35 +159,52 @@ function populateContainerTypes() {
 
     const types = new Set(
         Array.from(table.querySelectorAll('tbody tr'))
-            .flatMap(row => {
-                const cells = row.querySelectorAll('td');
-                return cells.length > 0 ? [cells[0].innerText.trim()] : [];
-            })
+            .map(row => row.querySelector('td')?.innerText.trim())
             .filter(Boolean)
     );
 
     containerTypeField.innerHTML = '';
     types.forEach(type => {
-        const option = new Option(type, type);
-        containerTypeField.add(option);
+        containerTypeField.add(new Option(type, type));
     });
 }
 
-// Initialize with debounced fetch
-document.addEventListener('DOMContentLoaded', () => {
+// ---------- Event Listener Setup ----------
+function setupEventListeners() {
     const debouncedFetch = debounce(fetchTariffRate, 300);
 
-    const events = [
-        ['chargesTypeInput', 'change', fetchTariffRate],
+    [
         ['chargeableWeight', 'input', debouncedFetch],
         ['ContainerType', 'change', debouncedFetch],
         ['partyCode', 'change', debouncedFetch]
-    ];
-
-    events.forEach(([id, event, handler]) => {
+    ].forEach(([id, event, handler]) => {
         document.getElementById(id)?.addEventListener(event, handler);
     });
 
-    populateContainerTypes();
-});
+    document.getElementById('chargesTypeInput')?.addEventListener('change', async function () {
+        const selectedValue = this.value;
+        const partyCode = getValue('partyCode');
 
+        if (!partyCode) {
+            alert('Please enter a Party Code before selecting Charges Type.');
+            return;
+        }
+
+        document.getElementById('chargesTypeList').value = selectedValue;
+
+        if (selectedValue === "Freight Amount") {
+            await fetchTariffRate();
+        }
+
+        const tax = await fetchDefaultTax(partyCode);
+        if (tax != null) {
+            document.getElementById('partyDefaultTax').value = tax;
+        }
+    });
+}
+
+// ---------- DOM Ready ----------
+document.addEventListener('DOMContentLoaded', () => {
+    populateContainerTypes();
+    setupEventListeners();
+});

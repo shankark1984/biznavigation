@@ -1,10 +1,10 @@
 // Fetch company data from Supabase
 async function fetchCompanyData() {
     try {
-        const { data, error } = await supabaseClient
+        const { data, error } = await SupabaseService.client
             .from('company_profile')
             .select('*')
-            .eq('company_id', companyID)
+            .eq('company_id', CompanyID)
             .single();
 
         if (error) {
@@ -186,7 +186,7 @@ function formatAddress(address) {
 async function generateNewCompanyID(companyName) {
     const firstLetter = companyName.charAt(0).toUpperCase();
 
-    const { data, error } = await supabaseClient
+    const { data, error } = await this.client
         .from('company_profile')
         .select('company_id');
 

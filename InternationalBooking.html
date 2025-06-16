@@ -131,7 +131,7 @@
                         <!-- Row 4-6 - Shipping details -->
                         <div class="col-md-2 col-sm-6">
                             <label class="form-label">P.O No</label>
-                            <input list="poNoSuggestions" class="form-control" id="poNo" required autocomplete="off">
+                            <input list="poNoSuggestions" class="form-control" id="poNo" autocomplete="off">
                             <datalist id="poNoSuggestions"></datalist>
                         </div>
 
@@ -154,8 +154,9 @@
                         </div>
                         <div class="col-md-4 col-sm-6">
                             <label class="form-label">Pickup Address</label>
-                            <textarea class="form-control" id="PartyAddress" required rows="1"
-                                oninput="PartyAddressDetails(this.value, 'Address', 'PartyAddressSuggestions')"></textarea>
+                            <input type="text" class="form-control" id="PartyAddress" required autocomplete="off"
+                                list="PartyAddressSuggestions" autocorrect="off"
+                                oninput="PartyAddressDetails(this.value, 'Address', 'PartyAddressSuggestions')" />
                             <datalist id="PartyAddressSuggestions"></datalist>
                         </div>
 
@@ -252,20 +253,19 @@
 
                         <div class="col-md-2 col-sm-6">
                             <label class="form-label">Act Wt</label>
-                            <input type="number" class="form-control" id="actualWeight"
-                                placeholder="Enter Actual Weight" min="0" step="0.01">
+                            <input type="number" class="form-control" id="actualWeight" value="0" min="0" step="0.01">
                         </div>
 
                         <div class="col-md-2 col-sm-6">
                             <label class="form-label">Vol Wt</label>
-                            <input type="number" class="form-control" id="volumetricWeight"
-                                placeholder="Enter Volumetric Weight" min="0" step="0.01">
+                            <input type="number" class="form-control" id="volumetricWeight" value="0" min="0"
+                                step="0.01">
                         </div>
 
                         <div class="col-md-2 col-sm-6">
                             <label class="form-label">Char Wt</label>
-                            <input type="number" class="form-control" id="chargeableWeight"
-                                placeholder="Enter Chargeable Weight" min="0" step="0.01" disabled>
+                            <input type="number" class="form-control" id="chargeableWeight" value="0" min="0"
+                                step="0.01" disabled>
                         </div>
 
                         <div class="col-md-4 col-sm-12">
@@ -290,8 +290,8 @@
                                     data-bs-target="#container-details" type="button">Container Details</button>
                             </li>
                             <li class="nav-item" role="presentation">
-                                <button class="nav-link" id="status-tab" data-bs-toggle="tab" data-bs-target="#status"
-                                    type="button">Status</button>
+                                <button class="nav-link" id="status-tab" data-bs-toggle="tab"
+                                    data-bs-target="#booking-status" type="button">Status</button>
                             </li>
                         </ul>
 
@@ -377,74 +377,81 @@
                                 </div>
                             </div>
 
-                            <!-- Volumetric Tab - Optimized layout -->
+                            <!-- Volumetric Tab -->
                             <div class="tab-pane fade" id="volumetric">
                                 <div class="row g-2 text-center">
+
+                                    <!-- Packing Type -->
                                     <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
-                                        <label class="form-label small text-start">Packing Type</label>
-                                        <input list="tabpackingTypeSuggestions" class="form-control form-control-sm"
-                                            id="tabpackingType" placeholder="Enter Packing Type">
-                                        <datalist id="tabpackingTypeSuggestions"></datalist>
+                                        <label for="tabPackingType" class="form-label small text-start">Packing
+                                            Type</label>
+                                        <input list="tabPackingTypeSuggestions" class="form-control form-control-sm"
+                                            id="tabPackingType" placeholder="Enter Packing Type">
+                                        <datalist id="tabPackingTypeSuggestions"></datalist>
                                     </div>
 
                                     <!-- Dimensions -->
                                     <div class="col-md-1 col-sm-3">
-                                        <label class="form-label small text-start">Length (cm)</label>
-                                        <input type="number" class="form-control form-control-sm" id="lenghtCM" min="0"
+                                        <label for="lengthCM" class="form-label small text-start">Length (cm)</label>
+                                        <input type="number" class="form-control form-control-sm" id="lengthCM" min="0"
                                             step="0.01">
                                     </div>
 
                                     <div class="col-md-1 col-sm-3">
-                                        <label class="form-label small text-start">Width (cm)</label>
+                                        <label for="widthCM" class="form-label small text-start">Width (cm)</label>
                                         <input type="number" class="form-control form-control-sm" id="widthCM" min="0"
                                             step="0.01">
                                     </div>
 
                                     <div class="col-md-1 col-sm-3">
-                                        <label class="form-label small text-start">Height (cm)</label>
+                                        <label for="heightCM" class="form-label small text-start">Height (cm)</label>
                                         <input type="number" class="form-control form-control-sm" id="heightCM" min="0"
                                             step="0.01">
                                     </div>
 
-                                    <!-- Weight Inputs -->
+                                    <!-- Quantity & Weight -->
                                     <div class="col-md-1 col-sm-3">
-                                        <label class="form-label small text-start">Quantity</label>
+                                        <label for="quantityV" class="form-label small text-start">Quantity</label>
                                         <input type="number" class="form-control form-control-sm" id="quantityV" min="0"
                                             step="1">
                                     </div>
 
                                     <div class="col-md-1 col-sm-3">
-                                        <label class="form-label small text-start">Act Wt (Kgs)</label>
+                                        <label for="actualWtV" class="form-label small text-start">Act Wt (Kgs)</label>
                                         <input type="number" class="form-control form-control-sm" id="actualWtV" min="0"
                                             step="0.01">
                                     </div>
 
+                                    <!-- Calculated Fields -->
                                     <div class="col-md-1 col-sm-3">
-                                        <label class="form-label small text-start">Total Act Wt</label>
+                                        <label for="totalActualWtV" class="form-label small text-start">Total Act
+                                            Wt</label>
                                         <input type="number" class="form-control form-control-sm" id="totalActualWtV"
                                             disabled>
                                     </div>
 
                                     <div class="col-md-1 col-sm-3">
-                                        <label class="form-label small text-start">Volume Wt</label>
+                                        <label for="volumeWtV" class="form-label small text-start">Volume Wt</label>
                                         <input type="number" class="form-control form-control-sm" id="volumeWtV"
                                             disabled>
                                     </div>
 
                                     <div class="col-md-1 col-sm-3">
-                                        <label class="form-label small text-start">Total Vol Wt</label>
-                                        <input type="number" class="form-control form-control-sm" id="totalvolumeWtV"
+                                        <label for="totalVolumeWtV" class="form-label small text-start">Total Vol
+                                            Wt</label>
+                                        <input type="number" class="form-control form-control-sm" id="totalVolumeWtV"
                                             disabled>
                                     </div>
 
                                     <div class="col-md-1 col-sm-3">
-                                        <label class="form-label small text-start">Chargable Wt</label>
-                                        <input type="number" class="form-control form-control-sm" id="chargableWtV"
+                                        <label for="chargeableWtV" class="form-label small text-start">Char Wt</label>
+                                        <input type="number" class="form-control form-control-sm" id="chargeableWtV"
                                             disabled>
                                     </div>
 
+                                    <!-- Add Button -->
                                     <div class="col-md-1 col-sm-2 pt-sm-1">
-                                        <label class="invisible">...</label>
+                                        <label class="invisible">Add</label>
                                         <button type="button" class="btn btn-sm btn-primary w-100 mt-1"
                                             id="addVolumetricRow">Add</button>
                                     </div>
@@ -465,7 +472,7 @@
                                                 <th>Total Actual Wt</th>
                                                 <th>Volume Wt</th>
                                                 <th>Total Vol Wt</th>
-                                                <th>Chargable Wt</th>
+                                                <th>Chargeable Wt</th>
                                                 <th>Action</th>
                                             </tr>
                                         </thead>
@@ -478,7 +485,7 @@
                                                 <th id="totalActualWtSum">0</th>
                                                 <th id="totalVolumeWt">0</th>
                                                 <th id="totalVolWtSum">0</th>
-                                                <th id="totalChargableWt">0</th>
+                                                <th id="totalChargeableWt">0</th>
                                                 <th></th>
                                             </tr>
                                         </tfoot>
@@ -486,28 +493,39 @@
                                 </div>
                             </div>
 
-                            <!-- Container Details Tab - Simplified -->
+                            <!-- Container Details Tab -->
                             <div class="tab-pane fade" id="container-details">
                                 <div class="row g-2 align-items-end text-center">
+
+                                    <!-- Container Type -->
                                     <div class="col-md-4 col-sm-6">
-                                        <label for="containerType" class="form-label">Container Type</label>
-                                        <select id="containerType" class="form-select"></select>
+                                        <label for="containerType" class="form-label small text-start">Container
+                                            Type</label>
+                                        <select id="containerType" class="form-select form-select-sm"></select>
                                     </div>
 
+                                    <!-- Container Number -->
                                     <div class="col-md-4 col-sm-6">
-                                        <label class="form-label small text-start">Container Number</label>
-
-                                        <input class="form-control form-control-sm" id="containerNumber"
+                                        <label for="containerNumber" class="form-label small text-start">Container
+                                            Number</label>
+                                        <input type="text" class="form-control form-control-sm" id="containerNumber"
                                             placeholder="Enter Container Number" maxlength="11">
                                     </div>
+
+                                    <!-- Add Button -->
                                     <div class="col-md-1 col-sm-2 pt-sm-1">
-                                        <label class="invisible">...</label>
+                                        <label class="invisible">Add</label>
                                         <button type="button" class="btn btn-sm btn-primary w-100 mt-1"
                                             id="addContainer">Add</button>
                                     </div>
-                                    <small id="containerFeedback" class="text-danger d-none text-start d-block"></small>
+
+                                    <!-- Feedback -->
+                                    <div class="col-12 text-start">
+                                        <small id="containerFeedback" class="text-danger d-none"></small>
+                                    </div>
                                 </div>
-                                <!-- create a table for container details -->
+
+                                <!-- Container Details Table -->
                                 <div class="table-responsive mt-3">
                                     <table class="table table-sm table-bordered text-center align-middle"
                                         id="containerDetailsTable">
@@ -522,14 +540,27 @@
                                         <tbody></tbody>
                                     </table>
                                 </div>
+                            </div>
 
-                                <!-- Status Tab - Simplified -->
-                                <div class="tab-pane fade" id="status">
-                                    <label class="form-label small">Status</label>
-                                    <textarea class="form-control" id="statusDetails" rows="3"
-                                        placeholder="Enter Status"></textarea>
+                            <!-- Booking Status Tab -->
+                            <div class="tab-pane fade" id="booking-status" role="tabpanel">
+                                <div class="table-responsive mt-3">
+                                    <table class="table table-bordered table-striped table-hover align-middle"
+                                        id="bookingStatusTable">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Status Date</th>
+                                                <th>Arrived At</th>
+                                                <th>Information</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <!-- Rows will be populated dynamically -->
+                                        </tbody>
+                                    </table>
                                 </div>
                             </div>
+
                         </div>
                 </form>
 
@@ -600,6 +631,7 @@
     <script src="assets/js/InternationalBooking/VolumetricCalculator.js"></script>
     <script src="assets/js/InternationalBooking/ContainerDetails.js"></script>
     <script src="assets/js/InternationalBooking/TariffCalculation.js"></script>
+    <script src="assets/js/InternationalBooking/BookingStatus.js"></script>
 </body>
 
 </html>

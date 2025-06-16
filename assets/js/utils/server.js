@@ -1,156 +1,158 @@
-// Initialize Supabase
-const { createClient } = supabase;
-const SUPABASE_URL = 'https://qfdrugniulwovfaijgkr.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFmZHJ1Z25pdWx3b3ZmYWlqZ2tyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mjg1OTA4MjIsImV4cCI6MjA0NDE2NjgyMn0.Jnh7qgfwZlU-REZIML3cub8FHSfdkpZkDQUFgpIjo74'; // Your Supabase Anon Key
-const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+let supabaseClient; // Declare global variable
 
-
-// Handle network status
-function handleNetworkChange() {
-    if (navigator.onLine) {
-        console.log("Back online");
-    } else {
-        console.log("No network!");
-        alert("No network!");
-    }
-}
-
-// Initial network check
-handleNetworkChange();
-
-// Monitor network changes
-window.addEventListener('online', handleNetworkChange);
-window.addEventListener('offline', handleNetworkChange);
-
-// Test Supabase connection
-async function testSupabaseConnection() {
-    try {
-        const { data, error } = await supabaseClient
-            .from('company_profile')
-            .select('*')
-            .limit(1);
-
-        if (error) {
-            console.error("Database server error:", error.message);
-            if (!navigator.onLine) {
-                console.log("Likely due to no internet.");
-            }
-        } else {
-            console.log("Connected to database server successfully!");
-        }
-    } catch (err) {
-        console.error("Unexpected error:", err);
-        alert("Error connecting to database server.");
-    }
-}
-
-// Run connection test
-testSupabaseConnection();
-
-
-const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-console.log(timeZone); // e.g., "America/New_York"
-
-const now = new Date();
-const localtimeStamp = now.toLocaleString(); // Local date and time
-console.log(localtimeStamp);
-
-const empCode = localStorage.getItem('EmpCode');
-const userName = localStorage.getItem('UserName');
-const userLoginID = localStorage.getItem('UserLoginID');
-const userType = parseInt(localStorage.getItem('UserType'), 10);
-const companyID = localStorage.getItem('CompanyID');
-const workingBranch = localStorage.getItem('WorkingBranch');
-
-
-
-// Arrays to store the fetched data for different types
-let partyDetails = []
-let vehicleTypeData = [];
-let bankNameData = [];
-let bloodGroupData = [];
-let chargesTypeData = [];
-let modeTypeData = [];
-let movementTypeData = [];
-let transitTypeData = [];
-let movementDetails = [];
-let tax_data = [];
-
-let lrNumber = '';
-let transitType = '';
-let tempFormID = '';
-let partyCode = '';
-let frightCharges = 0;
-let otherCharges = 0;
-let subTotal = 0;
-let cGSTAmount = 0;
-let sGSTAmount = 0;
-let iGSTAmount = 0;
-let totalGSTAmount = 0;
-let grandTotal = 0;
-
-let selectedOriginCountry = null;
-let selectedDestinationCountry = null;
-
-
-let rowIDEdit = null;
-let branchCode = null;
-let bankRowIDEdit = null;
-// Global variables for permissions
-let formName = '';
-let formID = null;
-let perRead = false;
-let perWrite = false;
-let perDelete = false;
-let perUpdate = false;
-
-let insertedID = null;
-
-
-document.addEventListener('DOMContentLoaded', () => {
-    const saveButton = document.getElementById('saveButton');
-    const newButton = document.getElementById('newButton');
-    const deleteButton = document.getElementById('deleteButton');
-    const reportButton = document.getElementById('reportButton');
-
-    if (saveButton) {
-        const saveBtnText = saveButton.textContent.trim().toLowerCase();
-        // console.log('Save Button:', saveBtnText);
-    }
-
-    if (newButton) {
-        const newBtnText = newButton.textContent.trim().toLowerCase();
-        // console.log('New Button:', newBtnText);
-    }
-
-    if (deleteButton) {
-        const deleteBtnText = deleteButton.textContent.trim().toLowerCase();
-        // console.log('Delete Button:', deleteBtnText);
-    }
-
-    if (reportButton) {
-        const reportBtnText = reportButton.textContent.trim().toLowerCase();
-        // console.log('Report Button:', reportBtnText);
+// Configuration Constants
+const SUPABASE_CONFIG = Object.freeze({
+    url: 'https://qfdrugniulwovfaijgkr.supabase.co',
+    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFmZHJ1Z25pdWx3b3ZmYWlqZ2tyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mjg1OTA4MjIsImV4cCI6MjA0NDE2NjgyMn0.Jnh7qgfwZlU-REZIML3cub8FHSfdkpZkDQUFgpIjo74',
+    tables: {
+        COMPANY_PROFILE: 'company_profile',
+        USER_LOGIN: 'user_login'
     }
 });
-// Disable all page drag / pull to refresh
-function disablePullToRefresh() {
-    let touchStartY = 0;
 
-    window.addEventListener('touchstart', function (e) {
-        touchStartY = e.touches[0].clientY;
-    }, { passive: false });
+// Supabase Service
+class SupabaseService {
+    static #client = null;
 
-    window.addEventListener('touchmove', function (e) {
-        const currentY = e.touches[0].clientY;
-
-        if (window.scrollY === 0 && currentY > touchStartY) {
-            e.preventDefault();
+    static get client() {
+        if (!this.#client) {
+            this.#client = supabase.createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.anonKey);
         }
-    }, { passive: false });
+        supabaseClient = this.#client; // For backward compatibility
+        console.log("Supabase client initialized");
+        return this.#client;
+    }
+
+    static async testConnection(maxRetries = 2) {
+        for (let attempt = 1; attempt <= maxRetries; attempt++) {
+            try {
+                const { error } = await this.client
+                    .from(SUPABASE_CONFIG.tables.COMPANY_PROFILE)
+                    .select('*')
+                    .limit(1)
+                    .single();
+
+                if (error) throw error;
+                console.log("Supabase connection successful");
+                return true;
+            } catch (error) {
+                console.error(`Connection attempt ${attempt} failed:`, error.message);
+                if (attempt === maxRetries) {
+                    return false;
+                }
+                await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+            }
+        }
+    }
 }
 
-// Call it when the page loads
-window.addEventListener('load', disablePullToRefresh);
+// Network Service
+class NetworkService {
+    static #online = navigator.onLine;
 
+    static init() {
+        window.addEventListener('online', () => {
+            this.#online = true;
+            console.log("Back online");
+        });
 
+        window.addEventListener('offline', () => {
+            this.#online = false;
+            console.warn("No network connection");
+        });
+
+        return this.#online;
+    }
+
+    static get isOnline() {
+        return this.#online;
+    }
+}
+
+// Session Service
+class SessionService {
+    static _SESSION_KEYS = Object.freeze([
+        'EmpCode', 'UserName', 'UserLoginID',
+        'UserType', 'CompanyID', 'WorkingBranch'
+    ]);
+
+    static loadGlobals() {
+        this._SESSION_KEYS.forEach(key => {
+            window[key] = localStorage.getItem(key) || null;
+        });
+    }
+
+    static saveGlobals() {
+        this._SESSION_KEYS.forEach(key => {
+            if (window[key] !== undefined && window[key] !== null) {
+                localStorage.setItem(key, window[key]);
+            }
+        });
+    }
+
+    static setSession(user) {
+        const {
+            emp_code, user_name, user_login_id,
+            user_type, company_id, working_branch
+        } = user;
+
+        const sessionMap = {
+            EmpCode: emp_code,
+            UserName: user_name,
+            UserLoginID: user_login_id,
+            UserType: user_type,
+            CompanyID: company_id,
+            WorkingBranch: working_branch || 'default'
+        };
+
+        this._SESSION_KEYS.forEach(key => {
+            const value = sessionMap[key];
+            localStorage.setItem(key, value);
+            window[key] = value;
+        });
+    }
+
+    static clearSession() {
+        this._SESSION_KEYS.forEach(key => {
+            localStorage.removeItem(key);
+            window[key] = null;
+        });
+    }
+
+    static getSession() {
+        const session = this._SESSION_KEYS.reduce((acc, key) => {
+            acc[key] = localStorage.getItem(key);
+            return acc;
+        }, {});
+
+        session.timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        session.localTime = new Date().toISOString();
+
+        return session;
+    }
+}
+
+// ✅ Global sync across tabs
+window.addEventListener('storage', (e) => {
+    if (SessionService._SESSION_KEYS.includes(e.key)) {
+        window[e.key] = e.newValue;
+    }
+});
+
+// ✅ Initialize on DOMContentLoaded
+document.addEventListener('DOMContentLoaded', () => {
+    NetworkService.init();
+
+    // Load global session variables
+    SessionService.loadGlobals();
+
+    SupabaseService.testConnection().then(isConnected => {
+        if (!isConnected && !NetworkService.isOnline) {
+            console.error("No network connection and Supabase unavailable");
+        }
+    });
+
+    console.log('Session Data:', SessionService.getSession());
+});
+
+// let branchCode = null;

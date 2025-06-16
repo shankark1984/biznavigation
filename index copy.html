@@ -6,17 +6,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>BizNavigation - Login</title>
 
-    <!-- Preload critical resources -->
-    <link rel="preload" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" as="style"
-        onload="this.onload=null;this.rel='stylesheet'">
-    <noscript>
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
-    </noscript>
-
-    <!-- Defer non-critical scripts -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js" defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" defer></script>
-
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <!-- Supabase JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
     <!-- Web Manifest -->
     <link rel="manifest" href="/manifest.json" />
 
@@ -147,18 +140,6 @@
             left: 50%;
             transform: translate(-50%, -50%);
         }
-
-        .form-control:focus {
-            box-shadow: 0 0 0 0.25rem rgba(108, 99, 255, 0.25);
-            background-color: rgba(255, 255, 255, 0.4);
-        }
-
-        /* Add reduced motion preference */
-        @media (prefers-reduced-motion: reduce) {
-            .login-card {
-                animation: none;
-            }
-        }
     </style>
 </head>
 
@@ -187,7 +168,7 @@
             <div class="mb-3">
                 <label for="password" class="form-label">Password</label>
                 <input type="password" class="form-control" id="password" placeholder="Enter your password"
-                    autocomplete="off" required />
+                    autocomplete="off" required onkeydown="handleEnterKey(event)" />
             </div>
 
             <button id="loginButton" type="button" class="btn btn-primary w-100" onclick="login()">

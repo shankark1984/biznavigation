@@ -2,7 +2,7 @@
 async function checkAccess(userLoginID, formID) {
 
     try {
-        const { data, error } = await supabaseClient
+        const { data, error } = await this.client
             .from('UserAccessRules')
             .select('Read, Write, Delete, Update')
             .eq('UserLoginID', userLoginID)

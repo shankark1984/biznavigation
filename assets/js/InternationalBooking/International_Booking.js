@@ -25,33 +25,46 @@ async function loadAWBNoDetails(query) {
     });
 }
 
-// Event listener for selection
 const awbNoInput = document.getElementById('awbNo');
-// awbNoInput.addEventListener('change', () => fetchDocketDetails(awbNoInput.value));
 
-document.getElementById('awbNo').addEventListener('change', async function () {
+awbNoInput.addEventListener('change', async () => {
+    const docketNo = awbNoInput.value.trim();
+
+    if (!docketNo) return; // Guard clause for empty input
+
     try {
-        await fetchDocketDetails(awbNoInput.value);// Wait for fetch to complete
+        await fetchDocketDetails(docketNo);
         await setupChargeTypeValidation();
+
         const tempFormID = freightElements.tempFormID.value.trim();
         console.log('tempFormID:', tempFormID);
-        if (!tempFormID.includes('TEMP')) {
-            console.log('Loading AWB details for ID:', tempFormID);
-            await loadFreightCharges();                        // Then load charges
-            await loadVolumetricDetails(); // Then load volumetric rows
-            await fetchContainerDetails(tempFormID); // Then fetch container details
-        }
+
+        // Skip loading additional details if it's a TEMP form
+        if (tempFormID.includes('TEMP')) return;
+
+        console.log('Loading AWB details for ID:', tempFormID);
+
+        // Load other sections in parallel if independent
+        await Promise.all([
+            loadFreightCharges(),
+            loadVolumetricDetails(),
+            fetchContainerDetails(tempFormID),
+            loadBookingStatus(docketNo, companyID)
+        ]);
+
     } catch (error) {
         console.error('Error loading AWB details:', error);
         alert('Failed to load docket details. Please try again.');
     }
 });
 
+
 async function fetchDocketDetails(docketNo) {
     const { data, error } = await supabaseClient
         .from('international_booking')
         .select('*')
         .eq('DocketNo', docketNo)
+        .eq('company_id', companyID)
         .maybeSingle();
 
     if (error) {
@@ -64,6 +77,7 @@ async function fetchDocketDetails(docketNo) {
         return;
     }
     // Map fields
+
     document.getElementById('tempFormID').value = data.id;
     document.getElementById('status').value = data.Status
     document.getElementById('partyCode').value = data.CustomerCode
@@ -86,7 +100,9 @@ async function fetchDocketDetails(docketNo) {
     document.getElementById('commodity').value = data.Commodity;
     document.getElementById('clearanceMode').value = data.ClearanceMode;
     document.getElementById('originCountry').value = data.OriginName;
+    document.getElementById('portOfLoading').value = data.PortofLoading;
     document.getElementById('destinationCountry').value = data.DestinationName;
+
     document.getElementById('packingType').value = data.PackingType;
     document.getElementById('uOMType').value = data.UOMType;
     document.getElementById('quantity').value = data.NoofUnit;
@@ -106,19 +122,39 @@ async function fetchDocketDetails(docketNo) {
 document.getElementById('newButton').addEventListener('click', function () {
     clearForm();
     enableForm();
+    toggleEditMode(true);
+
+    // Button States
     saveButton.disabled = false;
     modifyButton.disabled = true;
     deleteButton.disabled = true;
     reportButton.disabled = true;
     saveButton.innerHTML = '<i class="bi bi-save"></i> Save';
+
+    // Enable adding freight
     document.getElementById('addFreightRow').disabled = false;
-    const table = document.getElementById('freightTable');
-    const tbody = table.querySelector('tbody');
-    tbody.innerHTML = '';
-    const tableBody = document.querySelector('#containerDetailsTable tbody');
-    tableBody.innerHTML = ''; // Clear existing rows
-    recalcTotals(); // Reset totals
+
+    // Clear Freight Table
+    document.querySelector('#freightTable tbody').innerHTML = '';
+
+    // Clear Container Details Table
+    document.querySelector('#containerDetailsTable tbody').innerHTML = '';
+
+    // Clear Volumetric Table
+    document.querySelector('#volumetricTable tbody').innerHTML = '';
+
+    // Recalculate Totals
+    recalcTotals();
+    updateTotals(); // Reset totals display
+    const tbody = document.querySelector('#bookingStatusTable tbody').innerHTML = ''; // Clear previous data
+
+    // Disable calculated weight fields
+    ['totalActualWtV', 'volumeWtV', 'totalVolumeWtV', 'chargeableWtV', 'chargeableWeight'].forEach(id => {
+        document.getElementById(id).disabled = true;
+    });
 });
+
+
 
 document.getElementById('modifyButton').addEventListener('click', async function () {
     enableForm();
@@ -133,8 +169,8 @@ document.getElementById('modifyButton').addEventListener('click', async function
     document.getElementById('chargeableWeight').disabled = true;
     document.getElementById('totalActualWtV').disabled = true;
     document.getElementById('volumeWtV').disabled = true;
-    document.getElementById('totalvolumeWtV').disabled = true;
-    document.getElementById('chargableWtV').disabled = true;
+    document.getElementById('totalVolumeWtV').disabled = true;
+    document.getElementById('chargeableWtV').disabled = true;
 
     toggleEditMode(false);
 });
@@ -312,9 +348,11 @@ async function saveOrUpdateInternationalBooking() {
         Commodity: document.getElementById("commodity").value,
         Origin: document.getElementById("originCountry").value,
         OriginName: document.getElementById("originCountry").value,
+        PortofLoading: document.getElementById("portOfLoading").value,
         PickupAddress: document.getElementById("PartyAddress").value,
         Destination: document.getElementById("destinationCountry").value,
         DestinationName: document.getElementById("destinationCountry").value,
+        PortofDischarge: document.getElementById("portOfDischarge").value,
         DeliveryAddress: document.getElementById("deliveryAddress").value,
         ClearanceMode: document.getElementById("clearanceMode").value,
         PackingType: document.getElementById("packingType").value,
@@ -327,7 +365,7 @@ async function saveOrUpdateInternationalBooking() {
         CurrencyType: "INR",
         Infomation: document.getElementById("infomation").value,
         PONo: document.getElementById("poNo").value,
-        ShippingType: document.getElementById("shippingType").value,
+        ShippingType: document.getElementById("shippingType").value || 'NA',
         company_id: companyID,
         CreatedBy: userLoginID,
         created_at: localtimeStamp
@@ -350,6 +388,14 @@ async function saveOrUpdateInternationalBooking() {
             // console.log("Inserted ID:", insertedID);
             document.getElementById("tempFormID").value = insertedID;
         }
+        const bookingData = {
+            ID_IB: insertedID,
+            docketNo: document.getElementById("awbNo").value,
+            statusDate: document.getElementById("bookedDate").value,
+            arrivedAt: workingBranch,
+            information: 'Shimpemt Booked',
+        };
+        const success = await insertBookingStatus(bookingData);
 
     } else if (actionType === "Update") {
         // Update existing record
@@ -393,17 +439,54 @@ document.addEventListener("DOMContentLoaded", function () {
     const actualWeightInput = document.getElementById("actualWeight");
     const volumetricWeightInput = document.getElementById("volumetricWeight");
     const chargeableWeightInput = document.getElementById("chargeableWeight");
+    const uOMTypeInput = document.getElementById("uOMType");
+
+    function applyRounding(uom, chargeable, actual) {
+        uom = uom?.trim().toLowerCase();
+        switch (uom) {
+            case 'kgs':
+            case 'tons':
+                return Math.ceil(chargeable);
+            case 'gms':
+                if (Number.isInteger(chargeable)) {
+                    return chargeable;
+                } else {
+                    const decimal = chargeable - Math.floor(chargeable);
+                    return (decimal <= 0.5)
+                        ? Math.floor(chargeable) + 0.5
+                        : Math.ceil(chargeable);
+                }
+            case 'fixed':
+                return actual;
+            default:
+                return chargeable;
+        }
+    }
 
     function updateChargeableWeight() {
-        const actual = parseFloat(actualWeightInput.value) || 0;
-        const volumetric = parseFloat(volumetricWeightInput.value) || 0;
-        const chargeable = Math.max(actual, volumetric);
-        chargeableWeightInput.value = chargeable.toFixed(2);
+        const actualVal = actualWeightInput.value;
+        const volVal = volumetricWeightInput.value;
+        const uomVal = uOMTypeInput?.value;
+
+        // Only proceed if all three values are entered
+        if (actualVal === "" || volVal === "" || !uomVal) {
+            chargeableWeightInput.value = ""; // Clear if incomplete
+            return;
+        }
+
+        const actual = parseFloat(actualVal);
+        const volumetric = parseFloat(volVal);
+        const rawChargeable = Math.max(actual, volumetric);
+        const roundedChargeable = applyRounding(uomVal, rawChargeable, actual);
+        chargeableWeightInput.value = roundedChargeable.toFixed(2);
     }
 
     actualWeightInput.addEventListener("input", updateChargeableWeight);
     volumetricWeightInput.addEventListener("input", updateChargeableWeight);
+    uOMTypeInput.addEventListener("change", updateChargeableWeight);
 });
+
+
 
 document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('modeTypeI').addEventListener('change', async function () {
