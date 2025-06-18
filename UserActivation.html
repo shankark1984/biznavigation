@@ -6,19 +6,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>BizNavigation - Register</title>
 
-    <!-- Preload critical resources -->
+    <!-- Preload critical styles -->
     <link rel="preload" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" as="style"
         onload="this.onload=null;this.rel='stylesheet'">
     <noscript>
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
     </noscript>
 
-    <!-- Defer non-critical scripts -->
+    <!-- Defer non-critical libraries -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js" defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" defer></script>
-
-    <!-- Web Manifest -->
-    <link rel="manifest" href="/manifest.json" />
+    <script src="https://cdn.jsdelivr.net/npm/js-sha256@0.9.0/build/sha256.min.js" defer></script>
 
     <style>
         body {
@@ -67,6 +64,11 @@
             color: rgba(255, 255, 255, 0.7);
         }
 
+        .form-control:focus {
+            box-shadow: 0 0 0 0.25rem rgba(108, 99, 255, 0.25);
+            background-color: rgba(255, 255, 255, 0.4);
+        }
+
         .form-label {
             color: #f0f0f0;
             font-weight: 500;
@@ -108,7 +110,7 @@
             filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.5));
         }
 
-        /* Background animation circles */
+        /* Background blur effect */
         .background-blur {
             position: absolute;
             width: 100%;
@@ -148,12 +150,6 @@
             transform: translate(-50%, -50%);
         }
 
-        .form-control:focus {
-            box-shadow: 0 0 0 0.25rem rgba(108, 99, 255, 0.25);
-            background-color: rgba(255, 255, 255, 0.4);
-        }
-
-        /* Add reduced motion preference */
         @media (prefers-reduced-motion: reduce) {
             .login-card {
                 animation: none;
@@ -172,12 +168,16 @@
 
     <div class="card login-card w-100" style="max-width: 400px;">
         <div class="text-center mb-4">
-            <img src="assets/img/applogo.png" alt="BizNavigation Logo" class="img-fluid" style="max-width: 100px;" />
-            <h1 class="fw-bold mt-3 text-secondary">BizNavigation</h1>
-            <p class="text-muted">Take your business to the next level</p>
+            <h2 class="fw-bold mt-3 text-secondary">User Activation</h2>
         </div>
 
-        <form id="loginForm">
+        <form id="registrationForm">
+            <div class="mb-3">
+                <label for="employeeCode" class="form-label">Employee Code</label>
+                <input type="text" class="form-control" id="employeeCode" placeholder="Enter your employee code"
+                    autocomplete="off" required />
+            </div>
+
             <div class="mb-3">
                 <label for="userName" class="form-label">Username</label>
                 <input type="text" class="form-control" id="userName" placeholder="Enter your username"
@@ -185,34 +185,37 @@
             </div>
 
             <div class="mb-3">
-                <label for="password" class="form-label">Password</label>
-                <input type="password" class="form-control" id="password" placeholder="Enter your password"
+                <label for="newPassword" class="form-label">Password</label>
+                <input type="password" class="form-control" id="newPassword" placeholder="Enter your password"
                     autocomplete="off" required />
             </div>
 
-            <button id="loginButton" type="submit" class="btn btn-primary w-100" onclick="login()">
-                <span id="loginButtonText">Login</span>
-                <div id="loginSpinner" class="spinner-border spinner-border-sm ms-2 d-none" role="status"></div>
+            <div class="mb-3">
+                <label for="confirmPassword" class="form-label">Confirm Password</label>
+                <input type="password" class="form-control" id="confirmPassword" placeholder="Confirm your password"
+                    autocomplete="off" required />
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100 d-flex justify-content-center align-items-center"
+                onclick="UserActivation(event)">
+                <span id="loginButtonText">Register</span>
+                <div id="userActivationSpinner" class="spinner-border spinner-border-sm ms-2 d-none" role="status"
+                    aria-hidden="true"></div>
             </button>
 
             <div class="text-center mt-3">
-                <a href="#" class="text-decoration-none" onclick="resetPassword()">Forgot Password?</a>
+                <a href="#" id="forgotPasswordLink" class="text-decoration-none">Forgot Password?</a>
             </div>
         </form>
 
         <p id="errorMessage" class="text-danger text-center mt-3 d-none">
-            Invalid username or password. Please try again.
+            Something went wrong. Please try again.
         </p>
     </div>
 
-    <!-- Bootstrap Bundle JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/js-sha256@0.9.0/build/sha256.min.js"></script>
-
-
-    <!-- External login handling script -->
-    <script src="assets/js/utils/server.js"></script>
-    <script src="assets/js/utils/login.js"></script>
+    <!-- Your custom logic -->
+    <script src="assets/js/utils/server.js" defer></script>
+    <script src="assets/js/utils/login.js" defer></script>
 
 </body>
 

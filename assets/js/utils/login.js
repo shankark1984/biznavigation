@@ -77,20 +77,12 @@ async function login() {
     }
 }
 
-// Password reset (placeholder)
-async function resetPassword() {
-    const email = el.username.value.trim();
-    if (!email) {
-        showError('Please enter your email to reset your password.');
-        return;
-    }
-    alert('Reset password functionality coming soon.');
-}
+// document.getElementById("forgotPasswordLink").addEventListener("click", function (e) {
+//     e.preventDefault();
+//     resetPassword();
+// });
 
-// Attach key event handler
-el.password.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') {
-        e.preventDefault();
-        login();
-    }
-});
+// document.getElementById("userActivationLink").addEventListener("click", function (e) {
+//     e.preventDefault();
+//     UserActivation();
+// });
