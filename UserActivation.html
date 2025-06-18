@@ -4,39 +4,45 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>BizNavigation - Register</title>
+    <title>BizNavigation - User Activation</title>
 
-    <!-- Preload critical styles -->
-    <link rel="preload" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" as="style"
-        onload="this.onload=null;this.rel='stylesheet'">
+    <!-- Preload critical CSS -->
+    <link rel="preload" as="style" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+        onload="this.onload=null;this.rel='stylesheet'" />
     <noscript>
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
     </noscript>
 
-    <!-- Defer non-critical libraries -->
+    <!-- External JS Libraries -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/js-sha256@0.9.0/build/sha256.min.js" defer></script>
+
+    <!-- Internal Scripts -->
+    <script src="assets/js/utils/server.js" defer></script>
+    <script src="assets/js/UserAccessRules/UserActivation.js" defer></script>
 
     <style>
         body {
             background: linear-gradient(135deg, #667eea, #764ba2);
             min-height: 100vh;
+            margin: 0;
             display: flex;
-            justify-content: center;
             align-items: center;
-            overflow: hidden;
+            justify-content: center;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             position: relative;
+            overflow: hidden;
         }
 
         .login-card {
+            max-width: 400px;
+            width: 100%;
             background: rgba(255, 255, 255, 0.1);
             border-radius: 1rem;
             padding: 2rem;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
             color: #fff;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
             animation: fadeInUp 0.8s ease-in-out;
         }
 
@@ -53,11 +59,11 @@
         }
 
         .form-control {
-            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.3);
             border: none;
-            padding: 0.75rem;
-            background-color: rgba(255, 255, 255, 0.3);
             color: #fff;
+            padding: 0.75rem;
+            border-radius: 10px;
         }
 
         .form-control::placeholder {
@@ -65,8 +71,8 @@
         }
 
         .form-control:focus {
-            box-shadow: 0 0 0 0.25rem rgba(108, 99, 255, 0.25);
             background-color: rgba(255, 255, 255, 0.4);
+            box-shadow: 0 0 0 0.25rem rgba(108, 99, 255, 0.3);
         }
 
         .form-label {
@@ -79,18 +85,13 @@
             border: none;
             border-radius: 10px;
             padding: 0.75rem;
-            transition: all 0.3s ease;
             font-weight: 600;
+            transition: background 0.3s ease, box-shadow 0.3s ease;
         }
 
         .btn-primary:hover {
             background-color: #574b90;
             box-shadow: 0 0 15px rgba(108, 99, 255, 0.6);
-        }
-
-        .text-muted,
-        .text-secondary {
-            color: rgba(255, 255, 255, 0.8) !important;
         }
 
         .text-danger {
@@ -99,23 +100,15 @@
 
         a.text-decoration-none {
             color: #fce38a;
-            font-weight: 500;
         }
 
         a.text-decoration-none:hover {
             text-decoration: underline;
         }
 
-        img {
-            filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.5));
-        }
-
-        /* Background blur effect */
         .background-blur {
             position: absolute;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
+            inset: 0;
             z-index: -1;
         }
 
@@ -159,64 +152,57 @@
 </head>
 
 <body>
-
     <div class="background-blur">
         <div class="blur-1"></div>
         <div class="blur-2"></div>
         <div class="blur-3"></div>
     </div>
 
-    <div class="card login-card w-100" style="max-width: 400px;">
+    <div class="card login-card">
         <div class="text-center mb-4">
-            <h2 class="fw-bold mt-3 text-secondary">User Activation</h2>
+            <h2 class="fw-bold text-secondary mt-2">User Activation</h2>
         </div>
 
-        <form id="registrationForm">
+        <form id="userActivationForm" aria-label="User Activation Form" novalidate>
             <div class="mb-3">
                 <label for="employeeCode" class="form-label">Employee Code</label>
-                <input type="text" class="form-control" id="employeeCode" placeholder="Enter your employee code"
-                    autocomplete="off" required />
+                <input type="text" id="employeeCode" class="form-control" placeholder="Enter your employee code"
+                    autocomplete="off" required style="text-transform: uppercase;" />
             </div>
 
             <div class="mb-3">
-                <label for="userName" class="form-label">Username</label>
-                <input type="text" class="form-control" id="userName" placeholder="Enter your username"
+                <label for="loginID" class="form-label">Username</label>
+                <input type="text" id="loginID" class="form-control" placeholder="Enter your username"
                     autocomplete="off" required />
             </div>
 
             <div class="mb-3">
                 <label for="newPassword" class="form-label">Password</label>
-                <input type="password" class="form-control" id="newPassword" placeholder="Enter your password"
-                    autocomplete="off" required />
+                <input type="password" id="newPassword" class="form-control" placeholder="Enter your password"
+                    autocomplete="new-password" required />
             </div>
 
             <div class="mb-3">
                 <label for="confirmPassword" class="form-label">Confirm Password</label>
-                <input type="password" class="form-control" id="confirmPassword" placeholder="Confirm your password"
-                    autocomplete="off" required />
+                <input type="password" id="confirmPassword" class="form-control" placeholder="Confirm your password"
+                    autocomplete="new-password" required />
             </div>
 
-            <button type="submit" class="btn btn-primary w-100 d-flex justify-content-center align-items-center"
-                onclick="UserActivation(event)">
-                <span id="loginButtonText">Register</span>
+            <button type="submit" class="btn btn-primary w-100 d-flex justify-content-center align-items-center">
+                <span id="loginButtonText">Activate</span>
                 <div id="userActivationSpinner" class="spinner-border spinner-border-sm ms-2 d-none" role="status"
                     aria-hidden="true"></div>
             </button>
 
             <div class="text-center mt-3">
-                <a href="#" id="forgotPasswordLink" class="text-decoration-none">Forgot Password?</a>
+                <a href="ResetPassword.html" class="text-decoration-none">Forgot Password?</a>
             </div>
         </form>
 
-        <p id="errorMessage" class="text-danger text-center mt-3 d-none">
+        <p id="errorMessage" class="text-danger text-center mt-3 d-none" role="alert">
             Something went wrong. Please try again.
         </p>
     </div>
-
-    <!-- Your custom logic -->
-    <script src="assets/js/utils/server.js" defer></script>
-    <script src="assets/js/utils/login.js" defer></script>
-
 </body>
 
 </html>
