@@ -19,7 +19,7 @@ class SupabaseService {
             this.#client = supabase.createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.anonKey);
         }
         supabaseClient = this.#client; // For backward compatibility
-        console.log("Supabase client initialized");
+        // console.log("Supabase client initialized");
         return this.#client;
     }
 
@@ -152,7 +152,18 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    console.log('Session Data:', SessionService.getSession());
+    // console.log('Session Data:', SessionService.getSession());
 });
+const now = new Date();
+const localtimeStamp = now.toLocaleString(); // Local date and time
+let rowIDEdit = null;
+let bankRowIDEdit = null;
+let branchCode = null;
 
-// let branchCode = null;
+// Global variables for permissions
+let formName = '';
+let formID = null;
+let perRead = false;
+let perWrite = false;
+let perDelete = false;
+let perUpdate = false;

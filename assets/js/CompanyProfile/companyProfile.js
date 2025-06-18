@@ -1,6 +1,8 @@
 // Fetch company data from Supabase
 async function fetchCompanyData() {
     try {
+        console.log('Fetching company data...' + CompanyID);
+        // const CompanyID = localStorage.getItem('CompanyID');
         const { data, error } = await SupabaseService.client
             .from('company_profile')
             .select('*')
@@ -66,6 +68,7 @@ function clearForm() {
     document.querySelectorAll('input, textarea').forEach(el => el.value = '');
     document.getElementById('companylogo').src = '';
     document.querySelectorAll('input[type="checkbox"]').forEach(el => el.checked = false);
+    document.getElementById('CompID').textContent = '';
 }
 
 // Modify button event listener
@@ -75,47 +78,55 @@ modifyButton.addEventListener('click', () => {
     document.getElementById('saveButton').disabled = false;
     modifyButton.disabled = true;
     const saveButton = document.getElementById('saveButton');
-    saveButton.textContent = 'Update';
-
+    saveButton.innerHTML = '<i class="bi bi-save"></i> Update';
+    saveButton.setAttribute('data-mode', 'update');
     // Enable specific fields based on user role (call function later)
     userRoleType();
 });
 
 // New button event listener
-const newButton = document.getElementById('newButton');
-newButton.addEventListener('click', () => {
-    enableForm();
-    const saveButton = document.getElementById('saveButton');
-    saveButton.disabled = false;
-    modifyButton.disabled = true;
-    saveButton.textContent = 'Save';
+if (newButton) {
+    newButton.addEventListener('click', () => {
+        enableForm();
 
-    clearForm();
+        const saveButton = document.getElementById('saveButton');
+        const modifyButton = document.getElementById('modifyButton');
+        const companyLogo = document.getElementById('companylogo');
 
-    const tableBody = document.getElementById('tableBody');
-    const bankTableBody = document.getElementById('bankTableBody');
+        if (saveButton) {
+            saveButton.disabled = false;
+            saveButton.innerHTML = '<i class="bi bi-save"></i> Save';
+            saveButton.setAttribute('data-mode', 'insert');
+        }
 
-    if (tableBody) {
-        tableBody.innerHTML = '<tr><td colspan="9" class="text-center">No branches created</td></tr>';
-    }
-    if (bankTableBody) {
-        bankTableBody.innerHTML = '<tr><td colspan="9" class="text-center">No bank created</td></tr>';
-    }
-});
+        if (modifyButton) modifyButton.disabled = true;
+
+        if (companyLogo) {
+            companyLogo.src = 'assets/img/logo/default.png';
+            companyLogo.alt = 'Default Logo';
+        }
+
+        clearForm();
+
+        setEmptyTableMessage('branchTableBody', 'No branches created'); // utils.js function
+        setEmptyTableMessage('branchBankTableBody', 'No bank created'); // utils.js function
+    });
+}
 
 // Save or update form data
 document.getElementById('saveButton').addEventListener('click', async event => {
     event.preventDefault();
 
-    const saveButton = event.target;
+    const saveButton = event.currentTarget;
     const companyNameElement = document.getElementById('companyName');
+    const mode = saveButton.getAttribute('data-mode') || 'insert';
 
     if (!companyNameElement || companyNameElement.value.trim() === '') {
         alert('Please enter a company name.');
         return;
     }
 
-    const isInsert = saveButton.textContent === 'Save';
+    const isInsert = mode === 'insert';
 
     const companyID = isInsert
         ? await generateNewCompanyID(companyNameElement.value)
@@ -124,41 +135,45 @@ document.getElementById('saveButton').addEventListener('click', async event => {
     const formData = gatherFormData(companyID);
 
     try {
-        const response = isInsert
+        const { error } = isInsert
             ? await supabaseClient.from('company_profile').insert([formData])
             : await supabaseClient.from('company_profile').update(formData).eq('company_id', companyID);
 
-        if (response.error) {
-            alert(`Failed to ${isInsert ? 'save' : 'update'} company: ${response.error.message}`);
-        } else {
-            alert(`Company ${isInsert ? 'saved' : 'updated'} successfully!`);
-
-            if (isInsert) {
-                saveButton.textContent = 'Update';
-                modifyButton.disabled = false;
-            }
-
-            disableForm();
-            saveButton.disabled = true;
-            modifyButton.disabled = false;
-
-            // Disable branch related buttons
-            const branchAddDetails = document.getElementById('branchAddDetails');
-            const branchBankAddDetails = document.getElementById('branchBankAddDetails');
-            if (branchAddDetails) branchAddDetails.disabled = true;
-            if (branchBankAddDetails) branchBankAddDetails.disabled = true;
+        if (error) {
+            alert(`❌ Failed to ${isInsert ? 'save' : 'update'} company: ${error.message}`);
+            return;
         }
+
+        alert(`✅ Company ${isInsert ? 'saved' : 'updated'} successfully!`);
+
+        // Update UI
+        saveButton.innerHTML = '<i class="bi bi-pencil-square"></i> Update';
+        saveButton.setAttribute('data-mode', 'update');
+        saveButton.disabled = true;
+
+        const modifyButton = document.getElementById('modifyButton');
+        if (modifyButton) modifyButton.disabled = false;
+
+        disableForm();
+
+        // Disable branch buttons
+        ['branchAddDetails', 'branchBankAddDetails'].forEach(id => {
+            const btn = document.getElementById(id);
+            if (btn) btn.disabled = true;
+        });
+
     } catch (error) {
-        console.error('Error saving company:', error);
-        alert('Failed to save or update company data.');
+        console.error('❌ Error saving company:', error);
+        alert('Unexpected error occurred. Please try again.');
     }
 });
+
 
 // Gather form data for submission
 function gatherFormData(companyID) {
     return {
         company_id: companyID,
-        short_code: document.getElementById('shortCode').value.trim(),
+        short_code: document.getElementById('shortCode').value.trim().toUpperCase(),
         company_name: document.getElementById('companyName').value.trim(),
         address: formatAddress(document.getElementById('address').value.trim()),
         city: document.getElementById('city').value.trim(),
@@ -169,8 +184,8 @@ function gatherFormData(companyID) {
         e_mail: document.getElementById('email').value.trim(),
         gst_number: document.getElementById('gstNumber').value.trim().toUpperCase(),
         pan_number: document.getElementById('panNumber').value.trim().toUpperCase(),
-        cin_no: document.getElementById('cinNo').value.trim(),
-        Udyog_aadhaar_no: document.getElementById('uaNo').value.trim(),
+        cin_no: document.getElementById('cinNo').value.trim().toUpperCase(),
+        Udyog_aadhaar_no: document.getElementById('uaNo').value.trim().toUpperCase(),
         web_site: document.getElementById('website').value.trim(),
         logo_path: document.getElementById('companylogo').src || '',
         created_by: localStorage.getItem('UserLoginID') || 'unknown'
@@ -186,7 +201,7 @@ function formatAddress(address) {
 async function generateNewCompanyID(companyName) {
     const firstLetter = companyName.charAt(0).toUpperCase();
 
-    const { data, error } = await this.client
+    const { data, error } = await supabaseClient
         .from('company_profile')
         .select('company_id');
 
@@ -252,4 +267,49 @@ document.getElementById('website').addEventListener('blur', function () {
     if (url && !/^https?:\/\//i.test(url)) {
         this.value = 'https://' + url;
     }
+});
+
+function updateCompanyLogo(companyID) {
+    const logoImg = document.getElementById('companylogo');
+    const compIDText = document.getElementById('CompID');
+    const logoPath = `assets/img/logo/${companyID}.png`;
+    const fallbackLogo = 'assets/img/logo/default.png';
+
+    if (!logoImg || !compIDText) return;
+
+    compIDText.textContent = companyID || '...';
+
+    const testImage = new Image();
+    testImage.onload = () => {
+        console.log(`✅ Logo found: ${logoPath}`);
+        logoImg.src = logoPath;
+        logoImg.alt = `Logo for ${companyID}`;
+    };
+    testImage.onerror = () => {
+        console.warn(`❌ Logo not found, using fallback: ${fallbackLogo}`);
+        logoImg.src = fallbackLogo;
+        logoImg.alt = 'Default Logo';
+    };
+
+    testImage.src = logoPath;
+}
+
+// Update logo on page load
+document.addEventListener('DOMContentLoaded', () => {
+    // const companyID = 'CA0001'; // Or get dynamically
+    updateCompanyLogo(CompanyID);
+});
+
+document.getElementById('gstNumber').addEventListener('blur', async () => {
+    await validateGSTInput('gstNumber', 'gstFeedback', 'company_profile', 'gst_number');
+});
+document.getElementById('panNumber').addEventListener('blur', async () => {
+    await validatePANInput('panNumber', 'panFeedback', 'company_profile', 'pan_number');
+});
+
+document.getElementById('branchGSTNo').addEventListener('blur', async () => {
+    await validateGSTInput('branchGSTNo', 'branchGSTFeedback', 'CompanyBranchDetails', 'GSTNo');
+});
+document.getElementById('branchPANNo').addEventListener('blur', async () => {
+    await validatePANInput('branchPANNo', 'branchPANFeedback', 'CompanyBranchDetails', 'PANNo');
 });

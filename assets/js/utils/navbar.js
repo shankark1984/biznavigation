@@ -7,16 +7,17 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   const menuSection = (title, items) => `
-        <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">${title}</a>
-            <ul class="dropdown-menu">
-                ${items.map(item =>
+  <li class="nav-item dropdown">
+    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">${title}</a>
+    <ul class="dropdown-menu">
+      ${items.map(item =>
     item === 'divider'
       ? '<li><hr class="dropdown-divider" /></li>'
-      : `<li><a class="dropdown-item" href="${item.href}">${item.label}</a></li>`
+      : `<li><a class="dropdown-item menu-item" href="${item.href}" data-form-id="${item.href.replace('.html', '').replace(/[^a-zA-Z0-9]/g, '')}">${item.label}</a></li>`
   ).join('')}
-            </ul>
-        </li>`;
+    </ul>
+  </li>`;
+
 
   const header = `
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
@@ -117,4 +118,61 @@ document.addEventListener("DOMContentLoaded", () => {
       location.replace('index.html'); // Also clears history on logout
     });
   }
+  // Permission check on menu clicks
+  document.querySelectorAll('.menu-item').forEach(item => {
+    item.addEventListener('click', async e => {
+      e.preventDefault();
+      const formID = item.getAttribute('data-form-id');
+      const href = item.getAttribute('href');
+
+      if (!formID || !href) {
+        alert('Missing form data.');
+        return;
+      }
+      console.log('ok' + userLoginID + "" + formID);
+      const accessGranted = await checkAccess(userLoginID, formID);
+      if (accessGranted) {
+        window.location.href = href;
+      }
+    });
+  });
 });
+
+
+// Function to check user permissions
+async function checkAccess(userLoginID, formID) {
+
+  try {
+    console.log('Premission Details : ' + userLoginID + formID);
+    const { data, error } = await supabaseClient
+      .from('UserAccessRules')
+      .select('Read, Write, Delete, Update')
+      .eq('UserLoginID', userLoginID)
+      .eq('FormID', formID)
+      .maybeSingle();  // Allows 0 rows without throwing an error
+
+    if (error) {
+      console.error('Database error:', error);
+      alert('Error checking permissions. Please try again.');
+      return false;
+    }
+
+    if (!data) {
+      alert('Permission denied. Kindly contact your administrator.');
+      return false;
+    }
+
+    // Assign permissions to global variables
+    perRead = data.Read;
+    perWrite = data.Write;
+    perDelete = data.Delete;
+    perUpdate = data.Update;
+
+
+    return !!perRead; // true if Read permission exists
+  } catch (err) {
+    console.error('Unexpected error:', err);
+    alert('An unexpected error occurred while checking permissions.');
+    return false;
+  }
+}

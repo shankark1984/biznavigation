@@ -17,7 +17,7 @@ async function fetchUserData() {
         const { data, error } = await supabaseClient
             .from('user_login')
             .select('user_login_id, user_name')
-            .eq('company_id', companyID)
+            .eq('company_id', CompanyID)
             .order('user_login_id', { ascending: true });
 
         if (error) throw error;
@@ -51,7 +51,7 @@ async function fetchFormDetails() {
         const { data: userData, error: userError } = await supabaseClient
             .from("user_login")
             .select("user_type")
-            .eq("user_login_id", userLoginID)  // Ensure userLoginID is defined
+            .eq("user_login_id", UserLoginID)  // Ensure userLoginID is defined
             .single();
 
         if (userError) throw userError;

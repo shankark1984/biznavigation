@@ -22,16 +22,18 @@
 <body class="bg-light">
     <div class="container mt-4" id="root">
         <div class="card shadow-lg rounded">
-            <div class="card-header bg-primary text-white" style="margin-top: 50px;">
-                <div class="company-header d-flex justify-content-between align-items-center">
-                    <h3 class="mb-0">Company Registration - (<span id="CompID">companyid</span>)</h3>
-                    <img src="assets/img/logo/CA0001.png" alt="Company Logo" class="company-logo" id="companylogo"
-                        width="32" height="32" loading="lazy">
+            <div class="card-header bg-primary text-white mt-5">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Company Registration - (<span id="CompID">...</span>)</h5>
+                    <img id="companylogo" class="company-logo" alt="Company Logo" height="32" loading="lazy">
                 </div>
+
+                <!-- Hidden metadata inputs -->
                 <input type="hidden" id="tempFormID">
                 <input type="hidden" id="partyCode">
                 <input type="hidden" id="vendorCode">
             </div>
+
 
             <div class="card-body">
                 <form class="container">
@@ -49,8 +51,8 @@
                         <button type="button" class="btn btn-info btn-sm" id="reportButton" aria-label="Report">
                             <i class="bi bi-file-earmark-text"></i> Report
                         </button>
-                        <button type="button" class="btn btn-success btn-sm" id="saveButton" aria-label="Save">
-                            <i class="bi bi-save"></i> Save
+                        <button type="button" class="btn btn-success btn-sm" id="saveButton" data-mode="insert"
+                            aria-label="Save"> <i class="bi bi-save"></i> Save
                         </button>
                     </div>
 
@@ -113,12 +115,14 @@
                             <label for="panNumber" class="form-label small">Pan Number</label>
                             <input type="text" class="form-control" id="panNumber" required
                                 placeholder="Enter Pan Number" style="text-transform: uppercase;">
+                            <div id="panFeedback" class="invalid-feedback d-none">Invalid or duplicate PAN Number</div>
                         </div>
 
                         <div class="col-md-2 col-sm-6">
                             <label for="gstNumber" class="form-label small">GST Number</label>
                             <input type="text" class="form-control" id="gstNumber" required
                                 placeholder="Enter GST Number" style="text-transform: uppercase;">
+                            <div id="gstFeedback" class="invalid-feedback d-none">Invalid or duplicate GST Number</div>
                         </div>
 
                         <div class="col-md-2 col-sm-6">
@@ -159,7 +163,7 @@
                                 <div class="col-md-1 col-sm-6">
                                     <label for="branchCode" class="form-label small">Branch Code</label>
                                     <input type="text" class="form-control" id="branchCode"
-                                        placeholder="Enter Branch code">
+                                        style="text-transform: uppercase;">
                                 </div>
 
                                 <div class="col-md-5 col-sm-6">
@@ -203,11 +207,15 @@
                                 <div class="col-md-2 col-sm-6">
                                     <label for="branchGSTNo" class="form-label small">GST No</label>
                                     <input type="text" class="form-control" id="branchGSTNo" placeholder="Enter GST No">
+                                    <div id="branchGSTFeedback" class="invalid-feedback d-none">Invalid or duplicate GST
+                                        Number</div>
                                 </div>
 
                                 <div class="col-md-2 col-sm-6">
                                     <label for="branchPANNo" class="form-label small">PAN No</label>
                                     <input type="text" class="form-control" id="branchPANNo" placeholder="Enter PAN No">
+                                    <div id="branchPANFeedback" class="invalid-feedback d-none">Invalid or duplicate PAN
+                                        Number</div>
                                 </div>
 
                                 <div class="col-md-1 col-sm-6 d-flex align-items-end">
@@ -370,14 +378,12 @@
     <script src="assets/js/utils/server.js"></script>
     <script src="assets/js/utils/navbar.js"></script>
     <script src="assets/js/utils/footer.js"></script>
-    <script src="assets/js/UserAccessRules/AccessRules.js"></script>
+    <script src="assets/js/utils/utils.js"></script>
     <script src="assets/js/CompanyProfile/bankManagement.js"></script>
     <script src="assets/js/CompanyProfile/branchManagement.js"></script>
     <script src="assets/js/CompanyProfile/companyProfile.js"></script>
     <script src="assets/js/utils/pincode-helper.js"></script>
     <script src="assets/js/utils/logout.js"></script>
-
-
 
     <script>
         // Initialize first tab on load

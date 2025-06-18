@@ -12,9 +12,9 @@ branchBankAddBtn.addEventListener('click', async function () {
         Address: document.getElementById('branchBankAddress').value.trim(),
         DefaultBank: document.getElementById('branchDefaultBank').value, // No trim() for dropdown
         BankStatus: document.getElementById('branchAccountStatus').value, // No trim() for dropdown
-        CompanyID: companyID,
+        CompanyID: CompanyID,
         BranchCode: branchCode,
-        created_by: userLoginID
+        created_by: UserLoginID
     };
 
     // Validate required fields
@@ -37,7 +37,7 @@ branchBankAddBtn.addEventListener('click', async function () {
             bankRowIDEdit = null; // Reset after update
         } else {
             // Insert new record
-            response = await this.client
+            response = await supabaseClient
                 .from('CompanyBankDetails')
                 .insert([bankData]);
 

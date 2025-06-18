@@ -307,3 +307,112 @@ function formatDate(dateStr) {
     const year = date.getFullYear();
     return `${day}-${month}-${year}`;
 }
+// ✅ Set a message for an empty table body
+// This function will replace the content of a table body with a message when there are no rows
+function setEmptyTableMessage(tableBodyId, message) {
+    const tableBody = document.getElementById(tableBodyId);
+    if (tableBody) {
+        tableBody.innerHTML = `<tr><td colspan="9" class="text-center">${message}</td></tr>`;
+    }
+}
+// ✅ Validate GST input with Supabase check
+// This function checks the GST input against a regex pattern and queries Supabase for duplicates
+async function validateGSTInput(
+    gstInputElementID,
+    feedbackElementID,
+    tableName = 'company_profile',
+    fieldName = 'gst_number') {
+
+    const input = document.getElementById(gstInputElementID);
+    const feedback = document.getElementById(feedbackElementID);
+    const gstInput = input.value.trim().toUpperCase();
+    input.value = gstInput; // Ensure uppercase in the input field
+
+    const gstRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
+
+    if (!gstRegex.test(gstInput)) {
+        showInvalidGST('Invalid GST format.');
+        return false;
+    }
+
+    const { data, error } = await supabaseClient
+        .from(tableName)
+        .select('*')
+        .eq(fieldName, gstInput);
+
+    if (error) {
+        console.error('Error checking GST:', error.message);
+        showInvalidGST('Error validating GST.');
+        return false;
+    }
+
+    // If duplicate exists and not editing the same record
+    if (data.length > 0) {
+        showInvalidGST('Duplicate GST Number found.');
+        return false;
+    }
+
+    hideInvalidGST();
+    return true;
+
+    function showInvalidGST(msg) {
+        feedback.textContent = msg;
+        feedback.classList.remove('d-none');
+        input.classList.add('is-invalid');
+    }
+
+    function hideInvalidGST() {
+        feedback.classList.add('d-none');
+        input.classList.remove('is-invalid');
+    }
+}
+// ✅ Validate PAN input with regex and Supabase check
+async function validatePANInput(
+    panInputElementID,
+    feedbackElementID,
+    tableName = 'company_profile',
+    fieldName = 'pan_number') {
+
+    const input = document.getElementById(panInputElementID);
+    const feedback = document.getElementById(feedbackElementID);
+    const panInput = input.value.trim().toUpperCase();
+    input.value = panInput; // Ensure uppercase in the input field
+
+    const panRegex = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
+
+    if (!panRegex.test(panInput)) {
+        showInvalidPAN('Invalid PAN format.');
+        return false;
+    }
+
+    const { data, error } = await supabaseClient
+        .from(tableName)
+        .select('*')
+        .eq(fieldName, panInput);
+
+    if (error) {
+        console.error('Error checking PAN:', error.message);
+        showInvalidPAN('Error validating PAN.');
+        return false;
+    }
+
+    // If duplicate exists and not editing the same record
+    if (data.length > 0) {
+        showInvalidPAN('Duplicate PAN Number found.');
+        return false;
+    }
+
+    hideInvalidPAN();
+    return true;
+
+    function showInvalidPAN(msg) {
+        feedback.textContent = msg;
+        feedback.classList.remove('d-none');
+        input.classList.add('is-invalid');
+    }
+
+    function hideInvalidPAN() {
+        feedback.classList.add('d-none');
+        input.classList.remove('is-invalid');
+    }
+}   

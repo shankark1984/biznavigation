@@ -2,7 +2,7 @@
 async function checkAccess(userLoginID, formID) {
 
     try {
-        const { data, error } = await this.client
+        const { data, error } = await supabaseClient
             .from('UserAccessRules')
             .select('Read, Write, Delete, Update')
             .eq('UserLoginID', userLoginID)
@@ -27,16 +27,10 @@ async function checkAccess(userLoginID, formID) {
         perUpdate = data.Update;
 
 
-        // If at least Read permission is available, return true, else false
-        if (perRead) {
-            return true;
-        } else {
-            alert('Permission denied. Kindly contact your administrator.');
-            return false;
-        }
+        return !!perRead; // true if Read permission exists
     } catch (err) {
-        console.error('Error fetching permissions:', err);
-        alert('An unexpected error occurred.');
+        console.error('Unexpected error:', err);
+        alert('An unexpected error occurred while checking permissions.');
         return false;
     }
 }

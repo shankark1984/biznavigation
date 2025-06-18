@@ -14,7 +14,7 @@ branchAddBtn.addEventListener('click', async function () {
     }
 
     const branchData = {
-        BranchCode: document.getElementById('branchCode').value.trim(),
+        BranchCode: document.getElementById('branchCode').value.trim().toUpperCase(),
         Address: document.getElementById('branchAddress').value.trim(),
         PinCode: document.getElementById('branchPinCode').value.trim(),
         City: document.getElementById('branchCity').value.trim(),
@@ -28,8 +28,9 @@ branchAddBtn.addEventListener('click', async function () {
         BranchScope: document.getElementById('branchScope').value.trim(),
         Status: branchStatus,
         InactiveDate: branchInactiveDate,
-        CompanyID: companyID,
-        created_by: userLoginID
+        CompanyID: CompanyID,
+        created_by: UserLoginID,
+        created_at: localtimeStamp
     };
 
     // Validate required fields
