@@ -1,9 +1,9 @@
-async function loadBookingStatus(docketNo, companyID) {
+async function loadBookingStatus(docketNo) {
     try {
         const { data, error } = await supabaseClient
             .from('BookingStatus')
             .select('DocketNo, StatusDate, ArrivedAt, Information')
-            .eq('company_id', companyID)
+            .eq('company_id', CompanyID)
             .eq('DocketNo', docketNo)
             .order('StatusDate', { ascending: false });
 

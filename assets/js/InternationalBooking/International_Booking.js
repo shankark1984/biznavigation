@@ -1,5 +1,17 @@
-loadSuggestions('partySuggestions', 'PartyDetails', CompanyID, 'PartyCode', 'PartyName');
-loadSuggestions('vendorSuggestions', 'PartyDetails', CompanyID, 'PartyCode', 'PartyName');
+// On DOM load
+document.addEventListener("DOMContentLoaded", async () => {
+    if (!await checkAccess(UserLoginID, 'InternationalBooking')) {
+        disableForm();
+        alert("You do not have permission to view this form.");
+        return;
+    }
+    handleUserTypePermissions();
+
+    enableForm();
+
+    await loadSuggestions('partySuggestions', 'PartyDetails', CompanyID, 'PartyCode', 'PartyName');
+    await loadSuggestions('vendorSuggestions', 'PartyDetails', CompanyID, 'PartyCode', 'PartyName');
+});
 
 async function loadAWBNoDetails(query) {
     if (!query) return;
@@ -37,19 +49,16 @@ awbNoInput.addEventListener('change', async () => {
         await setupChargeTypeValidation();
 
         const tempFormID = freightElements.tempFormID.value.trim();
-        console.log('tempFormID:', tempFormID);
 
         // Skip loading additional details if it's a TEMP form
         if (tempFormID.includes('TEMP')) return;
-
-        console.log('Loading AWB details for ID:', tempFormID);
 
         // Load other sections in parallel if independent
         await Promise.all([
             loadFreightCharges(),
             loadVolumetricDetails(),
             fetchContainerDetails(tempFormID),
-            loadBookingStatus(docketNo, companyID)
+            loadBookingStatus(docketNo)
         ]);
 
     } catch (error) {
@@ -64,7 +73,7 @@ async function fetchDocketDetails(docketNo) {
         .from('international_booking')
         .select('*')
         .eq('DocketNo', docketNo)
-        .eq('company_id', companyID)
+        .eq('company_id', CompanyID)
         .maybeSingle();
 
     if (error) {

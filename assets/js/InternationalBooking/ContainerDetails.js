@@ -67,21 +67,6 @@ document.getElementById('containerNumber').addEventListener('input', function ()
     }
 });
 
-// for this create table dinmically 
-// <div class="table-responsive mt-3">
-//                                     <table class="table table-sm table-bordered text-center align-middle"
-//                                         id="containerDetailsTable">
-//                                         <thead class="table-light">
-//                                             <tr>
-//                                                 <th>S No.</th>
-//                                                 <th>Container Type</th>
-//                                                 <th>Container Number</th>
-//                                                 <th>Action</th>
-//                                             </tr>
-//                                         </thead>
-//                                         <tbody></tbody>
-//                                     </table>
-//                                 </div>
 function addContainerRow(containerType, containerNumber) {
     const tableBody = document.querySelector('#containerDetailsTable tbody');
     const rowCount = tableBody.rows.length + 1;

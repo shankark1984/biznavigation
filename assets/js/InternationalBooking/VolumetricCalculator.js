@@ -113,8 +113,8 @@ document.addEventListener('DOMContentLoaded', () => {
         console.error('Volumetric calc: one or more elements missing – aborting.');
         return;
     }
-    if (typeof supabaseClient === 'undefined' || typeof companyID === 'undefined') {
-        console.error('Volumetric calc: supabaseClient or companyID not on window – aborting.');
+    if (typeof supabaseClient === 'undefined' || typeof CompanyID === 'undefined') {
+        console.error('Volumetric calc: supabaseClient or CompanyID not on window – aborting.');
         return;
     }
 
@@ -139,7 +139,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     .from('SettingParameters')
                     .select('InputFieldID, FieldValue')
                     .in('InputFieldID', [bID, `${bID}CFT`])
-                    .eq('company_id', companyID);
+                    .eq('company_id', CompanyID);
 
                 if (error) console.warn('Supabase:', error.message);
 
