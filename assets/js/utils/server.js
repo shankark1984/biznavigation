@@ -154,6 +154,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // console.log('Session Data:', SessionService.getSession());
 });
+function handleUserTypePermissions() {
+    saveButton.disabled = !(UserType === 1 || UserType === 2);
+    newButton.disabled = UserType !== 1;
+}
+
 const now = new Date();
 const localtimeStamp = now.toLocaleString(); // Local date and time
 let rowIDEdit = null;
@@ -167,3 +172,9 @@ let perRead = false;
 let perWrite = false;
 let perDelete = false;
 let perUpdate = false;
+const newButton = document.getElementById('newButton');
+const modifyButton = document.getElementById('modifyButton');
+const deleteButton = document.getElementById('deleteButton');
+const reportButton = document.getElementById('reportButton');
+const saveButton = document.getElementById('saveButton');
+

@@ -130,7 +130,7 @@ const suggestionMaps = {}; // Global map for datalist values
 async function loadSuggestions(
     datalistId,
     tableName,
-    companyId,
+    CompanyID,
     valueField = 'PartyCode',
     displayField = 'PartyName'
 ) {
@@ -140,7 +140,7 @@ async function loadSuggestions(
     const { data, error } = await supabaseClient
         .from(tableName)
         .select(`${valueField}, ${displayField}`)
-        .eq('company_id', companyId)
+        .eq('company_id', CompanyID)
         .order(displayField, { ascending: true });
 
     if (error) {
@@ -161,8 +161,9 @@ async function loadSuggestions(
     suggestionMaps[datalistId] = map;
 
     // Attach mapping function
-    attachPartyCodeFiller('partyName', datalistId, 'partyCode');
+    attachPartyCodeFiller('partyNameReg', datalistId, 'partyCodes');
     attachPartyCodeFiller('serviceProvider', 'vendorSuggestions', 'serviceProviderCode');
+    attachPartyCodeFiller('userID', 'userLoginSuggestions', 'userName')
 }
 
 

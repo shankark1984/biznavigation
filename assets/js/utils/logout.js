@@ -51,3 +51,11 @@ function logoutlocalstorage() {
 
     window.location.href = 'index.html';
 }
+
+function clearPermissionCache(userLoginID) {
+    Object.keys(localStorage).forEach((key) => {
+        if (key.startsWith(`permissions_${userLoginID}_`)) {
+            localStorage.removeItem(key);
+        }
+    });
+}

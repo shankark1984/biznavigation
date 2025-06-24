@@ -74,7 +74,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Generate and simulate sending OTP
         generatedOTP = Math.floor(100000 + Math.random() * 900000).toString();
         otpExpiryTime = Date.now() + 5 * 60 * 1000; // valid for 5 mins
-        console.log("OTP sent to:", phone, "OTP:", generatedOTP); // Replace with actual SMS API
+        // console.log("OTP sent to:", phone, "OTP:", generatedOTP); // Replace with actual SMS API
         await sendOTPViaSMS(phone, generatedOTP);
 
         toggleField(otpInput, true);

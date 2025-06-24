@@ -1,246 +1,277 @@
-// Reference to input fields and datalist
+// Element References
 const userIDInput = document.getElementById('userID');
 const userNameInput = document.getElementById('userName');
-const userLoginList = document.getElementById('userLoginList');
-const userAccessInput = document.getElementById("userAccess");
-const formNameList = document.getElementById("formNameList");
-const roleTableBody = document.getElementById("roleTableBody");
-const addUserRoleBtn = document.getElementById("addUserRole");
+const userAccessFormName = document.getElementById('userAccessFormName');
+const userAccessFormID = document.getElementById('userAccessFormID');
+const saveSpinner = document.getElementById('saveSpinner');
+const addUserRoleButton = document.getElementById('addUserRole');
+const roleTableBody = document.getElementById('roleTableBody');
+const emptyRoleRow = document.getElementById('emptyRoleRow');
+const formSuggestions = document.getElementById('formNameListSuggestion');
 
-let cachedUsers = []; // Store user data to avoid redundant API calls
-let cachedForms = []; // Store form data to reduce API calls
+let existingForms = new Set();
+let formDetailsMap = {};
+let userRoles = [];
 
-// Function to fetch user data from Supabase
-async function fetchUserData() {
-    if (cachedUsers.length > 0) return cachedUsers;
-    try {
-        const { data, error } = await supabaseClient
-            .from('user_login')
-            .select('user_login_id, user_name')
-            .eq('company_id', CompanyID)
-            .order('user_login_id', { ascending: true });
-
-        if (error) throw error;
-        cachedUsers = data;
-        return data;
-    } catch (err) {
-        console.error('Error fetching user data:', err);
-        return [];
+// On DOM load
+document.addEventListener("DOMContentLoaded", async () => {
+    if (!await checkAccess(UserLoginID, 'UserAccessRules')) {
+        disableForm();
+        alert("You do not have permission to view this form.");
+        return;
     }
-}
+    handleUserTypePermissions();
+    if (perWrite) {
+        saveButton.disabled = false;
+        newButton.disabled = false; // Enable new button when form is accessible
+        deleteButton.disabled = true;
+        modifyButton.disabled = true;
+    }
+    enableForm();
 
-// Function to populate datalist when input is focused
-document.getElementById("userID").addEventListener("focus", async function () {
-    const userLoginList = document.getElementById("userLoginList");
-    userLoginList.innerHTML = ""; // Clear existing options
+    await loadSuggestions('userLoginSuggestions', 'EmployeeMaster', CompanyID, 'LoginID', 'EmployeeName');
 
-    const users = await fetchUserData();
-    users.forEach(form => {
-        const option = document.createElement("option");
-        option.value = form.user_login_id;
-        userLoginList.appendChild(option);
+    userIDInput.addEventListener("change", async () => {
+        await loadUserAccessRoles(userNameInput.value);
+        await loadFormSuggestions();
+        disableForm();
+        addUserRoleButton.disabled = true;
+        document.querySelectorAll('.remove-role-btn').forEach(btn => btn.disabled = true);
+        saveButton.disabled = true;
+        modifyButton.disabled = false;
+
     });
 });
 
-// Function to check user type and fetch form details from Supabase
-async function fetchFormDetails() {
-    if (cachedForms.length > 0) return cachedForms;
+// Load Form Suggestions
+async function loadFormSuggestions() {
+    const { data, error } = await supabaseClient.from('FormDetails').select('FormID, FormDescription');
 
-    try {
-        // Check user type from user_login table
-        const { data: userData, error: userError } = await supabaseClient
-            .from("user_login")
-            .select("user_type")
-            .eq("user_login_id", UserLoginID)  // Ensure userLoginID is defined
-            .single();
+    if (error) return console.error('Error loading forms:', error);
 
-        if (userError) throw userError;
+    formSuggestions.innerHTML = '';
+    formDetailsMap = {};
 
-        // If user_type is not 1, exclude 'UserAccessRules' from FormDetails
-        let query = supabaseClient.from("FormDetails").select("FormName, FormDescription");
-
-        if (userData.user_type !== 1) {
-            query = query.neq("FormName", "UserAccessRules");
-        }
-
-        const { data, error } = await query;
-
-        if (error) throw error;
-
-        cachedForms = data;
-        return data;
-    } catch (err) {
-        console.error("Error fetching form details:", err);
-        return [];
-    }
-}
-
-// Function to populate datalist when input is focused
-document.getElementById("userAccess").addEventListener("focus", async function () {
-    const formNameList = document.getElementById("formNameList");
-    formNameList.innerHTML = ""; // Clear existing options
-
-    const forms = await fetchFormDetails();
-    forms.forEach(form => {
-        const option = document.createElement("option");
-        option.value = form.FormName;
-        formNameList.appendChild(option);
-    });
-});
-
-
-// Function to populate the datalist
-function populateDatalist(list, items, valueKey, textKey) {
-    list.innerHTML = "";
-    items.forEach(item => {
-        const option = document.createElement("option");
-        option.value = item[valueKey];
-        option.textContent = item[textKey] || item[valueKey];
-        list.appendChild(option);
+    data.forEach(form => {
+        const option = document.createElement('option');
+        option.value = form.FormDescription;
+        formSuggestions.appendChild(option);
+        formDetailsMap[form.FormDescription] = form.FormID;
     });
 }
 
-// Function to find user name by user login ID
-function findUserName(userID) {
-    const user = cachedUsers.find(user => user.user_login_id === userID);
-    return user ? user.user_name : '';
-}
-
-// Debounce function to limit API calls while typing
-function debounce(func, delay) {
-    let timeout;
-    return (...args) => {
-        clearTimeout(timeout);
-        timeout = setTimeout(() => func(...args), delay);
-    };
-}
-
-// Event listeners
-userIDInput.addEventListener('input', debounce(async () => {
-    const users = await fetchUserData();
-    populateDatalist(userLoginList, users, "user_login_id", "user_name");
-}, 300));
-
-userIDInput.addEventListener('change', () => {
-    userNameInput.value = findUserName(userIDInput.value);
-    if (userIDInput.value) fetchUserRoles(userIDInput.value);
+// Auto-fill Form ID on input
+userAccessFormName.addEventListener("input", (e) => {
+    const formName = e.target.value.trim();
+    userAccessFormID.value = formDetailsMap[formName] || '';
 });
 
-// Handle form search input
-userAccessInput.addEventListener("input", debounce(async () => {
-    const searchText = userAccessInput.value.trim().toLowerCase();
-    if (!searchText) return;
-    const forms = await fetchFormDetails();
-    const filteredForms = forms.filter(form => form.FormName.toLowerCase().includes(searchText));
-    populateDatalist(formNameList, filteredForms, "FormName", "FormDescription");
-}, 300));
+// Load User Access Roles
+async function loadUserAccessRoles(userID) {
+    roleTableBody.innerHTML = `<tr><td colspan="6" class="text-center text-muted">Loading...</td></tr>`;
 
-// Function to fetch user roles from Supabase
-async function fetchUserRoles(userLoginID) {
-    try {
-        const { data, error } = await supabaseClient
-            .from("UserAccessRules")
-            .select("*")
-            .eq("UserLoginID", userLoginID);
-        if (error) throw error;
-        updateRoleTable(data);
-    } catch (err) {
-        console.error("Error fetching user roles:", err);
-    }
-}
+    const { data, error } = await supabaseClient
+        .from("UserAccessRules")
+        .select("id, FormID, FromDescription, CanRead, CanWrite, CanDelete, CanUpdate")
+        .eq("UserLoginID", userID);
 
-// Function to add a new user role to Supabase
-async function addUserRole() {
-    const userLoginID = userIDInput.value;
-    const formID = userAccessInput.value;
-    const form = cachedForms.find(f => f.FormName == formID);
-    console.log(userLoginID + ' 1 ' + formID + ' 1 ' + form);
-
-    if (!userLoginID || !formID || !form) {
-
-        console.log(userLoginID + ' 2 ' + formID + ' 2 ' + form);
-
-        alert("Please select a valid user and form.");
+    if (error) {
+        console.error("Error fetching roles:", error.message);
+        roleTableBody.innerHTML = `<tr><td colspan="6" class="text-danger text-center">Failed to load roles</td></tr>`;
         return;
     }
 
-    try {
-        // Check for duplicate entry
-        const { data: existingRoles, error: fetchError } = await supabaseClient
-            .from("UserAccessRules")
-            .select("id")
-            .eq("UserLoginID", userLoginID)
-            .eq("FormID", formID);
-
-        if (fetchError) throw fetchError;
-
-        if (existingRoles.length > 0) {
-            alert("This user already has access to the selected form.");
-            return;
-        }
-
-        // Prepare new role object
-        const newRole = {
-            UserLoginID: userLoginID,
-            FormID: formID,
-            FromDescription: form.FormDescription,
-            Read: document.getElementById("roleRead").checked,
-            Write: document.getElementById("roleWrite").checked,
-            Delete: document.getElementById("roleDelete").checked,
-            Update: document.getElementById("roleUpdate").checked,
-            created_by: userLoginID,
-        };
-
-        // Insert new role
-        const { error: insertError } = await supabaseClient
-            .from("UserAccessRules")
-            .insert([newRole]);
-
-        if (insertError) throw insertError;
-
-        // Refresh user roles after successful insertion
-        fetchUserRoles(userLoginID);
-    } catch (err) {
-        console.error("Error adding user role:", err);
-        alert("An error occurred while adding the user role. Please try again.");
+    if (!data.length) {
+        roleTableBody.innerHTML = `<tr id="emptyRoleRow"><td colspan="6" class="text-muted text-center">No roles found</td></tr>`;
+        return;
     }
+
+    roleTableBody.innerHTML = '';
+    userRoles = data.map(role => ({
+        id: role.id,
+        formID: role.FormID,
+        formName: role.FromDescription,
+        read: role.CanRead,
+        write: role.CanWrite,
+        del: role.CanDelete,
+        update: role.CanUpdate
+    }));
+
+    renderRoleTable();
 }
 
+// Render Roles in Table
+function renderRoleTable() {
+    roleTableBody.innerHTML = '';
 
-// Function to delete a user role
-async function deleteUserRole(roleID, userLoginID) {
-    try {
-        const { error } = await supabaseClient.from("UserAccessRules").delete().eq("id", roleID);
-        if (error) throw error;
-        fetchUserRoles(userLoginID);
-    } catch (err) {
-        console.error("Error deleting user role:", err);
+    if (userRoles.length === 0) {
+        roleTableBody.innerHTML = `<tr id="emptyRoleRow"><td colspan="6" class="text-center">No roles created</td></tr>`;
+        return;
     }
-}
 
-// Function to update the role table
-function updateRoleTable(roles) {
-    roleTableBody.innerHTML = roles.length === 0 ? `<tr><td colspan="6" class="text-center">No roles created</td></tr>` : roles.map(role => `
-        <tr>
-            <td>${role.FromDescription}</td>
-            <td>${role.Read ? "✔" : "✖"}</td>
-            <td>${role.Write ? "✔" : "✖"}</td>
-            <td>${role.Delete ? "✔" : "✖"}</td>
-            <td>${role.Update ? "✔" : "✖"}</td>
-            <td>
-                <button class="btn btn-danger btn-sm delete-role" data-roleid="${role.id}" data-userid="${role.UserLoginID}">Delete</button>
+    userRoles.forEach(role => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td>${role.formName}</td>
+            <td class="d-none">${role.formID}</td>
+            <td class="text-center">${role.read ? '✔️' : '❌'}</td>
+            <td class="text-center">${role.write ? '✔️' : '❌'}</td>
+            <td class="text-center">${role.del ? '✔️' : '❌'}</td>
+            <td class="text-center">${role.update ? '✔️' : '❌'}</td>
+            <td class="text-center">
+                <button type="button" class="btn btn-sm btn-danger remove-role-btn">Remove</button>
             </td>
-        </tr>`).join('');
-
-    document.querySelectorAll(".delete-role").forEach(button => {
-        button.addEventListener("click", function () {
-            deleteUserRole(this.getAttribute("data-roleid"), this.getAttribute("data-userid"));
-        });
+        `;
+        roleTableBody.appendChild(tr);
     });
 }
 
-// Event listener for adding a role
-addUserRoleBtn.addEventListener("click", addUserRole);
+// Save Roles
+saveButton.addEventListener('click', async () => {
+    if (!validateForm()) return;
 
-// Preload form details
-fetchFormDetails();
+    saveButton.disabled = true;
+    saveSpinner.classList.remove('d-none');
+
+    // Clear previous roles
+    const { error: deleteError } = await supabaseClient
+        .from('UserAccessRules')
+        .delete()
+        .eq('UserLoginID', userNameInput.value.trim());
+
+    if (deleteError) console.warn('Previous roles deletion failed:', deleteError);
+
+    const insertData = userRoles.map(role => ({
+        UserLoginID: userNameInput.value.trim(),
+        FormID: role.formID,
+        FromDescription: role.formName,
+        CanRead: role.read,
+        CanWrite: role.write,
+        CanDelete: role.del,
+        CanUpdate: role.update,
+        created_by: UserLoginID,
+        created_at: localtimeStamp
+    }));
+
+    const { error: insertError } = await supabaseClient
+        .from('UserAccessRules')
+        .insert(insertData);
+
+    if (insertError) {
+        alert('Error saving roles.');
+        console.error(insertError);
+    } else {
+        alert('Roles saved successfully.');
+    }
+
+    saveButton.disabled = false;
+    saveSpinner.classList.add('d-none');
+});
+
+// Validate Form
+function validateForm() {
+    let valid = true;
+
+    if (!userIDInput.value.trim()) {
+        userIDInput.classList.add('is-invalid');
+        valid = false;
+    } else {
+        userIDInput.classList.remove('is-invalid');
+    }
+
+    if (userRoles.length === 0) {
+        alert('Please add at least one role.');
+        valid = false;
+    }
+
+    return valid;
+}
+
+// Clear Role Inputs
+function clearFormInputs() {
+    userAccessFormName.value = '';
+    userAccessFormID.value = '';
+    document.getElementById('roleRead').checked = false;
+    document.getElementById('roleWrite').checked = false;
+    document.getElementById('roleDelete').checked = false;
+    document.getElementById('roleUpdate').checked = false;
+}
+
+// Add Role
+addUserRoleButton.addEventListener('click', () => {
+    const formName = userAccessFormName.value.trim();
+    const formID = userAccessFormID.value.trim(); // Fixed: Should be the Form ID
+
+    if (!formName || !formID) return alert('Please select a valid form.');
+
+    const read = document.getElementById('roleRead').checked;
+    const write = document.getElementById('roleWrite').checked;
+    const del = document.getElementById('roleDelete').checked;
+    const update = document.getElementById('roleUpdate').checked;
+
+    if (!read && !write && !del && !update) return alert('Please select at least one permission.');
+
+    // ✅ Check for duplicates in roleTableBody
+    const duplicateFound = Array.from(roleTableBody.rows).some(row => {
+        return row.cells[0]?.textContent.trim().toLowerCase() === formName.toLowerCase();
+    });
+
+    if (duplicateFound) return alert('Role for this form already exists.');
+
+    // ✅ Add role to userRoles array
+    userRoles.push({ formID, formName, read, write, del, update });
+
+    // ✅ Render the updated table
+    renderRoleTable();
+
+    // ✅ Clear the input fields
+    clearFormInputs();
+});
+
+
+// Remove Role
+roleTableBody.addEventListener('click', (e) => {
+    if (e.target.classList.contains('remove-role-btn')) {
+        const row = e.target.closest('tr');
+        const formName = row.children[0].textContent.trim();
+
+        userRoles = userRoles.filter(role => role.formName !== formName);
+        renderRoleTable();
+    }
+});
+
+newButton.addEventListener('click', () => {
+    // Clear input fields
+    userIDInput.value = '';
+    userNameInput.value = '';
+    clearFormInputs();
+
+    // Clear roles
+    userRoles = [];
+    renderRoleTable();
+
+    // Enable Save button (if you want to make sure it's clickable)
+    saveButton.disabled = false;
+
+    // Optional: Reset user suggestions if needed
+    // Optional: Focus on user ID input
+    userIDInput.focus();
+    enableForm();
+    addUserRoleButton.disabled = false;
+    saveButton.innerHTML = '<i class="bi bi-save"></i> Save';
+});
+
+modifyButton.addEventListener('click', () => {
+
+    // Enable Save button (if you want to make sure it's clickable)
+    saveButton.disabled = false;
+    saveButton.innerHTML = '<i class="bi bi-save"></i> Update';
+
+    // Optional: Reset user suggestions if needed
+    // Optional: Focus on user ID input
+    userIDInput.focus();
+    enableForm();
+    addUserRoleButton.disabled = false;
+    document.querySelectorAll('.remove-role-btn').forEach(btn => btn.disabled = false);
+    modifyButton.disabled = true;
+});

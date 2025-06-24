@@ -1,5 +1,5 @@
-loadSuggestions('partySuggestions', 'PartyDetails', companyID, 'PartyCode', 'PartyName');
-loadSuggestions('vendorSuggestions', 'PartyDetails', companyID, 'PartyCode', 'PartyName');
+loadSuggestions('partySuggestions', 'PartyDetails', CompanyID, 'PartyCode', 'PartyName');
+loadSuggestions('vendorSuggestions', 'PartyDetails', CompanyID, 'PartyCode', 'PartyName');
 
 async function loadAWBNoDetails(query) {
     if (!query) return;

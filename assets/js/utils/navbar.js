@@ -129,7 +129,7 @@ document.addEventListener("DOMContentLoaded", () => {
         alert('Missing form data.');
         return;
       }
-      console.log('ok' + userLoginID + "" + formID);
+      // console.log('ok' + userLoginID + "" + formID);
       const accessGranted = await checkAccess(userLoginID, formID);
       if (accessGranted) {
         window.location.href = href;
@@ -139,17 +139,17 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 
-// Function to check user permissions
-async function checkAccess(userLoginID, formID) {
 
+async function checkAccess(userLoginID, formID) {
   try {
-    console.log('Premission Details : ' + userLoginID + formID);
+    // console.log(`Permission Details: ${userLoginID}, ${formID}`);
+
     const { data, error } = await supabaseClient
       .from('UserAccessRules')
-      .select('Read, Write, Delete, Update')
+      .select('CanRead, CanWrite, CanDelete, CanUpdate')
       .eq('UserLoginID', userLoginID)
       .eq('FormID', formID)
-      .maybeSingle();  // Allows 0 rows without throwing an error
+      .maybeSingle();  // Allows zero rows without error
 
     if (error) {
       console.error('Database error:', error);
@@ -162,17 +162,17 @@ async function checkAccess(userLoginID, formID) {
       return false;
     }
 
-    // Assign permissions to global variables
-    perRead = data.Read;
-    perWrite = data.Write;
-    perDelete = data.Delete;
-    perUpdate = data.Update;
+    // Assign to global permission variables
+    perRead = data.CanRead ?? false;
+    perWrite = data.CanWrite ?? false;
+    perDelete = data.CanDelete ?? false;
+    perUpdate = data.CanUpdate ?? false;
 
-
-    return !!perRead; // true if Read permission exists
+    return !!perRead; // true if Read permission is granted
   } catch (err) {
     console.error('Unexpected error:', err);
     alert('An unexpected error occurred while checking permissions.');
     return false;
   }
 }
+
