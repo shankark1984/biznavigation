@@ -13,16 +13,15 @@ document.addEventListener("DOMContentLoaded", () => {
       ${items.map(item =>
     item === 'divider'
       ? '<li><hr class="dropdown-divider" /></li>'
-      : `<li><a class="dropdown-item menu-item" href="${item.href}" data-form-id="${item.href.replace('.html', '').replace(/[^a-zA-Z0-9]/g, '')}">${item.label}</a></li>`
+      : `<li><a class="dropdown-item menu-item" href="pages/${item.href}" data-form-id="${item.href.replace('.html', '').replace(/[^a-zA-Z0-9]/g, '')}">${item.label}</a></li>`
   ).join('')}
     </ul>
   </li>`;
 
-
   const header = `
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
         <div class="container-fluid">
-            <a class="navbar-brand d-flex align-items-center" href="home.html">
+            <a class="navbar-brand d-flex align-items-center" href="pages/home.html">
                 <img src="assets/img/applogo.png" alt="Logo" width="40" class="me-2" />
                 <div>
                     <h2 class="mb-0 fs-6">BizNavigation</h2>
@@ -118,6 +117,7 @@ document.addEventListener("DOMContentLoaded", () => {
       location.replace('index.html'); // Also clears history on logout
     });
   }
+
   // Permission check on menu clicks
   document.querySelectorAll('.menu-item').forEach(item => {
     item.addEventListener('click', async e => {
@@ -129,7 +129,7 @@ document.addEventListener("DOMContentLoaded", () => {
         alert('Missing form data.');
         return;
       }
-      // console.log('ok' + userLoginID + "" + formID);
+
       const accessGranted = await checkAccess(userLoginID, formID);
       if (accessGranted) {
         window.location.href = href;
@@ -138,12 +138,8 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
-
-
 async function checkAccess(userLoginID, formID) {
   try {
-    // console.log(`Permission Details: ${userLoginID}, ${formID}`);
-
     const { data, error } = await supabaseClient
       .from('UserAccessRules')
       .select('CanRead, CanWrite, CanDelete, CanUpdate')
@@ -175,4 +171,3 @@ async function checkAccess(userLoginID, formID) {
     return false;
   }
 }
-
