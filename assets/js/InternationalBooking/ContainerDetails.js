@@ -120,7 +120,7 @@ async function saveContainerDetails() {
     const rows = Array.from(tableBody.rows);
     insertedID = document.getElementById('tempFormID').value; // Assuming you have an input field with ID 'insertedID'
     if (rows.length === 0) {
-        alert('No container details to save.');
+        // alert('No container details to save.');
         return;
     }
 

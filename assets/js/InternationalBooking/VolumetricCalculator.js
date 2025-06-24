@@ -239,14 +239,12 @@ async function saveNewVolumetricRows() {
         const ID_IB = document.getElementById('tempFormID').value;
         const DocketNo = document.getElementById('awbNo').value;
 
-        console.log('Saving new volumetric rows for DocketNo:', DocketNo);
         if (!ID_IB || !DocketNo) {
             return { success: false, error: 'ID_IB or DocketNo is missing.' };
         }
         const newRows = Array.from(
             document.querySelectorAll('#volumetricTable tbody tr[data-volumetric-status="new"]')
         );
-        console.log('New rows to save:', newRows.length);
 
         if (!newRows.length) {
             return { success: true, count: 0, message: 'No new volumetric rows to save.' };

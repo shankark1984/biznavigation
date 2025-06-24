@@ -184,7 +184,7 @@ async function saveFreightCharges() {
             });
         }
 
-        if (!insertData.length) return console.log('No new charges to save (all are duplicates).');
+        // if (!insertData.length) return console.log('No new charges to save (all are duplicates).');
 
         const { error } = await supabaseClient
             .from('InternationalBookingCharges')

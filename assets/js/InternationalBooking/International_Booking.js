@@ -339,7 +339,6 @@ async function saveOrUpdateInternationalBooking() {
     // Get the button type: "save" or "update"
     const actionType = document.getElementById("saveButton").textContent.trim();
     const updateID = document.getElementById('tempFormID').value;
-    console.log('Action Type:', actionType);
     const formData = {
         DocketNo: document.getElementById("awbNo").value,
         BookedDate: document.getElementById("bookedDate").value,
@@ -375,8 +374,8 @@ async function saveOrUpdateInternationalBooking() {
         Infomation: document.getElementById("infomation").value,
         PONo: document.getElementById("poNo").value,
         ShippingType: document.getElementById("shippingType").value || 'NA',
-        company_id: companyID,
-        CreatedBy: userLoginID,
+        company_id: CompanyID,
+        CreatedBy: UserLoginID,
         created_at: localtimeStamp
     };
 
@@ -423,7 +422,6 @@ async function saveOrUpdateInternationalBooking() {
         alert("Failed to save data: " + result.error.message);
     } else {
         alert("Data saved successfully!");
-        console.log("Success:", result.data);
     }
 }
 
