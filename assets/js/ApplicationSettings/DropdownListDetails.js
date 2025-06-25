@@ -20,9 +20,9 @@ async function fetchDropdownList() {
             .from('dropdown_list')
             .select('*');
 
-        if (userType !== 1) {
+        if (UserType !== 1) {
             // Admin and below: Only get items for their company or 'All'
-            query = query.in('company_id', ['All', companyID]);
+            query = query.in('company_id', ['All', CompanyID]);
         }
 
         const { data, error } = await query;
@@ -48,7 +48,7 @@ async function fetchDropdownList() {
             const row = document.createElement('tr');
 
             const isGlobalItem = item.company_id === 'All';
-            const canEdit = (userType === 1) || (userType === 2 && !isGlobalItem && item.company_id === companyID);
+            const canEdit = (UserType === 1) || (UserType === 2 && !isGlobalItem && item.company_id === CompanyID);
             const canDelete = canEdit;
 
             row.innerHTML = `
@@ -123,12 +123,12 @@ async function addDropdownItem() {
         return;
     }
 
-    if (userType !== 1 && userType !== 2) {
+    if (UserType !== 1 && UserType !== 2) {
         alert('You do not have permission to modify dropdown items.');
         return;
     }
 
-    if (userType === 2 && companyID === 'All') {
+    if (UserType === 2 && CompanyID === 'All') {
         alert('Admins cannot modify items for global company "All".');
         return;
     }
@@ -143,7 +143,7 @@ async function addDropdownItem() {
         condition: condition,
         value: fixedValue,
         hsn_code: hsnCode,
-        company_id: companyID,
+        company_id: CompanyID,
         created_by: userLoginID,
         created_at: localtimeStamp
     };
@@ -152,7 +152,7 @@ async function addDropdownItem() {
         const exists = dropdownListData.some(item =>
             item.type_of_value.toLowerCase() === valueAssignedTo.toLowerCase() &&
             item.description.toLowerCase() === description.toLowerCase() &&
-            item.company_id === companyID
+            item.company_id === CompanyID
         );
 
         if (exists) {
@@ -179,12 +179,12 @@ async function addDropdownItem() {
             return;
         }
 
-        if (userType === 2 && originalItem.company_id === 'All') {
+        if (UserType === 2 && originalItem.company_id === 'All') {
             alert('Admins cannot edit global dropdown items.');
             return;
         }
 
-        if (userType !== 1 && originalItem.company_id !== companyID) {
+        if (userType !== 1 && originalItem.company_id !== CompanyID) {
             alert('You can only edit dropdown items for your company.');
             return;
         }
@@ -229,7 +229,7 @@ async function deleteDropdownItem(id, event) {
     event.preventDefault();
     const item = dropdownListData.find(x => x.id === id);
 
-    if (userType !== 1 && (item.company_id === 'All' || item.company_id !== companyID)) {
+    if (UserType !== 1 && (item.company_id === 'All' || item.company_id !== CompanyID)) {
         alert('You do not have permission to delete this item.');
         return;
     }
@@ -270,7 +270,7 @@ document.addEventListener('DOMContentLoaded', () => {
         console.error('Supabase client not initialized');
         return;
     }
-    if (typeof companyID === 'undefined' || typeof userType === 'undefined') {
+    if (typeof CompanyID === 'undefined' || typeof UserType === 'undefined') {
         console.error('Company ID or userType not defined');
         return;
     }
@@ -278,7 +278,7 @@ document.addEventListener('DOMContentLoaded', () => {
     fetchDropdownList();
 
     const addButton = document.getElementById('addDropdownMenuList');
-    if (userType === 1 || userType === 2) {
+    if (UserType === 1 || UserType === 2) {
         addButton.addEventListener('click', addDropdownItem);
     } else {
         addButton.disabled = true;

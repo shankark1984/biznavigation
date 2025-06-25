@@ -51,8 +51,8 @@ async function fetchCityData() {
 
         allData.forEach((item, index) => {
             const row = document.createElement('tr');
-            const canEdit = userType === 1 || userType === 2;
-            const canDelete = userType === 1;
+            const canEdit = UserType === 1 || UserType === 2;
+            const canDelete = UserType === 1;
 
             row.innerHTML = `
                 <td>${index + 1}</td>
@@ -132,7 +132,7 @@ async function addCityItem() {
 
             const { error } = await supabaseClient
                 .from('CityDetails')
-                .insert([{ ...cityObj, created_by: userLoginID, created_at: localtimeStamp }]);
+                .insert([{ ...cityObj, created_by: UserLoginID, created_at: localtimeStamp }]);
 
             if (error) throw error;
 
@@ -147,7 +147,7 @@ async function addCityItem() {
 
             const { error } = await supabaseClient
                 .from('CityDetails')
-                .update({ ...cityObj, updated_by: userLoginID, updated_at: localtimeStamp })
+                .update({ ...cityObj, updated_by: UserLoginID, updated_at: localtimeStamp })
                 .eq('id', id);
 
             if (error) throw error;
@@ -179,7 +179,7 @@ function editCityItem(id, cityName, stateName, zoneName, countryName, event) {
 // Delete a city
 async function deleteCityItem(id, event) {
     event.preventDefault();
-    if (userType !== 1) {
+    if (UserType !== 1) {
         alert('You do not have permission to delete this item.');
         return;
     }
@@ -209,7 +209,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     fetchCityData();
 
     const addButton = document.getElementById('addCityDetails');
-    if (userType === 1 || userType === 2) {
+    if (UserType === 1 || UserType === 2) {
         addButton.addEventListener('click', addCityItem);
     } else {
         addButton.disabled = true;
@@ -243,8 +243,8 @@ function filterTable() {
 
     filteredData.forEach((item, index) => {
         const row = document.createElement('tr');
-        const canEdit = userType === 1 || userType === 2;
-        const canDelete = userType === 1;
+        const canEdit = UserType === 1 || UserType === 2;
+        const canDelete = UserType === 1;
 
         row.innerHTML = `
              <td>${index + 1}</td>

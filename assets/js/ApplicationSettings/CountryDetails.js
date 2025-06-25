@@ -41,8 +41,8 @@ async function fetchCountryData() {
             const row = document.createElement('tr');
 
             // Add userType-based permission for Edit/Delete
-            const canEdit = userType === 1 || userType === 2;  // Admin or Manager can edit
-            const canDelete = userType === 1;  // Only Admin can delete
+            const canEdit = UserType === 1 || UserType === 2;  // Admin or Manager can edit
+            const canDelete = UserType === 1;  // Only Admin can delete
 
             row.innerHTML = `
                 <td>${escapeHtml(item.CountryCode)}</td>
@@ -165,7 +165,7 @@ async function deleteCountryItem(id, event) {
     event.preventDefault();
     const item = countryData.find(x => x.id === id);
 
-    if (userType !== 1) {
+    if (UserType !== 1) {
         alert('You do not have permission to delete this item.');
         return;
     }
@@ -193,7 +193,7 @@ document.addEventListener('DOMContentLoaded', () => {
     fetchCountryData();
 
     const addButton = document.getElementById('addCountry');
-    if (userType === 1 || userType === 2) {
+    if (UserType === 1 || UserType === 2) {
         addButton.addEventListener('click', addCountryItem);
     } else {
         addButton.disabled = true;

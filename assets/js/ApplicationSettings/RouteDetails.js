@@ -33,7 +33,7 @@ async function fetchRoutes() {
         data.forEach(route => {
             const row = document.createElement('tr');
 
-            const canEdit = userType === 1 || userType === 2;
+            const canEdit = UserType === 1 || UserType === 2;
             const canDelete = canEdit;
 
             row.innerHTML = `
@@ -196,7 +196,7 @@ document.addEventListener('DOMContentLoaded', () => {
         console.error('Supabase client not initialized');
         return;
     }
-    if (typeof companyID === 'undefined' || typeof userType === 'undefined') {
+    if (typeof CompanyID === 'undefined' || typeof UserType === 'undefined') {
         console.error('Company ID or userType not defined');
         return;
     }
@@ -204,7 +204,7 @@ document.addEventListener('DOMContentLoaded', () => {
     fetchRoutes();
 
     const addButton = document.getElementById('addRouteDetails');
-    if (userType === 1 || userType === 2) {
+    if (UserType === 1 || UserType === 2) {
         addButton.addEventListener('click', addRoute);
     } else {
         addButton.disabled = true;

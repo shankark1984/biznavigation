@@ -1,9 +1,11 @@
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    if (!await checkAccess(UserLoginID, 'ApplicationSettings')) {
+        disableForm();
+        alert("You do not have permission to view this form.");
+        return;
+    }
 
-    const userLoginID = localStorage.getItem("userLoginID");
-    const localtimeStamp = new Date().toISOString();
-
-    const isEditableUser = userType === 1 || userType === 2;
+    const isEditableUser = UserType === 1 || UserType === 2;
     const getField = id => document.getElementById(id);
 
     const formFields = {

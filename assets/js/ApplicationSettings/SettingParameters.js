@@ -18,7 +18,7 @@ async function initSettings() {
     const saveBtn = document.getElementById('saveSettingsBtn');
 
     const inputs = document.querySelectorAll('#SettingParameters input[id]');
-    const canEdit = [1, 2].includes(userType);          // ← 🔑 permission check
+    const canEdit = [1, 2].includes(UserType);          // ← 🔑 permission check
 
     if (!canEdit) {                                      // lock the UI
         inputs.forEach(i => (i.disabled = true));
@@ -38,7 +38,7 @@ async function loadSettings() {
     const { data, error } = await supabaseClient
         .from('SettingParameters')
         .select('id, InputFieldID, FieldValue, InputFieldType')
-        .eq('company_id', companyID);
+        .eq('company_id', CompanyID);
 
     if (error) throw error;
     return data;
@@ -75,11 +75,11 @@ async function saveSettings(saveBtn) {
                         InputFieldID: id,
                         FieldValue: value,
                         InputFieldType: type,
-                        company_id: companyID,
+                        company_id: CompanyID,
                         /* audit columns */
                         ...(prev
-                            ? { updated_at: localtimeStamp, updated_by: userLoginID }
-                            : { created_at: localtimeStamp, created_by: userLoginID }
+                            ? { updated_at: localtimeStamp, updated_by: UserLoginID }
+                            : { created_at: localtimeStamp, created_by: UserLoginID }
                         )
                     });
                 }

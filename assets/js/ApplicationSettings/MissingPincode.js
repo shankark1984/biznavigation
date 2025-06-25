@@ -36,7 +36,7 @@ async function fetchMissingPincodes() {
 
     data.forEach((item) => {
         const row = document.createElement('tr');
-        const canEdit = (userType === 1 || (userType === 2 && item.created_by === userLoginID));
+        const canEdit = (UserType === 1 || (UserType === 2 && item.created_by === UserLoginID));
         const canDelete = canEdit;
 
         let buttons = '';
@@ -192,7 +192,7 @@ $("#missingPincode").on("input", function () {
 document.addEventListener('DOMContentLoaded', () => {
     fetchMissingPincodes();
     const addButton = document.getElementById('addMissingPincode');
-    if (userType === 1 || userType === 2) {
+    if (UserType === 1 || UserType === 2) {
         addButton.addEventListener('click', addMissingPincode);
     } else {
         addButton.disabled = true;
