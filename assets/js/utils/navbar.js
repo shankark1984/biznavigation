@@ -58,7 +58,7 @@ document.addEventListener("DOMContentLoaded", () => {
   ])}
 
                     ${menuSection("Accounting", [
-    { label: "Customer Invoicing", href: "invoice_form.html" },
+    { label: "Customer Invoicing", href: "CustomerInvoice.html" },
     { label: "Vendor Billing", href: "#" },
     'divider',
     { label: "Payment Credit", href: "#" },

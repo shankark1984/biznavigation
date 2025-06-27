@@ -164,6 +164,7 @@ async function loadSuggestions(
     attachPartyCodeFiller('partyNameReg', datalistId, 'partyCodes');
     attachPartyCodeFiller('serviceProvider', 'vendorSuggestions', 'serviceProviderCode');
     attachPartyCodeFiller('userID', 'userLoginSuggestions', 'userName')
+    attachPartyCodeFiller('partyName', 'partySuggestions', 'partyCode');
 }
 
 
@@ -416,4 +417,223 @@ async function validatePANInput(
         feedback.classList.add('d-none');
         input.classList.remove('is-invalid');
     }
-}   
+}
+let bankMap = {}; // Global mapping: DisplayName -> BankID
+let bankID = null; // Selected Bank ID
+
+// Load bank suggestions from Supabase
+async function loadBankNameSuggestions() {
+    const datalist = document.getElementById('bankNameSuggestions');
+    datalist.innerHTML = '';
+    bankMap = {}; // Clear previous suggestions
+
+    try {
+        const { data, error } = await supabaseClient
+            .from('CompanyBankDetails')
+            .select('id, BankName, AccountNo')
+            .eq('CompanyID', CompanyID);
+
+        if (error) {
+            console.error('Error loading bank data:', error.message);
+            return;
+        }
+
+        data.forEach(bank => {
+            const lastFour = bank.AccountNo.slice(-4);
+            const displayName = `${bank.BankName} - ${lastFour}`;
+            bankMap[displayName] = bank.id;
+
+            const option = document.createElement('option');
+            option.value = displayName;
+            datalist.appendChild(option);
+        });
+    } catch (err) {
+        console.error('Unexpected error:', err);
+    }
+}
+
+
+// Load the default bank and set the input values
+async function loadDefaultBank() {
+    try {
+        const { data, error } = await supabaseClient
+            .from('CompanyBankDetails')
+            .select('id, BankName, AccountNo')
+            .eq('CompanyID', CompanyID)
+            .eq('DefaultBank', 'Yes')
+            .single();
+
+        if (error) throw error;
+
+        if (!data) {
+            console.warn('No default bank found.');
+            return null;
+        }
+
+        const { id, BankName, AccountNo } = data;
+        const lastFourDigits = AccountNo.slice(-4);
+        const displayName = `${BankName} - ${lastFourDigits}`;
+
+        const bankNameInput = document.getElementById('bankName');
+        const bankIDInput = document.getElementById('bankIDs');
+        const hiddenInput = getOrCreateHiddenBankInput();
+
+        if (bankNameInput) bankNameInput.value = displayName;
+        hiddenInput.value = displayName;
+        hiddenInput.setAttribute('data-bank-id', id);
+        bankIDInput.value = id;
+
+        bankID = id; // ✅ Store in global variable
+
+        return id;
+    } catch (err) {
+        console.error('Error loading default bank:', err.message);
+        return null;
+    }
+}
+
+// Create hidden input if not present
+function getOrCreateHiddenBankInput() {
+    let hiddenInput = document.getElementById('inputBankName');
+    if (!hiddenInput) {
+        hiddenInput = document.createElement('input');
+        hiddenInput.type = 'hidden';
+        hiddenInput.id = 'inputBankName';
+        document.body.appendChild(hiddenInput);
+    }
+    return hiddenInput;
+}
+
+async function autoUnlockRecords() {
+    if (lockedBookingIds.length === 0) return;
+
+    try {
+        const { error } = await supabaseClient
+            .from('international_booking')
+            .update({
+                IsLocked: false,
+                LockedBy: null,
+                LockedAt: null
+            })
+            .in('id', lockedBookingIds);
+
+        if (error) throw error;
+
+        console.log('Records unlocked automatically.');
+
+        // Clear the locked IDs and timer
+        lockedBookingIds = [];
+        if (autoUnlockTimer) {
+            clearTimeout(autoUnlockTimer);
+            autoUnlockTimer = null;
+        }
+
+    } catch (err) {
+        console.error('Error auto-unlocking records:', err.message);
+    }
+}
+let autoUnlockTimer = null;
+
+function startAutoUnlockTimer() {
+    // Auto-unlock after 10 minutes (600,000 ms)
+    autoUnlockTimer = setTimeout(() => {
+        autoUnlockRecords();
+    }, 600000);
+}
+
+function resetAutoUnlockTimer() {
+    if (autoUnlockTimer) {
+        clearTimeout(autoUnlockTimer);
+    }
+    startAutoUnlockTimer();
+}
+
+async function getPartyNameByCode(partyCode) {
+    try {
+        const { data, error } = await supabaseClient
+            .from('PartyDetails')
+            .select('PartyName')
+            .eq('PartyCode', partyCode)
+            .eq('company_id', CompanyID)
+            .single(); // Expecting one record per party code
+
+        if (error) throw error;
+
+        return data?.PartyName || '';
+    } catch (err) {
+        console.error('Error fetching party name:', err.message);
+        return '';
+    }
+}
+async function getBankNameByCode(bankID) {
+    try {
+        const { data, error } = await supabaseClient
+            .from('CompanyBankDetails')
+            .select('id, BankName, AccountNo')
+            .eq('CompanyID', CompanyID)
+            .eq('id', bankID)
+            .single();
+
+        if (error) throw error;
+
+        if (!data) {
+            console.warn('No default bank found.');
+            return null;
+        }
+
+        const { id, BankName, AccountNo } = data;
+        const lastFourDigits = AccountNo.slice(-4);
+        const displayName = `${BankName} - ${lastFourDigits}`;
+
+        const bankNameInput = document.getElementById('bankName');
+        const bankIDInput = document.getElementById('bankIDs');
+        const hiddenInput = getOrCreateHiddenBankInput();
+
+        if (bankNameInput) bankNameInput.value = displayName;
+        hiddenInput.value = displayName;
+        hiddenInput.setAttribute('data-bank-id', id);
+        bankIDInput.value = id;
+
+        return id;
+    } catch (err) {
+        console.error('Error loading default bank:', err.message);
+        return null;
+    }
+}
+
+async function loadInvoiceNoSuggestions() {
+    const datalist = document.getElementById('invoiceNoSuggestions');
+    datalist.innerHTML = ''; // Clear previous options
+
+    let from = 0;
+    const batchSize = 1000;
+    let hasMore = true;
+
+    try {
+        while (hasMore) {
+            const { data, error, count } = await supabaseClient
+                .from('InvoiceDetails')
+                .select('InvoiceNo', { count: 'exact' })
+                .eq('company_id', CompanyID)
+                .range(from, from + batchSize - 1);
+
+            if (error) throw error;
+
+            if (data && data.length > 0) {
+                data.forEach(invoice => {
+                    const option = document.createElement('option');
+                    option.value = invoice.InvoiceNo;
+                    datalist.appendChild(option);
+                });
+
+                from += batchSize;
+                hasMore = data.length === batchSize; // Continue if full batch fetched
+            } else {
+                hasMore = false;
+            }
+        }
+    } catch (err) {
+        console.error('Error loading invoice suggestions:', err.message);
+    }
+}
+
