@@ -61,7 +61,7 @@ document.addEventListener("DOMContentLoaded", () => {
     { label: "Customer Invoicing", href: "CustomerInvoice.html" },
     { label: "Vendor Billing", href: "#" },
     'divider',
-    { label: "Payment Credit", href: "#" },
+    { label: "Payment Credit", href: "PaymentDetails.html" },
     { label: "Payment Debit", href: "#" },
     'divider',
     { label: "Tax Details", href: "#" }

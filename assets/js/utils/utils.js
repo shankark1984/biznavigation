@@ -431,7 +431,8 @@ async function loadBankNameSuggestions() {
         const { data, error } = await supabaseClient
             .from('CompanyBankDetails')
             .select('id, BankName, AccountNo')
-            .eq('CompanyID', CompanyID);
+            .eq('CompanyID', CompanyID)
+            .eq('DefaultBank', 'Yes');
 
         if (error) {
             console.error('Error loading bank data:', error.message);
@@ -504,6 +505,28 @@ function getOrCreateHiddenBankInput() {
     return hiddenInput;
 }
 
+async function unlockShipmentRecord(shipId) {
+    try {
+        const { error } = await supabaseClient
+            .from('international_booking')
+            .update({
+                IsLocked: false,
+                LockedBy: null,
+                LockedAt: null
+            })
+            .eq('id', shipId);
+
+        if (error) {
+            console.error('Error unlocking shipment:', error.message);
+        } else {
+            console.log(`Shipment ${shipId} unlocked successfully.`);
+        }
+    } catch (err) {
+        console.error('Error unlocking shipment:', err.message);
+    }
+}
+
+
 async function autoUnlockRecords() {
     if (lockedBookingIds.length === 0) return;
 
@@ -548,23 +571,25 @@ function resetAutoUnlockTimer() {
     startAutoUnlockTimer();
 }
 
-async function getPartyNameByCode(partyCode) {
+async function getPartyDetailsByCode(partyCode) {
     try {
+        console.log('Fetching party details for code:', partyCode);
         const { data, error } = await supabaseClient
             .from('PartyDetails')
-            .select('PartyName')
+            .select('*')
             .eq('PartyCode', partyCode)
             .eq('company_id', CompanyID)
             .single(); // Expecting one record per party code
 
         if (error) throw error;
 
-        return data?.PartyName || '';
+        return data || null;
     } catch (err) {
-        console.error('Error fetching party name:', err.message);
-        return '';
+        console.error('Error fetching party details:', err.message);
+        return null;
     }
 }
+
 async function getBankNameByCode(bankID) {
     try {
         const { data, error } = await supabaseClient

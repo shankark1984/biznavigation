@@ -59,3 +59,51 @@ function clearPermissionCache(userLoginID) {
         }
     });
 }
+
+let notificationTimeout;
+
+function showNotification(message) {
+    const taskBar = document.getElementById('taskBar');
+
+    // Clear previous timeout if exists
+    if (notificationTimeout) {
+        clearTimeout(notificationTimeout);
+    }
+
+    if (message && message.trim() !== '') {
+        // Show browser notification
+        if (window.Notification && Notification.permission === 'granted') {
+            new Notification('Validation Error', { body: message });
+        }
+
+        taskBar.textContent = message;
+        taskBar.classList.remove('d-none', 'fade'); // Make visible without fade-out
+        void taskBar.offsetWidth; // Force reflow for fade-in to work
+        taskBar.classList.add('show'); // Bootstrap fade-in
+        return; // Exit early if showing a message
+
+        // Auto-hide after 3 seconds
+        notificationTimeout = setTimeout(() => {
+            taskBar.classList.remove('show'); // Start fade-out
+
+            const hideHandler = () => {
+                taskBar.classList.add('d-none'); // Hide after fade-out
+                taskBar.textContent = ''; // Clear old message
+                taskBar.removeEventListener('transitionend', hideHandler);
+            };
+
+            taskBar.addEventListener('transitionend', hideHandler);
+        }, 3000);
+    } else {
+        taskBar.classList.remove('show'); // Start fade-out
+
+        const hideHandler = () => {
+            taskBar.classList.add('d-none'); // Hide after fade-out
+            taskBar.textContent = ''; // Clear old message
+            taskBar.removeEventListener('transitionend', hideHandler);
+        };
+
+        taskBar.addEventListener('transitionend', hideHandler);
+    }
+}
+

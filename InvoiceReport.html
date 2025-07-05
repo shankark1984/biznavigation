@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tax Invoice - HDR Invoice Report</title>
+    <link rel="stylesheet" href="InvoiceReport.css">
+</head>
+
+<body>
+    <div class="invoice-container">
+        <!-- Header Section -->
+        <div class="header-section">
+            <div class="logo-container" id="logoContainer">
+                <!-- Logo will be inserted here -->
+            </div>
+            <div class="company-details">
+                <!-- company detials  -->
+            </div>
+            <div class="original-label">
+                Original
+            </div>
+        </div>
+
+        <!-- Tax Invoice Title -->
+        <div class="tax-invoice-title">
+            TAX INVOICE
+        </div>
+
+        <!-- Invoice Details Section -->
+        <div class="invoice-details-section">
+            <div class="customer-details">
+                <h1 id="customerName"></h1>
+                <span id="customerAddress"></span>
+            </div>
+            <div class="invoice-info">
+                <div class="invoice-info-row">
+                    <div class="invoice-info-label">Invoice No. :</div>
+                    <div id="invoice-number" class="invoice-info-value invoice-number"></div>
+                </div>
+                <div class="invoice-info-row">
+                    <div class="invoice-info-label">Invoice Date:</div>
+                    <div class="invoice-info-value" id="invoiceDate">27-06-2024</div>
+                </div>
+                <div class="invoice-info-row">
+                    <div class="invoice-info-label">SAC Code :</div>
+                    <div class="invoice-info-value">996511</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- GST and PO Section -->
+        <div class="gst-po-section">
+            <div class="gst-section">
+                <div class="gst-label">GST No. :-</div>
+                <div class="gst-value" id="gSTNumber"></div>
+            </div>
+            <div class="po-section">
+                <div class="po-label">P.O. No.</div>
+                <div class="po-value" id="poDetails"></div>
+            </div>
+        </div>
+
+        <!-- Table Header -->
+        <div class="table-header">
+            <div class="table-cell col-slno">Sl No</div>
+            <div class="table-cell col-date">Date</div>
+            <div class="table-cell col-awb">AWB No</div>
+            <div class="table-cell col-mode">Mode</div>
+            <div class="table-cell col-origin">Origin</div>
+            <div class="table-cell col-dest">Dest.</div>
+            <div class="table-cell col-cmdty">Cmdty</div>
+            <div class="table-cell col-weight">Weight/CBM</div>
+            <div class="table-cell col-freight">Frt. Amt.</div>
+            <div class="table-cell col-fsc">FSC. Chrgs</div>
+            <div class="table-cell col-other">Other Chrgs</div>
+            <div class="table-cell col-total">Total Amt.</div>
+        </div>
+
+        <!-- Table Data -->
+        <div class="table-row">
+            <div class="table-cell col-slno">1</div>
+            <div class="table-cell col-date">25-06-2024</div>
+            <div class="table-cell col-awb">AWB001234</div>
+            <div class="table-cell col-mode">Air</div>
+            <div class="table-cell col-origin">BLR</div>
+            <div class="table-cell col-dest">DEL</div>
+            <div class="table-cell col-cmdty">Electronics</div>
+            <div class="table-cell col-weight">25 KG</div>
+            <div class="table-cell col-freight" style="text-align: right;">8,000.00</div>
+            <div class="table-cell col-fsc" style="text-align: right;">800.00</div>
+            <div class="table-cell col-other" style="text-align: right;">200.00</div>
+            <div class="table-cell col-total" style="text-align: right;">9,000.00</div>
+        </div>
+
+        <div class="table-row">
+            <div class="table-cell col-slno">2</div>
+            <div class="table-cell col-date">26-06-2024</div>
+            <div class="table-cell col-awb">AWB001235</div>
+            <div class="table-cell col-mode">Road</div>
+            <div class="table-cell col-origin">BLR</div>
+            <div class="table-cell col-dest">MUM</div>
+            <div class="table-cell col-cmdty">Textiles</div>
+            <div class="table-cell col-weight">50 KG</div>
+            <div class="table-cell col-freight" style="text-align: right;">7,000.00</div>
+            <div class="table-cell col-fsc" style="text-align: right;">700.00</div>
+            <div class="table-cell col-other" style="text-align: right;">300.00</div>
+            <div class="table-cell col-total" style="text-align: right;">8,000.00</div>
+        </div>
+
+        <!-- Summary Section -->
+        <div class="summary-section">
+            <!-- Left Summary -->
+            <div class="left-summary">
+                <!-- Terms & Conditions -->
+                <div class="terms-section">
+                    <div class="terms-title">Terms & Conditions :</div>
+                    <div class="terms-content">
+                        1. Please draw cheque in favour of <strong>ABC Logistics Pvt Ltd</strong><br>
+                        2. Payments Should be made within 7 Days from the Date of Billing<br>
+                        3. All Complaints in respect of this bill must be forwarded within 8 days from the date of
+                        receipt.<br>
+                        4. Bangalore will be the Jurisdiction for any disputes arising out by this bill.
+                    </div>
+                </div>
+
+                <!-- Bank Details -->
+                <div class="bank-section">
+                    <div class="bank-title">Bank Details</div>
+                    <div class="bank-content">
+                        <strong>Name :</strong> ABC Logistics Pvt Ltd<br>
+                        <strong>Bank Name :</strong> State Bank of India<br>
+                        <strong>Account No :</strong> 1234567890<br>
+                        <strong>Branch Name :</strong> Electronic City Branch<br>
+                        <strong>IFSC No :</strong> SBIN0001234 <strong>| MICR Code :</strong> 560002001
+                    </div>
+                </div>
+
+                <!-- Amount in Words -->
+                <div class="amount-words">
+                    Amount in Words: - Twenty Two Thousand Eight Hundred Sixty Only
+                </div>
+            </div>
+
+            <!-- Right Summary -->
+            <div class="right-summary">
+                <!-- Summary Header -->
+                <div class="summary-header">
+                    <div class="summary-header-cell"></div>
+                    <div class="summary-header-cell">Non Taxable</div>
+                    <div class="summary-header-cell">Taxable</div>
+                </div>
+
+                <!-- Total Freight -->
+                <div class="summary-row">
+                    <div class="summary-label">Total Freight :</div>
+                    <div class="summary-non-tax">2,000.00</div>
+                    <div class="summary-tax">15,000.00</div>
+                </div>
+
+                <!-- Fuel Charges -->
+                <div class="summary-row">
+                    <div class="summary-label">Fuel Charges :</div>
+                    <div class="summary-non-tax">200.00</div>
+                    <div class="summary-tax">1,500.00</div>
+                </div>
+
+                <!-- Other Charges -->
+                <div class="summary-row">
+                    <div class="summary-label">Other Charges :</div>
+                    <div class="summary-non-tax">100.00</div>
+                    <div class="summary-tax">500.00</div>
+                </div>
+
+                <!-- CGST -->
+                <div class="summary-row">
+                    <div class="summary-label">CGST @ 9% :</div>
+                    <div class="summary-non-tax">0.00</div>
+                    <div class="summary-tax">1,530.00</div>
+                </div>
+
+                <!-- SGST -->
+                <div class="summary-row">
+                    <div class="summary-label">SGST @ 9% :</div>
+                    <div class="summary-non-tax">0.00</div>
+                    <div class="summary-tax">1,530.00</div>
+                </div>
+
+                <!-- IGST -->
+                <div class="summary-row">
+                    <div class="summary-label">IGST @ 18% :</div>
+                    <div class="summary-non-tax">0.00</div>
+                    <div class="summary-tax">0.00</div>
+                </div>
+
+                <!-- Total GST -->
+                <div class="summary-row">
+                    <div class="summary-label">Total GST :</div>
+                    <div class="summary-non-tax">0.00</div>
+                    <div class="summary-tax">3,060.00</div>
+                </div>
+
+                <!-- Total -->
+                <div class="summary-row">
+                    <div class="summary-label">Total:</div>
+                    <div class="summary-non-tax">2,300.00</div>
+                    <div class="summary-tax">20,560.00</div>
+                </div>
+
+                <!-- Grand Total -->
+                <div class="grand-total-row">
+                    <div class="grand-total-label">GRAND TOTAL INR :</div>
+                    <div class="grand-total-value">22,860.00</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <div class="footer-left">
+                Powered by <span class="brand-highlight">AllEdge</span>
+            </div>
+            <div class="footer-center">
+                "This is computer generated invoice no signature required."
+            </div>
+            <div class="footer-right">
+                Page 1 of 1
+            </div>
+        </div>
+    </div>
+    <script src="https://unpkg.com/@supabase/supabase-js"></script>
+    <script src="assets/js/utils/server.js"></script>
+    <script src="assets/js/utils/utils.js"></script>
+    <script src="assets/js/utils/companyService.js" defer></script>
+    <script src="InvoiceReport.js"></script>
+</body>
+
+</html>

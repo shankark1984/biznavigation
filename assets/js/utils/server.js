@@ -178,5 +178,8 @@ const deleteButton = document.getElementById('deleteButton');
 const reportButton = document.getElementById('reportButton');
 const saveButton = document.getElementById('saveButton');
 let lockedBookingIds = [];
+let alertMessage = '';
+let debounceTimer;
+let partyCode = null;
 
 

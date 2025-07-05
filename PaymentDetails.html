@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BizNavigation - Payment Details</title>
+
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+
+    <!-- Bootstrap-Select CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.14.0-beta3/css/bootstrap-select.min.css"
+        rel="stylesheet">
+
+    <!-- Custom CSS -->
+    <style>
+        #freightTable th:nth-child(13),
+        #freightTable td:nth-child(13) {
+            display: none;
+        }
+
+        .form-control-sm {
+            min-height: calc(1.5em + 0.5rem + 2px);
+        }
+
+        .card-header {
+            padding: 0.75rem 1.25rem;
+        }
+
+        .nav-tabs .nav-link {
+            padding: 0.5rem 1rem;
+        }
+
+        .bg-light-input {
+            background-color: #e6f7ff;
+        }
+
+        .fs-7 {
+            font-size: 0.75rem !important;
+        }
+
+        .input-date-small {
+            width: 140px !important;
+        }
+    </style>
+</head>
+
+<body class="bg-light">
+    <div class="container mt-4 pt-5" id="root">
+        <div class="card shadow-lg rounded">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h3 class="mb-0">International Booking</h3>
+                <input type="hidden" id="tempFormID">
+                <input type="hidden" id="bankID">
+                <input type="text" id="partyCode">
+            </div>
+
+            <div class="card-body">
+                <form>
+
+                    <!-- Action Buttons -->
+                    <div class="d-flex flex-wrap gap-2 mb-3">
+                        <button type="button" class="btn btn-primary btn-sm" id="newButton" title="Create new booking">
+                            <i class="bi bi-file-earmark-plus"></i> New
+                        </button>
+                        <button type="button" class="btn btn-warning btn-sm" id="modifyButton" title="Modify booking"
+                            disabled>
+                            <i class="bi bi-pencil"></i> Modify
+                        </button>
+                        <button type="button" class="btn btn-danger btn-sm" id="deleteButton" title="Delete booking"
+                            disabled>
+                            <i class="bi bi-trash"></i> Delete
+                        </button>
+                        <button type="button" class="btn btn-info btn-sm" id="reportButton" title="Generate report"
+                            disabled>
+                            <i class="bi bi-file-earmark-text"></i> Report
+                        </button>
+                        <button type="button" class="btn btn-success btn-sm" id="saveButton" title="Save booking">
+                            <i class="bi bi-save"></i> Save
+                        </button>
+                        <input type="text" class="form-control bg-light d-none" id="status" value="New" readonly>
+                    </div>
+
+                    <!-- Payment Main Details -->
+                    <div class="border p-3 rounded mb-4">
+                        <h5 class="mb-3 fw-bold text-primary fs-6">Payment Main Details</h5>
+                        <div class="row g-2">
+
+                            <div class="col-md-2 col-sm-6">
+                                <label class="form-label">Payment ID</label>
+                                <input list="paymentIDSuggestions" class="form-control bg-light-input" id="paymentID"
+                                    required autocomplete="off">
+                                <datalist id="paymentIDSuggestions"></datalist>
+                            </div>
+
+                            <div class="col-md-2 col-sm-6">
+                                <label class="form-label">Receipt On</label>
+                                <input type="date" class="form-control" id="receiptOn" required>
+                            </div>
+
+                            <div class="col-md-4 col-sm-6">
+                                <label class="form-label">Customer Name</label>
+                                <input list="partySuggestions" class="form-control" id="partyName" required
+                                    placeholder="Choose..." autocomplete="off">
+                                <datalist id="partySuggestions"></datalist>
+                            </div>
+
+                            <div class="col-md-2 col-sm-6">
+                                <label class="form-label">Transaction Type</label>
+                                <select class="form-control" id="transactionType" required>
+                                    <option value="">Choose...</option>
+                                    <option value="Credit">Credit</option>
+                                    <option value="Debit">Debit</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-2 col-sm-6">
+                                <label class="form-label">Payment Mode</label>
+                                <select class="form-control" id="paymentMode" required>
+                                    <option value="">Choose...</option>
+                                    <option value="Cash">Cash</option>
+                                    <option value="Cheque">Cheque</option>
+                                    <option value="Card">Card</option>
+                                    <option value="IMPS">IMPS</option>
+                                    <option value="NEFT">NEFT</option>
+                                    <option value="RTGS">RTGS</option>
+                                    <option value="UPI">UPI</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-2 col-sm-6">
+                                <label class="form-label">Bank Name</label>
+                                <input list="bankNameSuggestions" class="form-control" id="inputBankName" required
+                                    autocomplete="off">
+                                <datalist id="bankNameSuggestions"></datalist>
+                            </div>
+
+                            <div class="col-md-2 col-sm-6">
+                                <label class="form-label">Reference No</label>
+                                <input type="text" class="form-control" id="referenceNo" required>
+                            </div>
+
+                            <div class="col-md-3 col-sm-12">
+                                <label class="form-label">Narration</label>
+                                <input type="text" class="form-control" id="infomation" placeholder="Enter Narration">
+                            </div>
+
+                            <div class="col-md-2 col-sm-6">
+                                <label class="form-label">Amount</label>
+                                <input type="number" class="form-control text-end" id="paymentAmount" value="0.00"
+                                    step="0.01" min="0" required>
+                            </div>
+
+                            <div class="col-md-2 col-sm-6">
+                                <label class="form-label">Deduction Amount</label>
+                                <input type="number" class="form-control text-end" id="deductionAmount" value="0.00"
+                                    step="0.01" min="0">
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <!-- Payment Allocation Table -->
+                    <div class="table-responsive">
+                        <h5 class="mb-1 fw-bold text-success fs-6">Payment Allocation Details</h5>
+                        <table class="table table-hover align-middle text-center fs-6" id="paymentAllocationTable">
+                            <thead class="table-dark fs-7">
+                                <tr>
+                                    <th>Invoice No</th>
+                                    <th>Invoice Date</th>
+                                    <th>Invoice Amount</th>
+                                    <th>Balance Amount</th>
+                                    <th>Allocated Amount</th>
+                                    <th>Other Deduction</th>
+                                    <th>TDS Deduction</th>
+                                    <th>Narration</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="paymentAllocationBody" class="fs-7">
+                                <!-- Dynamic rows will be added here -->
+                            </tbody>
+                            <tfoot class="table-light fw-bold fs-6">
+                                <tr>
+                                    <td colspan="4" class="text-end">Total:</td>
+                                    <td id="totalAllocatedAmount" class="text-end">0.00</td>
+                                    <td id="totalOtherDeductionAmount" class="text-end">0.00</td>
+                                    <td id="totalTDSDeductionAmount" class="text-end">0.00</td>
+                                    <td colspan="2"></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+
+                        <div class="d-flex justify-content-between align-items-center mt-2">
+                            <button id="addRowButton" class="btn btn-primary" type="button">Add More Row</button>
+                            <div id="taskBar" class="alert alert-danger d-none fade" role="alert"></div>
+                            <span id="rowCounter">Total Rows: 0</span>
+                        </div>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Suspense Popup -->
+    <div class="modal fade" id="suspensePopup" tabindex="-1" aria-labelledby="suspensePopupLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="suspensePopupLabel">Suspense Payments</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+
+                    <!-- Loading Indicator -->
+                    <div id="popupLoading" class="text-center my-3" style="display: none;">
+                        <div class="spinner-border text-primary" role="status"></div>
+                        <p>Loading Suspense Payments...</p>
+                    </div>
+
+                    <!-- Search Box -->
+                    <div class="mb-3">
+                        <input type="text" id="suspenseSearch" class="form-control"
+                            placeholder="Search by Payment ID or Transaction Type">
+                    </div>
+
+                    <!-- Suspense Payment Table -->
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Payment ID</th>
+                                    <th>Receipt On</th>
+                                    <th>Suspense Amount</th>
+                                    <th>Transaction Type</th>
+                                    <th>Payment Mode</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="suspenseTableBody">
+                                <!-- Data will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination Controls -->
+                    <div class="d-flex justify-content-between align-items-center">
+                        <button id="prevPage" class="btn btn-secondary btn-sm">Previous</button>
+                        <span id="paginationInfo"></span>
+                        <button id="nextPage" class="btn btn-secondary btn-sm">Next</button>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JS Libraries -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.14.0-beta3/js/bootstrap-select.min.js"
+        defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/2.3.10/purify.min.js" defer></script>
+    <script src="https://unpkg.com/@supabase/supabase-js" defer></script>
+
+    <!-- Project Scripts -->
+    <script src="assets/js/utils/server.js" defer></script>
+    <script src="assets/js/utils/navbar.js" defer></script>
+    <script src="assets/js/utils/footer.js" defer></script>
+    <script src="assets/js/utils/logout.js" defer></script>
+    <script src="assets/js/utils/utils.js" defer></script>
+    <script src="assets/js/Payment/PaymentDetails.js" defer></script>
+
+</body>
+
+</html>

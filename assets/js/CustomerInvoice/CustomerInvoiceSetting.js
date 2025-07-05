@@ -378,6 +378,19 @@ function removeRow(button) {
     const row = button.closest('tr');
     if (!row) return;
 
+    // Get the shipment ID
+    const shipId = row.getAttribute('data-ship-id');
+    if (shipId) {
+        // Optional: Remove from lockedBookingIds if you maintain this array
+        const index = lockedBookingIds.indexOf(parseInt(shipId));
+        if (index !== -1) {
+            lockedBookingIds.splice(index, 1);
+        }
+
+        // Optional: Unlock the record in the database
+        unlockShipmentRecord(shipId);
+    }
+
     // Get the amounts from the row
     const freightAmt = parseFloat(row.cells[10].textContent) || 0;
     const fscAmt = parseFloat(row.cells[11].textContent) || 0;
@@ -401,6 +414,7 @@ function removeRow(button) {
     // Remove row from table
     row.remove();
 }
+
 function showSpinner() {
     document.getElementById('loadingSpinner').classList.remove('d-none');
 }
@@ -444,6 +458,9 @@ document.getElementById('newButton').addEventListener('click', () => {
     document.getElementById('modifyButton').disabled = true;
     document.getElementById('deleteButton').disabled = true;
     document.getElementById('reportButton').disabled = true;
+    document.getElementById('fetchPendingInvoices').disabled = false; // Disable party code field
+    saveButton.disabled = false; // Enable save button
+    saveButton.innerHTML = '<i class="bi bi-save"></i> Save';
 
     // Optional: Reset focus
     document.getElementById('partyName').focus();
@@ -457,6 +474,11 @@ document.getElementById('modifyButton').addEventListener('click', () => {
     document.getElementById('modifyButton').disabled = true; // Disable modify button
     document.getElementById('deleteButton').disabled = true; // Enable delete button
     document.getElementById('reportButton').disabled = true; // Enable report button
+    enableForm(); // Enable form for modification
+    document.getElementById('invoiceNo').disabled = true; // Disable invoice number field
+    document.getElementById('movementType').disabled = true; // Disable invoice date field
+    document.getElementById('partyName').disabled = true; // Disable party code field
+    document.getElementById('fetchPendingInvoices').disabled = true; // Disable party code field
     document.querySelectorAll('.delete-btn').forEach(button => {
         button.disabled = false;
     });
@@ -501,11 +523,8 @@ let invoiceData = {
     CashReceiptName: 0,
     CashReceiptGSTNo: 0,
     PONoDt: null,
-    Remarks: 0,
+    Remarks: null,
     BankID: bankID,
-    created_by: null,
-    created_at: localtimeStamp,
-    company_id: null,
 };
 
 document.getElementById('saveButton').addEventListener('click', async () => {
@@ -519,15 +538,30 @@ document.getElementById('saveButton').addEventListener('click', async () => {
 
     console.log('Selected Bank ID:', bankID);
 
-    // ✅ Move this UP
-    const invoiceNumber = await generateInvoiceNumber(invoiceDate);
-    if (invoiceNumber) {
-        document.getElementById('invoiceNo').value = invoiceNumber;
+    // ✅ Determine button mode
+    const isInsertMode = saveButton.innerHTML.trim() === '<i class="bi bi-save"></i> Save';
+    const invoiceNumber = document.getElementById('invoiceNo').value.trim();
+
+    if (isInsertMode) {
+        // Insert mode: Generate invoice number
+        const generatedInvoiceNumber = await generateInvoiceNumber(invoiceDate);
+        if (generatedInvoiceNumber) {
+            document.getElementById('invoiceNo').value = generatedInvoiceNumber;
+            invoiceData.InvoiceNo = generatedInvoiceNumber;
+        } else {
+            alert('Failed to generate Invoice Number.');
+            return;
+        }
     } else {
-        alert('Failed to generate Invoice Number.');
-        return;
+        // Update mode: Use the existing invoice number
+        if (!invoiceNumber) {
+            alert('Invoice Number is required for update.');
+            return;
+        }
+        invoiceData.InvoiceNo = invoiceNumber;
     }
-    // ✅ Validation AFTER invoice number is generated
+
+    // ✅ Validation AFTER invoice number is handled
     if (!partyCode || !invoiceDate || !invoiceNumber || !invoiceAddress) {
         alert('Please fill all required fields.');
         return;
@@ -537,40 +571,62 @@ document.getElementById('saveButton').addEventListener('click', async () => {
     saveSpinner.classList.remove('d-none');
     saveButton.disabled = true;
 
-    // Prepare invoiceData for saving
-    invoiceData.InvoiceNo = invoiceNumber;
+    // Prepare invoiceData
     invoiceData.InvoiceDate = invoiceDate;
     invoiceData.InvoiceType = invoiceType;
     invoiceData.PartyCode = partyCode;
     invoiceData.InvoiceAddress = invoiceAddress;
     invoiceData.BankID = bankID;
-    invoiceData.created_by = UserLoginID; // Assuming UserLoginID is available globally
-    invoiceData.company_id = CompanyID; // Assuming CompanyID is available globally
+    invoiceData.company_id = CompanyID;
+
+    if (isInsertMode) {
+        invoiceData.created_by = UserLoginID;
+        invoiceData.created_at = localtimeStamp;
+    } else {
+        invoiceData.updated_by = UserLoginID;
+        invoiceData.updated_at = localtimeStamp;
+    }
 
     try {
-        const { data, error } = await supabaseClient
-            .from('InvoiceDetails')
-            .insert([invoiceData]);
+        if (isInsertMode) {
+            // ✅ INSERT
+            const { data, error } = await supabaseClient
+                .from('InvoiceDetails')
+                .insert([invoiceData]);
 
-        if (error) throw error;
+            if (error) throw error;
 
-        updateInvoiceNumbers(invoiceNumber); // Update invoice number in international_booking  
+            alert('Invoice saved successfully!');
+        } else {
+            // ✅ UPDATE
+            const { data, error } = await supabaseClient
+                .from('InvoiceDetails')
+                .update(invoiceData)
+                .eq('InvoiceNo', invoiceData.InvoiceNo)
+                .eq('company_id', CompanyID);
 
-        disableForm(); // Disable form after saving
-        resetInvoiceData();
-        await autoUnlockRecords(); // Unlock when saved
-        alert('Invoice saved successfully!');
-        // console.log('Saved Invoice Data:', data);
+            if (error) throw error;
+
+            disableForm();
+            alert('Invoice updated successfully!');
+        }
 
     } catch (err) {
-        console.error('Error saving invoice:', err?.message || JSON.stringify(err));
-        alert('Failed to save invoice: ' + (err?.message || JSON.stringify(err)));
+        console.error('Error processing invoice:', err?.message || JSON.stringify(err));
+        alert('Failed to process invoice: ' + (err?.message || JSON.stringify(err)));
     } finally {
+        disableForm(); // Disable form after saving
+        await updateInvoiceNumbers(invoiceData.InvoiceNo); // Update linked bookings
+        resetInvoiceData();
+        await autoUnlockRecords(); // Unlock records
         saveSpinner.classList.add('d-none');
-        saveButton.disabled = false;
+        saveButton.disabled = true;
+        modifyButton.disabled = false; // Disable modify button
+        document.querySelectorAll('.delete-btn').forEach(button => {
+            button.disabled = true;
+        });
     }
 });
-
 
 // Optional: Reset invoiceData after form reset
 function resetInvoiceData() {
@@ -590,9 +646,13 @@ function resetInvoiceData() {
         CashReceiptName: 0,
         CashReceiptGSTNo: 0,
         PONoDt: null,
-        Remarks: 0,
+        Remarks: null,
         BankID: null,
         company_id: CompanyID,
+        created_at: null,
+        created_by: null,
+        updated_at: null,
+        updated_by: null
     };
 }
 
@@ -613,13 +673,30 @@ async function updateInvoiceNumbers(invNo) {
         const shipId = row.getAttribute('data-ship-id'); // Assuming you store the shipment ID here
         if (shipId) shipmentIds.push(parseInt(shipId));
     });
-
+    console.log('Shipment IDs to update:', shipmentIds);
     if (shipmentIds.length === 0) {
         console.warn('No shipment IDs found for invoice update.');
         return;
     }
 
-    const { error } = await supabaseClient
+    // Step 1: Clear existing assignments
+    const { error: clearError } = await supabaseClient
+        .from('international_booking')
+        .update({
+            InvoiceStatus: false,
+            InvoiceNumber: null
+        })
+        .eq('InvoiceNumber', invNo); // Corrected: Use eq for a single invoice number
+
+    console.log('Clearing previous invoice assignments for:', invNo);
+    if (clearError) {
+        console.error('Error clearing previous invoice assignments:', clearError.message);
+        throw clearError;
+    }
+    console.log('Previous invoice assignments cleared for:', invNo);
+
+    // Step 2: Update new assignments
+    const { error: updateError } = await supabaseClient
         .from('international_booking')
         .update({
             InvoiceStatus: true,
@@ -627,9 +704,9 @@ async function updateInvoiceNumbers(invNo) {
         })
         .in('id', shipmentIds);
 
-    if (error) {
-        console.error('Error updating invoice numbers:', error.message);
-        throw error;
+    if (updateError) {
+        console.error('Error updating invoice numbers:', updateError.message);
+        throw updateError;
     }
 
     console.log('Invoice numbers updated for shipments:', shipmentIds);
@@ -691,6 +768,7 @@ document.getElementById('invoiceNo').addEventListener('change', async (e) => {
         document.getElementById('modifyButton').disabled = false; // Enable modify button
         document.getElementById('deleteButton').disabled = false; // Enable delete button
         document.getElementById('reportButton').disabled = false; // Enable report button
+        document.getElementById('fetchPendingInvoices').disabled = true; // Disable party code field
 
         await loadInvoiceBookings(invoiceNo);
 
@@ -811,4 +889,100 @@ async function loadInvoiceBookings(invoiceNo) {
     }
 }
 
+document.getElementById('addShipmentNo').addEventListener('click', async () => {
+    const shipmentNo = document.getElementById('shipmentNo').value.trim();
+    const invoiceNo = document.getElementById('invoiceNo').value.trim();
+    const saveSpinner = document.getElementById('saveSpinner');
 
+    if (!shipmentNo) {
+        alert('Please enter/select a Shipment Number.');
+        return;
+    }
+
+    if (!invoiceNo) {
+        alert('Invoice Number is required.');
+        return;
+    }
+
+    // Show spinner and disable button
+    saveSpinner.classList.remove('d-none');
+
+    await addSingleShipmentToInvoice(shipmentNo, invoiceNo);
+});
+
+async function addSingleShipmentToInvoice(shipmentNo, invoiceNo) {
+    showSpinner();
+
+    try {
+        // Fetch shipment details
+        const { data, error } = await supabaseClient
+            .from('international_booking')
+            .select('*')
+            .eq('company_id', CompanyID)
+            .eq('DocketNo', shipmentNo)
+            .is('InvoiceNumber', null)
+            .eq('IsLocked', false)
+            .single();
+
+        if (error || !data) {
+            alert('Shipment not found or already locked.');
+            return;
+        }
+
+        const charges = await getBookingCharges(data.id);
+        if (!charges || charges.grandTotal <= 0) {
+            alert('No valid charges for this shipment.');
+            return;
+        }
+
+        // Lock the shipment and assign invoice number
+        const { error: updateError } = await supabaseClient
+            .from('international_booking')
+            .update({
+                InvoiceStatus: true,
+                InvoiceNumber: invoiceNo,
+                IsLocked: true,
+                LockedBy: UserLoginID,
+                LockedAt: localtimeStamp
+            })
+            .eq('id', data.id);
+
+        if (updateError) throw updateError;
+
+        // Add to table
+        const tableBody = document.getElementById('pendingShipmentTable').querySelector('tbody');
+        const row = document.createElement('tr');
+        row.setAttribute('data-ship-id', data.id);
+        row.innerHTML = `
+            <td>${data.DocketNo || ''}</td>
+            <td>${data.BookedDate || ''}</td>
+            <td>${data.MovementType || ''}</td>
+            <td>${data.TransitType || ''}</td>
+            <td>${data.ModeType || ''}</td>
+            <td>${data.Origin || ''}</td>
+            <td>${data.Destination || ''}</td>
+            <td>${data.NoofUnit || ''} ${data.UOMType || ''}</td>
+            <td>${data.AcutalWeight || ''}</td>
+            <td>${data.ChargableWeight || ''}</td>
+            <td>${charges.BasicFrightAmt.toFixed(2)}</td>
+            <td>${charges.FSCAmt.toFixed(2)}</td>
+            <td>${charges.OtherAmt.toFixed(2)}</td>
+            <td>${charges.totalSGST.toFixed(2)}</td>
+            <td>${charges.totalCGST.toFixed(2)}</td>
+            <td>${charges.totalIGST.toFixed(2)}</td>
+            <td>${charges.totalGST.toFixed(2)}</td>
+            <td>${charges.grandTotal.toFixed(2)}</td>
+            <td><button class="btn btn-danger btn-sm delete-btn" onclick="removeRow(this)"><i class="bi bi-trash"></i></button></td>
+        `;
+        tableBody.appendChild(row);
+
+        // Optionally update your totals here (if required)
+        alert('Shipment added successfully!');
+
+    } catch (err) {
+        console.error('Error adding shipment:', err.message);
+        alert('Error adding shipment: ' + err.message);
+    } finally {
+        hideSpinner();
+    }
+}
