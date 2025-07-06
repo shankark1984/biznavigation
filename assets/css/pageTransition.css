@@ -1,0 +1,60 @@
+/* Base state */
+body {
+    opacity: 0;
+    transform: scale(0.95);
+    transition: transform 0.5s ease, opacity 0.5s ease;
+    overflow-x: hidden;
+}
+
+/* Entry state */
+body.page-enter {
+    opacity: 1;
+    transform: scale(1);
+}
+
+/* Exit state */
+body.page-exit {
+    opacity: 0;
+    transform: scale(0.95);
+}
+
+/* Slide + Scale Animation */
+body.slide-scale {
+    transition: transform 0.5s ease, opacity 0.5s ease;
+}
+
+body.slide-scale.page-enter {
+    transform: translateX(0) scale(1);
+}
+
+body.slide-scale.page-exit {
+    transform: translateX(-100%) scale(0.95);
+}
+
+/* Fade Only Animation */
+body.fade-only {
+    transition: opacity 0.5s ease;
+}
+
+body.fade-only.page-enter {
+    opacity: 1;
+}
+
+body.fade-only.page-exit {
+    opacity: 0;
+}
+
+/* Slide Only Animation */
+body.slide-only {
+    transition: transform 0.5s ease, opacity 0.5s ease;
+}
+
+body.slide-only.page-enter {
+    transform: translateX(0);
+    opacity: 1;
+}
+
+body.slide-only.page-exit {
+    transform: translateX(-100%);
+    opacity: 0;
+}

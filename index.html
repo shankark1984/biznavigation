@@ -6,12 +6,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>BizNavigation - Login</title>
 
-    <!-- Preload critical resources -->
+    <!-- Preload Bootstrap -->
     <link rel="preload" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" as="style"
         onload="this.onload=null;this.rel='stylesheet'">
     <noscript>
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
     </noscript>
+
+    <!-- Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
 
     <!-- Defer non-critical scripts -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js" defer></script>
@@ -21,32 +24,51 @@
     <link rel="manifest" href="/manifest.json" />
 
     <style>
+        :root {
+            --background-color: linear-gradient(135deg, #74ebd5, #ACB6E5);
+            --card-background: #ffffff;
+            --text-color: #333333;
+            --subtext-color: #666666;
+            --input-background: #f9f9f9;
+            --input-border: #ddd;
+            --button-color: #6c63ff;
+            --button-hover: #574b90;
+            --link-color: #6c63ff;
+            --error-color: #dc3545;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
         body {
-            background: linear-gradient(135deg, #667eea, #764ba2);
+            margin: 0;
+            padding: 0;
+            font-family: 'Poppins', sans-serif;
+            background: var(--background-color);
             min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            overflow: hidden;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            position: relative;
+            transition: background 0.3s ease, color 0.3s ease;
         }
 
-        .login-card {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 1rem;
+        .login-container {
+            background: var(--card-background);
             padding: 2rem;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            color: #fff;
-            animation: fadeInUp 0.8s ease-in-out;
+            border-radius: 1rem;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 400px;
+            animation: fadeIn 0.8s ease;
+            color: var(--text-color);
+            transition: background 0.3s ease, color 0.3s ease;
         }
 
-        @keyframes fadeInUp {
+        @keyframes fadeIn {
             from {
                 opacity: 0;
-                transform: translateY(40px);
+                transform: translateY(30px);
             }
 
             to {
@@ -55,156 +77,117 @@
             }
         }
 
-        .form-control {
-            border-radius: 10px;
-            border: none;
-            padding: 0.75rem;
-            background-color: rgba(255, 255, 255, 0.3);
-            color: #fff;
+        .login-header {
+            text-align: center;
+            margin-bottom: 1.5rem;
         }
 
-        .form-control::placeholder {
-            color: rgba(255, 255, 255, 0.7);
+        .login-header img {
+            max-width: 100px;
+            filter: drop-shadow(0 0 8px rgba(0, 0, 0, 0.2));
         }
 
-        .form-label {
-            color: #f0f0f0;
-            font-weight: 500;
-        }
-
-        .btn-primary {
-            background-color: #6c63ff;
-            border: none;
-            border-radius: 10px;
-            padding: 0.75rem;
-            transition: all 0.3s ease;
+        .login-header h1 {
             font-weight: 600;
+            margin-top: 1rem;
+            color: var(--text-color);
         }
 
-        .btn-primary:hover {
-            background-color: #574b90;
-            box-shadow: 0 0 15px rgba(108, 99, 255, 0.6);
+        .login-header p {
+            color: var(--subtext-color);
+            font-size: 0.9rem;
         }
 
-        .text-muted,
-        .text-secondary {
-            color: rgba(255, 255, 255, 0.8) !important;
-        }
-
-        .text-danger {
-            font-weight: 500;
-        }
-
-        a.text-decoration-none {
-            color: #fce38a;
-            font-weight: 500;
-        }
-
-        a.text-decoration-none:hover {
-            text-decoration: underline;
-        }
-
-        img {
-            filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.5));
-        }
-
-        /* Background animation circles */
-        .background-blur {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            z-index: -1;
-        }
-
-        .background-blur div {
-            position: absolute;
-            border-radius: 50%;
-            filter: blur(100px);
-        }
-
-        .blur-1 {
-            width: 300px;
-            height: 300px;
-            background: #ff9a9e;
-            top: -100px;
-            left: -100px;
-        }
-
-        .blur-2 {
-            width: 200px;
-            height: 200px;
-            background: #fad0c4;
-            bottom: -100px;
-            right: -50px;
-        }
-
-        .blur-3 {
-            width: 250px;
-            height: 250px;
-            background: #a1c4fd;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
+        .form-control {
+            border-radius: 8px;
+            padding: 0.75rem;
+            border: 1px solid var(--input-border);
+            background-color: var(--input-background);
+            color: var(--text-color);
+            transition: background 0.3s ease, color 0.3s ease;
         }
 
         .form-control:focus {
-            box-shadow: 0 0 0 0.25rem rgba(108, 99, 255, 0.25);
-            background-color: rgba(255, 255, 255, 0.4);
+            box-shadow: 0 0 0 0.25rem rgba(108, 99, 255, 0.3);
+            border-color: var(--button-color);
+            background-color: #fff;
         }
 
-        /* Add reduced motion preference */
-        @media (prefers-reduced-motion: reduce) {
-            .login-card {
-                animation: none;
-            }
+        .btn-primary {
+            background-color: var(--button-color);
+            border: none;
+            border-radius: 8px;
+            padding: 0.75rem;
+            font-weight: 600;
+            width: 100%;
+            transition: background-color 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--button-hover);
+        }
+
+        .form-links {
+            margin-top: 1rem;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+
+        .form-links a {
+            color: var(--link-color);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .form-links a:hover {
+            text-decoration: underline;
+        }
+
+        .error-message {
+            color: var(--error-color);
+            text-align: center;
+            margin-top: 1rem;
+            font-weight: 500;
         }
     </style>
 </head>
 
 <body>
 
-    <div class="background-blur">
-        <div class="blur-1"></div>
-        <div class="blur-2"></div>
-        <div class="blur-3"></div>
-    </div>
-
-    <div class="card login-card w-100" style="max-width: 400px;">
-        <div class="text-center mb-4">
-            <img src="assets/img/applogo.png" alt="BizNavigation Logo" class="img-fluid" style="max-width: 100px;" />
-            <h1 class="fw-bold mt-3 text-secondary">BizNavigation</h1>
-            <p class="text-muted">Take your business to the next level</p>
+    <main class="login-container" role="main">
+        <div class="login-header">
+            <img src="assets/img/applogo.png" alt="BizNavigation Logo" />
+            <h1>BizNavigation</h1>
+            <p>Take your business to the next level</p>
         </div>
 
-        <form id="loginForm">
+        <form id="loginForm" onsubmit="event.preventDefault(); login();">
             <div class="mb-3">
-                <label for="userName" class="form-label">Username</label>
-                <input type="text" class="form-control" id="userName" placeholder="Enter your username"
-                    autocomplete="off" required />
+                <input type="text" class="form-control" id="userName" placeholder="Username" autocomplete="off"
+                    required />
             </div>
 
             <div class="mb-3">
-                <label for="password" class="form-label">Password</label>
-                <input type="password" class="form-control" id="password" placeholder="Enter your password"
-                    autocomplete="off" required />
+                <input type="password" class="form-control" id="password" placeholder="Password" autocomplete="off"
+                    required />
             </div>
 
-            <button id="loginButton" type="submit" class="btn btn-primary w-100" onclick="login()">
+            <button id="loginButton" type="submit"
+                class="btn btn-primary d-flex justify-content-center align-items-center">
                 <span id="loginButtonText">Login</span>
                 <div id="loginSpinner" class="spinner-border spinner-border-sm ms-2 d-none" role="status"></div>
             </button>
-            <div class="text-center mt-3">
-                <a href="ResetPassword.html" id="forgotPasswordLink" class="text-decoration-none me-3">Forgot
-                    Password?</a>
-                <a href="UserActivation.html" id="userActivationLink1" class="text-decoration-none">User Activation?</a>
+
+            <div class="form-links mt-3">
+                <a href="ResetPassword.html" id="forgotPasswordLink" class="me-3">Forgot Password?</a>
+                <a href="UserActivation.html" id="userActivationLink1">User Activation?</a>
             </div>
         </form>
 
-        <p id="errorMessage" class="text-danger text-center mt-3 d-none">
+        <p id="errorMessage" class="error-message d-none">
             Invalid username or password. Please try again.
         </p>
-    </div>
+    </main>
 
     <!-- Bootstrap Bundle JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>

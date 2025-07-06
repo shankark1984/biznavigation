@@ -573,7 +573,7 @@ function resetAutoUnlockTimer() {
 
 async function getPartyDetailsByCode(partyCode) {
     try {
-        console.log('Fetching party details for code:', partyCode);
+        // console.log('Fetching party details for code:', partyCode);
         const { data, error } = await supabaseClient
             .from('PartyDetails')
             .select('*')

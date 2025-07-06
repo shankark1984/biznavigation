@@ -1,23 +1,31 @@
 document.addEventListener("DOMContentLoaded", () => {
-  // Redirect to login if not logged in and clear history
+  // Redirect to login if not logged in
   const userLoginID = localStorage.getItem('UserLoginID');
   if (!userLoginID) {
-    location.replace('index.html'); // Clears history and redirects
+    location.replace('index.html');
     return;
   }
 
   const menuSection = (title, items) => `
-  <li class="nav-item dropdown">
-    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">${title}</a>
-    <ul class="dropdown-menu">
-      ${items.map(item =>
+    <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">${title}</a>
+        <ul class="dropdown-menu">
+            ${items.map(item =>
     item === 'divider'
       ? '<li><hr class="dropdown-divider" /></li>'
-      : `<li><a class="dropdown-item menu-item" href="${item.href}" data-form-id="${item.href.replace('.html', '').replace(/[^a-zA-Z0-9]/g, '')}">${item.label}</a></li>`
+      : `<li><a class="dropdown-item menu-item" href="${item.href}" data-form-id="${generateFormID(item)}">${item.label}</a></li>`
   ).join('')}
-    </ul>
-  </li>`;
+        </ul>
+    </li>`;
 
+  const generateFormID = (item) => {
+    if (item.href.includes('PaymentDetails.html')) {
+      const url = new URL(item.href, window.location.origin);
+      const type = url.searchParams.get('type') || '';
+      return `PaymentDetails${type}`; // Example: PaymentDetailsCredit
+    }
+    return item.href.replace('.html', '').replace(/[^a-zA-Z0-9]/g, '');
+  };
 
   const header = `
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
@@ -29,7 +37,6 @@ document.addEventListener("DOMContentLoaded", () => {
                     <span class="d-block text-center" style="font-size: 0.6rem;">TAKE YOUR BUSINESS TO THE NEXT LEVEL</span>
                 </div>
             </a>
-
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
                 aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
@@ -61,8 +68,8 @@ document.addEventListener("DOMContentLoaded", () => {
     { label: "Customer Invoicing", href: "CustomerInvoice.html" },
     { label: "Vendor Billing", href: "#" },
     'divider',
-    { label: "Payment Credit", href: "PaymentDetails.html" },
-    { label: "Payment Debit", href: "#" },
+    { label: "Payment Credit", href: "PaymentDetails.html?type=Credit" },
+    { label: "Payment Debit", href: "PaymentDetails.html?type=Debit" },
     'divider',
     { label: "Tax Details", href: "#" }
   ])}
@@ -115,9 +122,10 @@ document.addEventListener("DOMContentLoaded", () => {
   if (logoutBtn) {
     logoutBtn.addEventListener('click', () => {
       localStorage.clear();
-      location.replace('index.html'); // Also clears history on logout
+      location.replace('index.html');
     });
   }
+
   // Permission check on menu clicks
   document.querySelectorAll('.menu-item').forEach(item => {
     item.addEventListener('click', async e => {
@@ -129,7 +137,7 @@ document.addEventListener("DOMContentLoaded", () => {
         alert('Missing form data.');
         return;
       }
-      // console.log('ok' + userLoginID + "" + formID);
+
       const accessGranted = await checkAccess(userLoginID, formID);
       if (accessGranted) {
         window.location.href = href;
@@ -138,18 +146,14 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
-
-
 async function checkAccess(userLoginID, formID) {
   try {
-    // console.log(`Permission Details: ${userLoginID}, ${formID}`);
-
     const { data, error } = await supabaseClient
       .from('UserAccessRules')
       .select('CanRead, CanWrite, CanDelete, CanUpdate')
       .eq('UserLoginID', userLoginID)
       .eq('FormID', formID)
-      .maybeSingle();  // Allows zero rows without error
+      .maybeSingle();
 
     if (error) {
       console.error('Database error:', error);
@@ -168,11 +172,10 @@ async function checkAccess(userLoginID, formID) {
     perDelete = data.CanDelete ?? false;
     perUpdate = data.CanUpdate ?? false;
 
-    return !!perRead; // true if Read permission is granted
+    return !!perRead;
   } catch (err) {
     console.error('Unexpected error:', err);
     alert('An unexpected error occurred while checking permissions.');
     return false;
   }
 }
-

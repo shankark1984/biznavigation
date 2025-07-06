@@ -141,17 +141,17 @@ window.addEventListener('storage', (e) => {
 
 // ✅ Initialize on DOMContentLoaded
 document.addEventListener('DOMContentLoaded', () => {
+
     NetworkService.init();
 
     // Load global session variables
     SessionService.loadGlobals();
-
+ 
     SupabaseService.testConnection().then(isConnected => {
         if (!isConnected && !NetworkService.isOnline) {
             console.error("No network connection and Supabase unavailable");
         }
     });
-
     // console.log('Session Data:', SessionService.getSession());
 });
 function handleUserTypePermissions() {

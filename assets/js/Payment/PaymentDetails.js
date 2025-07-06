@@ -30,12 +30,21 @@ document.addEventListener('DOMContentLoaded', initializeForm);
 // Main Functions
 async function initializeForm() {
     try {
-        if (!await checkAccess(UserLoginID, 'PaymentDetails')) {
+        if (!await checkAccess(UserLoginID, 'PaymentDetailsCredit')) {
             disableForm();
             alert("You do not have permission to view this form.");
             return;
         }
 
+        const urlParams = new URLSearchParams(window.location.search);
+        const transactionType = urlParams.get('type');
+
+        if (transactionType && (transactionType === 'Credit' || transactionType === 'Debit')) {
+            pageTitle.textContent = `Payment Details - ${transactionType}`;
+            const transactionTypeSelect = document.getElementById('transactionType');
+            transactionTypeSelect.value = transactionType;
+            transactionTypeSelect.disabled = true; // Optional: lock selection if you want
+        }
         await Promise.all([
             loadSuggestions('partySuggestions', 'PartyDetails', CompanyID),
             loadBankNameSuggestions(),
@@ -79,6 +88,7 @@ function enableFormForModification() {
     paymentFormElements.addRowButton.disabled = false;
     saveButton.innerHTML = '<i class="bi bi-save"></i> Update';
     loadBankNameSuggestions();
+    document.querySelectorAll('.delete-btn').forEach(button => button.disabled = false);
 }
 
 function setupEventListeners() {
@@ -130,10 +140,6 @@ async function savePaymentDetails() {
     const paymentAmount = (
         parseFloat(formData.PaymentAmount || 0) + parseFloat(formData.DeductionAmount || 0)
     ).toFixed(2);
-
-    console.log('Allocated Amount:', allocatedAmount);
-    console.log('Payment Amount:', paymentAmount, 'Deduction Amount:', formData.DeductionAmount,
-        'Payment Amount:', formData.PaymentAmount);
 
     if (allocatedAmount > paymentAmount) {
         alert("Payment collected can't be more than Allocated Amount.");
@@ -514,7 +520,7 @@ async function handlePartyChange() {
     // Check suspense payments for the selected party
     const { data: suspensePayments, error } = await supabaseClient
         .from('PaymentDetails')
-        .select('PaymentID, ReceiptOn, SuspenseAmount, PartyCode, TransactionType, PaymentMode')
+        .select('PaymentID, ReceiptOn, SuspenseAmount, PartyCode, TransactionType, PaymentMode,ReferenceNo')
         .eq('PartyCode', partyCode)
         .gt('SuspenseAmount', 0);
 
@@ -542,6 +548,7 @@ function showSuspensePopup(payments) {
             <td>${payment.SuspenseAmount}</td>
             <td>${payment.TransactionType}</td>
             <td>${payment.PaymentMode}</td>
+            <td>${payment.ReferenceNo}</td>
             <td><button class="btn btn-sm btn-primary selectPayment" data-id="${payment.PaymentID}">Select</button></td>
         `;
         popupTableBody.appendChild(row);
