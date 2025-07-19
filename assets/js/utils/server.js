@@ -146,7 +146,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Load global session variables
     SessionService.loadGlobals();
- 
+
     SupabaseService.testConnection().then(isConnected => {
         if (!isConnected && !NetworkService.isOnline) {
             console.error("No network connection and Supabase unavailable");
@@ -181,5 +181,6 @@ let lockedBookingIds = [];
 let alertMessage = '';
 let debounceTimer;
 let partyCode = null;
-
+let currentPageNumber = 1;
+let totalPageCount = 1;
 

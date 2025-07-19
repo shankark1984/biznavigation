@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Invoice Report A4</title>
+
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="reportDesign.css" />
+
+    <!-- JS Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</head>
+
+<body>
+
+    <!-- Download Button -->
+    <div class="container text-center my-4">
+        <button class="btn btn-success" onclick="generatePDF()">Download PDF</button>
+    </div>
+
+    <!-- Invoice Container -->
+    <div class="a4-page mt-3">
+        <div class="container position-relative">
+
+            <div class="watermark">Original</div>
+
+            <!-- === Header === -->
+            <div class="row header-section">
+                <div class="col-2 d-flex align-items-center justify-content-center bb">
+                    <div id="logoContainer" class="companyLogo"></div>
+                </div>
+                <div class="col-10 bb">
+                    <div class="company-name"></div>
+                    <div class="company-details small-text"></div>
+                </div>
+                <div class="col-12 text-center bb-r">
+                    <strong>TAX INVOICE</strong>
+                </div>
+            </div>
+
+            <!-- === Customer Info === -->
+            <div class="row customerDetails bb br bl">
+                <div class="col-8 br">
+                    <div id="customerName"></div>
+                    <div id="customerAddress" class="small-text"></div>
+                </div>
+                <div class="col-2 small-text">
+                    <div><strong>Invoice No.:</strong></div>
+                    <div><strong>Invoice Date:</strong></div>
+                    <div><strong>SAC Code:</strong></div>
+                </div>
+                <div class="col-2 text-end small-text">
+                    <div><strong id="invoice-number"></strong></div>
+                    <div><strong id="invoiceDate"></strong></div>
+                    <div><strong id="sacCode"></strong></div>
+                </div>
+            </div>
+
+            <!-- === Meta Info === -->
+            <div class="row br bl small-text">
+                <div class="col-5 br">
+                    <strong>GST No.:</strong> <span id="gSTNumber"></span>
+                </div>
+                <div class="col-7">
+                    <strong>P.O. No.:</strong> <span id="poDetails"></span>
+                </div>
+            </div>
+
+            <!-- === Table === -->
+            <div class="row">
+                <table class="table table-bordered text-center align-middle text-nowrap">
+                    <thead>
+                        <tr>
+                            <th>Sr<br>No</th>
+                            <th>Date</th>
+                            <th>AWB No.</th>
+                            <th>Mode</th>
+                            <th>Origin</th>
+                            <th>Dest.</th>
+                            <th>Weight</th>
+                            <th>Freight<br>Amt</th>
+                            <th>FSC<br>Amt</th>
+                            <th>Other<br>Amt</th>
+                            <th>Total<br>Amt</th>
+                        </tr>
+                    </thead>
+                    <tbody id="itemRows"></tbody>
+                    <tfoot>
+                        <tr class="fw-bold text-end">
+                            <td colspan="6" class="text-end">Total</td>
+                            <td id="totalWeight">0.00</td>
+                            <td id="totalFreight">₹0.00</td>
+                            <td id="totalFSC">₹0.00</td>
+                            <td id="totalOther">₹0.00</td>
+                            <td id="totalAmount">₹0.00</td>
+                        </tr>
+
+                        <tr class="fw-bold table-light">
+                            <td colspan="9" class="text-start">Terms & Conditions :</td>
+                            <td>Non-Taxable</td>
+                            <td>Taxable</td>
+                        </tr>
+
+                        <tr>
+                            <td colspan="8" class="text-start align-top remove-border">
+                                <ul class="mb-0 ps-3">
+                                    <li>Please draw cheque in favour of <strong id="drawName"></strong>.</li>
+                                </ul>
+                            </td>
+                            <td class="text-end border-bottom border-end">Total Freight:</td>
+                            <td id="freightNonTaxable" class="text-end border-bottom border-end">₹0.00</td>
+                            <td id="freightTaxable" class="text-end border-bottom border-end">₹0.00</td>
+                        </tr>
+
+                        <tr>
+                            <td colspan="8" class="text-start">
+                                <ul class="mb-0 ps-3">
+                                    <li>Payments should be made within 7 days from the date of billing.</li>
+                                </ul>
+                            </td>
+                            <td class="text-end border-end">CGST @ 9%:</td>
+                            <td colspan="2" id="totalCGST" class="text-end border-end">₹0.00</td>
+                        </tr>
+
+                        <tr>
+                            <td colspan="8" class="text-start">
+                                <ul class="mb-0 ps-3">
+                                    <li>All complaints must be raised within 8 days. Bangalore jurisdiction applies for
+                                        disputes.</li>
+                                </ul>
+                            </td>
+                            <td class="text-end border-end">SGST @ 9%:</td>
+                            <td colspan="2" id="totalSGST" class="text-end border-end">₹0.00</td>
+                        </tr>
+
+                        <tr>
+                            <td colspan="8" class="text-start"><strong>Bank Details</strong></td>
+                            <td class="text-end">IGST @ 18%:</td>
+                            <td colspan="2" id="totalIGST" class="text-end">₹0.00</td>
+                        </tr>
+
+                        <tr>
+                            <td colspan="8" class="text-start">
+                                <strong>Account Holder Name:</strong> <span id="accountHolderName"></span> |
+                                <strong>Account No:</strong> <span id="accountNumber"></span>
+                            </td>
+                            <td class="text-end">GST Total:</td>
+                            <td colspan="2" id="totalGST" class="text-end">₹0.00</td>
+                        </tr>
+
+                        <tr>
+                            <td colspan="8" class="text-start">
+                                <strong>Bank:</strong> <span id="bankName"></span> |
+                                <strong>Branch:</strong> <span id="branchName"></span> |
+                                <strong>IFSC:</strong> <span id="ifscCode"></span>
+                            </td>
+                            <td class="text-end">Sub Total:</td>
+                            <td id="subNonTaxable" class="text-end">₹0.00</td>
+                            <td id="subTaxable" class="text-end">₹0.00</td>
+                        </tr>
+
+                        <tr class="fw-bold table-success text-end">
+                            <td colspan="9" class="text-end">Grand Total:</td>
+                            <td colspan="2" id="grandTotal" class="text-end">₹0.00</td>
+                        </tr>
+
+                        <tr>
+                            <td colspan="12" class="text-start small-text">
+                                <strong>Amount in Words:</strong> <span id="amountInWords"></span>
+                            </td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+
+            <!-- === Footer === -->
+            <div class="footer-note d-flex justify-content-between align-items-center small mt-2">
+                <div>Powered by <strong class="text-primary">AllEdge</strong></div>
+                <div class="fst-italic">This is a computer-generated invoice. No signature required.</div>
+                <div>Page <span id="currentPage">1</span> of <span id="totalPages">1</span></div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Custom Scripts -->
+    <script src="assets/js/utils/server.js"></script>
+    <script src="assets/js/utils/utils.js"></script>
+    <script src="assets/js/utils/companyService.js"></script>
+    <script src="reportDesign.js"></script>
+</body>
+
+</html>

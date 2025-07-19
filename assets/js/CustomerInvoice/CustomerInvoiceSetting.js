@@ -490,9 +490,13 @@ document.getElementById('deleteButton').addEventListener('click', () => {
     alert('Delete functionality not implemented yet.');
 });
 document.getElementById('reportButton').addEventListener('click', () => {
-    // Logic to generate report
-    alert('Report functionality not implemented yet.');
+    window.open(
+        'rep_Invoice_Forwarding_Main.html',
+        'InvoiceReportPopup',
+        'width=1000,height=800,resizable=yes,scrollbars=yes'
+    );
 });
+
 // Listen for input selection
 document.getElementById('inputBankName').addEventListener('input', function () {
     const selectedValue = this.value;
@@ -759,18 +763,23 @@ document.getElementById('invoiceNo').addEventListener('change', async (e) => {
         document.getElementById('invoiceInformation').value = invoiceDetails.Remarks || '';
 
         // ✅ Fetch and update Party Name
-        const partyName = await getPartyNameByCode(invoiceDetails.PartyCode);
-        document.getElementById('partyName').value = partyName;
+        const partyData = await getPartyDetailsByCode(invoiceDetails.PartyCode);
+        if (partyData) {
+            document.getElementById('partyName').value = partyData.PartyName || '';
+        } else {
+            alert('Party not found.');
+        }
 
         // Load international_booking records linked to this invoice
         disableForm(); // Disable form after loading invoice details
         saveButton.disabled = true; // Disable save button
         document.getElementById('modifyButton').disabled = false; // Enable modify button
-        document.getElementById('deleteButton').disabled = false; // Enable delete button
+        document.getElementById('deleteButton').disabled = true; // Enable delete button
         document.getElementById('reportButton').disabled = false; // Enable report button
         document.getElementById('fetchPendingInvoices').disabled = true; // Disable party code field
 
         await loadInvoiceBookings(invoiceNo);
+
 
     }
 });

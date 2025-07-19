@@ -75,7 +75,7 @@ document.addEventListener("DOMContentLoaded", () => {
   ])}
 
                     ${menuSection("Reports", [
-    { label: "International Report", href: "#" },
+    { label: "International Report", href: "reportInternationalShipmentDetails.html" },
     { label: "Domestic Report", href: "#" },
     { label: "Customs Clearance Report", href: "#" },
     { label: "FTL or FCL Report", href: "fulltruck_Report.html" },
@@ -154,6 +154,8 @@ async function checkAccess(userLoginID, formID) {
       .eq('UserLoginID', userLoginID)
       .eq('FormID', formID)
       .maybeSingle();
+
+    // console.log('Checking access for:', userLoginID, formID);
 
     if (error) {
       console.error('Database error:', error);

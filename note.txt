@@ -1,0 +1,28 @@
+</div>
+
+        <div class="header-section">
+            <!-- Header -->
+            <div class="d-flex align-items-center mb-3 companyInfo gap-3">
+                <!-- Logo -->
+                <!-- <div id="logoContainer" class="companyLogo"> -->
+                <!-- Logo will be inserted here -->
+                <!-- </div> -->
+
+                <!-- Company Info -->
+                <div class="company-box">
+                    <div class="company-name fw-bold fs-5">1</div>
+                    <div class="company-details text-muted text-size-4">2</div>
+                </div>
+            </div>
+
+
+            <!-- Company Info (2 rows) -->
+            <!-- <div class=" company-box d-flex flex-column"> -->
+            <!-- Row 1: Company Name -->
+            <!-- <div class="company-name-wrapper"> -->
+            <!-- <div class="company-name fw-bold" id="companyNameEl"></div> -->
+            <!-- </div> -->
+
+            <!-- Row 2: Company Details -->
+            <!-- <div class="company-details text-size-3"></div> -->
+            <!-- </div> -->

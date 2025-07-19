@@ -1,0 +1,30 @@
+body {
+    background-color: white;
+}
+
+#invoice {
+    width: 794px;
+    /* A4 width at 96 DPI */
+    min-height: 1123px;
+    /* A4 height at 96 DPI */
+    background-color: white;
+    margin: 20px;
+    padding: 20px;
+    border: 2px solid black;
+}
+
+.header-section {
+    border: 1px solid black;
+}
+
+.companyInfo {
+    height: 120px;
+    width: 764px;
+    border: 1px solid #2d08e6;
+    /* margin-left: 5px; */
+}
+
+.companyLogo {
+    align-items: center;
+    justify-content: center;
+}

@@ -424,6 +424,11 @@ let bankID = null; // Selected Bank ID
 // Load bank suggestions from Supabase
 async function loadBankNameSuggestions() {
     const datalist = document.getElementById('bankNameSuggestions');
+    if (!datalist) {
+        // console.warn('Datalist element not found.');
+        return;
+    }
+
     datalist.innerHTML = '';
     bankMap = {}; // Clear previous suggestions
 
@@ -453,6 +458,11 @@ async function loadBankNameSuggestions() {
     }
 }
 
+document.addEventListener('DOMContentLoaded', () => {
+    loadBankNameSuggestions();
+});
+
+
 
 // Load the default bank and set the input values
 async function loadDefaultBank() {
@@ -461,17 +471,16 @@ async function loadDefaultBank() {
             .from('CompanyBankDetails')
             .select('id, BankName, AccountNo')
             .eq('CompanyID', CompanyID)
-            .eq('DefaultBank', 'Yes')
-            .single();
+            .eq('DefaultBank', 'Yes');
 
         if (error) throw error;
 
-        if (!data) {
+        if (data.length === 0) {
             console.warn('No default bank found.');
             return null;
         }
 
-        const { id, BankName, AccountNo } = data;
+        const { id, BankName, AccountNo } = data[0]; // Pick first
         const lastFourDigits = AccountNo.slice(-4);
         const displayName = `${BankName} - ${lastFourDigits}`;
 
@@ -479,10 +488,19 @@ async function loadDefaultBank() {
         const bankIDInput = document.getElementById('bankIDs');
         const hiddenInput = getOrCreateHiddenBankInput();
 
+        if (!bankNameInput)
+            // console.warn('Element with ID "bankName" not found.')
+            ;
+        if (!bankIDInput)
+            // console.warn('Element with ID "bankIDs" not found.')
+            ;
+
         if (bankNameInput) bankNameInput.value = displayName;
-        hiddenInput.value = displayName;
-        hiddenInput.setAttribute('data-bank-id', id);
-        bankIDInput.value = id;
+        if (hiddenInput) {
+            hiddenInput.value = displayName;
+            hiddenInput.setAttribute('data-bank-id', id);
+        }
+        if (bankIDInput) bankIDInput.value = id;
 
         bankID = id; // ✅ Store in global variable
 
@@ -628,6 +646,11 @@ async function getBankNameByCode(bankID) {
 
 async function loadInvoiceNoSuggestions() {
     const datalist = document.getElementById('invoiceNoSuggestions');
+    if (!datalist) {
+        // console.warn('Datalist element with ID "invoiceNoSuggestions" not found.');
+        return;
+    }
+
     datalist.innerHTML = ''; // Clear previous options
 
     let from = 0;
@@ -636,9 +659,9 @@ async function loadInvoiceNoSuggestions() {
 
     try {
         while (hasMore) {
-            const { data, error, count } = await supabaseClient
+            const { data, error } = await supabaseClient
                 .from('InvoiceDetails')
-                .select('InvoiceNo', { count: 'exact' })
+                .select('InvoiceNo')
                 .eq('company_id', CompanyID)
                 .range(from, from + batchSize - 1);
 
@@ -660,5 +683,79 @@ async function loadInvoiceNoSuggestions() {
     } catch (err) {
         console.error('Error loading invoice suggestions:', err.message);
     }
+}
+
+function fitMultilineText(el, maxFontSize = 18, minFontSize = 8) {
+    const element = typeof el === 'string' ? document.querySelector(el) : el;
+    if (!element) return;
+
+    let fontSize = maxFontSize;
+    element.style.fontSize = fontSize + 'px';
+
+    while ((element.scrollHeight > element.offsetHeight || element.scrollWidth > element.offsetWidth) && fontSize > minFontSize) {
+        fontSize--;
+        element.style.fontSize = fontSize + 'px';
+    }
+}
+
+
+document.addEventListener('DOMContentLoaded', () => {
+    loadDefaultBank();
+    loadInvoiceNoSuggestions();
+});
+
+function numberToWordsIndian(amount) {
+    const ones = [
+        "", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine",
+        "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen",
+        "Sixteen", "Seventeen", "Eighteen", "Nineteen"
+    ];
+
+    const tens = [
+        "", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"
+    ];
+
+    function convertToWords(num) {
+        let str = "";
+
+        if (num > 9999999) {
+            str += convertToWords(Math.floor(num / 10000000)) + " Crore ";
+            num %= 10000000;
+        }
+        if (num > 99999) {
+            str += convertToWords(Math.floor(num / 100000)) + " Lakh ";
+            num %= 100000;
+        }
+        if (num > 999) {
+            str += convertToWords(Math.floor(num / 1000)) + " Thousand ";
+            num %= 1000;
+        }
+        if (num > 99) {
+            str += convertToWords(Math.floor(num / 100)) + " Hundred ";
+            num %= 100;
+        }
+        if (num > 0) {
+            if (str !== "") str += "and ";
+            if (num < 20) str += ones[num];
+            else {
+                str += tens[Math.floor(num / 10)];
+                if (num % 10 > 0) str += " " + ones[num % 10];
+            }
+        }
+
+        return str.trim();
+    }
+
+    // Split rupees and paise
+    let [rupeesStr, paiseStr] = amount.toFixed(2).split(".");
+    let rupees = parseInt(rupeesStr, 10);
+    let paise = parseInt(paiseStr, 10);
+
+    let result = "";
+    if (rupees > 0) result += "Rupees " + convertToWords(rupees);
+    if (paise > 0) result += " and Paise " + convertToWords(paise);
+    result += " Only";
+
+    return result;
 }
 

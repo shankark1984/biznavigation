@@ -10,7 +10,8 @@ class CompanyService {
         const { data, error } = await supabaseClient
             .from('company_profile')
             .select(`
-                company_name, address, city, pin_code, state, country, phone_no, e_mail, gst_number, pan_number, cin_no, Udyog_aadhaar_no
+                company_name, address, city, pin_code, state, country,
+                phone_no, e_mail, gst_number, pan_number, cin_no, Udyog_aadhaar_no
             `)
             .eq('company_id', companyID)
             .single();
@@ -23,26 +24,29 @@ class CompanyService {
         return data;
     }
 
-    static renderCompanyDetails(company, targetSelector) {
+    static renderCompanyDetails(company, detailsSelector = '.company-details', nameSelector = '.company-name') {
         if (!company) {
             console.error('No company data provided for rendering.');
             return;
         }
 
-        const targetElement = document.querySelector(targetSelector);
-        if (!targetElement) {
-            console.error(`Target element "${targetSelector}" not found.`);
+        const detailsElement = document.querySelector(detailsSelector);
+        const nameElement = document.querySelector(nameSelector);
+
+        if (!detailsElement || !nameElement) {
+            console.error(`Target elements not found: ${detailsSelector}, ${nameSelector}`);
             return;
         }
 
+        // Render Company Name
+        nameElement.innerHTML = company.company_name
+            ? `<h2 class="mb-1">${company.company_name}</h2>`
+            : '';
+
         const lines = [];
 
-        if (company.company_name) {
-            lines.push(`<h1>${company.company_name}</h1>`);
-        }
-
         // Address Line 1
-        const addressLine1 = company.address ? toProperCase(company.address) : null;
+        const addressLine1 = company.address ? toProperCase(company.address) : '';
 
         // Address Line 2
         const addressLine2Parts = [
@@ -52,13 +56,8 @@ class CompanyService {
             company.country
         ].filter(Boolean).join(' ');
 
-        if (addressLine1) {
-            lines.push(`${addressLine1}<br>`);
-        }
-
-        if (addressLine2Parts.trim()) {
-            lines.push(`${addressLine2Parts}<br>`);
-        }
+        if (addressLine1) lines.push(`${addressLine1}<br>`);
+        if (addressLine2Parts) lines.push(`${addressLine2Parts} | `);
 
         // Contact Details
         const contactParts = [];
@@ -78,11 +77,11 @@ class CompanyService {
         if (company.Udyog_aadhaar_no) regParts.push(`Udyog Aadhaar No: ${company.Udyog_aadhaar_no}`);
         if (regParts.length) lines.push(`${regParts.join(' | ')}<br>`);
 
-        // Final Render
-        targetElement.innerHTML = lines.join('').trim();
+        // Final render
+        detailsElement.innerHTML = lines.join('').trim();
     }
 
-    static async loadCompanyDetails(targetSelector) {
+    static async loadCompanyDetails(detailsSelector = '.company-details', nameSelector = '.company-name') {
         if (!window.CompanyID) {
             alert('Session expired. Please login again.');
             return;
@@ -90,29 +89,31 @@ class CompanyService {
 
         const company = await this.fetchCompanyDetails(window.CompanyID);
         if (company) {
-            this.renderCompanyDetails(company, targetSelector);
+            this.renderCompanyDetails(company, detailsSelector, nameSelector);
         }
     }
 }
 
-
-
 function loadCompanyLogo() {
     const logoContainer = document.getElementById('logoContainer');
     const companyID = window.CompanyID;
-
     const logoPath = `assets/img/logo/${companyID}.png`;
+
     const img = new Image();
     img.src = logoPath;
+    img.alt = "Company Logo";
+    img.style.maxWidth = '100%';
+    img.style.maxHeight = '100%';
+    img.style.objectFit = 'contain';
 
     img.onload = () => {
         logoContainer.innerHTML = '';
         logoContainer.appendChild(img);
-        img.style.maxWidth = '100%';
-        img.style.maxHeight = '100%';
     };
 
     img.onerror = () => {
         logoContainer.innerHTML = 'LOGO';
     };
 }
+
+
