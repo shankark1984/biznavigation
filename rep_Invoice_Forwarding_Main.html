@@ -11,28 +11,31 @@
     <!-- Custom CSS -->
     <link rel="stylesheet" href="assets/css/rep_Invoice_Forwarding_Main.css" />
 
+    <!-- jsPDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- html2canvas -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+
     <!-- JS Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 
 <body>
-
-    <!-- Download Button -->
+    <!-- Action Buttons -->
     <div class="container text-center my-4">
-        <button class="btn btn-success" onclick="generatePDF()">Download PDF</button>
+        <button class="btn btn-success me-2" onclick="generatePDF()">Download PDF</button>
+        <button class="btn btn-primary" onclick="prepareAndDownloadPDF()">Download PDF (Auto Zoom)</button>
     </div>
 
-    <!-- Invoice Container -->
+    <!-- Invoice -->
     <div class="a4-page mt-3">
         <div class="container position-relative">
-
             <div class="watermark">Original</div>
 
-            <!-- === Header === -->
+            <!-- Header -->
             <div class="row header-section">
                 <div class="col-2 d-flex align-items-center justify-content-center bb">
                     <div id="logoContainer" class="companyLogo"></div>
@@ -46,13 +49,13 @@
                 </div>
             </div>
 
-            <!-- === Customer Info === -->
+            <!-- Customer Info -->
             <div class="row customerDetails bb br bl">
                 <div class="col-8 br">
                     <div id="customerName"></div>
                     <div id="customerAddress" class="small-text"></div>
                 </div>
-                <div class="col-4 small-text d-flex flex-column justify-content-between">
+                <div class="col-4 small-text">
                     <div class="d-flex justify-content-between">
                         <div><strong>Invoice No.:</strong></div>
                         <div class="text-end text-nowrap" id="invoice-number"></div>
@@ -68,7 +71,7 @@
                 </div>
             </div>
 
-            <!-- === Meta Info === -->
+            <!-- Meta Info -->
             <div class="row br bl small-text">
                 <div class="col-5 br">
                     <strong>GST No.:</strong> <span id="gSTNumber"></span>
@@ -78,7 +81,7 @@
                 </div>
             </div>
 
-            <!-- === Table === -->
+            <!-- Table Section -->
             <div class="row">
                 <table class="table table-bordered text-center align-middle text-nowrap">
                     <thead>
@@ -119,9 +122,9 @@
                                     <li>Please draw cheque in favour of <strong id="drawName"></strong>.</li>
                                 </ul>
                             </td>
-                            <td class="text-end border-bottom border-end">Total Freight:</td>
-                            <td id="freightNonTaxable" class="text-end border-bottom border-end">₹0.00</td>
-                            <td id="freightTaxable" class="text-end border-bottom border-end">₹0.00</td>
+                            <td class="text-end">Total Freight:</td>
+                            <td id="freightNonTaxable" class="text-end">₹0.00</td>
+                            <td id="freightTaxable" class="text-end">₹0.00</td>
                         </tr>
 
                         <tr>
@@ -130,8 +133,8 @@
                                     <li>Payments should be made within 7 days from the date of billing.</li>
                                 </ul>
                             </td>
-                            <td class="text-end border-end">CGST @ 9%:</td>
-                            <td colspan="2" id="totalCGST" class="text-end border-end">₹0.00</td>
+                            <td class="text-end">CGST @ 9%:</td>
+                            <td colspan="2" id="totalCGST" class="text-end">₹0.00</td>
                         </tr>
 
                         <tr>
@@ -141,8 +144,8 @@
                                         disputes.</li>
                                 </ul>
                             </td>
-                            <td class="text-end border-end">SGST @ 9%:</td>
-                            <td colspan="2" id="totalSGST" class="text-end border-end">₹0.00</td>
+                            <td class="text-end">SGST @ 9%:</td>
+                            <td colspan="2" id="totalSGST" class="text-end">₹0.00</td>
                         </tr>
 
                         <tr>
@@ -185,13 +188,12 @@
                 </table>
             </div>
 
-            <!-- === Footer === -->
+            <!-- Footer Note -->
             <div class="footer-note d-flex justify-content-between align-items-center small mt-2">
                 <div>Powered by <strong class="text-primary">AllEdge</strong></div>
                 <div class="fst-italic">This is a computer-generated invoice. No signature required.</div>
                 <div>Page <span id="currentPage">1</span> of <span id="totalPages">1</span></div>
             </div>
-
         </div>
     </div>
 
