@@ -214,12 +214,20 @@ function generatePDF() {
     debugElements.forEach(el => el.style.border = 'none');
 
     html2pdf().set({
-        margin: 10,
-        filename: 'invoice.pdf',
-        image: { type: 'jpeg', quality: 0.9 },
-        html2canvas: { scale: 2 },
-        jsPDF: { unit: 'pt', format: 'a4', orientation: 'portrait' }
-    }).from(element).save().then(() => {
-        debugElements.forEach(el => el.style.border = '1px dashed red');
-    });
+        margin: [10, 10, 10, 10],
+        filename: 'Invoice_Report.pdf',
+        image: { type: 'jpeg', quality: 1 },
+        html2canvas: {
+            scale: 2, // higher = better quality
+            useCORS: true, // allow images
+            scrollX: 0,
+            scrollY: 0
+        },
+        jsPDF: {
+            unit: 'mm',
+            format: 'a4',
+            orientation: 'portrait'
+        }
+    }).from(container).save();
+
 }

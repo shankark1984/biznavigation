@@ -6,11 +6,11 @@ body {
 }
 
 .a4-page {
-    width: 750px;
+    width: 768px;
     min-height: 1050px;
     margin: auto;
     padding: 20px;
-    background-color: #fff;
+    background-color: white;
     box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
     position: relative;
     page-break-inside: avoid;
@@ -165,6 +165,17 @@ body {
 @media print {
     body {
         background: none;
+        margin: 0;
+        padding: 0;
+    }
+
+    .btn {
+        display: none !important;
+        /* hide download button */
+    }
+
+    .table-responsive {
+        overflow: visible !important;
     }
 
     .a4-page {
