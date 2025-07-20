@@ -4,9 +4,7 @@ const currencyFormatter = new Intl.NumberFormat('en-IN', {
     currency: 'INR',
     minimumFractionDigits: 2
 });
-
 const formatCurrencys = (amount = 0) => currencyFormatter.format(parseFloat(amount) || 0);
-// const formatDate = (dateStr) => dateStr ? new Date(dateStr).toLocaleDateString('en-GB') : '';
 const setText = (id, val = '') => document.getElementById(id).textContent = val;
 const setCurrency = (id, val = 0) => setText(id, formatCurrencys(val));
 
@@ -25,8 +23,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 // === Invoice Service ===
 class InvoiceService {
     static async loadInvoice(invoiceNo) {
-        if (!invoiceNo) return console.warn('Invoice No. is required.');
-        if (!window.CompanyID) return console.error('Company ID is missing.');
+        if (!invoiceNo || !window.CompanyID) return console.error('Invoice No. or Company ID missing.');
 
         const invoice = await this.fetchInvoiceDetails(invoiceNo);
         if (!invoice) return;
@@ -36,7 +33,6 @@ class InvoiceService {
             this.renderPartyDetails(invoice.PartyCode),
             this.fetchInvoiceBankDetails(invoice.BankID)
         ]);
-
         const lineItems = await this.fetchLineItems(invoiceNo);
         this.renderLineItems(lineItems);
     }
@@ -48,7 +44,6 @@ class InvoiceService {
             .eq('company_id', window.CompanyID)
             .eq('InvoiceNo', invoiceNo)
             .single();
-
         if (error) {
             console.error('Error fetching invoice details:', error.message);
             return null;
@@ -66,7 +61,6 @@ class InvoiceService {
             if (error) throw error;
 
             const companyName = document.querySelector('.company-name')?.textContent || 'NA';
-
             setText('accountHolderName', companyName);
             setText('accountNumber', data?.AccountNo ?? 'NA');
             setText('bankName', data?.BankName ?? 'NA');
@@ -87,7 +81,6 @@ class InvoiceService {
                 TotalIGSTAmt, TotalGSTAmt, GrandTotalAmt, PONo, NonTaxableAmount, TaxableAmount
             `)
             .eq('InvoiceNumber', invoiceNo);
-
         if (error) {
             console.error('Error fetching line items:', error.message);
             return [];
@@ -101,7 +94,6 @@ class InvoiceService {
             if (!party) return;
 
             const companyName = document.querySelector('.company-name')?.textContent || '';
-
             setText('customerName', party.PartyName ?? '');
             setText('drawName', companyName);
             setText('gSTNumber', party.GSTNumber ?? '');
@@ -166,9 +158,8 @@ class InvoiceService {
             tbody.appendChild(row);
         });
 
-        const totalGST = totals.totalSGST + totals.totalCGST + totals.totalIGST;
+        // Fill empty rows
         const emptyRowCount = Math.max(0, 20 - items.length);
-
         for (let i = 0; i < emptyRowCount; i++) {
             const emptyRow = document.createElement('tr');
             emptyRow.innerHTML = `
@@ -187,6 +178,9 @@ class InvoiceService {
             tbody.appendChild(emptyRow);
         }
 
+        const totalGST = totals.totalSGST + totals.totalCGST + totals.totalIGST;
+
+        // Set totals
         setText('totalWeight', totals.totalWeight.toFixed(2));
         setCurrency('totalFreight', totals.totalFreight);
         setCurrency('totalFSC', totals.totalFSC);
@@ -201,33 +195,59 @@ class InvoiceService {
         setCurrency('freightTaxable', totals.freightTaxable);
         setCurrency('subNonTaxable', totals.freightNonTaxable);
         setCurrency('subTaxable', totals.freightTaxable + totalGST);
-
         setText('amountInWords', numberToWordsIndian(totals.grandTotal));
     }
 }
 
-// === PDF Generation ===
-function generatePDF() {
-    const element = document.querySelector('.a4-page');
-    const debugElements = document.querySelectorAll('.debug-border div');
+// === PDF Utility ===
+async function prepareAndDownloadPDF() {
+    const { jsPDF } = window.jspdf;
+    const invoiceElement = document.querySelector('.a4-page');
+    const isMobile = window.innerWidth <= 768;
 
-    debugElements.forEach(el => el.style.border = 'none');
+    invoiceElement.scrollIntoView({ behavior: 'auto', block: 'start' });
 
-    html2pdf().set({
-        margin: [10, 10, 10, 10],
-        filename: 'Invoice_Report.pdf',
-        image: { type: 'jpeg', quality: 1 },
-        html2canvas: {
-            scale: 2, // higher = better quality
-            useCORS: true, // allow images
-            scrollX: 0,
-            scrollY: 0
-        },
-        jsPDF: {
-            unit: 'mm',
-            format: 'a4',
-            orientation: 'portrait'
-        }
-    }).from(container).save();
+    const canvas = await html2canvas(invoiceElement, {
+        scale: 2,
+        scrollY: 0,
+        useCORS: true
+    });
 
+    const imgData = canvas.toDataURL('image/jpeg', 0.98);
+    const pdf = new jsPDF('p', 'pt', 'a4');
+
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+
+    const imgProps = {
+        width: canvas.width,
+        height: canvas.height
+    };
+
+    const imgRatio = imgProps.width / imgProps.height;
+    const pdfRatio = pageWidth / pageHeight;
+
+    let imgWidth = pageWidth;
+    let imgHeight = imgWidth / imgRatio;
+
+    if (imgHeight > pageHeight) {
+        imgHeight = pageHeight;
+        imgWidth = imgHeight * imgRatio;
+    }
+
+    const marginX = (pageWidth - imgWidth) / 2;
+    const marginY = (pageHeight - imgHeight) / 2;
+
+    pdf.addImage(imgData, 'JPEG', marginX, marginY, imgWidth, imgHeight);
+    pdf.save('invoice.pdf');
+}
+
+// === Alt. Scroll and Zoom Trigger ===
+function scrollToInvoiceAndZoom() {
+    const invoice = document.querySelector(".a4-page");
+    if (invoice) {
+        invoice.scrollIntoView({ behavior: "smooth", block: "start" });
+        document.body.style.zoom = "0.85";
+        setTimeout(() => prepareAndDownloadPDF(), 1000);
+    }
 }

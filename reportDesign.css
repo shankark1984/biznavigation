@@ -5,9 +5,10 @@ body {
     padding: 0;
 }
 
+/* A4 Page Wrapper */
 .a4-page {
-    width: 100%;
-    min-height: 1050px;
+    width: 768px;
+    min-height: 1123px;
     margin: auto;
     padding: 20px;
     background-color: white;
@@ -58,7 +59,7 @@ body {
     border-collapse: collapse;
 }
 
-/* === Layout === */
+/* === Layout and Sections === */
 .container {
     position: relative;
 }
@@ -156,9 +157,14 @@ body {
     font-size: 1rem;
     font-weight: bold;
     color: rgba(252, 4, 4, 0.4);
-    z-index: auto;
     pointer-events: none;
     user-select: none;
+    z-index: auto;
+}
+
+/* === Debug Helper === */
+.debug-border div {
+    border: 1px solid red;
 }
 
 /* === Print Styles === */
@@ -171,7 +177,6 @@ body {
 
     .btn {
         display: none !important;
-        /* hide download button */
     }
 
     .table-responsive {
@@ -198,15 +203,18 @@ body {
     }
 }
 
-/* === Responsive View (Mobile Preview) === */
+/* === Responsive View === */
 @media screen and (max-width: 768px) {
     .a4-page {
-        transform: scale(0.9);
+        transform: scale(0.95);
         transform-origin: top center;
     }
 }
 
-/* === Debug Border Helper === */
-.debug-border div {
-    border: 1px solid red;
+/* === Force A4 View for PDF === */
+.a4-force-desktop {
+    width: 768px !important;
+    zoom: 1 !important;
+    transform: scale(1) !important;
+    transform-origin: top left;
 }

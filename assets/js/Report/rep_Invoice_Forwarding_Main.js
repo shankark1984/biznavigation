@@ -9,16 +9,29 @@ const setText = (id, val = '') => document.getElementById(id).textContent = val;
 const setCurrency = (id, val = 0) => setText(id, formatCurrencys(val));
 
 // === On Load ===
+function getQueryParams() {
+    const params = new URLSearchParams(window.location.search);
+    return {
+        invoiceNo: params.get('invoiceNo'),
+        partyName: params.get('partyName')
+    };
+}
+
 document.addEventListener("DOMContentLoaded", async () => {
     try {
+        const { invoiceNo, partyName } = getQueryParams();
+        console.log('Invoice No (from URL):', invoiceNo);
+        console.log('Party Name (from URL):', partyName);
+
         await CompanyService.loadCompanyDetails('.company-details', '.company-name');
-        await InvoiceService.loadInvoice('ASL/25-26/0009');
+        await InvoiceService.loadInvoice(invoiceNo);
         loadCompanyLogo();
         fitMultilineText('#customerAddress');
     } catch (err) {
         console.error('Error during invoice load:', err.message || err);
     }
 });
+
 
 // === Invoice Service ===
 class InvoiceService {
@@ -239,7 +252,9 @@ async function prepareAndDownloadPDF() {
     const marginY = (pageHeight - imgHeight) / 2;
 
     pdf.addImage(imgData, 'JPEG', marginX, marginY, imgWidth, imgHeight);
-    pdf.save('invoice.pdf');
+    const { invoiceNo, partyName } = getQueryParams();
+    const fileName = `${sanitizeFileName(partyName)}-${sanitizeFileName(invoiceNo)}.pdf`;
+    pdf.save(fileName);
 }
 
 // === Alt. Scroll and Zoom Trigger ===
@@ -250,4 +265,8 @@ function scrollToInvoiceAndZoom() {
         document.body.style.zoom = "0.85";
         setTimeout(() => prepareAndDownloadPDF(), 1000);
     }
+}
+
+function sanitizeFileName(name) {
+    return name.replace(/[^a-z0-9_\-]/gi, '_'); // replace any unsafe char with "_"
 }

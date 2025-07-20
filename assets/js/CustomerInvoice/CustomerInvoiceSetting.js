@@ -490,12 +490,17 @@ document.getElementById('deleteButton').addEventListener('click', () => {
     alert('Delete functionality not implemented yet.');
 });
 document.getElementById('reportButton').addEventListener('click', () => {
+    const invoiceNo = document.getElementById('invoiceNo').value;
+    const partyName = document.getElementById('partyName').value;
+    const url = `rep_Invoice_Forwarding_Main.html?invoiceNo=${encodeURIComponent(invoiceNo)}&partyName=${encodeURIComponent(partyName)}`;
+
     window.open(
-        'rep_Invoice_Forwarding_Main.html',
+        url,
         'InvoiceReportPopup',
         'width=1000,height=800,resizable=yes,scrollbars=yes'
     );
 });
+
 
 // Listen for input selection
 document.getElementById('inputBankName').addEventListener('input', function () {
