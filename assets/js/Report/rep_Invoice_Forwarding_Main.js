@@ -159,7 +159,7 @@ class InvoiceService {
         });
 
         // Fill empty rows
-        const emptyRowCount = Math.max(0, 18 - items.length);
+        const emptyRowCount = Math.max(0, 20 - items.length);
         for (let i = 0; i < emptyRowCount; i++) {
             const emptyRow = document.createElement('tr');
             emptyRow.innerHTML = `
@@ -241,8 +241,6 @@ async function prepareAndDownloadPDF() {
     pdf.addImage(imgData, 'JPEG', marginX, marginY, imgWidth, imgHeight);
     pdf.save('invoice.pdf');
 }
-
-
 
 // === Alt. Scroll and Zoom Trigger ===
 function scrollToInvoiceAndZoom() {
