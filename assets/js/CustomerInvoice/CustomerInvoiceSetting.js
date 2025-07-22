@@ -464,6 +464,7 @@ document.getElementById('newButton').addEventListener('click', () => {
 
     // Optional: Reset focus
     document.getElementById('partyName').focus();
+    testUnlock();
 
 });
 
@@ -1000,3 +1001,17 @@ async function addSingleShipmentToInvoice(shipmentNo, invoiceNo) {
         hideSpinner();
     }
 }
+
+window.addEventListener('beforeunload', () => {
+    if (!UserLoginID) return;
+    fetch('https://qfdrugniulwovfaijgkr.supabase.co/functions/v1/unlock-booking', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: UserLoginID }),
+        keepalive: true
+    });
+});
+
+
+
+

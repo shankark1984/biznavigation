@@ -126,8 +126,8 @@ addbillingAddress.addEventListener('click', async function (event) {
         Country: $("#billingCountry").val(),
         Status: $("#billingAddressStatus").val() === "Active",     // Boolean
         DefaultActive: $("#defaultBilling").is(":checked"),               // Boolean
-        company_id: companyID,     // must exist
-        created_by: userLoginID,   // must exist
+        company_id: CompanyID,     // must exist
+        created_by: UserLoginID,   // must exist
         created_at: localtimeStamp // must exist
     };
 
