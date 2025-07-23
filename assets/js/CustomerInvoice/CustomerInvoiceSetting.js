@@ -1004,13 +1004,13 @@ async function addSingleShipmentToInvoice(shipmentNo, invoiceNo) {
 
 window.addEventListener('beforeunload', () => {
     if (!UserLoginID) return;
-    fetch('https://qfdrugniulwovfaijgkr.supabase.co/functions/v1/unlock-booking', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: UserLoginID }),
-        keepalive: true
-    });
+
+    const url = 'https://qfdrugniulwovfaijgkr.supabase.co/functions/v1/unlock-booking';
+    const data = JSON.stringify({ userId: UserLoginID });
+    const blob = new Blob([data], { type: 'application/json' }); // Still good practice
+    navigator.sendBeacon(url, blob);
 });
+
 
 
 
