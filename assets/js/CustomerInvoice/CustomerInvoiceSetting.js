@@ -1002,14 +1002,25 @@ async function addSingleShipmentToInvoice(shipmentNo, invoiceNo) {
     }
 }
 
-window.addEventListener('beforeunload', () => {
-    if (!UserLoginID) return;
+// window.addEventListener('beforeunload', () => {
+//     if (!UserLoginID) return;
 
+//     const url = 'https://qfdrugniulwovfaijgkr.supabase.co/functions/v1/unlock-booking';
+//     const data = JSON.stringify({ userId: UserLoginID });
+//     const blob = new Blob([data], { type: 'application/json' }); // Still good practice
+//     navigator.sendBeacon(url, blob);
+// });
+
+window.addEventListener('beforeunload', () => {
     const url = 'https://qfdrugniulwovfaijgkr.supabase.co/functions/v1/unlock-booking';
-    const data = JSON.stringify({ userId: UserLoginID });
-    const blob = new Blob([data], { type: 'application/json' }); // Still good practice
+    const payload = JSON.stringify({ user_id: UserLoginID });
+
+    const blob = new Blob([payload], { type: 'application/json' });
+
     navigator.sendBeacon(url, blob);
 });
+
+
 
 
 
