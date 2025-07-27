@@ -120,57 +120,80 @@ async function generateInvoiceNumber(invoiceDateValue) {
     }
 }
 
-// Fetch pending invoice details
 async function getPendingInvoiceDetails() {
     const partyCode = document.getElementById('partyCode').value.trim();
+    const invoiceDateElement = document.getElementById('invoiceDate');
+    const movementTypeElement = document.getElementById('movementType');
+    const movementType = movementTypeElement.value;
+
+    if (!partyCode) {
+        alert('Please select a customer first.');
+        return;
+    }
+
+    if (!invoiceDateElement.value) {
+        alert('Please select an invoice date first.');
+        invoiceDateElement.focus();
+        return;
+    }
+
+    if (!movementType) {
+        alert('Please select a movement type first.');
+        movementTypeElement.focus();
+        return;
+    }
+
+    document.getElementById('fetchPendingInvoices').disabled = true;
+    showSpinner();
 
     let totalFreight = 0, totalFSCAmt = 0, totalOtherAmt = 0;
     let totalSGST = 0, totalCGST = 0, totalIGST = 0, totalGST = 0, totalGrand = 0;
-
     let mergedChargesMap = {};
-
-    showSpinner();
+    let validDataFound = false;
 
     try {
-        // Step 1: Fetch only unlocked records
-        const { data, error } = await supabaseClient
+        // Build query
+        let query = supabaseClient
             .from('international_booking')
             .select('*')
             .eq('company_id', CompanyID)
             .eq('CustomerCode', partyCode)
-            .is('InvoiceNumber', null)
+            .or('InvoiceNumber.is.null,InvoiceNumber.eq.""')
             .eq('IsLocked', false)
             .order('BookedDate', { ascending: true });
 
+        // Movement type condition
+        if (movementType === 'Forwarding') {
+            query = query.in('MovementType', ['Import', 'Export']);
+        } else {
+            query = query.eq('MovementType', movementType);
+        }
+
+        const { data, error } = await query;
+
         if (error) throw error;
 
-        if (data.length === 0) {
+        if (!data || data.length === 0) {
             alert('No pending invoices found or all are currently locked.');
-            hideSpinner();
             return;
         }
 
-        // Step 2: Lock the fetched records immediately
         const bookingIds = data.map(item => item.id);
-        lockedBookingIds = bookingIds; // Store locked IDs
-
+        lockedBookingIds = bookingIds;
         startAutoUnlockTimer();
-        // Step 3: Continue your existing logic to process these records
+
         const tableBody = document.getElementById('pendingShipmentTable').querySelector('tbody');
         tableBody.innerHTML = '';
 
-        let validDataFound = false;
-
         for (const invoice of data) {
             const charges = await getBookingCharges(invoice.id);
-
             if (!charges || charges.grandTotal <= 0) continue;
 
             const { error: lockError } = await supabaseClient
                 .from('international_booking')
                 .update({
                     IsLocked: true,
-                    LockedBy: UserLoginID, // You should set this from your login/session
+                    LockedBy: UserLoginID,
                     LockedAt: localtimeStamp
                 })
                 .eq('id', invoice.id);
@@ -189,24 +212,20 @@ async function getPendingInvoiceDetails() {
 
             for (const [type, amounts] of Object.entries(charges.chargesMap)) {
                 const normalizedType = toProperCase(type.trim().toLowerCase());
-
                 if (!mergedChargesMap[normalizedType]) {
                     mergedChargesMap[normalizedType] = {
-                        TotalAmount: 0,
-                        SGSTAmt: 0,
-                        CGSTAmt: 0,
-                        IGSTAmt: 0,
-                        TotalGSTAmt: 0,
-                        GrandTotalAmt: 0
+                        TotalAmount: 0, SGSTAmt: 0, CGSTAmt: 0,
+                        IGSTAmt: 0, TotalGSTAmt: 0, GrandTotalAmt: 0
                     };
                 }
 
-                mergedChargesMap[normalizedType].TotalAmount += amounts.TotalAmount;
-                mergedChargesMap[normalizedType].SGSTAmt += amounts.SGSTAmt;
-                mergedChargesMap[normalizedType].CGSTAmt += amounts.CGSTAmt;
-                mergedChargesMap[normalizedType].IGSTAmt += amounts.IGSTAmt;
-                mergedChargesMap[normalizedType].TotalGSTAmt += amounts.TotalGSTAmt;
-                mergedChargesMap[normalizedType].GrandTotalAmt += amounts.GrandTotalAmt;
+                const entry = mergedChargesMap[normalizedType];
+                entry.TotalAmount += amounts.TotalAmount;
+                entry.SGSTAmt += amounts.SGSTAmt;
+                entry.CGSTAmt += amounts.CGSTAmt;
+                entry.IGSTAmt += amounts.IGSTAmt;
+                entry.TotalGSTAmt += amounts.TotalGSTAmt;
+                entry.GrandTotalAmt += amounts.GrandTotalAmt;
             }
 
             const row = document.createElement('tr');
@@ -240,7 +259,6 @@ async function getPendingInvoiceDetails() {
         }
 
         updateTotals({ totalFreight, totalFSCAmt, totalOtherAmt, totalSGST, totalCGST, totalIGST, totalGST, totalGrand });
-
         renderChargesTable(mergedChargesMap);
 
     } catch (err) {
@@ -423,7 +441,7 @@ function hideSpinner() {
     document.getElementById('loadingSpinner').classList.add('d-none');
 }
 
-document.getElementById('newButton').addEventListener('click', () => {
+document.getElementById('newButton').addEventListener('click', async () => {
     // Reset form fields
     document.querySelector('form').reset();
 
@@ -464,7 +482,8 @@ document.getElementById('newButton').addEventListener('click', () => {
 
     // Optional: Reset focus
     document.getElementById('partyName').focus();
-    testUnlock();
+    await loadInvoiceNoSuggestions();
+    await unlockBooking(UserLoginID); // Unlock booking for the current user
 
 });
 
@@ -472,6 +491,7 @@ document.getElementById('modifyButton').addEventListener('click', () => {
     // Enable all delete buttons
     saveButton.disabled = false; // Enable save button
     saveButton.innerHTML = '<i class="bi bi-save"></i> Update';
+    saveButton.dataset.mode = 'update';
     document.getElementById('modifyButton').disabled = true; // Disable modify button
     document.getElementById('deleteButton').disabled = true; // Enable delete button
     document.getElementById('reportButton').disabled = true; // Enable report button
@@ -545,98 +565,103 @@ document.getElementById('saveButton').addEventListener('click', async () => {
     const invoiceDate = document.getElementById('invoiceDate').value.trim();
     const invoiceAddress = document.getElementById('invoiceAddress').value.trim();
     const invoiceType = document.getElementById('movementType').value;
+    const invoiceNumberInput = document.getElementById('invoiceNo');
+
+    const isInsertMode = saveButton.dataset.mode === 'insert';
+    let invoiceNumber = invoiceNumberInput.value.trim();
 
     console.log('Selected Bank ID:', bankID);
-
-    // ✅ Determine button mode
-    const isInsertMode = saveButton.innerHTML.trim() === '<i class="bi bi-save"></i> Save';
-    const invoiceNumber = document.getElementById('invoiceNo').value.trim();
-
-    if (isInsertMode) {
-        // Insert mode: Generate invoice number
-        const generatedInvoiceNumber = await generateInvoiceNumber(invoiceDate);
-        if (generatedInvoiceNumber) {
-            document.getElementById('invoiceNo').value = generatedInvoiceNumber;
-            invoiceData.InvoiceNo = generatedInvoiceNumber;
-        } else {
-            alert('Failed to generate Invoice Number.');
-            return;
-        }
-    } else {
-        // Update mode: Use the existing invoice number
-        if (!invoiceNumber) {
-            alert('Invoice Number is required for update.');
-            return;
-        }
-        invoiceData.InvoiceNo = invoiceNumber;
-    }
-
-    // ✅ Validation AFTER invoice number is handled
-    if (!partyCode || !invoiceDate || !invoiceNumber || !invoiceAddress) {
-        alert('Please fill all required fields.');
-        return;
-    }
-
-    // Show spinner and disable button
-    saveSpinner.classList.remove('d-none');
-    saveButton.disabled = true;
-
-    // Prepare invoiceData
-    invoiceData.InvoiceDate = invoiceDate;
-    invoiceData.InvoiceType = invoiceType;
-    invoiceData.PartyCode = partyCode;
-    invoiceData.InvoiceAddress = invoiceAddress;
-    invoiceData.BankID = bankID;
-    invoiceData.company_id = CompanyID;
-
-    if (isInsertMode) {
-        invoiceData.created_by = UserLoginID;
-        invoiceData.created_at = localtimeStamp;
-    } else {
-        invoiceData.updated_by = UserLoginID;
-        invoiceData.updated_at = localtimeStamp;
-    }
+    console.log('Invoice Number:', invoiceNumber, 'isInsertMode:', isInsertMode);
+    console.log('saveButton.innerHTML:', saveButton.innerHTML.trim());
 
     try {
+        // 🚀 Generate invoice number if in insert mode
         if (isInsertMode) {
-            // ✅ INSERT
-            const { data, error } = await supabaseClient
+            console.log('ok')
+            const generatedInvoiceNumber = await generateInvoiceNumber(invoiceDate);
+            if (!generatedInvoiceNumber) {
+                alert('Failed to generate Invoice Number.');
+                return;
+            }
+            invoiceNumber = generatedInvoiceNumber;
+            invoiceNumberInput.value = generatedInvoiceNumber;
+        } else {
+            if (!invoiceNumber) {
+                alert('Invoice Number is required for update.');
+                return;
+            }
+        }
+
+
+        // ✅ Basic validation after invoice number handling
+        if (!partyCode || !invoiceDate || !invoiceNumber || !invoiceAddress) {
+            alert('Please fill all required fields.');
+            return;
+        }
+
+        // 🧾 Prepare invoiceData
+        const invoiceData = {
+            InvoiceNo: invoiceNumber,
+            InvoiceDate: invoiceDate,
+            InvoiceType: invoiceType,
+            PartyCode: partyCode,
+            InvoiceAddress: invoiceAddress,
+            BankID: bankID,
+            company_id: CompanyID
+        };
+
+        if (isInsertMode) {
+            invoiceData.created_by = UserLoginID;
+            invoiceData.created_at = localtimeStamp;
+        } else {
+            invoiceData.updated_by = UserLoginID;
+            invoiceData.updated_at = localtimeStamp;
+        }
+
+        // ⏳ Show spinner and disable buttons
+        saveSpinner.classList.remove('d-none');
+        saveButton.disabled = true;
+
+        let result;
+        if (isInsertMode) {
+            // 🟢 INSERT
+            result = await supabaseClient
                 .from('InvoiceDetails')
                 .insert([invoiceData]);
-
-            if (error) throw error;
-
-            alert('Invoice saved successfully!');
         } else {
-            // ✅ UPDATE
-            const { data, error } = await supabaseClient
+            // 🔵 UPDATE
+            result = await supabaseClient
                 .from('InvoiceDetails')
                 .update(invoiceData)
                 .eq('InvoiceNo', invoiceData.InvoiceNo)
                 .eq('company_id', CompanyID);
-
-            if (error) throw error;
-
-            disableForm();
-            alert('Invoice updated successfully!');
         }
 
+        if (result.error) throw result.error;
+
+        alert(`Invoice ${isInsertMode ? 'saved' : 'updated'} successfully!`);
+        disableForm();
     } catch (err) {
-        console.error('Error processing invoice:', err?.message || JSON.stringify(err));
-        alert('Failed to process invoice: ' + (err?.message || JSON.stringify(err)));
+        console.error('Error processing invoice:', err?.message || err);
+        alert('Failed to process invoice: ' + (err?.message || err));
     } finally {
-        disableForm(); // Disable form after saving
-        await updateInvoiceNumbers(invoiceData.InvoiceNo); // Update linked bookings
+        try {
+            await updateInvoiceNumbers(invoiceNumber);
+            await autoUnlockRecords();
+        } catch (unlockErr) {
+            console.warn('Post-save operations failed:', unlockErr.message);
+        }
+
         resetInvoiceData();
-        await autoUnlockRecords(); // Unlock records
         saveSpinner.classList.add('d-none');
         saveButton.disabled = true;
-        modifyButton.disabled = false; // Disable modify button
+        modifyButton.disabled = false;
         document.querySelectorAll('.delete-btn').forEach(button => {
             button.disabled = true;
         });
     }
 });
+
 
 // Optional: Reset invoiceData after form reset
 function resetInvoiceData() {
@@ -1002,27 +1027,36 @@ async function addSingleShipmentToInvoice(shipmentNo, invoiceNo) {
     }
 }
 
-// window.addEventListener('beforeunload', () => {
-//     if (!UserLoginID) return;
+window.addEventListener('beforeunload', async (event) => {
+    // Your logic here, like unlocking a row in Supabase
+    // WARNING: async operations are not guaranteed to finish before the unload
+    navigator.sendBeacon('/your-server-endpoint', JSON.stringify({ unlock: true }));
 
-//     const url = 'https://qfdrugniulwovfaijgkr.supabase.co/functions/v1/unlock-booking';
-//     const data = JSON.stringify({ userId: UserLoginID });
-//     const blob = new Blob([data], { type: 'application/json' }); // Still good practice
-//     navigator.sendBeacon(url, blob);
-// });
+    await unlockBooking(UserLoginID); // Unlock booking for the current user
 
-window.addEventListener('beforeunload', () => {
-    const url = 'https://qfdrugniulwovfaijgkr.supabase.co/functions/v1/unlock-booking';
-    const payload = JSON.stringify({ user_id: UserLoginID });
-
-    const blob = new Blob([payload], { type: 'application/json' });
-
-    navigator.sendBeacon(url, blob);
+    // Optionally show a confirmation dialog (some browsers ignore it now)
+    event.preventDefault();
+    event.returnValue = '';
 });
 
+async function unlockBooking(userID) {
+    if (!userID) {
+        console.warn("No user ID provided. Cannot unlock booking.");
+        return;
+    }
 
+    try {
+        const { error } = await supabaseClient
+            .from("international_booking")
+            .update({ IsLocked: false })
+            .eq("LockedBy", userID);
 
-
-
-
-
+        if (error) {
+            console.error("Failed to unlock booking:", error.message);
+        } else {
+            console.log(`Booking unlocked successfully for user ID: ${userID}`);
+        }
+    } catch (err) {
+        console.error("Unexpected error during unlock:", err);
+    }
+}
