@@ -109,8 +109,32 @@ async function loadTable(filters = {}) {
     if (filters.invoiceStatus) query = query.ilike('InvoiceStatus', `%${filters.invoiceStatus}%`);
     if (filters.startDate) query = query.gte('BookedDate', filters.startDate);
     if (filters.endDate) query = query.lte('BookedDate', filters.endDate);
-    if (filters.bookedMonth) query = query.ilike('BookedDate', `${filters.bookedMonth}%`);
-    if (filters.bookedYear) query = query.ilike('BookedDate', `${filters.bookedYear}%`);
+
+    // If invoiceMonth is set (format: MM-YYYY or YYYY-MM)
+    if (filters.bookedMonth) {
+        let [monthStr, yearStr] = filters.bookedMonth.split('-');
+        if (parseInt(monthStr) > 12) [yearStr, monthStr] = [monthStr, yearStr];
+
+        const month = parseInt(monthStr);
+        const year = parseInt(yearStr);
+
+        if (!isNaN(year) && !isNaN(month)) {
+            const start = new Date(year, month - 1, 1).toISOString().split('T')[0];
+            const end = new Date(year, month, 0).toISOString().split('T')[0];
+            query = query.gte('BookedDate', start).lte('BookedDate', end);
+        }
+    }
+
+    // Else fallback to full year range if only invoiceYear is set
+    if (!filters.bookedMonth && filters.bookedYear) {
+        const year = parseInt(filters.bookedYear);
+        if (!isNaN(year)) {
+            const start = new Date(year, 0, 1).toISOString().split('T')[0];   // Jan 1
+            const end = new Date(year, 11, 31).toISOString().split('T')[0];  // Dec 31
+            query = query.gte('BookedDate', start).lte('BookedDate', end);
+        }
+    }
+
     if (filters.financialYear) {
         const [startYear, endYear] = filters.financialYear.split('-').map(Number);
         query = query.gte('BookedDate', `${startYear}-04-01`).lte('BookedDate', `${endYear}-03-31`);
@@ -341,8 +365,32 @@ async function fetchAllFilteredData(filters = {}) {
         if (filters.invoiceStatus) query = query.ilike('InvoiceStatus', `%${filters.invoiceStatus}%`);
         if (filters.startDate) query = query.gte('BookedDate', filters.startDate);
         if (filters.endDate) query = query.lte('BookedDate', filters.endDate);
-        if (filters.bookedMonth) query = query.ilike('BookedDate', `${filters.bookedMonth}%`);
-        if (filters.bookedYear) query = query.ilike('BookedDate', `${filters.bookedYear}%`);
+
+        // If invoiceMonth is set (format: MM-YYYY or YYYY-MM)
+        if (filters.bookedMonth) {
+            let [monthStr, yearStr] = filters.bookedMonth.split('-');
+            if (parseInt(monthStr) > 12) [yearStr, monthStr] = [monthStr, yearStr];
+
+            const month = parseInt(monthStr);
+            const year = parseInt(yearStr);
+
+            if (!isNaN(year) && !isNaN(month)) {
+                const start = new Date(year, month - 1, 1).toISOString().split('T')[0];
+                const end = new Date(year, month, 0).toISOString().split('T')[0];
+                query = query.gte('BookedDate', start).lte('BookedDate', end);
+            }
+        }
+
+        // Else fallback to full year range if only invoiceYear is set
+        if (!filters.bookedMonth && filters.bookedYear) {
+            const year = parseInt(filters.bookedYear);
+            if (!isNaN(year)) {
+                const start = new Date(year, 0, 1).toISOString().split('T')[0];   // Jan 1
+                const end = new Date(year, 11, 31).toISOString().split('T')[0];  // Dec 31
+                query = query.gte('BookedDate', start).lte('BookedDate', end);
+            }
+        }
+
         if (filters.financialYear) {
             const [startYear, endYear] = filters.financialYear.split('-').map(Number);
             query = query.gte('BookedDate', `${startYear}-04-01`).lte('BookedDate', `${endYear}-03-31`);

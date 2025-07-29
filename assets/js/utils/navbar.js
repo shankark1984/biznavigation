@@ -58,7 +58,7 @@ document.addEventListener("DOMContentLoaded", () => {
     'divider',
     { label: "International Booking", href: "InternationalBooking.html" },
     { label: "Domestic", href: "#" },
-    { label: "Customs Clearance", href: "#" },
+    { label: "Customs Clearance", href: "CustomsClearance.html" },
     { label: "FTL or FCL", href: "fulltruckload.html" },
     'divider',
     { label: "Upload Data", href: "#" }
@@ -80,7 +80,7 @@ document.addEventListener("DOMContentLoaded", () => {
     { label: "Customs Clearance Report", href: "#" },
     { label: "FTL or FCL Report", href: "fulltruck_Report.html" },
     'divider',
-    { label: "Customer Invoice Report", href: "#" },
+    { label: "Customer Invoice Report", href: "reportCustomerInvoiceDetails.html" },
     { label: "Vendor Billing Report", href: "#" },
     'divider',
     { label: "Payment Received", href: "#" },
