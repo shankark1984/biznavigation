@@ -875,3 +875,69 @@ async function addNewConsignee(event) {
     }
 }
 
+// Clearance Port Suggestions
+const clearancePortInput = document.getElementById('clearancePort');
+const clearanceCountryInput = document.getElementById('clearanceCountry');
+const datalistElement = document.getElementById('clearancePortSuggestions');
+
+let currentSuggestions = [];
+
+
+async function updateSuggestionsAndCountry() {
+    const query = clearancePortInput.value.trim();
+    clearanceCountryInput.value = '';
+    datalistElement.innerHTML = '';
+
+    if (query.length === 0) return;
+
+    currentSuggestions = await fetchPortSuggestions(query, 10);
+
+    currentSuggestions.forEach(({ label }) => {
+        const option = document.createElement('option');
+        option.value = label; // show full label to user
+        datalistElement.appendChild(option);
+    });
+
+    // Case-insensitive exact match
+    const matchedPort = currentSuggestions.find(s => s.label.toLowerCase() === query.toLowerCase());
+    if (matchedPort) {
+        clearanceCountryInput.value = matchedPort.portDetails.PortCountry;
+    }
+}
+
+/**
+ * Fetch port suggestions from Supabase based on user input
+ * @param {string} userInput - The search text typed by the user
+ * @param {number} limit - Maximum number of suggestions to return (optional, default 10)
+ * @returns {Promise<Array>} - Resolves to an array of suggestion objects
+ */
+async function fetchPortSuggestions(userInput, limit = 10) {
+    if (!userInput || userInput.trim() === '') {
+        // Return empty array if input is empty or just spaces
+        return [];
+    }
+
+    try {
+        const { data, error } = await supabaseClient
+            .from('PortsDetails')
+            .select('PortCode, PortName, PortCountry, PortType')
+            .ilike('PortName', `%${userInput}%`)
+            .limit(limit);
+
+        if (error) {
+            console.error('Error fetching port suggestions:', error);
+            return [];
+        }
+
+        // Map to suggestion objects for UI consumption
+        return data.map(port => ({
+            label: `${port.PortName} (${port.PortCode}) - ${port.PortCountry}`,
+            value: port.PortCode,
+            portDetails: port, // full port object if needed
+        }));
+    } catch (err) {
+        console.error('Unexpected error:', err);
+        return [];
+    }
+}
+// clearance Port Input Event Listener end
