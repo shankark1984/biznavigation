@@ -162,11 +162,15 @@ async function getPendingInvoiceDetails() {
             .eq('IsLocked', false)
             .order('BookedDate', { ascending: true });
 
+        console.log('Fetching pending invoices for:', CompanyID, partyCode, movementType);
+
         // Movement type condition
         if (movementType === 'Forwarding') {
+            console.log('Fetching invoices for Forwarding movement type');
             query = query.in('MovementType', ['Import', 'Export']);
         } else {
             query = query.eq('MovementType', movementType);
+            console.log('Fetching invoices for movement type:', movementType);
         }
 
         const { data, error } = await query;
@@ -175,6 +179,7 @@ async function getPendingInvoiceDetails() {
 
         if (!data || data.length === 0) {
             alert('No pending invoices found or all are currently locked.');
+            document.getElementById('fetchPendingInvoices').disabled = false;
             return;
         }
 
@@ -390,7 +395,26 @@ function updateTotals(totals) {
 }
 
 // Fetch pending invoices on button click
-document.getElementById('fetchPendingInvoices').addEventListener('click', getPendingInvoiceDetails);
+document.getElementById('fetchPendingInvoices').addEventListener('click', async function () {
+    // Get the selected value from the movementType element
+    const movementTypeValue = document.getElementById('movementType').value;
+
+    // Normalize/trimming the value to prevent whitespace issues
+    const type = movementTypeValue.trim();
+
+    // Check the value and run the relevant function
+    if (type === 'Forwarding' || type === 'Import' || type === 'Export') {
+        console.log('Fetching pending invoices for Forwarding/Import/Export');
+        await getPendingInvoiceDetails();
+    }
+    else if (type === 'Customs Clearance') {
+        await CustomsClearanceInvoiceDetails();
+    }
+    else {
+        console.warn('Unknown movement type:', type);
+    }
+});
+
 
 function removeRow(button) {
     const row = button.closest('tr');

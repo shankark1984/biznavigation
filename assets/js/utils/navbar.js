@@ -77,7 +77,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     ${menuSection("Reports", [
     { label: "International Report", href: "reportInternationalShipmentDetails.html" },
     { label: "Domestic Report", href: "#" },
-    { label: "Customs Clearance Report", href: "#" },
+    { label: "Customs Clearance Report", href: "reportCustomsClearance.html" },
     { label: "FTL or FCL Report", href: "fulltruck_Report.html" },
     'divider',
     { label: "Customer Invoice Report", href: "reportCustomerInvoiceDetails.html" },

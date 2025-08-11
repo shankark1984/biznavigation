@@ -116,9 +116,22 @@
                     <datalist id="customerNameList"></datalist>
                 </div>
                 <div class="col-6 col-md-6 col-lg-2">
-                    <label for="docketNo" class="form-label">Docket No</label>
-                    <input id="docketNo" class="form-control" list="docketNoList" placeholder="Enter Docket No">
-                    <datalist id="docketNoList"></datalist>
+                    <label for="jobNo" class="form-label">Job No</label>
+                    <input id="jobNo" class="form-control" list="jobNoList" placeholder="Enter Job No"
+                        autocomplete="off">
+                    <datalist id="jobNoList"></datalist>
+                </div>
+
+                <div class="col-6 col-md-6 col-lg-2">
+                    <label for="bLAWBNo" class="form-label">BL / AWB No</label>
+                    <input id="bLAWBNo" class="form-control" list="bLAWBNoList" placeholder="BL / AWB No">
+                    <datalist id="bLAWBNoList"></datalist>
+                </div>
+
+                <div class="col-6 col-md-6 col-lg-2">
+                    <label for="bENo" class="form-label">BE No</label>
+                    <input id="bENo" class="form-control" list="bENoList" placeholder="BE No">
+                    <datalist id="bENoList"></datalist>
                 </div>
                 <div class="col-6 col-md-6 col-lg-3">
                     <label for="dateRange" class="form-label">Booked Date Range</label>
@@ -126,9 +139,15 @@
                 </div>
                 <div class="col-6 col-md-6 col-lg-2">
                     <label for="movementType" class="form-label">Movement Type</label>
-                    <input id="movementType" class="form-control" list="movementTypeList"
+                    <input id="movementType" class="form-control" list="movementTypeList" autocomplete="off"
                         placeholder="Enter Movement Type">
                     <datalist id="movementTypeList"></datalist>
+                </div>
+                <div class="col-6 col-md-6 col-lg-2">
+                    <label for="transitType" class="form-label">Transit Type</label>
+                    <input id="transitType" class="form-control" list="transitTypeList"
+                        placeholder="Enter Transit Type">
+                    <datalist id="transitTypeList"></datalist>
                 </div>
                 <div class="col-6 col-md-6 col-lg-2">
                     <label for="modeType" class="form-label">Mode Type</label>
@@ -136,10 +155,16 @@
                     <datalist id="modeTypeList"></datalist>
                 </div>
                 <div class="col-6 col-md-6 col-lg-2">
-                    <label for="serviceProviderName" class="form-label">Service Provider</label>
-                    <input id="serviceProviderName" class="form-control" list="serviceProviderNameList"
+                    <label for="clearanceCountry" class="form-label">Clearance Country</label>
+                    <input id="clearanceCountry" class="form-control" list="clearanceCountryList"
                         placeholder="Enter Service Provider">
-                    <datalist id="serviceProviderNameList"></datalist>
+                    <datalist id="clearanceCountryList"></datalist>
+                </div>
+                <div class="col-6 col-md-6 col-lg-2">
+                    <label for="clearancePort" class="form-label">Clearance Port</label>
+                    <input id="clearancePort" class="form-control" list="clearancePortList"
+                        placeholder="Enter Service Provider">
+                    <datalist id="clearancePortList"></datalist>
                 </div>
                 <div class="col-6 col-md-2 col-lg-2">
                     <label for="bookedMonth" class="form-label">Booked Month</label>
@@ -159,6 +184,13 @@
                     <input id="invoiceStatus" class="form-control" list="invoiceStatusList" placeholder="Enter Status">
                     <datalist id="invoiceStatusList"></datalist>
                 </div>
+                <div class="col-6 col-md-4 col-lg-2">
+                    <label for="customsBroker" class="form-label">Customs Broker</label>
+                    <input id="customsBroker" class="form-control" list="customsBrokerList"
+                        placeholder="Enter Customs Broker">
+                    <datalist id="customsBrokerList"></datalist>
+                </div>
+
                 <div class="col-6 col-md-2 col-lg-2 d-grid align-self-end">
                     <button class="btn btn-primary" id="searchBtn"><i class="bi bi-search"></i> Search</button>
                 </div>
@@ -177,23 +209,25 @@
                 <thead class="table-dark text-center">
                     <tr>
                         <th data-key="RowID">Sr No</th>
-                        <th data-key="DocketNo">Docket No</th>
-                        <th data-key="BookedDate">Booked Date</th>
-                        <th data-key="CustomerName">Customer Name</th>
+                        <th data-key="JobID">Job ID</th>
+                        <th data-key="JobDate">Job Date</th>
+                        <th data-key="PartyName">Customer Name</th>
+                        <th data-key="BLAWBNo">BL / AWB No</th>
+                        <th data-key="BLAWBDate">BL / AWB Date</th>
+                        <th data-key="BENo">BE No</th>
+                        <th data-key="BEDate">BE Date</th>
                         <th data-key="MovementType">Movement Type</th>
+                        <th data-key="TransitType">Transit Type</th>
                         <th data-key="ModeType">Mode Type</th>
-                        <th data-key="ServiceProviderName">Service Provider</th>
-                        <th data-key="CourierName">Courier Name</th>
                         <th data-key="Consignee">Consignee</th>
-                        <th data-key="OriginName">Origin</th>
-                        <th data-key="PortofLoading">Port of Loading</th>
-                        <th data-key="DestinationName">Destination</th>
-                        <th data-key="PortofDischarge">Port of Discharge</th>
-                        <th data-key="UOM">UOM</th>
-                        <th data-key="NoOfUnits">No. of Units</th>
-                        <th data-key="ActualWeight">Actual Weight</th>
-                        <th data-key="VolumeWeight">Volume Weight</th>
-                        <th data-key="ChargeableWeight">Chargeable Weight</th>
+                        <th data-key="CustomsBroker">Customs Broker</th>
+                        <th data-key="ClearancePort">Clearance Port</th>
+                        <th data-key="ClearanceCountry">Clearance Country</th>
+                        <th data-key="Quantity">Quantity</th>
+                        <th data-key="CargoWeight">Cargo Weight</th>
+                        <th data-key="ClearanceMode">Clearance Mode</th>
+                        <th data-key="Commodity">Commodity</th>
+                        <th data-key="AnyInformation">Any Information</th>
                         <th data-key="TotalAmount">Total Amount</th>
                         <th data-key="SGST">SGST</th>
                         <th data-key="CGST">CGST</th>
@@ -202,11 +236,6 @@
                         <th data-key="GrandTotal">Grand Total</th>
                         <th data-key="InvoiceNo">Invoice No</th>
                         <th data-key="InvoiceStatus">Invoice Status</th>
-                        <th data-key="ShipperRef">Shipper Ref</th>
-                        <th data-key="Commodity">Commodity</th>
-                        <th data-key="ShippingType">Shipping Type</th>
-                        <th data-key="ConsignmentValue">Consignment Value</th>
-                        <th data-key="PONo">PO No</th>
                     </tr>
                 </thead>
                 <tbody></tbody>
@@ -233,7 +262,7 @@
     <script src="assets/js/utils/navbar.js"></script>
     <script src="assets/js/utils/footer.js"></script>
     <script src="assets/js/utils/utils.js"></script>
-    <script src="assets/js/Report/reportInternationalShipmentDetails.js"></script>
+    <script src="assets/js/Report/reportCustomsClearance.js"></script>
     <script src="assets/js/utils/logout.js"></script>
 </body>
 
