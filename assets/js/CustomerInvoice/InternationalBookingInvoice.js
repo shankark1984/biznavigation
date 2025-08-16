@@ -143,7 +143,7 @@ async function getPendingInvoiceDetails() {
             alert('No pending invoices with grand total greater than 0 found.');
         }
 
-        updateTotals({ totalFreight, totalFSCAmt, totalOtherAmt, totalSGST, totalCGST, totalIGST, totalGST, totalGrand });
+        updateTotals_ib({ totalFreight, totalFSCAmt, totalOtherAmt, totalSGST, totalCGST, totalIGST, totalGST, totalGrand });
         renderChargesTable(mergedChargesMap);
 
     } catch (err) {
@@ -214,7 +214,7 @@ async function getBookingCharges(bookingID) {
     }
 }
 
-function updateTotals(totals) {
+function updateTotals_ib(totals) {
     const setValue = (id, value) => {
         const el = document.getElementById(id);
         if (el) el.textContent = value.toFixed(2);
@@ -245,6 +245,15 @@ async function updateInvoiceNumbers(invNo) {
 
     const shipmentIds = [];
 
+    // Step 1: Clear existing assignments
+    const { error: clearError } = await supabaseClient
+        .from('international_booking')
+        .update({
+            InvoiceStatus: false,
+            InvoiceNumber: null
+        })
+        .eq('InvoiceNumber', invNo); // Corrected: Use eq for a single invoice number
+
     // Extract IDs from a hidden column or dataset
     rows.forEach(row => {
         const shipId = row.getAttribute('data-ship-id'); // Assuming you store the shipment ID here
@@ -255,15 +264,6 @@ async function updateInvoiceNumbers(invNo) {
         console.warn('No shipment IDs found for invoice update.');
         return;
     }
-
-    // Step 1: Clear existing assignments
-    const { error: clearError } = await supabaseClient
-        .from('international_booking')
-        .update({
-            InvoiceStatus: false,
-            InvoiceNumber: null
-        })
-        .eq('InvoiceNumber', invNo); // Corrected: Use eq for a single invoice number
 
     console.log('Clearing previous invoice assignments for:', invNo);
     if (clearError) {
@@ -473,6 +473,8 @@ async function addSingleShipmentToInvoice(shipmentNo, invoiceNo) {
 
         // Optionally update your totals here (if required)
         alert('Shipment added successfully!');
+        updateTotals_ib();
+        renderChargesTable(mergedChargesMap);
 
     } catch (err) {
         console.error('Error adding shipment:', err.message);
@@ -482,7 +484,7 @@ async function addSingleShipmentToInvoice(shipmentNo, invoiceNo) {
     }
 }
 
-async function unlockBooking(userID) {
+async function unlockBooking_ib(userID) {
     if (!userID) {
         console.warn("No user ID provided. Cannot unlock booking.");
         return;
@@ -491,18 +493,19 @@ async function unlockBooking(userID) {
     try {
         const { error } = await supabaseClient
             .from("international_booking")
-            .update({ IsLocked: false })
+            .update({ IsLocked: false, LockedBy: null, LockedAt: null }) // Also clear lock metadata
             .eq("LockedBy", userID);
 
         if (error) {
             console.error("Failed to unlock booking:", error.message);
         } else {
-            // console.log(`Booking unlocked successfully for user ID: ${userID}`);
+            // console.log(`Booking(s) unlocked successfully for user ID: ${userID}`);
         }
     } catch (err) {
         console.error("Unexpected error during unlock:", err);
     }
 }
+
 
 // Function to create table header & footer dynamically
 async function createPendingShipmentTableHeaderAndFooter_ib() {
@@ -585,4 +588,46 @@ async function createPendingShipmentTableHeaderAndFooter_ib() {
 
     tfoot.appendChild(footRow);
     table.appendChild(tfoot);
+}
+
+function removeRow(button) {
+    const row = button.closest('tr');
+    if (!row) return;
+
+    // Get the shipment ID
+    const shipId = row.getAttribute('data-ship-id');
+    console.log('Removing row for Shipment ID:', shipId);
+    if (shipId) {
+        // Optional: Remove from lockedBookingIds if you maintain this array
+        const index = lockedBookingIds.indexOf(parseInt(shipId));
+        if (index !== -1) {
+            lockedBookingIds.splice(index, 1);
+        }
+
+        // Optional: Unlock the record in the database
+        unlockShipmentRecord(shipId);
+    }
+
+    // Get the amounts from the row
+    const freightAmt = parseFloat(row.cells[10].textContent) || 0;
+    const fscAmt = parseFloat(row.cells[11].textContent) || 0;
+    const otherAmt = parseFloat(row.cells[12].textContent) || 0;
+    const sgstAmt = parseFloat(row.cells[13].textContent) || 0;
+    const cgstAmt = parseFloat(row.cells[14].textContent) || 0;
+    const igstAmt = parseFloat(row.cells[15].textContent) || 0;
+    const gstAmt = parseFloat(row.cells[16].textContent) || 0;
+    const grandAmt = parseFloat(row.cells[17].textContent) || 0;
+
+    // Subtract from totals
+    document.getElementById('totalFreight').textContent = (parseFloat(document.getElementById('totalFreight').textContent) - freightAmt).toFixed(2);
+    document.getElementById('totalFSCAmt').textContent = (parseFloat(document.getElementById('totalFSCAmt').textContent) - fscAmt).toFixed(2);
+    document.getElementById('totalOtherAmt').textContent = (parseFloat(document.getElementById('totalOtherAmt').textContent) - otherAmt).toFixed(2);
+    document.getElementById('totalSGST').textContent = (parseFloat(document.getElementById('totalSGST').textContent) - sgstAmt).toFixed(2);
+    document.getElementById('totalCGST').textContent = (parseFloat(document.getElementById('totalCGST').textContent) - cgstAmt).toFixed(2);
+    document.getElementById('totalIGST').textContent = (parseFloat(document.getElementById('totalIGST').textContent) - igstAmt).toFixed(2);
+    document.getElementById('totalGST').textContent = (parseFloat(document.getElementById('totalGST').textContent) - gstAmt).toFixed(2);
+    document.getElementById('totalGrand').textContent = (parseFloat(document.getElementById('totalGrand').textContent) - grandAmt).toFixed(2);
+
+    // Remove row from table
+    row.remove();
 }

@@ -339,7 +339,13 @@ function populateForm(data) {
     saveButton.setAttribute('data-mode', 'update');
     saveButton.disabled = true;
     saveButton.innerHTML = '<i class="bi bi-save"></i> Update';
-    modifyButton.disabled = false;
+    
+    if (data.InvoiceNo === null || data.InvoiceNo === undefined || data.InvoiceNo.trim() === "") {
+        modifyButton.disabled = false;
+    } else {
+        modifyButton.disabled = true;
+    }
+
     disableForm(); // Disable form inputs for viewing
     // optionally enable form editing here
 }

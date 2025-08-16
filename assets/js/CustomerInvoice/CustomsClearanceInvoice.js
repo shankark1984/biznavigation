@@ -4,10 +4,12 @@ async function CustomsClearanceInvoiceDetails() {
     const movementTypeElement = document.getElementById('movementType');
     const movementType = movementTypeElement.value;
 
+
     if (!partyCode) {
         alert('Please select a customer first.');
         return;
     }
+
 
     if (!invoiceDateElement.value) {
         alert('Please select an invoice date first.');
@@ -15,19 +17,23 @@ async function CustomsClearanceInvoiceDetails() {
         return;
     }
 
+
     if (!movementType) {
         alert('Please select a movement type first.');
         movementTypeElement.focus();
         return;
     }
 
+
     document.getElementById('fetchPendingInvoices').disabled = true;
     showSpinner();
+
 
     let totalFreight = 0, totalFSCAmt = 0, totalOtherAmt = 0;
     let totalSGST = 0, totalCGST = 0, totalIGST = 0, totalGST = 0, totalGrand = 0;
     let mergedChargesMap = {};
     let validDataFound = false;
+
 
     try {
         // Build query
@@ -40,7 +46,9 @@ async function CustomsClearanceInvoiceDetails() {
             .eq('IsLocked', false)
             .order('JobDate', { ascending: true });
 
+
         console.log('Fetching pending invoices for:', CompanyID, partyCode, movementType);
+
 
         // Movement type condition
         if (movementType === 'Customs Clearance') {
@@ -51,9 +59,12 @@ async function CustomsClearanceInvoiceDetails() {
             console.log('Fetching invoices for movement type:', movementType);
         }
 
+
         const { data, error } = await query;
 
+
         if (error) throw error;
+
 
         if (!data || data.length === 0) {
             alert('No pending invoices found or all are currently locked.');
@@ -61,20 +72,25 @@ async function CustomsClearanceInvoiceDetails() {
             return;
         }
 
+
         const bookingIds = data.map(item => item.id);
         lockedBookingIds = bookingIds;
         startAutoUnlockTimer();
 
+
         const tableBody = document.getElementById('pendingShipmentTable').querySelector('tbody');
         tableBody.innerHTML = '';
 
+
         // build dynamic header + footer
         createPendingShipmentTableHeaderAndFooter();
+
 
         for (const invoice of data) {
             console.log('Processing invoice:', invoice.id, invoice.JobID);
             const charges = await getBookingCharges_cc(invoice.id);
             if (!charges || charges.grandTotal <= 0) continue;
+
 
             const { error: lockError } = await supabaseClient
                 .from('CustomsClearance_Details')
@@ -86,7 +102,9 @@ async function CustomsClearanceInvoiceDetails() {
                 .eq('id', invoice.id);
             if (lockError) throw lockError;
 
+
             validDataFound = true;
+
 
             totalFreight += charges.BasicFrightAmt;
             totalFSCAmt += charges.FSCAmt;
@@ -97,6 +115,7 @@ async function CustomsClearanceInvoiceDetails() {
             totalGST += charges.totalGST;
             totalGrand += charges.grandTotal;
 
+
             for (const [type, amounts] of Object.entries(charges.chargesMap)) {
                 const normalizedType = toProperCase(type.trim().toLowerCase());
                 if (!mergedChargesMap[normalizedType]) {
@@ -106,6 +125,7 @@ async function CustomsClearanceInvoiceDetails() {
                     };
                 }
 
+
                 const entry = mergedChargesMap[normalizedType];
                 entry.TotalAmount += amounts.TotalAmount;
                 entry.SGSTAmt += amounts.SGSTAmt;
@@ -114,6 +134,7 @@ async function CustomsClearanceInvoiceDetails() {
                 entry.TotalGSTAmt += amounts.TotalGSTAmt;
                 entry.GrandTotalAmt += amounts.GrandTotalAmt;
             }
+
 
             const row = document.createElement('tr');
             row.setAttribute('data-ship-id', invoice.id);
@@ -139,17 +160,20 @@ async function CustomsClearanceInvoiceDetails() {
                 <td>${invoice.IGSTAmt.toFixed(2)}</td>
                 <td>${invoice.TotalGSTAmt.toFixed(2)}</td>
                 <td>${invoice.GrandTotalAmt.toFixed(2)}</td>
-                <td><button class="btn btn-danger btn-sm delete-btn" onclick="removeRow(this)"><i class="bi bi-trash"></i></button></td>
+                <td><button class="btn btn-danger btn-sm delete-btn" onclick="removeRow_cc(this)" disabled><i class="bi bi-trash"></i></button></td>
             `;
             tableBody.appendChild(row);
         }
+
 
         if (!validDataFound) {
             alert('No pending invoices with grand total greater than 0 found.');
         }
 
+
         updateTotals_cc({ totalFreight, totalSGST, totalCGST, totalIGST, totalGST, totalGrand });
         renderChargesTable(mergedChargesMap);
+
 
     } catch (err) {
         console.error('Error fetching or locking pending invoices:', err.message);
@@ -164,17 +188,21 @@ async function getBookingCharges_cc(bookingID) {
             .from('CustomsClearanceCharges')
             .select('ChargesType, TotalAmount, SGSTAmt, CGSTAmt, IGSTAmt, TotalGSTAmt, GrandTotalAmt')
             .eq('ID_CC', bookingID);
-
+        console.log('Fetching booking charges for ID:', bookingID, 'Data:', data);
         if (error) throw error;
 
+
         if (data.length === 0) return null;
+
 
         const chargesMap = {};
         let BasicFrightAmt = 0;
         let totalSGST = 0, totalCGST = 0, totalIGST = 0, totalGST = 0, grandTotal = 0;
 
+
         data.forEach(charge => {
             const type = (charge.ChargesType || 'Other').trim();
+
 
             if (!chargesMap[type]) {
                 chargesMap[type] = {
@@ -187,12 +215,14 @@ async function getBookingCharges_cc(bookingID) {
                 };
             }
 
+
             chargesMap[type].TotalAmount += parseFloat(charge.TotalAmount) || 0;
             chargesMap[type].SGSTAmt += parseFloat(charge.SGSTAmt) || 0;
             chargesMap[type].CGSTAmt += parseFloat(charge.CGSTAmt) || 0;
             chargesMap[type].IGSTAmt += parseFloat(charge.IGSTAmt) || 0;
             chargesMap[type].TotalGSTAmt += parseFloat(charge.TotalGSTAmt) || 0;
             chargesMap[type].GrandTotalAmt += parseFloat(charge.GrandTotalAmt) || 0;
+
 
             BasicFrightAmt += parseFloat(charge.TotalAmount) || 0;
             totalSGST += parseFloat(charge.SGSTAmt) || 0;
@@ -211,6 +241,7 @@ async function getBookingCharges_cc(bookingID) {
         });
         return { BasicFrightAmt, totalSGST, totalCGST, totalIGST, totalGST, grandTotal, chargesMap };
 
+
     } catch (err) {
         console.error('Error fetching booking charges:', err.message);
         return null;
@@ -223,11 +254,13 @@ async function unlockBooking_cc(userID) {
         return;
     }
 
+
     try {
         const { error } = await supabaseClient
             .from("CustomsClearance_Details")
             .update({ IsLocked: false })
             .eq("LockedBy", userID);
+
 
         if (error) {
             console.error("Failed to unlock booking:", error.message);
@@ -266,19 +299,23 @@ async function createPendingShipmentTableHeaderAndFooter() {
         "Action"
     ];
 
+
     const footerTotals = [
         { colspan: 15, label: "Totals:", align: "text-end" },
 
-        { id: "totalFreight" },
-        { id: "totalSGST" },
-        { id: "totalCGST" },
-        { id: "totalIGST" },
-        { id: "totalGST" },
-        { id: "totalGrand" },
+
+        { id: "totalFreight_sc" },
+        { id: "totalSGST_sc" },
+        { id: "totalCGST_sc" },
+        { id: "totalIGST_sc" },
+        { id: "totalGST_sc" },
+        { id: "totalGrand_sc" },
         { empty: true }
     ];
 
+
     const table = document.getElementById("pendingShipmentTable");
+
 
     // Remove old head/foot if exists
     const oldHead = table.querySelector("thead");
@@ -286,9 +323,11 @@ async function createPendingShipmentTableHeaderAndFooter() {
     if (oldHead) oldHead.remove();
     if (oldFoot) oldFoot.remove();
 
+
     // Create THEAD
     const thead = document.createElement("thead");
     thead.classList.add("table-light");
+
 
     const headRow = document.createElement("tr");
     headerCols.forEach(text => {
@@ -299,12 +338,15 @@ async function createPendingShipmentTableHeaderAndFooter() {
     thead.appendChild(headRow);
     table.prepend(thead);
 
+
     // Create TFOOT
     const tfoot = document.createElement("tfoot");
     tfoot.classList.add("table-light");
 
+
     const footRow = document.createElement("tr");
     footRow.id = "totalsRow";
+
 
     footerTotals.forEach(item => {
         const th = document.createElement("th");
@@ -320,47 +362,46 @@ async function createPendingShipmentTableHeaderAndFooter() {
         footRow.appendChild(th);
     });
 
+
     tfoot.appendChild(footRow);
     table.appendChild(tfoot);
 }
 
-function updateTotals_cc(totals) {
-    const setValue = (id, value) => {
-        const el = document.getElementById(id);
-        if (el) el.textContent = value.toFixed(2);
+function updateTotals_cc() {
+    const rows = document.querySelectorAll('#pendingShipmentTable tbody tr');
+    const totals = {
+        totalFreight: 0,
+        totalSGST: 0,
+        totalCGST: 0,
+        totalIGST: 0,
+        totalGST: 0,
+        totalGrand: 0
     };
 
-    setValue('totalFreight', totals.totalFreight);
-    setValue('totalSGST', totals.totalSGST);
-    setValue('totalCGST', totals.totalCGST);
-    setValue('totalIGST', totals.totalIGST);
-    setValue('totalGST', totals.totalGST);
-    setValue('totalGrand', totals.totalGrand);
+    rows.forEach(r => {
+        totals.totalFreight += parseFloat(r.cells[15]?.textContent) || 0;
+        totals.totalSGST += parseFloat(r.cells[16]?.textContent) || 0;
+        totals.totalCGST += parseFloat(r.cells[17]?.textContent) || 0;
+        totals.totalIGST += parseFloat(r.cells[18]?.textContent) || 0;
+        totals.totalGST += parseFloat(r.cells[19]?.textContent) || 0;
+        totals.totalGrand += parseFloat(r.cells[20]?.textContent) || 0;
+    });
 
-    invoiceData.BasicAmount = parseFloat(totals.totalFreight) || 0;
-    invoiceData.CGSTAmount = parseFloat(totals.totalCGST) || 0;
-    invoiceData.SGSTAmount = parseFloat(totals.totalSGST) || 0;
-    invoiceData.IGSTAmount = parseFloat(totals.totalIGST) || 0;
-    invoiceData.TotalGSTAmount = parseFloat(totals.totalGST) || 0;
-    invoiceData.GrandTotalAmount = parseFloat(totals.totalGrand) || 0;
+    // Render totals to UI
+    document.getElementById('totalFreight_sc').textContent = totals.totalFreight.toFixed(2);
+    document.getElementById('totalSGST_sc').textContent = totals.totalSGST.toFixed(2);
+    document.getElementById('totalCGST_sc').textContent = totals.totalCGST.toFixed(2);
+    document.getElementById('totalIGST_sc').textContent = totals.totalIGST.toFixed(2);
+    document.getElementById('totalGST_sc').textContent = totals.totalGST.toFixed(2);
+    document.getElementById('totalGrand_sc').textContent = totals.totalGrand.toFixed(2);
 }
 
 async function updateInvoiceNumbers_cc(invNo) {
     const tableBody = document.getElementById('pendingShipmentTable').querySelector('tbody');
     const rows = tableBody.querySelectorAll('tr');
-
+    console.log('Updating invoice numbers for:', invNo);
     const shipmentIds = [];
 
-    // Extract IDs from a hidden column or dataset
-    rows.forEach(row => {
-        const shipId = row.getAttribute('data-ship-id'); // Assuming you store the shipment ID here
-        if (shipId) shipmentIds.push(parseInt(shipId));
-    });
-    console.log('Shipment IDs to update:', shipmentIds);
-    if (shipmentIds.length === 0) {
-        console.warn('No shipment IDs found for invoice update.');
-        return;
-    }
 
     // Step 1: Clear existing assignments
     const { error: clearError } = await supabaseClient
@@ -369,6 +410,18 @@ async function updateInvoiceNumbers_cc(invNo) {
             InvoiceNo: null
         })
         .eq('InvoiceNo', invNo); // Corrected: Use eq for a single invoice number
+
+
+    // Extract IDs from a hidden column or dataset
+    rows.forEach(row => {
+        const shipId = row.getAttribute('data-ship-id'); // Assuming you store the shipment ID here
+        if (shipId) shipmentIds.push(parseInt(shipId));
+    });
+
+    if (shipmentIds.length === 0) {
+        console.warn('No shipment IDs found for invoice update.');
+        return;
+    }
 
     console.log('Clearing previous invoice assignments for:', invNo);
     if (clearError) {
@@ -385,13 +438,16 @@ async function updateInvoiceNumbers_cc(invNo) {
         })
         .in('id', shipmentIds);
 
+
     if (updateError) {
         console.error('Error updating invoice numbers:', updateError.message);
         throw updateError;
     }
 
+
     console.log('Invoice numbers updated for shipments:', shipmentIds);
 }
+
 
 async function loadInvoiceLineItems_cc(invoiceNo) {
     if (!invoiceNo) {
@@ -422,6 +478,7 @@ async function loadInvoiceLineItems_cc(invoiceNo) {
 
         if (error) throw error;
 
+
         if (!data || data.length === 0) {
             alert('No shipments found for this invoice.');
             return;
@@ -430,7 +487,9 @@ async function loadInvoiceLineItems_cc(invoiceNo) {
         const tableBody = document.getElementById('pendingShipmentTable').querySelector('tbody');
         tableBody.innerHTML = '';
 
+
         await createPendingShipmentTableHeaderAndFooter(); // Ensure header/footer is created
+
 
         for (const invoice of data) {
             const charges = await getBookingCharges_cc(invoice.id);
@@ -492,48 +551,67 @@ async function loadInvoiceLineItems_cc(invoiceNo) {
                 <td>${invoice.IGSTAmt.toFixed(2)}</td>
                 <td>${invoice.TotalGSTAmt.toFixed(2)}</td>
                 <td>${invoice.GrandTotalAmt.toFixed(2)}</td>
-                <td><button class="btn btn-danger btn-sm delete-btn" onclick="removeRow(this)"><i class="bi bi-trash"></i></button></td>
+                <td><button class="btn btn-danger btn-sm delete-btn" onclick="removeRow_cc(this)" disabled><i class="bi bi-trash"></i></button></td>
             `;
             tableBody.appendChild(row);
         }
 
+
         updateTotals_cc(totals);
         renderChargesTable(mergedChargesMap);
 
+
     } catch (err) {
-        console.error('Error loading linked bookings:', err.message);
+        console.error('Error loading linked bookings:', err.message, err);
         alert('Error loading bookings. Please try again.');
     } finally {
         hideSpinner();
     }
 }
 
+
 async function addSingleShipmentToInvoice_cc(shipmentNo, invoiceNo) {
     showSpinner();
+    console.log('Adding single shipment to Customs Clearance Invoice:', shipmentNo, 'Invoice No:', invoiceNo);
+    const partyCode = document.getElementById('partyCode').value.trim();
+    console.log('Party Code:', partyCode, 'Company ID:', CompanyID, 'User Login ID:', UserLoginID);
 
     try {
-        // Fetch shipment details
+        // Step 1: Fetch shipment details
         const { data, error } = await supabaseClient
             .from('CustomsClearanceView')
             .select('*')
             .eq('company_id', CompanyID)
             .eq('JobID', shipmentNo)
-            .is('InvoiceNo', null)
-            .eq('IsLocked', false)
             .single();
 
+        console.log('Fetched shipment data:', data, 'Error:', error);
+
         if (error || !data) {
-            alert('Shipment not found or already locked.');
+            alert(`Shipment ${shipmentNo} not found.`);
             return;
         }
 
-        const charges = await getBookingCharges(data.id);
+        // Step 2: Already linked check
+        if (data.InvoiceNo) {
+            alert(`Shipment ${shipmentNo} is already linked to Invoice No: ${data.InvoiceNo}.`);
+            return;
+        }
+
+        // Step 3: Locked check
+        if (data.IsLocked) {
+            alert(`Shipment ${shipmentNo} is currently locked by another process/user.`);
+            return;
+        }
+
+        // Step 4: Get charges
+        const charges = await getBookingCharges_cc(data.id);
         if (!charges || charges.grandTotal <= 0) {
             alert('No valid charges for this shipment.');
             return;
         }
 
-        // Lock the shipment and assign invoice number
+        // Step 5: Lock and assign invoice number
         const { error: updateError } = await supabaseClient
             .from('CustomsClearance_Details')
             .update({
@@ -542,47 +620,113 @@ async function addSingleShipmentToInvoice_cc(shipmentNo, invoiceNo) {
                 LockedBy: UserLoginID,
                 LockedAt: localtimeStamp
             })
-            .eq('id', data.id);
+            .eq('id', data.id)
+            .eq('company_id', CompanyID)
+            .eq('PartyCode', partyCode);
 
         if (updateError) throw updateError;
 
-        // Add to table
+        // Step 6: Add shipment row
         const tableBody = document.getElementById('pendingShipmentTable').querySelector('tbody');
         const row = document.createElement('tr');
         row.setAttribute('data-ship-id', data.id);
         row.innerHTML = `
             <td>${tableBody.children.length + 1}</td>
-                <td>${invoice.JobID || ''}</td>
-                <td>${invoice.JobDate || ''}</td>
-                <td>${invoice.BLAWBNo || ''}</td>
-                <td>${invoice.BLAWBDate || ''}</td>
-                <td>${invoice.BENo || ''}</td>
-                <td>${invoice.BEDate || ''}</td>
-                <td>${invoice.MovementType || ''}</td>
-                <td>${invoice.TransitType || ''}</td>
-                <td>${invoice.ModeType || ''}</td>
-                <td>${invoice.CustomsBroker || ''}</td>
-                <td>${invoice.ClearancePort || ''}</td>
-                <td>${invoice.ClearanceCountry || ''}</td>
-                <td>${invoice.Quantity || ''}</td>
-                <td>${invoice.CargoWeight || ''}</td>
-                <td>${invoice.TotalAmount.toFixed(2)}</td>
-                <td>${invoice.SGSTAmt.toFixed(2)}</td>
-                <td>${invoice.CGSTAmt.toFixed(2)}</td>
-                <td>${invoice.IGSTAmt.toFixed(2)}</td>
-                <td>${invoice.TotalGSTAmt.toFixed(2)}</td>
-                <td>${invoice.GrandTotalAmt.toFixed(2)}</td>
-                <td><button class="btn btn-danger btn-sm delete-btn" onclick="removeRow(this)"><i class="bi bi-trash"></i></button></td>
-            `;
+            <td>${data.JobID || ''}</td>
+            <td>${data.JobDate || ''}</td>
+            <td>${data.BLAWBNo || ''}</td>
+            <td>${data.BLAWBDate || ''}</td>
+            <td>${data.BENo || ''}</td>
+            <td>${data.BEDate || ''}</td>
+            <td>${data.MovementType || ''}</td>
+            <td>${data.TransitType || ''}</td>
+            <td>${data.ModeType || ''}</td>
+            <td>${data.CustomsBroker || ''}</td>
+            <td>${data.ClearancePort || ''}</td>
+            <td>${data.ClearanceCountry || ''}</td>
+            <td>${data.Quantity || ''}</td>
+            <td>${data.CargoWeight || ''}</td>
+            <td>${data.TotalAmount.toFixed(2)}</td>
+            <td>${data.SGSTAmt.toFixed(2)}</td>
+            <td>${data.CGSTAmt.toFixed(2)}</td>
+            <td>${data.IGSTAmt.toFixed(2)}</td>
+            <td>${data.TotalGSTAmt.toFixed(2)}</td>
+            <td>${data.GrandTotalAmt.toFixed(2)}</td>
+            <td><button class="btn btn-danger btn-sm delete-btn" onclick="removeRow_cc(this)" disabled><i class="bi bi-trash"></i></button></td>
+        `;
         tableBody.appendChild(row);
 
-        // Optionally update your totals here (if required)
+        // ✅ Step 7: Merge charges into global map and re-render charges table
+        mergeChargesIntoMap(charges);
+        renderChargesTable(mergedChargesMap);
+
+        // ✅ Update totals if needed
+        updateTotals_cc();
+
         alert('Shipment added successfully!');
 
     } catch (err) {
-        console.error('Error adding shipment:', err.message);
+        console.error('Error adding shipment:', err.message, err);
         alert('Error adding shipment: ' + err.message);
     } finally {
         hideSpinner();
     }
 }
+
+// Utility to merge charges
+function mergeChargesIntoMap(newCharges) {
+    if (!window.mergedChargesMap) window.mergedChargesMap = {};
+
+    for (const [type, amounts] of Object.entries(newCharges)) {
+        if (!mergedChargesMap[type]) {
+            mergedChargesMap[type] = { ...amounts };
+        } else {
+            mergedChargesMap[type].TotalAmount += amounts.TotalAmount;
+            mergedChargesMap[type].SGSTAmt += amounts.SGSTAmt;
+            mergedChargesMap[type].CGSTAmt += amounts.CGSTAmt;
+            mergedChargesMap[type].IGSTAmt += amounts.IGSTAmt;
+            mergedChargesMap[type].TotalGSTAmt += amounts.TotalGSTAmt;
+            mergedChargesMap[type].GrandTotalAmt += amounts.GrandTotalAmt;
+        }
+    }
+}
+
+
+async function removeRow_cc(button) {
+    const row = button.closest('tr');
+    if (!row) return;
+
+    const shipId = row.getAttribute('data-ship-id');
+    if (shipId) unlockShipmentRecord_cc(shipId);
+
+    // Remove the row
+    row.remove();
+
+    // Recalculate totals from scratch
+    await recalcTotals_cc();
+}
+
+async function recalcTotals_cc() {
+    const rows = document.querySelectorAll('#totalsRow tbody tr');
+    const totals = {
+        totalFreight: 0,
+        totalSGST: 0,
+        totalCGST: 0,
+        totalIGST: 0,
+        totalGST: 0,
+        totalGrand: 0
+    };
+
+    rows.forEach(r => {
+        totals.totalFreight += parseFloat(r.cells[15]?.textContent) || 0;
+        totals.totalSGST += parseFloat(r.cells[16]?.textContent) || 0;
+        totals.totalCGST += parseFloat(r.cells[17]?.textContent) || 0;
+        totals.totalIGST += parseFloat(r.cells[18]?.textContent) || 0;
+        totals.totalGST += parseFloat(r.cells[19]?.textContent) || 0;
+        totals.totalGrand += parseFloat(r.cells[20]?.textContent) || 0;
+    });
+
+
+    updateTotals_cc(totals);
+}
+

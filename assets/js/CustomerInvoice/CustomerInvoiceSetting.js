@@ -124,7 +124,7 @@ async function generateInvoiceNumber(invoiceDateValue) {
 function renderChargesTable(chargesMap) {
     const tbody = document.querySelector('#pendingShipmentCharges tbody');
     tbody.innerHTML = '';
-
+    console.log('Rendering charges table with chargesMap:', chargesMap);
     let totalAmount = 0, totalSGST = 0, totalCGST = 0, totalIGST = 0, totalGSTAmt = 0, totalGrandAmt = 0;
 
     Object.entries(chargesMap).forEach(([type, amounts]) => {
@@ -132,12 +132,12 @@ function renderChargesTable(chargesMap) {
 
         row.innerHTML = `
             <td>${type}</td>
-            <td class="text-end">${amounts.TotalAmount.toFixed(2)}</td>
-            <td class="text-end">${amounts.SGSTAmt.toFixed(2)}</td>
-            <td class="text-end">${amounts.CGSTAmt.toFixed(2)}</td>
-            <td class="text-end">${amounts.IGSTAmt.toFixed(2)}</td>
-            <td class="text-end">${amounts.TotalGSTAmt.toFixed(2)}</td>
-            <td class="text-end">${amounts.GrandTotalAmt.toFixed(2)}</td>
+            <td class="text-end">${amounts.TotalAmount}</td>
+            <td class="text-end">${amounts.SGSTAmt}</td>
+            <td class="text-end">${amounts.CGSTAmt}</td>
+            <td class="text-end">${amounts.IGSTAmt}</td>
+            <td class="text-end">${amounts.TotalGSTAmt}</td>
+            <td class="text-end">${amounts.GrandTotalAmt}</td>
         `;
 
         tbody.appendChild(row);
@@ -178,47 +178,6 @@ document.getElementById('fetchPendingInvoices').addEventListener('click', async 
         console.warn('Unknown movement type:', type);
     }
 });
-
-function removeRow(button) {
-    const row = button.closest('tr');
-    if (!row) return;
-
-    // Get the shipment ID
-    const shipId = row.getAttribute('data-ship-id');
-    if (shipId) {
-        // Optional: Remove from lockedBookingIds if you maintain this array
-        const index = lockedBookingIds.indexOf(parseInt(shipId));
-        if (index !== -1) {
-            lockedBookingIds.splice(index, 1);
-        }
-
-        // Optional: Unlock the record in the database
-        unlockShipmentRecord(shipId);
-    }
-
-    // Get the amounts from the row
-    const freightAmt = parseFloat(row.cells[10].textContent) || 0;
-    const fscAmt = parseFloat(row.cells[11].textContent) || 0;
-    const otherAmt = parseFloat(row.cells[12].textContent) || 0;
-    const sgstAmt = parseFloat(row.cells[13].textContent) || 0;
-    const cgstAmt = parseFloat(row.cells[14].textContent) || 0;
-    const igstAmt = parseFloat(row.cells[15].textContent) || 0;
-    const gstAmt = parseFloat(row.cells[16].textContent) || 0;
-    const grandAmt = parseFloat(row.cells[17].textContent) || 0;
-
-    // Subtract from totals
-    document.getElementById('totalFreight').textContent = (parseFloat(document.getElementById('totalFreight').textContent) - freightAmt).toFixed(2);
-    document.getElementById('totalFSCAmt').textContent = (parseFloat(document.getElementById('totalFSCAmt').textContent) - fscAmt).toFixed(2);
-    document.getElementById('totalOtherAmt').textContent = (parseFloat(document.getElementById('totalOtherAmt').textContent) - otherAmt).toFixed(2);
-    document.getElementById('totalSGST').textContent = (parseFloat(document.getElementById('totalSGST').textContent) - sgstAmt).toFixed(2);
-    document.getElementById('totalCGST').textContent = (parseFloat(document.getElementById('totalCGST').textContent) - cgstAmt).toFixed(2);
-    document.getElementById('totalIGST').textContent = (parseFloat(document.getElementById('totalIGST').textContent) - igstAmt).toFixed(2);
-    document.getElementById('totalGST').textContent = (parseFloat(document.getElementById('totalGST').textContent) - gstAmt).toFixed(2);
-    document.getElementById('totalGrand').textContent = (parseFloat(document.getElementById('totalGrand').textContent) - grandAmt).toFixed(2);
-
-    // Remove row from table
-    row.remove();
-}
 
 function showSpinner() {
     document.getElementById('loadingSpinner').classList.remove('d-none');
@@ -326,7 +285,7 @@ document.getElementById('newButton').addEventListener('click', async () => {
     // Optional: Reset focus
     document.getElementById('partyName').focus();
     await loadInvoiceNoSuggestions();
-    await unlockBooking(UserLoginID); // Unlock booking for the current user
+    await unlockBooking_ib(UserLoginID); // Unlock booking for the current user
     await unlockBooking_cc(UserLoginID); // Unlock booking for the current user in Customs Clearance
 
 });
@@ -626,9 +585,11 @@ document.getElementById('invoiceNo').addEventListener('change', async (e) => {
         // Check the value and run the relevant function
         if (invoiceDetails.InvoiceType === 'Forwarding' || invoiceDetails.InvoiceType === 'Import' || invoiceDetails.InvoiceType === 'Export') {
             console.log('Fetching pending invoices for Forwarding/Import/Export');
+            await createPendingShipmentTableHeaderAndFooter_ib();
             await loadInvoiceBookings(invoiceNo);
         }
         else if (invoiceDetails.InvoiceType === 'Customs Clearance') {
+            await createPendingShipmentTableHeaderAndFooter();
             await loadInvoiceLineItems_cc(invoiceNo); // Load Customs Clearance bookings if applicable
         }
         else {
@@ -641,7 +602,9 @@ document.getElementById('addShipmentNo').addEventListener('click', async () => {
     const shipmentNo = document.getElementById('shipmentNo').value.trim();
     const invoiceNo = document.getElementById('invoiceNo').value.trim();
     const saveSpinner = document.getElementById('saveSpinner');
+    const movementType = document.getElementById('movementType').value.trim();
 
+    console.log('Adding Shipment No:', shipmentNo, 'to Invoice No:', invoiceNo, 'for Movement Type:', movementType);
     if (!shipmentNo) {
         alert('Please enter/select a Shipment Number.');
         return;
@@ -655,16 +618,28 @@ document.getElementById('addShipmentNo').addEventListener('click', async () => {
     // Show spinner and disable button
     saveSpinner.classList.remove('d-none');
 
-    await addSingleShipmentToInvoice(shipmentNo, invoiceNo);
+    // Check the value and run the relevant function
+    if (movementType === 'Forwarding' || movementType === 'Import' || movementType === 'Export') {
+        console.log('Fetching pending invoices for Forwarding/Import/Export');
+        await addSingleShipmentToInvoice(shipmentNo, invoiceNo);
+    }
+    else if (movementType === 'Customs Clearance') {
+        console.log('Adding Shipment No to Customs Clearance Invoice');
+        await addSingleShipmentToInvoice_cc(shipmentNo, invoiceNo);
+    }
+    else {
+        console.warn('Unknown movement type:', type);
+    }
+
+    hideSpinner();
 });
 
 window.addEventListener('beforeunload', async (event) => {
     showSpinner();
     // Your logic here, like unlocking a row in Supabase
     // WARNING: async operations are not guaranteed to finish before the unload
-    navigator.sendBeacon('/your-server-endpoint', JSON.stringify({ unlock: true }));
 
-    await unlockBooking(UserLoginID); // Unlock booking for the current user
+    await unlockBooking_ib(UserLoginID); // Unlock booking for the current user
     await unlockBooking_cc(UserLoginID); // Unlock booking for the current user in Customs Clearance
 
     // Optionally show a confirmation dialog (some browsers ignore it now)

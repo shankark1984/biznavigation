@@ -440,7 +440,7 @@ async function loadBankNameSuggestions() {
             .eq('DefaultBank', 'Yes');
 
         if (error) {
-            console.error('Error loading bank data:', error.message);
+            // console.error('Error loading bank data:', error.message);
             return;
         }
 
@@ -461,8 +461,6 @@ async function loadBankNameSuggestions() {
 document.addEventListener('DOMContentLoaded', () => {
     loadBankNameSuggestions();
 });
-
-
 
 // Load the default bank and set the input values
 async function loadDefaultBank() {
@@ -506,7 +504,7 @@ async function loadDefaultBank() {
 
         return id;
     } catch (err) {
-        console.error('Error loading default bank:', err.message);
+        // console.error('Error loading default bank:', err.message);
         return null;
     }
 }
@@ -535,7 +533,28 @@ async function unlockShipmentRecord(shipId) {
             .eq('id', shipId);
 
         if (error) {
-            console.error('Error unlocking shipment:', error.message);
+            // console.error('Error unlocking shipment:', error.message);
+        } else {
+            console.log(`Shipment ${shipId} unlocked successfully.`);
+        }
+    } catch (err) {
+        console.error('Error unlocking shipment:', err.message);
+    }
+}
+
+async function unlockShipmentRecord_cc(shipId) {
+    try {
+        const { error } = await supabaseClient
+            .from('CustomsClearance_Details')
+            .update({
+                IsLocked: false,
+                LockedBy: null,
+                LockedAt: null
+            })
+            .eq('id', shipId);
+
+        if (error) {
+            // console.error('Error unlocking shipment:', error.message);
         } else {
             console.log(`Shipment ${shipId} unlocked successfully.`);
         }
@@ -663,6 +682,7 @@ async function loadInvoiceNoSuggestions() {
                 .from('InvoiceDetails')
                 .select('InvoiceNo')
                 .eq('company_id', CompanyID)
+                .order('InvoiceNo', { ascending: false }) // ✅ Order ASC
                 .range(from, from + batchSize - 1);
 
             if (error) throw error;
@@ -681,7 +701,7 @@ async function loadInvoiceNoSuggestions() {
             }
         }
     } catch (err) {
-        console.error('Error loading invoice suggestions:', err.message);
+        // console.error('Error loading invoice suggestions:', err.message);
     }
 }
 
