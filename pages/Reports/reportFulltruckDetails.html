@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BizNavigation - Full-Truck Details</title>
+
+    <!-- Bootstrap & Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+
+    <!-- Flatpickr -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+
+    <!-- SheetJS, jsPDF, jsPDF AutoTable -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+
+    <!-- jQuery, Bootstrap JS, Flatpickr, Supabase -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr" defer></script>
+    <script src="https://unpkg.com/@supabase/supabase-js" defer></script>
+
+    <!-- UI Enhancements -->
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: #f8f9fa;
+        }
+
+        .table-responsive {
+            max-height: 500px;
+            overflow-y: auto;
+            overflow-x: auto;
+            background: #fff;
+            border-radius: 0.5rem;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        #bookingTable thead th {
+            position: sticky;
+            top: 0;
+            background-color: #343a40;
+            color: white;
+            z-index: 10;
+            cursor: pointer;
+            white-space: nowrap;
+            font-size: 0.85rem;
+            padding: 10px;
+            box-shadow: 0 2px 2px rgba(0, 0, 0, 0.05);
+        }
+
+        #bookingTable tbody td {
+            vertical-align: middle;
+            white-space: nowrap;
+            font-size: 0.8rem;
+            padding: 8px 10px;
+        }
+
+        #bookingTable tbody tr:hover {
+            background-color: #f1f1f1;
+        }
+
+        #bookingTable tbody tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        #bookingTable th,
+        #bookingTable td {
+            text-align: center;
+        }
+
+        @media (max-width: 768px) {
+
+            #bookingTable thead th,
+            #bookingTable tbody td {
+                font-size: 0.75rem;
+                padding: 6px 8px;
+            }
+        }
+
+        .table-wrapper {
+            border: 2px solid #6c757d;
+            /* Bootstrap secondary */
+            border-radius: 8px;
+            padding: 0;
+            overflow: hidden;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.05);
+        }
+    </style>
+</head>
+
+<body class="p-3">
+    <div class="container-fluid" style="margin-top: 55px;">
+
+        <!-- Filter Toggle -->
+        <div class="mb-3 d-flex justify-content-between align-items-center flex-wrap">
+            <h2 class="mb-0">Full-Truck Details</h2>
+            <button class="btn btn-outline-secondary" type="button" data-bs-toggle="collapse"
+                data-bs-target="#filterSection">
+                <i class="bi bi-funnel"></i> Toggle Filters
+            </button>
+        </div>
+
+        <!-- Filters Section -->
+        <div class="collapse" id="filterSection">
+            <div class="row g-3 mb-4" id="searchFilters">
+                <!-- Inputs: Customer Name, Docket No, Date Range, Movement, Mode, Provider, Month, Year, Fin Year, Invoice Status -->
+                <div class="col-12 col-md-6 col-lg-3">
+                    <label for="customerName" class="form-label">Customer Name</label>
+                    <input id="customerName" class="form-control" list="customerNameList"
+                        placeholder="Enter Customer Name">
+                    <datalist id="customerNameList"></datalist>
+                </div>
+                <div class="col-6 col-md-6 col-lg-2">
+                    <label for="jobNo" class="form-label">Job No</label>
+                    <input id="jobNo" class="form-control" list="jobNoList" placeholder="Enter Job No"
+                        autocomplete="off">
+                    <datalist id="jobNoList"></datalist>
+                </div>
+
+                <div class="col-6 col-md-6 col-lg-2">
+                    <label for="bLAWBNo" class="form-label">BL / AWB No</label>
+                    <input id="bLAWBNo" class="form-control" list="bLAWBNoList" placeholder="BL / AWB No">
+                    <datalist id="bLAWBNoList"></datalist>
+                </div>
+
+                <div class="col-6 col-md-6 col-lg-2">
+                    <label for="bENo" class="form-label">BE No</label>
+                    <input id="bENo" class="form-control" list="bENoList" placeholder="BE No">
+                    <datalist id="bENoList"></datalist>
+                </div>
+                <div class="col-6 col-md-6 col-lg-3">
+                    <label for="dateRange" class="form-label">Booked Date Range</label>
+                    <input id="dateRange" class="form-control" placeholder="Select Date Range" readonly>
+                </div>
+                <div class="col-6 col-md-6 col-lg-2">
+                    <label for="movementType" class="form-label">Movement Type</label>
+                    <input id="movementType" class="form-control" list="movementTypeList" autocomplete="off"
+                        placeholder="Enter Movement Type">
+                    <datalist id="movementTypeList"></datalist>
+                </div>
+                <div class="col-6 col-md-6 col-lg-2">
+                    <label for="transitType" class="form-label">Transit Type</label>
+                    <input id="transitType" class="form-control" list="transitTypeList"
+                        placeholder="Enter Transit Type">
+                    <datalist id="transitTypeList"></datalist>
+                </div>
+                <div class="col-6 col-md-6 col-lg-2">
+                    <label for="modeType" class="form-label">Mode Type</label>
+                    <input id="modeType" class="form-control" list="modeTypeList" placeholder="Enter Mode Type">
+                    <datalist id="modeTypeList"></datalist>
+                </div>
+                <div class="col-6 col-md-6 col-lg-2">
+                    <label for="clearanceCountry" class="form-label">Clearance Country</label>
+                    <input id="clearanceCountry" class="form-control" list="clearanceCountryList"
+                        placeholder="Enter Service Provider">
+                    <datalist id="clearanceCountryList"></datalist>
+                </div>
+                <div class="col-6 col-md-6 col-lg-2">
+                    <label for="clearancePort" class="form-label">Clearance Port</label>
+                    <input id="clearancePort" class="form-control" list="clearancePortList"
+                        placeholder="Enter Service Provider">
+                    <datalist id="clearancePortList"></datalist>
+                </div>
+                <div class="col-6 col-md-2 col-lg-2">
+                    <label for="bookedMonth" class="form-label">Booked Month</label>
+                    <input type="month" id="bookedMonth" class="form-control">
+                </div>
+                <div class="col-6 col-md-4 col-lg-2">
+                    <label for="bookedYear" class="form-label">Booked Year</label>
+                    <input type="number" id="bookedYear" class="form-control" placeholder="YYYY" min="2000" max="2100">
+                </div>
+                <div class="col-6 col-md-4 col-lg-2">
+                    <label for="financialYear" class="form-label">Financial Year</label>
+                    <input id="financialYear" class="form-control" placeholder="YYYY-YYYY" list="financialYearList">
+                    <datalist id="financialYearList"></datalist>
+                </div>
+                <div class="col-6 col-md-4 col-lg-2">
+                    <label for="invoiceStatus" class="form-label">Invoice Status</label>
+                    <input id="invoiceStatus" class="form-control" list="invoiceStatusList" placeholder="Enter Status">
+                    <datalist id="invoiceStatusList"></datalist>
+                </div>
+                <div class="col-6 col-md-4 col-lg-2">
+                    <label for="customsBroker" class="form-label">Customs Broker</label>
+                    <input id="customsBroker" class="form-control" list="customsBrokerList"
+                        placeholder="Enter Customs Broker">
+                    <datalist id="customsBrokerList"></datalist>
+                </div>
+
+                <div class="col-6 col-md-2 col-lg-2 d-grid align-self-end">
+                    <button class="btn btn-primary" id="searchBtn"><i class="bi bi-search"></i> Search</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Spinner -->
+        <div id="loadingSpinner" class="text-center my-4" style="display: none;">
+            <div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div>
+        </div>
+
+        <!-- Table -->
+        <!-- Table with outer border -->
+        <div class="table-responsive border border-secondary rounded shadow-sm">
+            <table class="table table-bordered table-hover table-sm mb-0" id="bookingTable">
+                <thead class="table-dark text-center">
+                    <tr>
+                        <th data-key="RowID">Sr No</th>
+                        <th data-key="JobID">Job ID</th>
+                        <th data-key="JobDate">Job Date</th>
+                        <th data-key="PartyName">Customer Name</th>
+                        <th data-key="BLAWBNo">BL / AWB No</th>
+                        <th data-key="BLAWBDate">BL / AWB Date</th>
+                        <th data-key="BENo">BE No</th>
+                        <th data-key="BEDate">BE Date</th>
+                        <th data-key="MovementType">Movement Type</th>
+                        <th data-key="TransitType">Transit Type</th>
+                        <th data-key="ModeType">Mode Type</th>
+                        <th data-key="Consignee">Consignee</th>
+                        <th data-key="CustomsBroker">Customs Broker</th>
+                        <th data-key="ClearancePort">Clearance Port</th>
+                        <th data-key="ClearanceCountry">Clearance Country</th>
+                        <th data-key="Quantity">Quantity</th>
+                        <th data-key="CargoWeight">Cargo Weight</th>
+                        <th data-key="ClearanceMode">Clearance Mode</th>
+                        <th data-key="Commodity">Commodity</th>
+                        <th data-key="AnyInformation">Any Information</th>
+                        <th data-key="TotalAmount">Total Amount</th>
+                        <th data-key="SGST">SGST</th>
+                        <th data-key="CGST">CGST</th>
+                        <th data-key="IGST">IGST</th>
+                        <th data-key="GST">Total GST</th>
+                        <th data-key="GrandTotal">Grand Total</th>
+                        <th data-key="InvoiceNo">Invoice No</th>
+                        <th data-key="InvoiceStatus">Invoice Status</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+
+
+        <!-- Pagination & Export -->
+        <div class="mb-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
+            <nav>
+                <ul class="pagination mb-0" id="paginationControls"></ul>
+            </nav>
+            <div class="d-flex flex-wrap gap-2">
+                <button class="btn btn-success" id="exportExcelBtn"><i class="bi bi-file-earmark-excel"></i> Export to
+                    Excel</button>
+                <button class="btn btn-danger" id="exportPdfBtn"><i class="bi bi-file-earmark-pdf"></i> Export to
+                    PDF</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- App Scripts -->
+    <script src="../../assets/js/utils/server.js"></script>
+    <script src="../../assets/js/utils/navbar.js"></script>
+    <script src="../../assets/js/utils/footer.js"></script>
+    <script src="../../assets/js/utils/utils.js"></script>
+    <script src="../../assets/js/Report/reportCustomsClearance.js"></script>
+    <script src="../../assets/js/utils/logout.js"></script>
+</body>
+
+</html>

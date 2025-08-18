@@ -180,11 +180,13 @@ document.getElementById('fetchPendingInvoices').addEventListener('click', async 
 });
 
 function showSpinner() {
-    document.getElementById('loadingSpinner').classList.remove('d-none');
+    const spinner = document.getElementById('loadingSpinner');
+    if (spinner) spinner.classList.remove('d-none');
 }
 
 function hideSpinner() {
-    document.getElementById('loadingSpinner').classList.add('d-none');
+    const spinner = document.getElementById('loadingSpinner');
+    if (spinner) spinner.classList.add('d-none');
 }
 
 function updateTotals(totals) {
@@ -313,11 +315,69 @@ document.getElementById('deleteButton').addEventListener('click', () => {
     // Logic to delete the invoice
     alert('Delete functionality not implemented yet.');
 });
-document.getElementById('reportButton').addEventListener('click', () => {
+document.getElementById('reportButton').addEventListener('click', async () => {
     const invoiceNo = document.getElementById('invoiceNo').value;
     const partyName = document.getElementById('partyName').value;
-    const url = `rep_Invoice_Forwarding_Main.html?invoiceNo=${encodeURIComponent(invoiceNo)}&partyName=${encodeURIComponent(partyName)}`;
-
+    const invoiceType = document.getElementById('movementType').value;
+    const reportType = document.getElementById('reportType').value;
+    let url = null;
+    console.log('Generating report for Invoice No:', invoiceNo, 'Party Name:', partyName, 'Invoice Type:', invoiceType);
+    // Check the value and run the relevant function
+    if (invoiceType === 'Forwarding' || invoiceType === 'Import' || invoiceType === 'Export') {
+        if (reportType === '') {
+            url = `pages/reports/rep_Invoice_Forwarding_Main.html?invoiceNo=${encodeURIComponent(invoiceNo)}&partyName=${encodeURIComponent(partyName)}`;
+        } else if (reportType === 'Latter Head') {
+            url = `rep_Invoice_Forwarding_Main.html?invoiceNo=${encodeURIComponent(invoiceNo)}&partyName=${encodeURIComponent(partyName)}`;
+            console.log('Generating report for International Booking Invoice');
+        } else if (reportType === 'Print Annexure') {
+            url = `rep_Invoice_Forwarding_Annexure.html?invoiceNo=${encodeURIComponent(invoiceNo)}&partyName=${encodeURIComponent(partyName)}`;
+            console.log('Generating report for International Booking Invoice Annexure');
+        }
+    }
+    else if (invoiceType === 'Customs Clearance') {
+        if (reportType === '') {
+            url = `rep_Invoice_CustomsClearance_Main.html?invoiceNo=${encodeURIComponent(invoiceNo)}&partyName=${encodeURIComponent(partyName)}`;
+            console.log('Generating report for Customs Clearance Invoice');
+        } else if (reportType === 'Latter Head') {
+            url = `rep_Invoice_CustomsClearance_Main.html?invoiceNo=${encodeURIComponent(invoiceNo)}&partyName=${encodeURIComponent(partyName)}`;
+            console.log('Generating report for Customs Clearance Invoice');
+        } else if (reportType === 'Print Annexure') {
+            url = `rep_Invoice_CustomsClearance_Annexure.html?invoiceNo=${encodeURIComponent(invoiceNo)}&partyName=${encodeURIComponent(partyName)}`;
+            console.log('Generating report for Customs Clearance Invoice Annexure');
+        }
+    }
+    else if (invoiceType === 'Domestic') {
+        if (reportType === '') {
+            url = `rep_Invoice_Domestic_Main.html?invoiceNo=${encodeURIComponent(invoiceNo)}&partyName=${encodeURIComponent(partyName)}`;
+            console.log('Generating report for Domestic Booking Invoice');
+        } else if (reportType === 'Latter Head') {
+            url = `rep_Invoice_Domestic_Main.html?invoiceNo=${encodeURIComponent(invoiceNo)}&partyName=${encodeURIComponent(partyName)}`;
+            console.log('Generating report for Domestic Booking Invoice');
+        } else if (reportType === 'Print Annexure') {
+            url = `rep_Invoice_Domestic_Annexure.html?invoiceNo=${encodeURIComponent(invoiceNo)}&partyName=${encodeURIComponent(partyName)}`;
+            console.log('Generating report for Domestic Booking Invoice Annexure');
+        }
+    }
+    else if (invoiceType === 'FTL or FCL') {
+        if (reportType === '') {
+            url = `rep_Invoice_FTLFCL_Main.html?invoiceNo=${encodeURIComponent(invoiceNo)}&partyName=${encodeURIComponent(partyName)}`;
+            console.log('Generating report for FTL or FCL Booking Invoice');
+        } else if (reportType === 'Latter Head') {
+            url = `rep_Invoice_FTLFCL_Main.html?invoiceNo=${encodeURIComponent(invoiceNo)}&partyName=${encodeURIComponent(partyName)}`;
+            console.log('Generating report for FTL or FCL Booking Invoice');
+        } else if (reportType === 'Print Annexure') {
+            url = `rep_Invoice_FTLFCL_Annexure.html?invoiceNo=${encodeURIComponent(invoiceNo)}&partyName=${encodeURIComponent(partyName)}`;
+            console.log('Generating report for FTL or FCL Booking Invoice Annexure');
+        }
+    } else {
+        alert('Unknown invoice type selected. Please select a valid invoice type.');
+        return;
+    }
+    // Open the report in a new window
+    if (!url) {
+        alert('Please select a valid invoice type to generate report.');
+        return;
+    }
     window.open(
         url,
         'InvoiceReportPopup',
@@ -576,6 +636,7 @@ document.getElementById('invoiceNo').addEventListener('change', async (e) => {
 
         // Load international_booking records linked to this invoice
         disableForm(); // Disable form after loading invoice details
+
         saveButton.disabled = true; // Disable save button
         document.getElementById('modifyButton').disabled = false; // Enable modify button
         document.getElementById('deleteButton').disabled = true; // Enable delete button

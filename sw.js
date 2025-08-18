@@ -49,7 +49,7 @@ self.addEventListener('fetch', event => {
             return (
                 cacheRes ||
                 fetch(event.request).catch(() =>
-                    caches.match('/offline.html') // Optional offline fallback
+                    caches.match('/pages/Tools/offline.html') // Optional offline fallback
                 )
             );
         })

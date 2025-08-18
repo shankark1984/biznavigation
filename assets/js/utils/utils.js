@@ -5,9 +5,13 @@ function enableForm() {
 
 // ✅ Disable all form inputs
 function disableForm() {
-    document.querySelectorAll('input, select, textarea, option').forEach(el => el.disabled = true);
+    const exemptIds = ['reportType']; // list of allowed fields
+    document.querySelectorAll('input, select, textarea').forEach(el => {
+        if (!exemptIds.includes(el.id)) {
+            el.disabled = true;
+        }
+    });
 }
-
 // ✅ Clear all input fields including selects, checkboxes, and textareas
 function clearForm() {
     document.querySelectorAll("input, select, textarea").forEach(input => {

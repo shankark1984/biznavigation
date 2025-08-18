@@ -234,8 +234,8 @@ document.getElementById('branchPANNo').addEventListener('blur', async () => {
 
 function updateCompanyLogo(companyID) {
     const logo = document.getElementById('companylogo');
-    const fallback = 'assets/img/logo/default.png';
-    const path = `assets/img/logo/${companyID}.png`;
+    const fallback = '../../assets/img/logo/default.png';
+    const path = `../../assets/img/logo/${companyID}.png`;
 
     if (!logo) return;
 

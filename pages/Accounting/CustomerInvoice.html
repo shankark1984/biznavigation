@@ -287,15 +287,29 @@
                                 <i class="bi bi-plus-circle"></i>
                             </button>
                         </div>
+                        <div class="col-md-3">
+                            <label for="reportType" class="form-label">Report Type</label>
+                            <select class="form-select" id="reportType">
+                                <option value="">Choose...</option>
+                                <option value="Latter Head">Latter Head</option>
+                                <option value="Print Annexure">Print Annexure</option>
+                                <!-- <option value="Domestic Booking">R3</option>
+                                <option value="FTL or FCL Booking">R4</option>
+                                <option value="Import Booking">R5</option> -->
+                            </select>
+                        </div>
+
                     </div>
                 </form>
 
                 <!-- Loading Spinner -->
-                <div id="loadingSpinner" class="text-center my-3 d-none">
-                    <div class="spinner-border text-primary" role="status">
+                <div id="loadingSpinner"
+                    class="d-none position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center bg-dark bg-opacity-50">
+                    <div class="spinner-border text-light" role="status">
                         <span class="visually-hidden">Loading...</span>
                     </div>
                 </div>
+
 
                 <!-- Address Selection Modal -->
                 <div class="modal fade" id="addressSelectionModal" tabindex="-1" aria-labelledby="addressModalLabel"
@@ -322,14 +336,14 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/2.3.10/purify.min.js" defer></script>
     <script src="https://unpkg.com/@supabase/supabase-js" defer></script>
 
-    <script src="assets/js/utils/server.js"></script>
-    <script src="assets/js/utils/navbar.js"></script>
-    <script src="assets/js/utils/footer.js"></script>
-    <script src="assets/js/utils/utils.js"></script>
-    <script src="assets/js/CustomerInvoice/CustomerInvoiceSetting.js"></script>
-    <script src="assets/js/CustomerInvoice/InternationalBookingInvoice.js"></script>
-    <script src="assets/js/CustomerInvoice/CustomsClearanceInvoice.js"></script>
-    <script src="assets/js/utils/logout.js"></script>
+    <script src="../../assets/js/utils/server.js"></script>
+    <script src="../../assets/js/utils/navbar.js"></script>
+    <script src="../../assets/js/utils/footer.js"></script>
+    <script src="../../assets/js/utils/utils.js"></script>
+    <script src="../../assets/js/CustomerInvoice/CustomerInvoiceSetting.js"></script>
+    <script src="../../assets/js/CustomerInvoice/InternationalBookingInvoice.js"></script>
+    <script src="../../assets/js/CustomerInvoice/CustomsClearanceInvoice.js"></script>
+    <script src="../../assets/js/utils/logout.js"></script>
 
 </body>
 

@@ -67,7 +67,7 @@ async function login() {
             showError('Invalid username or password.');
         } else {
             storeUserDetails(data);
-            window.location.href = 'home.html';
+            window.location.href = '/pages/Tools/home.html';
         }
     } catch (err) {
         console.error('Login Error:', err);

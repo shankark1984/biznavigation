@@ -2,10 +2,11 @@ document.addEventListener("DOMContentLoaded", () => {
   // Redirect to login if not logged in
   const userLoginID = localStorage.getItem('UserLoginID');
   if (!userLoginID) {
-    location.replace('index.html');
+    location.replace('/index.html');
     return;
   }
 
+  // Helper: create dropdown section
   const menuSection = (title, items) => `
     <li class="nav-item dropdown">
         <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">${title}</a>
@@ -18,20 +19,30 @@ document.addEventListener("DOMContentLoaded", () => {
         </ul>
     </li>`;
 
+  // ✅ Generate FormID
   const generateFormID = (item) => {
-    if (item.href.includes('PaymentDetails.html')) {
+    if (item.href.includes("PaymentDetails.html")) {
       const url = new URL(item.href, window.location.origin);
-      const type = url.searchParams.get('type') || '';
+      const type = url.searchParams.get("type") || "";
       return `PaymentDetails${type}`; // Example: PaymentDetailsCredit
     }
-    return item.href.replace('.html', '').replace(/[^a-zA-Z0-9]/g, '');
+    return item.href
+      .replace("/pages/master/", "")
+      .replace("/pages/Accounting/", "")
+      .replace("/pages/Functions/", "")
+      .replace("/pages/Reports/", "")
+      .replace("/pages/Tools/", "")
+      .replace("/reports/", "")
+      .replace(".html", "")
+      .replace(/[^a-zA-Z0-9]/g, "");
   };
 
+  // ✅ Navbar HTML
   const header = `
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
         <div class="container-fluid">
-            <a class="navbar-brand d-flex align-items-center" href="home.html">
-                <img src="assets/img/applogo.png" alt="Logo" width="40" class="me-2" />
+            <a class="navbar-brand d-flex align-items-center" href="/home.html">
+                <img src="/assets/img/applogo.png" alt="Logo" width="40" class="me-2" />
                 <div>
                     <h2 class="mb-0 fs-6">BizNavigation</h2>
                     <span class="d-block text-center" style="font-size: 0.6rem;">TAKE YOUR BUSINESS TO THE NEXT LEVEL</span>
@@ -44,43 +55,44 @@ document.addEventListener("DOMContentLoaded", () => {
 
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
+
                     ${menuSection("Master", [
-    { label: "Company", href: "companyProfile.html" },
-    { label: "Party Registration", href: "PartyRegistration.html" },
+    { label: "Company", href: "/pages/master/companyProfile.html" },
+    { label: "Party Registration", href: "/pages/master/PartyRegistration.html" },
     'divider',
-    { label: "Employee", href: "#" },
-    { label: "User Rules", href: "UserAccessRules.html" }
+    { label: "Employee", href: "/pages/master/EmployeeMaster.html" },
+    { label: "User Rules", href: "/pages/master/UserAccessRules.html" }
   ])}
 
                     ${menuSection("Functions", [
-    { label: "Enquiry", href: "#" },
-    { label: "Quotation", href: "#" },
+    { label: "Enquiry", href: "/pages/Functions/Enquiry.html" },
+    { label: "Quotation", href: "/pages/Functions/Quotation.html" },
     'divider',
-    { label: "International Booking", href: "InternationalBooking.html" },
-    { label: "Domestic", href: "#" },
-    { label: "Customs Clearance", href: "CustomsClearance.html" },
-    { label: "FTL or FCL", href: "fulltruckload.html" },
+    { label: "International Booking", href: "/pages/Functions/InternationalBooking.html" },
+    { label: "Domestic", href: "/pages/Functions/Domestic.html" },
+    { label: "Customs Clearance", href: "/pages/Functions/CustomsClearance.html" },
+    { label: "FTL or FCL", href: "/pages/Functions/fulltruckload.html" },
     'divider',
     { label: "Upload Data", href: "#" }
   ])}
 
                     ${menuSection("Accounting", [
-    { label: "Customer Invoicing", href: "CustomerInvoice.html" },
-    { label: "Vendor Billing", href: "#" },
+    { label: "Customer Invoicing", href: "/pages/Accounting/CustomerInvoice.html" },
+    { label: "Vendor Billing", href: "/pages/Accounting/VendorBilling.html" },
     'divider',
-    { label: "Payment Credit", href: "PaymentDetails.html?type=Credit" },
-    { label: "Payment Debit", href: "PaymentDetails.html?type=Debit" },
+    { label: "Payment Credit", href: "/pages/Accounting/PaymentDetails.html?type=Credit" },
+    { label: "Payment Debit", href: "/pages/Accounting/PaymentDetails.html?type=Debit" },
     'divider',
-    { label: "Tax Details", href: "#" }
+    { label: "Tax Details", href: "/pages/Accounting/TaxDetails.html" }
   ])}
 
                     ${menuSection("Reports", [
-    { label: "International Report", href: "reportInternationalShipmentDetails.html" },
-    { label: "Domestic Report", href: "#" },
-    { label: "Customs Clearance Report", href: "reportCustomsClearance.html" },
-    { label: "FTL or FCL Report", href: "fulltruck_Report.html" },
+    { label: "International Report", href: "/pages/Reports/reportInternationalShipmentDetails.html" },
+    { label: "Domestic Report", href: "/pages/Reports/reportDomesticDetails.html" },
+    { label: "Customs Clearance Report", href: "/pages/Reports/reportCustomsClearance.html" },
+    { label: "FTL or FCL Report", href: "/pages/Reports/reportFulltruckDetails.html" },
     'divider',
-    { label: "Customer Invoice Report", href: "reportCustomerInvoiceDetails.html" },
+    { label: "Customer Invoice Report", href: "/pages/Reports/reportCustomerInvoiceDetails.html" },
     { label: "Vendor Billing Report", href: "#" },
     'divider',
     { label: "Payment Received", href: "#" },
@@ -92,12 +104,12 @@ document.addEventListener("DOMContentLoaded", () => {
   ])}
 
                     ${menuSection("Tools", [
-    { label: "Settings", href: "setting.html" },
+    { label: "Settings", href: "/pages/Tools/setting.html" },
     { label: "Error Log", href: "#" },
     { label: "Docket Master", href: "#" },
     { label: "Reset Database", href: "#" },
-    { label: "Route Master", href: "routemaster.html" },
-    { label: "Application Settings", href: "ApplicationSettings.html" }
+    { label: "Route Master", href: "/pages/Tools/routemaster.html" },
+    { label: "Application Settings", href: "/pages/Tools/ApplicationSettings.html" }
   ])}
                 </ul>
 
@@ -109,32 +121,32 @@ document.addEventListener("DOMContentLoaded", () => {
         </div>
     </nav>`;
 
-  document.body.insertAdjacentHTML('afterbegin', header);
+  document.body.insertAdjacentHTML("afterbegin", header);
 
   // Show logged-in user ID
-  const userLoginIDSpan = document.getElementById('userLoginID');
+  const userLoginIDSpan = document.getElementById("userLoginID");
   if (userLoginIDSpan) {
     userLoginIDSpan.textContent = userLoginID;
   }
 
   // Logout functionality
-  const logoutBtn = document.querySelector('.logout-btn');
+  const logoutBtn = document.querySelector(".logout-btn");
   if (logoutBtn) {
-    logoutBtn.addEventListener('click', () => {
+    logoutBtn.addEventListener("click", () => {
       localStorage.clear();
-      location.replace('index.html');
+      location.replace("/index.html");
     });
   }
 
-  // Permission check on menu clicks
-  document.querySelectorAll('.menu-item').forEach(item => {
-    item.addEventListener('click', async e => {
+  // ✅ Permission check on menu clicks
+  document.querySelectorAll(".menu-item").forEach(item => {
+    item.addEventListener("click", async e => {
       e.preventDefault();
-      const formID = item.getAttribute('data-form-id');
-      const href = item.getAttribute('href');
+      const formID = item.getAttribute("data-form-id");
+      const href = item.getAttribute("href");
 
       if (!formID || !href) {
-        alert('Missing form data.');
+        alert("Missing form data.");
         return;
       }
 
@@ -146,29 +158,29 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
+// ✅ Check permission from Supabase
 async function checkAccess(userLoginID, formID) {
+  console.log("Checking access for:", userLoginID, formID);
   try {
     const { data, error } = await supabaseClient
-      .from('UserAccessRules')
-      .select('CanRead, CanWrite, CanDelete, CanUpdate')
-      .eq('UserLoginID', userLoginID)
-      .eq('FormID', formID)
+      .from("UserAccessRules")
+      .select("CanRead, CanWrite, CanDelete, CanUpdate")
+      .eq("UserLoginID", userLoginID)
+      .eq("FormID", formID)
       .maybeSingle();
 
-    // console.log('Checking access for:', userLoginID, formID);
-
     if (error) {
-      console.error('Database error:', error);
-      alert('Error checking permissions. Please try again.');
+      console.error("Database error:", error);
+      alert("Error checking permissions. Please try again.");
       return false;
     }
 
     if (!data) {
-      alert('Permission denied. Kindly contact your administrator.');
+      alert("Permission denied. Kindly contact your administrator.");
       return false;
     }
 
-    // Assign to global permission variables
+    // Assign permissions
     perRead = data.CanRead ?? false;
     perWrite = data.CanWrite ?? false;
     perDelete = data.CanDelete ?? false;
@@ -176,8 +188,8 @@ async function checkAccess(userLoginID, formID) {
 
     return !!perRead;
   } catch (err) {
-    console.error('Unexpected error:', err);
-    alert('An unexpected error occurred while checking permissions.');
+    console.error("Unexpected error:", err);
+    alert("An unexpected error occurred while checking permissions.");
     return false;
   }
 }
