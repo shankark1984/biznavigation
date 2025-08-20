@@ -41,8 +41,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const header = `
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
         <div class="container-fluid">
-            <a class="navbar-brand d-flex align-items-center" href="/home.html">
-                <img src="/assets/img/applogo.png" alt="Logo" width="40" class="me-2" />
+            <a class="navbar-brand d-flex align-items-center" href="/pages/Tools/home.html">
+                <img src="../../assets/img/applogo.png" alt="Logo" width="40" class="me-2" />
                 <div>
                     <h2 class="mb-0 fs-6">BizNavigation</h2>
                     <span class="d-block text-center" style="font-size: 0.6rem;">TAKE YOUR BUSINESS TO THE NEXT LEVEL</span>

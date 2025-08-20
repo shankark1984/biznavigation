@@ -46,7 +46,7 @@
     <div class="container mt-4 pt-5" id="root">
         <div class="card shadow-lg rounded">
             <div class="card-header bg-primary text-white">
-                <h3 class="mb-0">Domestic</h3>
+                <h3 class="mb-0">Domestic Booking</h3>
                 <input type="hidden" id="tempFormID" />
                 <input type="hidden" id="partyCode" />
                 <input type="hidden" id="serviceProviderCode" />
@@ -79,22 +79,57 @@
                     </div>
 
                     <div class="row g-2">
-                        <!-- Job Details -->
-                        <div class="col-md-2 col-sm-6">
-                            <label for="jobNo" class="form-label">Job No</label>
-                            <input list="jobNoSuggestions" id="jobNo" class="form-control bg-light-input" />
-                            <datalist id="jobNoSuggestions"></datalist>
+                        <div class="col-md-4 col-sm-6">
+                            <label class="form-label">Service Provider</label>
+                            <input list="vendorSuggestions" class="form-control" id="serviceProvider" required
+                                placeholder="Choose..." autocomplete="off">
+                            <datalist id="vendorSuggestions"></datalist>
                         </div>
-                        <div class="col-md-2 col-sm-6">
-                            <label for="jobDate" class="form-label">Job Date</label>
-                            <input type="date" id="jobDate" class="form-control bg-light-input" required />
-                        </div>
+
                         <div class="col-md-4 col-sm-6">
                             <label for="partyName" class="form-label">Customer Name</label>
                             <input list="partySuggestions" id="partyName" class="form-control" placeholder="Choose..."
                                 autocomplete="off" required />
                             <datalist id="partySuggestions"></datalist>
                         </div>
+
+                        <!-- Job Details -->
+                        <div class="col-md-2 col-sm-6">
+                            <label for="dcoketNo" class="form-label">Docket No</label>
+                            <input list="dcoketNoSuggestions" id="dcoketNo" class="form-control bg-light-input" />
+                            <datalist id="dcoketNoSuggestions"></datalist>
+                        </div>
+                        <div class="col-md-2 col-sm-6">
+                            <label for="bookingDate" class="form-label">Booking Date</label>
+                            <input type="date" id="bookingDate" class="form-control bg-light-input" required />
+                        </div>
+
+                        <div class="col-md-4 col-sm-6">
+                            <label for="originAddress" class="form-label">Origin Address</label>
+                            <textarea class="form-control" id="originAddress" rows="1"></textarea>
+                        </div>
+                        <div class="col-md-4 col-sm-6">
+                            <label for="originPincode" class="form-label">Origin Pincode</label>
+                            <input type="text" id="originPincode" class="form-control" placeholder="Enter Pincode"
+                                maxlength="6" required />
+                        </div>
+                        <div class="col-md-4 col-sm-6">
+                            <label for="originCity" class="form-label">Origin City</label>
+                            <input type="text" id="originCity" class="form-control" placeholder="Enter City"
+                                required /> 
+                        </div>
+                        <div class="col-md-4 col-sm-6">
+                            <label for="originState" class="form-label">Origin State</label>
+                            <input type="text" id="originState" class="form-control" placeholder="Enter State"
+                                required />
+                        </div>
+                        <div class="col-md-4 col-sm-6">
+                            <label for="originCountry" class="form-label">Origin Country</label>
+                            <input type="text" id="originCountry" class="form-control" placeholder="Enter Country"
+                                required />
+                        </div>
+                        
+
                         <div class="col-md-2 col-sm-6">
                             <label for="movementType" class="form-label">Movement Type</label>
                             <select id="movementType" class="form-select" required>
