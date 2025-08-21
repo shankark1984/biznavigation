@@ -49,7 +49,7 @@ function logoutlocalstorage() {
     localStorage.removeItem('WorkingBranch');
     localStorage.removeItem('CompanyShortCode');
 
-    window.location.href = 'index.html';
+    window.location.href = '../../index.html';
 }
 
 function clearPermissionCache(userLoginID) {
