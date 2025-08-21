@@ -69,7 +69,7 @@ document.addEventListener("DOMContentLoaded", () => {
     { label: "Quotation", href: "/pages/Functions/Quotation.html" },
     'divider',
     { label: "International Booking", href: "/pages/Functions/InternationalBooking.html" },
-    { label: "Domestic", href: "/pages/Functions/Domestic.html" },
+    { label: "Domestic", href: "/pages/Functions/DomesticBooking.html" },
     { label: "Customs Clearance", href: "/pages/Functions/CustomsClearance.html" },
     { label: "FTL or FCL", href: "/pages/Functions/fulltruckload.html" },
     'divider',

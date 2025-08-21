@@ -13,13 +13,6 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet"
         crossorigin="anonymous" />
 
-    <!-- Preload JS (only necessary if you want to preload large scripts; usually defer works well) -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" defer></script>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js" defer></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/2.3.10/purify.min.js" defer></script>
-    <script src="https://unpkg.com/@supabase/supabase-js" defer></script>
-
-
     <style>
         /* Hide the 13th column via class instead of nth-child for clarity */
         .hide-col-13 {
@@ -81,10 +74,10 @@
 
                     <div class="row g-2">
                         <div class="col-md-4 col-sm-6">
-                            <label for="partyName" class="form-label">Customer Name</label>
-                            <input list="partySuggestions" id="partyName" class="form-control" placeholder="Choose..."
-                                autocomplete="off" required />
-                            <datalist id="partySuggestions"></datalist>
+                            <label for="customerName" class="form-label">Customer Name</label>
+                            <input list="customerNameSuggestions" id="customerName" class="form-control"
+                                placeholder="Choose..." autocomplete="off" required />
+                            <datalist id="customerNameSuggestions"></datalist>
                         </div>
 
                         <!-- Job Details -->
@@ -119,9 +112,9 @@
                             <datalist id="consignorNameSuggestions"></datalist>
                         </div>
                         <div class="col-md-2 col-sm-6">
-                            <label for="originPincode" class="form-label">Origin Pincode</label>
-                            <input type="text" id="originPincode" class="form-control" maxlength="6" required
-                                aria-describedby="originPincodeHelp" />
+                            <label for="originPinCode" class="form-label">Origin Pincode</label>
+                            <input type="text" id="originPinCode" class="form-control" maxlength="6" required
+                                aria-describedby="originPincodeHelp" autocomplete="additional-name" />
                         </div>
                         <div class="col-md-2 col-sm-6">
                             <label for="originCity" class="form-label">Origin City</label>
@@ -191,11 +184,10 @@
 
                         <div class="col-md-4 col-sm-6">
                             <label class="form-label">Service Provider</label>
-                            <input list="serviceProviderSuggestions" class="form-control" id="serviceProvider" required
-                                placeholder="Choose..." autocomplete="off">
+                            <input list="serviceProviderSuggestions" class="form-control" id="serviceProviderName"
+                                required placeholder="Choose..." autocomplete="off">
                             <datalist id="serviceProviderSuggestions"></datalist>
                         </div>
-
 
                         <!-- Quantity and Cargo Weight -->
                         <div class="col-md-2 col-sm-6">
@@ -230,9 +222,9 @@
                     <div class="mt-3">
                         <ul class="nav nav-tabs" id="bookingTabs" role="tablist">
                             <li class="nav-item" role="presentation">
-                                <button class="nav-link" id="freight-tab" data-bs-toggle="tab" data-bs-target="#freight"
-                                    type="button" role="tab" aria-controls="freight"
-                                    aria-selected="false">Freight</button>
+                                <button class="nav-link active" id="freight-tab" data-bs-toggle="tab"
+                                    data-bs-target="#freight" type="button" role="tab" aria-controls="freight"
+                                    aria-selected="true">Freight</button>
                             </li>
                             <li class="nav-item" role="presentation">
                                 <button class="nav-link" id="container-details-tab" data-bs-toggle="tab"
@@ -275,12 +267,6 @@
                                         <select id="partyDefaultTax" class="form-select form-select-sm">
                                             <option value="" disabled selected>Select Tax</option>
                                         </select>
-                                    </div>
-                                    <div class="col-md-1 col-sm-4 text-start">
-                                        <label for="currencyCode" class="form-label small">Currency</label>
-                                        <input type="text" id="currencyCode" list="currencyListDatalist" value="INR"
-                                            required />
-                                        <datalist id="currencyListDatalist"></datalist>
                                     </div>
                                     <div class="col-md-1 col-sm-2 d-flex align-items-end">
                                         <button type="button" id="addChargesRow"
@@ -344,7 +330,9 @@
                                     <div class="col-md-1 col-sm-2 pt-sm-1">
                                         <label class="invisible">Add</label>
                                         <button type="button" class="btn btn-sm btn-primary w-100 mt-1"
-                                            id="addContainer">Add</button>
+                                            id="addContainer" aria-label="Add container">
+                                            Add
+                                        </button>
                                     </div>
                                     <div class="col-12 text-start">
                                         <small id="containerFeedback" class="text-danger d-none"></small>
@@ -435,7 +423,14 @@
         </div>
     </div>
 
-ś    <!-- Custom scripts loaded with defer -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" defer
+        crossorigin="anonymous"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js" defer crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/2.3.10/purify.min.js" defer
+        crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js" defer></script>
+
+    <!-- Custom scripts loaded with defer -->
     <script src="../../assets/js/utils/server.js" defer></script>
     <script src="../../assets/js/utils/navbar.js" defer></script>
     <script src="../../assets/js/utils/footer.js" defer></script>
@@ -444,6 +439,7 @@
     <script src="../../assets/js/utils/logout.js" defer></script>
     <script src="../../assets/js/utils/dropdownLoader.js" defer></script>
     <script src="../../assets/js/utils/utils.js" defer></script>
+    <script src="../../assets/js/DomesticBooking/DomesticBooking.js" defer></script>
 
 
     <script src="../../assets/js/InternationalBooking/ContainerDetails.js" defer></script>
