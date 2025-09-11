@@ -51,15 +51,15 @@ async function login() {
     setLoading(true);
 
     try {
-        // Hash the password before comparing
-        const hashedPassword = sha256(password);
+        // Hash the password before comparing and convert to string
+        const hashedPassword = sha256(password).toString();
 
         const { data, error, status } = await supabaseClient
             .from('user_login')
             .select('*')
             .eq('user_login_id', username)
             .eq('user_password', hashedPassword)
-            .single();
+            .maybeSingle();
 
         if (error && status !== 406) {
             showError('Login failed. Please check your credentials.');

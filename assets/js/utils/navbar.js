@@ -109,7 +109,8 @@ document.addEventListener("DOMContentLoaded", () => {
     { label: "Docket Master", href: "#" },
     { label: "Reset Database", href: "#" },
     { label: "Route Master", href: "/pages/Tools/routemaster.html" },
-    { label: "Application Settings", href: "/pages/Tools/ApplicationSettings.html" }
+    { label: "Application Settings", href: "/pages/Tools/ApplicationSettings.html" },
+    { label: "Pincode Master", href: "/pages/Tools/PincodeMaster.html" }
   ])}
                 </ul>
 

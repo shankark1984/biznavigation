@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 
+
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -10,65 +11,85 @@
         crossorigin="anonymous" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet"
         crossorigin="anonymous" />
+    <style>
+        /* Fixed height table container with vertical scroll */
+        .table-responsive {
+            max-height: 400px;
+            /* Adjust height as needed */
+            overflow-y: auto;
+        }
+
+        /* Optional: Keep table header sticky on scroll */
+        .table-responsive thead th {
+            position: sticky;
+            top: 0;
+            background-color: #f8f9fa;
+            /* match Bootstrap light table header */
+            z-index: 2;
+        }
+    </style>
 </head>
 
+
 <body class="bg-light">
+
 
     <div class="container mt-4 pt-5" id="root">
         <header class="my-4">
             <h1 class="text-center">Pincode Master</h1>
         </header>
 
+
         <main>
-            <form id="pincodeForm" class="row g-2" novalidate>
+            <form id="pincodeForm" class="row g-2" novalidate autocomplete="off">
                 <div class="col-md-2 col-sm-6">
-                    <label for="pincode" class="form-label">Pincode</label>
-                    <input type="text" id="pincode" class="form-control" maxlength="6" pattern="\d{6}" required
-                        aria-describedby="pincodeHelp" inputmode="numeric" />
-                    <div id="pincodeHelp" class="form-text">Enter a valid 6-digit pincode.</div>
+                    <label for="pinCode" class="form-label">Pincode</label>
+                    <input type="text" id="pinCode" class="form-control" maxlength="6" pattern="\d{6}" required
+                        inputmode="numeric" autocomplete="new-password" />
                 </div>
 
                 <div class="col-md-2 col-sm-6">
                     <label for="areaName" class="form-label">Area Name</label>
-                    <input type="text" id="areaName" class="form-control" required aria-describedby="areaNameHelp" />
-                    <div id="areaNameHelp" class="form-text">Enter the area name.</div>
+                    <div id="areaNameContainer">
+                        <input type="text" id="areaName" class="form-control" required autocomplete="new-password" />
+                    </div>
                 </div>
 
                 <div class="col-md-2 col-sm-6">
                     <label for="city" class="form-label">City</label>
-                    <input type="text" id="city" class="form-control" required aria-describedby="cityHelp" />
-                    <div id="cityHelp" class="form-text">Enter the city name.</div>
+                    <input type="text" id="city" class="form-control" required autocomplete="new-password" />
                 </div>
 
                 <div class="col-md-2 col-sm-6">
                     <label for="state" class="form-label">State</label>
-                    <input type="text" id="state" class="form-control" required aria-describedby="stateHelp" />
-                    <div id="stateHelp" class="form-text">Enter the state name.</div>
+                    <input type="text" id="state" class="form-control" required autocomplete="new-password" />
                 </div>
 
                 <div class="col-md-2 col-sm-6">
                     <label for="country" class="form-label">Country</label>
-                    <input type="text" id="country" class="form-control" required aria-describedby="countryHelp" />
-                    <div id="countryHelp" class="form-text">Enter the country name.</div>
+                    <input type="text" id="country" class="form-control" required autocomplete="new-password" />
                 </div>
+
 
                 <div class="col-md-2 col-sm-6">
                     <label for="serviceType" class="form-label">Service Type</label>
-                    <select id="serviceType" class="form-select" required aria-describedby="serviceTypeHelp">
+                    <select id="serviceType" class="form-select" required aria-describedby="serviceTypeHelp"
+                        autocomplete="off">
                         <option value="" disabled selected>Select Service Type</option>
                         <option value="Standard">Standard</option>
                         <option value="Express">Express</option>
                         <option value="Overnight">Overnight</option>
                     </select>
-                    <div id="serviceTypeHelp" class="form-text">Select the service type.</div>
                 </div>
 
-                <div class="col-md-2 col-sm-6 d-flex align-items-end">
+                <div class="col-md-1 col-sm-6 d-flex align-items-end">
                     <button type="submit" id="submitButton" class="btn btn-primary w-100">Submit</button>
                 </div>
+
             </form>
 
-            <!-- Table to display input data -->
+
+            <!-- Table to display input data with fixed height and vertical scroll -->
             <div class="table-responsive mt-4">
                 <table class="table table-striped table-bordered" id="pincodeTable" aria-label="Pincode details table">
                     <thead class="table-light">
@@ -102,9 +123,9 @@
     <script src="../../assets/js/utils/server.js" defer></script>
     <script src="../../assets/js/utils/navbar.js" defer></script>
     <script src="../../assets/js/utils/footer.js" defer></script>
-
+    <script src="../../assets/js/utils/logout.js" defer></script>
+    <script src="../../assets/js/utils/utils.js" defer></script>
     <script src="../../assets/js/utils/PincodeMaster.js" defer></script>
-
 </body>
 
 </html>

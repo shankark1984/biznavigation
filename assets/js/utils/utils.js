@@ -167,8 +167,11 @@ async function loadSuggestions(
     // Attach mapping function
     attachPartyCodeFiller('partyNameReg', datalistId, 'partyCodes');
     attachPartyCodeFiller('serviceProvider', 'vendorSuggestions', 'serviceProviderCode');
-    attachPartyCodeFiller('userID', 'userLoginSuggestions', 'userName')
+    attachPartyCodeFiller('userID', 'userLoginSuggestions', 'userName');
     attachPartyCodeFiller('partyName', 'partySuggestions', 'partyCode');
+    attachPartyCodeFiller('customerName', 'customerNameSuggestions', 'customerCode');
+    attachPartyCodeFiller('consignorName', 'consignorNameSuggestions', 'consignorCode');
+    attachPartyCodeFiller('serviceProviderName', 'serviceProviderSuggestions', 'serviceProviderCode');
 }
 
 
@@ -965,3 +968,61 @@ async function fetchPortSuggestions(userInput, limit = 10) {
     }
 }
 // clearance Port Input Event Listener end
+async function getPincodeDetails(pincode) {
+    if (!pincode || typeof pincode !== 'string') {
+        throw new Error('Invalid pincode');
+    }
+
+    const response = await fetch(`https://api.postalpincode.in/pincode/${pincode}`);
+    if (!response.ok) {
+        throw new Error(`Network error: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    if (!Array.isArray(data) || data.length === 0 || data[0].Status !== "Success") {
+        throw new Error('No data found for the given pincode');
+    }
+
+    // Extract the relevant fields from the first PostOffice entry
+    const firstPostOffice = data[0].PostOffice && data[0].PostOffice[0];
+    if (!firstPostOffice) {
+        throw new Error('No PostOffice data available for the given pincode');
+    }
+
+    // Return object with Name, District, State, Country
+    return {
+        Name: firstPostOffice.Name || '',
+        District: firstPostOffice.District || '',
+        State: firstPostOffice.State || '',
+        Country: firstPostOffice.Country || ''
+    };
+}
+async function getPartyDetailsByCode(paryCode) {
+    if (!paryCode || typeof paryCode !== 'string') {
+        throw new Error('Invalid paryCode');
+    }
+    try {
+        const { data, error } = await supabaseClient
+            .from('PartyDetails')
+            .select('*')
+            .eq('PartyCode', paryCode)
+            .eq('company_id', CompanyID)
+            .limit(1);
+
+        if (error) throw error;
+        if (data.length === 0) throw new Error('No data found for the given paryCode');
+
+        return data[0];  // Return entire row object
+
+    } catch (error) {
+        console.error('Error fetching PartyDetails:', error.message);
+        return null;
+    }
+}
+
+function getGSTValue(label, str) {
+    const regex = new RegExp(label + "\\s*(\\d+)%", "i");
+    const match = str.match(regex);
+    return match ? parseFloat(match[1]) : 0;
+}

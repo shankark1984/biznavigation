@@ -185,4 +185,5 @@ let currentPageNumber = 1;
 let totalPageCount = 1;
 let invoiceNo = null;
 let partyName = null;
+let customerGSTRate = null;
 

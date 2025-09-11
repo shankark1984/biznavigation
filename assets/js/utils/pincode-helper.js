@@ -21,12 +21,13 @@ document.addEventListener('DOMContentLoaded', function () {
 // Pin code blur handler
 async function setupPincodeListener(pinCodeFieldId, cityFieldId, stateFieldId = 'state', countryFieldId = 'country') {
     const pincodeInput = document.getElementById(pinCodeFieldId);
+    // console.log('pincodeInput', pincodeInput);
     if (!pincodeInput) return;
 
     pincodeInput.addEventListener('blur', async function () {
         const pincode = this.value.trim();
         resetError(pincodeInput);
-
+        if (!pincode) return;
         if (!/^\d{6}$/.test(pincode)) {
             displayError(pincodeInput, 'Please enter a valid 6-digit pin code.');
             return;
@@ -93,6 +94,7 @@ function resetError(inputField) {
 // Utility for setting/clearing field values
 function updateFieldValue(fieldId, value) {
     const field = document.getElementById(fieldId);
+    if (!field) return;
     if (field) field.value = value;
     else console.error(`Field not found: ${fieldId}`);
 }

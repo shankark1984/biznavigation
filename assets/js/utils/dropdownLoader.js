@@ -1,13 +1,11 @@
 async function loadDropdownOptions(filterValue, dropdownId) {
     const selectElement = document.getElementById(dropdownId);
-    if (!selectElement) {
-        // console.log(`Dropdown with ID "${dropdownId}" not found. Skipping.`);
-        return;
-    }
+    if (!selectElement) return;
+
     try {
         const { data, error } = await supabaseClient
             .from('dropdown_list')
-            .select('description')
+            .select('description, hsn_code')     // Include hsn_code here
             .in('company_id', ['All', CompanyID])
             .ilike('type_of_value', `%${filterValue}%`);
 
@@ -16,18 +14,16 @@ async function loadDropdownOptions(filterValue, dropdownId) {
             return;
         }
 
-        const selectElement = document.getElementById(dropdownId);
-        if (!selectElement) {
-            console.log(`Dropdown with ID "${dropdownId}" not found.`);
-            return;
-        }
-
-        selectElement.innerHTML = '<option value="">Select an option</option>'; // Default option
+        selectElement.innerHTML = '<option value="">Select an option</option>';
 
         data.forEach(item => {
             const option = document.createElement('option');
             option.value = item.description;
             option.textContent = item.description;
+
+            // Store hsn_code as a data attribute on the option element
+            option.dataset.hsnCode = item.hsn_code || '';
+
             selectElement.appendChild(option);
         });
 
@@ -35,6 +31,7 @@ async function loadDropdownOptions(filterValue, dropdownId) {
         console.error('Unexpected error:', err);
     }
 }
+
 
 // Load Movement Types Example
 document.addEventListener('DOMContentLoaded', () => {
