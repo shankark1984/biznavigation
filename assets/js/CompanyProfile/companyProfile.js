@@ -1,6 +1,8 @@
 // On DOM ready
 document.addEventListener("DOMContentLoaded", async () => {
     disableForm();
+    document.getElementById("branchAddDetails").disabled = true;
+    document.getElementById("branchBankAddDetails").disabled = true;
 
     const accessGranted = await checkAccess(UserLoginID, 'PartyRegistration');
     if (!accessGranted) {
@@ -15,15 +17,27 @@ document.addEventListener("DOMContentLoaded", async () => {
     else console.warn('No CompanyID found in localStorage');
 
     handleUserTypePermissions();
-    enableForm();
+
+
+    const modifyButton = document.getElementById('modifyButton');
+    if (modifyButton.disabled) {
+        document.getElementById("branchAddDetails").disabled = !this.value;
+        document.getElementById("branchBankAddDetails").disabled = !this.value;
+    }
+
+    document.getElementById("modifyButton").addEventListener("click", function () {
+        this.disabled = true; // Disable modifyButton
+        document.getElementById("branchAddDetails").disabled = false; // Enable branchAddDetails
+    });
 
     updateCompanyLogo(companyID);
+
     if (typeof loadBranches === 'function') loadBranches();
 
-    ['branchAddDetails', 'branchBankAddDetails'].forEach(id => {
-        const btn = document.getElementById(id);
-        if (btn) btn.disabled = document.getElementById('modifyButton').disabled;
-    });
+    // ['branchAddDetails', 'branchBankAddDetails'].forEach(id => {
+    //     const btn = document.getElementById(id);
+    //     if (btn) btn.disabled = document.getElementById('modifyButton').disabled;
+    // });
 });
 
 async function checkAccess(userLoginID, formID) {

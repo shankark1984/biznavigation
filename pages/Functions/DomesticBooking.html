@@ -254,19 +254,58 @@
 
                         <div class="tab-content p-3 border border-top-0">
                             <!-- Freight Tab -->
-                            <div class="tab-pane fade show active" id="freight" role="tabpanel"
-                                aria-labelledby="freight-tab">
-                                <div class="table-responsive mt-3 small">
+                            <div class="tab-pane fade show active" id="freight">
+                                <!-- Freight Input Row -->
+                                <div class="row g-2 text-center">
+                                    <div class="col-md-3 col-sm-4 text-start">
+                                        <label for="chargesTypeInput" class="form-label small">Charges</label>
+                                        <input list="chargesTypeList" id="chargesTypeInput"
+                                            class="form-control form-control-sm" placeholder="Charges Type">
+                                        <datalist id="chargesTypeList"></datalist>
+                                    </div>
+                                    <div class="col-md-1 col-sm-2 text-start">
+                                        <label for="hsnNumber" class="form-label small">HSN</label>
+                                        <input type="text" id="hsnNumber" class="form-control form-control-sm">
+                                    </div>
+                                    <div class="col-md-2 col-sm-3 text-start">
+                                        <label for="freightAmount" class="form-label small">Amount</label>
+                                        <input type="number" id="freightAmount" class="form-control form-control-sm"
+                                            min="0" step="0.01">
+                                    </div>
+                                    <div class="col-md-2 col-sm-4 text-start">
+                                        <label for="remarksDetails" class="form-label small">Remarks</label>
+                                        <input type="text" id="remarksDetails" class="form-control form-control-sm">
+                                    </div>
+                                    <div class="col-md-2 col-sm-4 text-start">
+                                        <label for="partyDefaultTax" class="form-label small">Tax Rate</label>
+                                        <select id="partyDefaultTax" class="form-control form-control-sm">
+                                            <option value="" disabled selected>Select Tax</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-1 col-sm-4 text-start">
+                                        <label for="currencyCode" class="form-label small">Currency</label>
+                                        <input type="text" id="currencyCode" list="currencyListDatalist"
+                                            class="form-control form-control-sm text-uppercase" autocomplete="off"
+                                            required value="INR">
+                                        <datalist id="currencyListDatalist"></datalist>
+                                    </div>
+                                    <div class="col-md-1 col-sm-2 d-flex align-items-end">
+                                        <button type="button" id="addFreightRow"
+                                            class="btn btn-sm btn-primary w-100">Add</button>
+                                    </div>
+                                </div>
+
+                                <!-- Freight Charges Table -->
+                                <div class="table-responsive mt-3">
                                     <table class="table table-sm table-bordered text-center align-middle"
-                                        id="chargesTable">
+                                        id="freightTable">
                                         <thead class="table-light">
                                             <tr>
                                                 <th>Charges Type</th>
                                                 <th>HSN No</th>
                                                 <th>Remarks</th>
-                                                <th>Tax Rate (%)</th>
-                                                <th>Weight (Kgs)</th>
-                                                <th>Unit Price</th>
+                                                <th>Tax Rate</th>
+                                                <th>Quantity</th>
                                                 <th>Basic Amount</th>
                                                 <th>SGST Amt</th>
                                                 <th>CGST Amt</th>
@@ -274,15 +313,13 @@
                                                 <th>Total GST Amt</th>
                                                 <th>Grand Total</th>
                                                 <th>Action</th>
-                                                <th class="hide-col-13">Tax Type</th>
+                                                <th class="d-none">Tax Type</th>
                                             </tr>
                                         </thead>
-                                        <tbody id="chargesBody">
-                                            <!-- Editable rows will be added dynamically -->
-                                        </tbody>
+                                        <tbody></tbody>
                                         <tfoot>
                                             <tr id="totalsRow">
-                                                <th colspan="6" class="text-end">Totals:</th>
+                                                <th colspan="5" class="text-end">Totals:</th>
                                                 <th class="text-end" id="totalFreight">0.00</th>
                                                 <th class="text-end" id="totalSGST">0.00</th>
                                                 <th class="text-end" id="totalCGST">0.00</th>
@@ -290,12 +327,10 @@
                                                 <th class="text-end" id="totalGST">0.00</th>
                                                 <th class="text-end" id="totalGrand">0.00</th>
                                                 <th></th>
-                                                <th class="hide-col-13"></th>
+                                                <th class="d-none"></th>
                                             </tr>
                                         </tfoot>
                                     </table>
-                                    <button type="button" class="btn btn-primary btn-sm mt-2" onclick="addRow()">➕ Add
-                                        Row</button>
                                 </div>
                             </div>
                         </div>
