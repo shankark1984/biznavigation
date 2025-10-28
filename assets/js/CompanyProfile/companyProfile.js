@@ -1,46 +1,56 @@
-// On DOM ready
+// 🌐 Company Registration Initialization
 document.addEventListener("DOMContentLoaded", async () => {
-    disableForm();
-    document.getElementById("branchAddDetails").disabled = true;
-    document.getElementById("branchBankAddDetails").disabled = true;
+    try {
+        await initCompanyRegistration();
+    } catch (err) {
+        console.error("Initialization error:", err);
+        alert("Error initializing the page.");
+    }
+});
 
-    const accessGranted = await checkAccess(UserLoginID, 'PartyRegistration');
+async function initCompanyRegistration() {
+    const companyID = localStorage.getItem('CompanyID');
+    const userLoginID = localStorage.getItem('UserLoginID');
+    const userType = parseInt(localStorage.getItem('UserType'), 10) || 0;
+
+    // Initial UI setup
+    setFormState(false);
+    setButtonState(['branchAddDetails', 'branchBankAddDetails'], false);
+    handleUserTypePermissions(userType);
+
+    // Permission check
+    const accessGranted = await checkAccess(userLoginID, 'PartyRegistration');
     if (!accessGranted) {
         alert("You do not have permission to view this form.");
         return;
     }
 
-    if (perWrite) document.getElementById('saveButton').disabled = false;
-
-    const companyID = localStorage.getItem('CompanyID');
+    // Fetch company data if exists
     if (companyID) await fetchCompanyData(companyID);
-    else console.warn('No CompanyID found in localStorage');
+    else console.warn("⚠️ No CompanyID found in localStorage");
 
-    handleUserTypePermissions();
-
-
-    const modifyButton = document.getElementById('modifyButton');
-    if (modifyButton.disabled) {
-        document.getElementById("branchAddDetails").disabled = !this.value;
-        document.getElementById("branchBankAddDetails").disabled = !this.value;
-    }
-
-    document.getElementById("modifyButton").addEventListener("click", function () {
-        this.disabled = true; // Disable modifyButton
-        document.getElementById("branchAddDetails").disabled = false; // Enable branchAddDetails
-    });
-
+    // Update logo
     updateCompanyLogo(companyID);
 
-    if (typeof loadBranches === 'function') loadBranches();
+    // Bind Events
+    bindEvents(userType);
+}
 
-    // ['branchAddDetails', 'branchBankAddDetails'].forEach(id => {
-    //     const btn = document.getElementById(id);
-    //     if (btn) btn.disabled = document.getElementById('modifyButton').disabled;
-    // });
-});
+/* ---------------------- 🔧 Utility Functions ---------------------- */
+function setFormState(enabled) {
+    document.querySelectorAll('input, select, textarea').forEach(el => el.disabled = !enabled);
+}
 
+function setButtonState(buttonIDs, enabled) {
+    buttonIDs.forEach(id => {
+        const btn = document.getElementById(id);
+        if (btn) btn.disabled = !enabled;
+    });
+}
+
+/* ---------------------- 🔐 Access Check ---------------------- */
 async function checkAccess(userLoginID, formID) {
+    if (!userLoginID) return false;
     try {
         const { data, error } = await supabaseClient
             .from('UserAccessRules')
@@ -49,20 +59,21 @@ async function checkAccess(userLoginID, formID) {
             .eq('FormID', formID)
             .maybeSingle();
 
-        if (error || !data) throw new Error('Permission denied or fetch error');
+        if (error || !data) throw error;
 
-        perRead = data.CanRead ?? false;
-        perWrite = data.CanWrite ?? false;
-        perDelete = data.CanDelete ?? false;
-        perUpdate = data.CanUpdate ?? false;
+        window.perRead = !!data.CanRead;
+        window.perWrite = !!data.CanWrite;
+        window.perDelete = !!data.CanDelete;
+        window.perUpdate = !!data.CanUpdate;
 
-        return !!perRead;
+        return window.perRead;
     } catch (err) {
-        console.error(err);
+        console.error("Access check failed:", err);
         return false;
     }
 }
 
+/* ---------------------- 🏢 Company Data Handling ---------------------- */
 async function fetchCompanyData(companyID) {
     try {
         const { data, error } = await SupabaseService.client
@@ -73,14 +84,14 @@ async function fetchCompanyData(companyID) {
 
         if (error) throw error;
         if (data) populateCompanyForm(data);
-    } catch (error) {
-        console.error('Error fetching company data:', error.message);
-        alert('Failed to load company data.');
+    } catch (err) {
+        console.error("Error fetching company data:", err.message);
+        alert("Failed to load company data.");
     }
 }
 
 function populateCompanyForm(data) {
-    const map = {
+    const fieldMap = {
         CompID: data.company_id,
         shortCode: data.short_code,
         companyName: data.company_name,
@@ -97,62 +108,112 @@ function populateCompanyForm(data) {
         uaNo: data.Udyog_aadhaar_no,
         website: data.web_site
     };
-    for (let id in map) document.getElementById(id).value = map[id] || '';
-    document.getElementById('companylogo').src = data.logo_path || '';
+    Object.entries(fieldMap).forEach(([id, value]) => {
+        const el = document.getElementById(id);
+        if (el) el.value = value || '';
+    });
+    const logo = document.getElementById('companylogo');
+    if (logo) logo.src = data.logo_path || '../../assets/img/logo/default.png';
 }
 
-function handleUserTypePermissions() {
-    const userType = parseInt(localStorage.getItem('UserType'), 10);
-    document.getElementById('modifyButton').disabled = !(userType === 1 || userType === 2);
-    document.getElementById('newButton').disabled = userType !== 1;
+/* ---------------------- 👤 User Permission ---------------------- */
+function handleUserTypePermissions(userType) {
+    const modifyBtn = document.getElementById('modifyButton');
+    const newBtn = document.getElementById('newButton');
+    if (modifyBtn) modifyBtn.disabled = !(userType === 1 || userType === 2);
+    if (newBtn) newBtn.disabled = userType !== 1;
 }
 
-function enableForm() {
-    document.querySelectorAll('input, select, textarea').forEach(el => el.disabled = false);
+function userRoleType() {
+    const editable = parseInt(localStorage.getItem('UserType'), 10) === 1;
+    enableEditFields(['shortCode', 'companyName', 'panNumber', 'gstNumber'], editable);
 }
 
-function disableForm() {
-    document.querySelectorAll('input, select, textarea').forEach(el => el.disabled = true);
+function enableEditFields(fields, editable) {
+    fields.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.disabled = !editable;
+    });
 }
 
+/* ---------------------- 🧼 Form Management ---------------------- */
 function clearForm() {
     document.querySelectorAll('input, textarea').forEach(el => el.value = '');
-    document.getElementById('companylogo').src = '';
     document.querySelectorAll('input[type="checkbox"]').forEach(el => el.checked = false);
-    document.getElementById('CompID').textContent = '';
+    const logo = document.getElementById('companylogo');
+    if (logo) logo.src = '../../assets/img/logo/default.png';
+    const compID = document.getElementById('CompID');
+    if (compID) compID.textContent = '';
 }
 
-document.getElementById('modifyButton').addEventListener('click', () => {
-    enableForm();
-    const saveBtn = document.getElementById('saveButton');
-    saveBtn.disabled = false;
-    saveBtn.innerHTML = '<i class="bi bi-save"></i> Update';
-    saveBtn.setAttribute('data-mode', 'update');
-    userRoleType();
-});
+/* ---------------------- 🎛️ Event Handlers ---------------------- */
+function bindEvents(userType) {
+    const modifyBtn = document.getElementById("modifyButton");
+    const newBtn = document.getElementById("newButton");
+    const saveBtn = document.getElementById("saveButton");
 
-document.getElementById('newButton')?.addEventListener('click', () => {
-    enableForm();
+    modifyBtn?.addEventListener("click", onModifyClick);
+    newBtn?.addEventListener("click", onNewClick);
+    saveBtn?.addEventListener("click", onSaveClick);
+
+    document.getElementById("website")?.addEventListener("blur", enforceURLProtocol);
+
+    // Validation bindings
+    const validators = [
+        ['gstNumber', 'gstFeedback', 'company_profile', 'gst_number', validateGSTInput],
+        ['panNumber', 'panFeedback', 'company_profile', 'pan_number', validatePANInput],
+        ['branchGSTNo', 'branchGSTFeedback', 'CompanyBranchDetails', 'GSTNo', validateGSTInput],
+        ['branchPANNo', 'branchPANFeedback', 'CompanyBranchDetails', 'PANNo', validatePANInput]
+    ];
+    validators.forEach(([input, feedback, table, column, validator]) => bindValidation(input, feedback, table, column, validator));
+
+    if (typeof loadBranches === "function") loadBranches();
+}
+
+function onModifyClick() {
+    setFormState(true);
+    const saveBtn = document.getElementById('saveButton');
+    if (saveBtn) {
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = '<i class="bi bi-save"></i> Update';
+        saveBtn.dataset.mode = 'update';
+    }
+    const modifyBtn = document.getElementById('modifyButton');
+    if (modifyBtn) {
+        modifyBtn.disabled = true;
+    }
+    userRoleType();
+    setButtonState(['branchAddDetails', 'branchBankAddDetails'], true);
+}
+
+function onNewClick() {
+    setFormState(true);
     clearForm();
     const saveBtn = document.getElementById('saveButton');
-    saveBtn.disabled = false;
-    saveBtn.innerHTML = '<i class="bi bi-save"></i> Save';
-    saveBtn.setAttribute('data-mode', 'insert');
-    document.getElementById('companylogo').src = 'assets/img/logo/default.png';
+    if (saveBtn) {
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = '<i class="bi bi-save"></i> Save';
+        saveBtn.dataset.mode = 'insert';
+    }
     setEmptyTableMessage('branchTableBody', 'No branches created');
     setEmptyTableMessage('branchBankTableBody', 'No bank created');
-});
+    setButtonState(['branchAddDetails', 'branchBankAddDetails'], false);
+}
 
-document.getElementById('saveButton').addEventListener('click', async e => {
+/* ---------------------- 💾 Save / Update ---------------------- */
+async function onSaveClick(e) {
     e.preventDefault();
-
     const saveBtn = e.currentTarget;
-    const mode = saveBtn.getAttribute('data-mode') || 'insert';
+    const mode = saveBtn.dataset.mode || 'insert';
     const isInsert = mode === 'insert';
-    const companyName = document.getElementById('companyName').value.trim();
+
+    const companyName = document.getElementById('companyName')?.value.trim();
     if (!companyName) return alert('Please enter a company name.');
 
-    const companyID = isInsert ? await generateNewCompanyID(companyName) : localStorage.getItem('CompanyID');
+    const companyID = isInsert
+        ? await generateNewCompanyID(companyName)
+        : localStorage.getItem('CompanyID');
+
     const formData = gatherFormData(companyID);
 
     try {
@@ -164,40 +225,39 @@ document.getElementById('saveButton').addEventListener('click', async e => {
 
         alert(`Company ${isInsert ? 'saved' : 'updated'} successfully!`);
         saveBtn.innerHTML = '<i class="bi bi-pencil-square"></i> Update';
-        saveBtn.setAttribute('data-mode', 'update');
+        saveBtn.dataset.mode = 'update';
         saveBtn.disabled = true;
         document.getElementById('modifyButton').disabled = false;
-        disableForm();
+        setFormState(false);
+        setButtonState(['branchAddDetails', 'branchBankAddDetails'], false);
+        modifyButton.disabled = false;
 
-        ['branchAddDetails', 'branchBankAddDetails'].forEach(id => {
-            const btn = document.getElementById(id);
-            if (btn) btn.disabled = true;
-        });
-
-    } catch (error) {
-        console.error('Error saving company:', error);
-        alert('Unexpected error occurred. Please try again.');
+    } catch (err) {
+        console.error("Error saving company:", err);
+        alert("Unexpected error occurred. Please try again.");
     }
-});
+}
 
+/* ---------------------- 🧩 Form Data Builder ---------------------- */
 function gatherFormData(companyID) {
+    const getVal = id => document.getElementById(id)?.value.trim() || '';
     return {
         company_id: companyID,
-        short_code: document.getElementById('shortCode').value.trim().toUpperCase(),
-        company_name: document.getElementById('companyName').value.trim(),
-        address: formatAddress(document.getElementById('address').value.trim()),
-        city: document.getElementById('city').value.trim(),
-        pin_code: document.getElementById('pinCode').value.trim(),
-        state: document.getElementById('state').value.trim(),
-        country: document.getElementById('country').value.trim(),
-        phone_no: document.getElementById('phoneNumber').value.trim(),
-        e_mail: document.getElementById('email').value.trim(),
-        gst_number: document.getElementById('gstNumber').value.trim().toUpperCase(),
-        pan_number: document.getElementById('panNumber').value.trim().toUpperCase(),
-        cin_no: document.getElementById('cinNo').value.trim().toUpperCase(),
-        Udyog_aadhaar_no: document.getElementById('uaNo').value.trim().toUpperCase(),
-        web_site: document.getElementById('website').value.trim(),
-        logo_path: document.getElementById('companylogo').src || '',
+        short_code: getVal('shortCode').toUpperCase(),
+        company_name: getVal('companyName'),
+        address: formatAddress(getVal('address')),
+        city: getVal('city'),
+        pin_code: getVal('pinCode'),
+        state: getVal('state'),
+        country: getVal('country'),
+        phone_no: getVal('phoneNumber'),
+        e_mail: getVal('email'),
+        gst_number: getVal('gstNumber').toUpperCase(),
+        pan_number: getVal('panNumber').toUpperCase(),
+        cin_no: getVal('cinNo').toUpperCase(),
+        Udyog_aadhaar_no: getVal('uaNo').toUpperCase(),
+        web_site: getVal('website'),
+        logo_path: document.getElementById('companylogo')?.src || '',
         created_by: localStorage.getItem('UserLoginID') || 'unknown'
     };
 }
@@ -206,61 +266,44 @@ function formatAddress(address) {
     return address ? address.charAt(0).toUpperCase() + address.slice(1).toLowerCase() : '';
 }
 
+/* ---------------------- 🆔 Company ID Generation ---------------------- */
 async function generateNewCompanyID(companyName) {
     const prefix = `C${companyName.charAt(0).toUpperCase()}`;
-    const { data, error } = await supabaseClient.from('company_profile').select('company_id');
+    try {
+        const { data, error } = await supabaseClient.from('company_profile').select('company_id');
+        if (error || !data?.length) return `${prefix}0001`;
 
-    if (error) return `${prefix}0001`;
+        const maxNum = data
+            .filter(r => r.company_id?.startsWith(prefix))
+            .map(r => parseInt(r.company_id.slice(2), 10) || 0)
+            .reduce((max, n) => Math.max(max, n), 0);
 
-    const maxCount = data
-        .map(item => item.company_id)
-        .filter(id => id.startsWith(prefix))
-        .reduce((max, id) => Math.max(max, parseInt(id.slice(2), 10) || 0), 0);
-
-    return `${prefix}${String(maxCount + 1).padStart(4, '0')}`;
+        return `${prefix}${String(maxNum + 1).padStart(4, '0')}`;
+    } catch {
+        return `${prefix}0001`;
+    }
 }
 
-function userRoleType() {
-    const editable = parseInt(localStorage.getItem('UserType'), 10) === 1;
-    ['shortCode', 'companyName', 'panNumber', 'gstNumber'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.disabled = !editable;
-    });
+/* ---------------------- 🌐 Misc Utilities ---------------------- */
+function enforceURLProtocol() {
+    if (!this.value.trim()) return;
+    if (!/^https?:\/\//i.test(this.value.trim())) {
+        this.value = 'https://' + this.value.trim();
+    }
 }
 
-document.getElementById('website').addEventListener('blur', function () {
-    const val = this.value.trim();
-    if (val && !/^https?:\/\//i.test(val)) this.value = 'https://' + val;
-});
+function bindValidation(inputID, feedbackID, table, column, validator) {
+    const input = document.getElementById(inputID);
+    if (input) input.addEventListener('blur', () => validator(inputID, feedbackID, table, column));
+}
 
-document.getElementById('gstNumber').addEventListener('blur', async () => {
-    await validateGSTInput('gstNumber', 'gstFeedback', 'company_profile', 'gst_number');
-});
-document.getElementById('panNumber').addEventListener('blur', async () => {
-    await validatePANInput('panNumber', 'panFeedback', 'company_profile', 'pan_number');
-});
-document.getElementById('branchGSTNo').addEventListener('blur', async () => {
-    await validateGSTInput('branchGSTNo', 'branchGSTFeedback', 'CompanyBranchDetails', 'GSTNo');
-});
-document.getElementById('branchPANNo').addEventListener('blur', async () => {
-    await validatePANInput('branchPANNo', 'branchPANFeedback', 'CompanyBranchDetails', 'PANNo');
-});
-
+/* ---------------------- 🖼️ Logo Update ---------------------- */
 function updateCompanyLogo(companyID) {
     const logo = document.getElementById('companylogo');
+    if (!logo) return;
     const fallback = '../../assets/img/logo/default.png';
     const path = `../../assets/img/logo/${companyID}.png`;
-
-    if (!logo) return;
-
-    const img = new Image();
-    img.onload = () => {
-        logo.src = path;
-        logo.alt = `Logo for ${companyID}`;
-    };
-    img.onerror = () => {
-        logo.src = fallback;
-        logo.alt = 'Default Logo';
-    };
-    img.src = path;
+    logo.onerror = () => { logo.src = fallback; logo.alt = 'Default Logo'; };
+    logo.onload = () => { logo.alt = `Logo for ${companyID}`; };
+    logo.src = companyID ? path : fallback;
 }
