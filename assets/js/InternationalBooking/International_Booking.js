@@ -44,17 +44,6 @@ awbNoInput.addEventListener('change', async () => {
     if (!docketNo) return;
 
     try {
-        // 1) Check billing status first
-        const { isUnbilled, invoiceNo } = await checkAWBBilledStatus(docketNo);
-
-        if (!isUnbilled) {
-            alert(`This AWB has already been billed.\nInvoice Number: ${invoiceNo}`);
-            disableForm();
-            saveButton.disabled = true;
-            modifyButton.disabled = true;
-            deleteButton.disabled = true;
-        }
-
 
         // 2) Load basic docket details
         await fetchDocketDetails(docketNo);
@@ -75,6 +64,17 @@ awbNoInput.addEventListener('change', async () => {
             fetchContainerDetails(tempFormID),
             loadBookingStatus(docketNo)
         ]);
+
+        // 1) Check billing status first
+        const { isUnbilled, invoiceNo } = await checkAWBBilledStatus(docketNo);
+
+        if (!isUnbilled) {
+            alert(`This AWB has already been billed.\nInvoice Number: ${invoiceNo}`);
+            disableForm();
+            saveButton.disabled = true;
+            modifyButton.disabled = true;
+            deleteButton.disabled = true;
+        }
 
     } catch (error) {
         console.error('Error loading AWB details:', error);
