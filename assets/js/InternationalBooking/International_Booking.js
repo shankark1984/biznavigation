@@ -53,8 +53,6 @@ awbNoInput.addEventListener('change', async () => {
             saveButton.disabled = true;
             modifyButton.disabled = true;
             deleteButton.disabled = true;
-
-            return;
         }
 
 
