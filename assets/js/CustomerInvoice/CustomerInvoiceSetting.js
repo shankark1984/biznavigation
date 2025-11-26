@@ -315,6 +315,7 @@ document.getElementById('deleteButton').addEventListener('click', () => {
     // Logic to delete the invoice
     alert('Delete functionality not implemented yet.');
 });
+
 document.getElementById('reportButton').addEventListener('click', async () => {
     const invoiceNo = document.getElementById('invoiceNo').value;
     const partyName = document.getElementById('partyName').value;
@@ -325,7 +326,7 @@ document.getElementById('reportButton').addEventListener('click', async () => {
     // Check the value and run the relevant function
     if (invoiceType === 'Forwarding' || invoiceType === 'Import' || invoiceType === 'Export') {
         if (reportType === '') {
-            url = `pages/reports/rep_Invoice_Forwarding_Main.html?invoiceNo=${encodeURIComponent(invoiceNo)}&partyName=${encodeURIComponent(partyName)}`;
+            url = `../../pages/Print_Reports/rep_Invoice_Forwarding_Main.html?invoiceNo=${encodeURIComponent(invoiceNo)}&partyName=${encodeURIComponent(partyName)}`;
         } else if (reportType === 'Latter Head') {
             url = `rep_Invoice_Forwarding_Main.html?invoiceNo=${encodeURIComponent(invoiceNo)}&partyName=${encodeURIComponent(partyName)}`;
             console.log('Generating report for International Booking Invoice');
@@ -477,8 +478,19 @@ document.getElementById('saveButton').addEventListener('click', async () => {
             PartyCode: partyCode,
             InvoiceAddress: invoiceAddress,
             BankID: bankID,
-            company_id: CompanyID
+            company_id: CompanyID,
+
+            // 💰 Totals — directly from DOM
+            BasicAmount: parseFloat(document.getElementById('totalFreight').textContent) || 0,
+            OtherAmount: parseFloat(document.getElementById('totalFSCAmt').textContent) || 0 + parseFloat(document.getElementById('totalOtherAmt').textContent) || 0,
+            SGSTAmount: parseFloat(document.getElementById('totalSGST').textContent) || 0,
+            CGSTAmount: parseFloat(document.getElementById('totalCGST').textContent) || 0,
+            IGSTAmount: parseFloat(document.getElementById('totalIGST').textContent) || 0,
+            TotalGSTAmount: parseFloat(document.getElementById('totalGST').textContent) || 0,
+            GrandTotalAmount: parseFloat(document.getElementById('totalGrand').textContent) || 0
         };
+
+
 
         if (isInsertMode) {
             invoiceData.created_by = UserLoginID;

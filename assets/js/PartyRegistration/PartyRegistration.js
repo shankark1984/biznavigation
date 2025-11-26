@@ -8,9 +8,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     if (perWrite) saveButton.disabled = false;
-    handleUserTypePermissions();
     enableForm();
-
     await loadSuggestions('partySuggestions', 'PartyDetails', CompanyID);
 });
 

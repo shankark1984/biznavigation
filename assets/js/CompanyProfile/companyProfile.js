@@ -172,19 +172,28 @@ function bindEvents(userType) {
 
 function onModifyClick() {
     setFormState(true);
+
     const saveBtn = document.getElementById('saveButton');
     if (saveBtn) {
         saveBtn.disabled = false;
         saveBtn.innerHTML = '<i class="bi bi-save"></i> Update';
         saveBtn.dataset.mode = 'update';
     }
+
     const modifyBtn = document.getElementById('modifyButton');
-    if (modifyBtn) {
-        modifyBtn.disabled = true;
-    }
-    userRoleType();
+    if (modifyBtn) modifyBtn.disabled = true;
+
+    userRoleType(); // this might re-enable fields based on role
+
+    // 🔹 Now disable GST and PAN after all enabling logic
+    const gstNumber = document.getElementById('gstNumber');
+    const panNumber = document.getElementById('panNumber');
+    if (gstNumber) gstNumber.disabled = true;
+    if (panNumber) panNumber.disabled = true;
+
     setButtonState(['branchAddDetails', 'branchBankAddDetails'], true);
 }
+
 
 function onNewClick() {
     setFormState(true);

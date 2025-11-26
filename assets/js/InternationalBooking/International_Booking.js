@@ -5,7 +5,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         alert("You do not have permission to view this form.");
         return;
     }
-    handleUserTypePermissions();
+    // handleUserTypePermissions();
 
     enableForm();
 
@@ -41,19 +41,36 @@ const awbNoInput = document.getElementById('awbNo');
 
 awbNoInput.addEventListener('change', async () => {
     const docketNo = awbNoInput.value.trim();
-
-    if (!docketNo) return; // Guard clause for empty input
+    if (!docketNo) return;
 
     try {
+        // 1) Check billing status first
+        const { isUnbilled, invoiceNo } = await checkAWBBilledStatus(docketNo);
+
+        if (!isUnbilled) {
+            alert(`This AWB has already been billed.\nInvoice Number: ${invoiceNo}`);
+            disableForm();
+            saveButton.disabled = true;
+            modifyButton.disabled = true;
+            deleteButton.disabled = true;
+
+            return;
+        }
+
+
+        // 2) Load basic docket details
         await fetchDocketDetails(docketNo);
+
+        // 3) Setup charge type validation
         await setupChargeTypeValidation();
 
+        // 4) Read temp form ID
         const tempFormID = freightElements.tempFormID.value.trim();
 
-        // Skip loading additional details if it's a TEMP form
+        // If TEMP docket, stop here (do not load other details)
         if (tempFormID.includes('TEMP')) return;
 
-        // Load other sections in parallel if independent
+        // 5) Load remaining sections in parallel (faster)
         await Promise.all([
             loadFreightCharges(),
             loadVolumetricDetails(),
@@ -127,7 +144,6 @@ async function fetchDocketDetails(docketNo) {
     document.getElementById('addFreightRow').disabled = true;
 }
 
-
 document.getElementById('newButton').addEventListener('click', function () {
     clearForm();
     enableForm();
@@ -162,8 +178,6 @@ document.getElementById('newButton').addEventListener('click', function () {
         document.getElementById(id).disabled = true;
     });
 });
-
-
 
 document.getElementById('modifyButton').addEventListener('click', async function () {
     enableForm();
@@ -374,7 +388,6 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 
-
 document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('modeTypeI').addEventListener('change', async function () {
         const modeType = this.value;
@@ -402,3 +415,20 @@ document.addEventListener('DOMContentLoaded', async () => {
 document.getElementById('consigneeName').addEventListener('focus', function () {
     this.setAttribute('list', 'consigneeNameSuggestions');
 });
+// AWB alreday billed check in database table is "international_booking" column "InvoiceNumber" is not null or empty its unbilled otherwise billed
+async function checkAWBBilledStatus(docketNo) {
+    const { data, error } = await supabaseClient
+        .from('international_booking')
+        .select('InvoiceNumber')
+        .eq('DocketNo', docketNo)
+        .eq('company_id', CompanyID)
+        .maybeSingle();
+
+    // If no record or no invoice → unbilled
+    if (error || !data || !data.InvoiceNumber) {
+        return { isUnbilled: true, invoiceNo: null };
+    }
+
+    // If invoice exists → billed
+    return { isUnbilled: false, invoiceNo: data.InvoiceNumber };
+}

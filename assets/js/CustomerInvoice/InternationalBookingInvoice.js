@@ -143,7 +143,16 @@ async function getPendingInvoiceDetails() {
             alert('No pending invoices with grand total greater than 0 found.');
         }
 
-        updateTotals_ib({ totalFreight, totalFSCAmt, totalOtherAmt, totalSGST, totalCGST, totalIGST, totalGST, totalGrand });
+        updateTotals_ib({
+            totalFreight,
+            totalFSCAmt,
+            totalOtherAmt,
+            totalSGST,
+            totalCGST,
+            totalIGST,
+            totalGST,
+            totalGrand
+        });
         renderChargesTable(mergedChargesMap);
 
     } catch (err) {
@@ -471,10 +480,25 @@ async function addSingleShipmentToInvoice(shipmentNo, invoiceNo) {
         `;
         tableBody.appendChild(row);
 
-        // Optionally update your totals here (if required)
+        // ✅ Update totals from footer before adding new values
+        const totals = {
+            totalFreight: parseFloat(document.getElementById('totalFreight').textContent) + charges.BasicFrightAmt,
+            totalFSCAmt: parseFloat(document.getElementById('totalFSCAmt').textContent) + charges.FSCAmt,
+            totalOtherAmt: parseFloat(document.getElementById('totalOtherAmt').textContent) + charges.OtherAmt,
+            totalSGST: parseFloat(document.getElementById('totalSGST').textContent) + charges.totalSGST,
+            totalCGST: parseFloat(document.getElementById('totalCGST').textContent) + charges.totalCGST,
+            totalIGST: parseFloat(document.getElementById('totalIGST').textContent) + charges.totalIGST,
+            totalGST: parseFloat(document.getElementById('totalGST').textContent) + charges.totalGST,
+            totalGrand: parseFloat(document.getElementById('totalGrand').textContent) + charges.grandTotal
+        };
+
+        // ✅ Now pass totals to updateTotals_ib
+        updateTotals_ib(totals);
+
+        // Optionally refresh merged charges table
+        renderChargesTable({ [data.DocketNo]: charges.chargesMap });
+
         alert('Shipment added successfully!');
-        updateTotals_ib();
-        renderChargesTable(mergedChargesMap);
 
     } catch (err) {
         console.error('Error adding shipment:', err.message);
@@ -483,6 +507,7 @@ async function addSingleShipmentToInvoice(shipmentNo, invoiceNo) {
         hideSpinner();
     }
 }
+
 
 async function unlockBooking_ib(userID) {
     if (!userID) {

@@ -156,6 +156,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 function handleUserTypePermissions() {
     saveButton.disabled = !(UserType === 1 || UserType === 2);
+    console.log("UserType:", UserType);
     newButton.disabled = UserType !== 1;
 }
 
