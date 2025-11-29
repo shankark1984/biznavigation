@@ -3,13 +3,15 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BizNavigation - Payment Details</title>
+
     <!-- Bootstrap & Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.14.0-beta3/css/bootstrap-select.min.css"
         rel="stylesheet">
+
     <!-- Custom CSS -->
     <style>
         #freightTable th:nth-child(13),
@@ -44,6 +46,8 @@
 
     <div class="container mt-4 pt-5" id="root">
         <div class="card shadow-lg rounded">
+
+            <!-- HEADER -->
             <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
                 <h4 class="mb-0" id="pageTitle">Payment Details</h4>
                 <input type="hidden" id="tempFormID">
@@ -51,62 +55,63 @@
                 <input type="hidden" id="partyCode">
             </div>
 
+            <!-- BODY -->
             <div class="card-body">
                 <form autocomplete="off">
-                    <!-- Action Buttons -->
-                    <div class="d-flex flex-wrap gap-2 mb-3 align-items-center">
-                        <button type="button" class="btn btn-primary btn-sm" id="newButton" title="Create new booking">
+
+                    <!-- ACTION BUTTONS -->
+                    <div class="d-flex flex-wrap gap-2 mb-3">
+                        <button type="button" class="btn btn-primary btn-sm" id="newButton">
                             <i class="bi bi-file-earmark-plus"></i> New
                         </button>
-                        <button type="button" class="btn btn-warning btn-sm" id="modifyButton" title="Modify booking"
-                            disabled>
+                        <button type="button" class="btn btn-warning btn-sm" id="modifyButton" disabled>
                             <i class="bi bi-pencil"></i> Modify
                         </button>
-                        <button type="button" class="btn btn-danger btn-sm" id="deleteButton" title="Delete booking"
-                            disabled>
+                        <button type="button" class="btn btn-danger btn-sm" id="deleteButton" disabled>
                             <i class="bi bi-trash"></i> Delete
                         </button>
-                        <button type="button" class="btn btn-info btn-sm" id="reportButton" title="Generate report"
-                            disabled>
+                        <button type="button" class="btn btn-info btn-sm" id="reportButton" disabled>
                             <i class="bi bi-file-earmark-text"></i> Report
                         </button>
-                        <button type="button" class="btn btn-success btn-sm" id="saveButton" title="Save booking">
+                        <button type="button" class="btn btn-success btn-sm" id="saveButton">
                             <i class="bi bi-save"></i> Save
                         </button>
-                        <input type="text" class="form-control bg-light d-none" id="status" value="New" readonly>
+
+                        <input type="text" class="d-none" id="status" value="New" readonly>
                     </div>
 
-                    <!-- Payment Main Details -->
+                    <!-- PAYMENT MAIN DETAILS -->
                     <div class="border p-3 rounded mb-4">
                         <h5 class="mb-3 fw-bold text-primary fs-6">Payment Main Details</h5>
                         <div class="row g-2">
-                            <div class="col-md-2 col-sm-6">
+
+                            <div class="col-md-2">
                                 <label class="form-label" for="paymentID">Payment ID</label>
-                                <input list="paymentIDSuggestions" class="form-control bg-light-input" id="paymentID"
-                                    required autocomplete="off">
+                                <input list="paymentIDSuggestions" id="paymentID" class="form-control bg-light-input"
+                                    required>
                                 <datalist id="paymentIDSuggestions"></datalist>
                             </div>
-                            <div class="col-md-2 col-sm-6">
+
+                            <div class="col-md-2">
                                 <label class="form-label" for="receiptOn">Receipt On</label>
-                                <input type="date" class="form-control" id="receiptOn" required>
+                                <input type="date" id="receiptOn" class="form-control" required>
                             </div>
-                            <div class="col-md-4 col-sm-6">
+
+                            <div class="col-md-4">
                                 <label class="form-label" for="partyName">Customer Name</label>
-                                <input list="partySuggestions" class="form-control" id="partyName"
-                                    placeholder="Choose..." required autocomplete="off">
+                                <input list="partySuggestions" id="partyName" class="form-control" required
+                                    placeholder="Choose...">
                                 <datalist id="partySuggestions"></datalist>
                             </div>
-                            <div class="col-md-2 col-sm-6">
-                                <label class="form-label" for="transactionType">Transaction Type</label>
-                                <select class="form-control" id="transactionType" required disabled>
-                                    <option value="">Choose...</option>
-                                    <option value="Credit">Credit</option>
-                                    <option value="Debit">Debit</option>
-                                </select>
+
+                            <div class="col-md-2">
+                                <label class="form-label">Transaction Type</label>
+                                <input type="text" id="transactionType" class="form-control" disabled>
                             </div>
-                            <div class="col-md-2 col-sm-6">
-                                <label class="form-label" for="paymentMode">Payment Mode</label>
-                                <select class="form-control" id="paymentMode" required>
+
+                            <div class="col-md-2">
+                                <label class="form-label">Payment Mode</label>
+                                <select id="paymentMode" class="form-control" required>
                                     <option value="">Choose...</option>
                                     <option>Cash</option>
                                     <option>Cheque</option>
@@ -117,76 +122,132 @@
                                     <option>UPI</option>
                                 </select>
                             </div>
-                            <div class="col-md-2 col-sm-6">
-                                <label class="form-label" for="inputBankName">Bank Name</label>
-                                <input list="bankNameSuggestions" class="form-control" id="inputBankName" required
-                                    autocomplete="off">
+
+                            <div class="col-md-2">
+                                <label class="form-label">Bank Name</label>
+                                <input list="bankNameSuggestions" id="inputBankName" class="form-control" required>
                                 <datalist id="bankNameSuggestions"></datalist>
                             </div>
-                            <div class="col-md-2 col-sm-6">
-                                <label class="form-label" for="referenceNo">Reference No</label>
-                                <input type="text" class="form-control" id="referenceNo" required>
+
+                            <div class="col-md-2">
+                                <label class="form-label">Reference No</label>
+                                <input type="text" id="referenceNo" class="form-control" required>
                             </div>
-                            <div class="col-md-3 col-sm-12">
-                                <label class="form-label" for="infomation">Narration</label>
-                                <input type="text" class="form-control" id="infomation" placeholder="Enter Narration">
+
+                            <div class="col-md-3">
+                                <label class="form-label">Narration</label>
+                                <input type="text" id="information" class="form-control">
                             </div>
-                            <div class="col-md-2 col-sm-6">
-                                <label class="form-label" for="paymentAmount">Amount</label>
-                                <input type="number" class="form-control text-end" id="paymentAmount" value="0.00"
-                                    step="0.01" min="0" required>
+
+                            <div class="col-md-2">
+                                <label class="form-label">Amount</label>
+                                <input type="number" id="paymentAmount" class="form-control text-end" min="0"
+                                    step="0.01" value="0.00" required>
                             </div>
-                            <div class="col-md-2 col-sm-6">
-                                <label class="form-label" for="deductionAmount">Deduction Amount</label>
-                                <input type="number" class="form-control text-end" id="deductionAmount" value="0.00"
-                                    step="0.01" min="0">
+
+                            <div class="col-md-2">
+                                <label class="form-label">Deduction Amount</label>
+                                <input type="number" id="deductionAmount" class="form-control text-end" min="0"
+                                    step="0.01" value="0.00">
                             </div>
                         </div>
                     </div>
 
-                    <!-- Payment Allocation Table -->
-                    <div class="table-responsive">
-                        <h5 class="mb-1 fw-bold text-success fs-6">Payment Allocation Details</h5>
-                        <table class="table table-hover align-middle text-center fs-6" id="paymentAllocationTable">
-                            <thead class="table-dark fs-7">
-                                <tr>
-                                    <th>Invoice No</th>
-                                    <th>Invoice Date</th>
-                                    <th>Invoice Amount</th>
-                                    <th>Balance Amount</th>
-                                    <th>Allocated Amount</th>
-                                    <th>Other Deduction</th>
-                                    <th>TDS Deduction</th>
-                                    <th>Narration</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="paymentAllocationBody" class="fs-7"></tbody>
-                            <tfoot class="table-light fw-bold fs-6">
-                                <tr>
-                                    <td colspan="4" class="text-end">Total:</td>
-                                    <td id="totalAllocatedAmount" class="text-end">0.00</td>
-                                    <td id="totalOtherDeductionAmount" class="text-end">0.00</td>
-                                    <td id="totalTDSDeductionAmount" class="text-end">0.00</td>
-                                    <td colspan="2"></td>
-                                </tr>
-                            </tfoot>
-                        </table>
-
-                        <div class="d-flex justify-content-between align-items-center mt-2 gap-2 flex-wrap">
-                            <button id="addRowButton" class="btn btn-primary" type="button">
-                                Add More Row
+                    <!-- TABS -->
+                    <ul class="nav nav-tabs" id="bookingTabs">
+                        <li class="nav-item">
+                            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#invoiceDetails">
+                                Payment Allocation Details
                             </button>
-                            <div class="d-flex align-items-center gap-3 flex-wrap">
-                                <span class="mb-0">
-                                    Suspense Amount: <strong id="unallocatedAmount">0.00</strong>
-                                </span>
-                                <span class="mb-0">
-                                    Deducted Amt: <strong id="undeductedAmount">0.00</strong>
-                                </span>
-                                <span id="rowCounter" class="badge bg-light text-dark ms-2">Total Rows: 0</span>
+                        </li>
+                    </ul>
+
+                    <!-- TAB CONTENT -->
+                    <div class="tab-content p-3 border border-top-0">
+
+                        <div class="tab-pane fade show active" id="invoiceDetails">
+
+                            <!-- PAYMENT ALLOCATION INPUT -->
+                            <div class="row g-2 text-center">
+
+                                <div class="col-md-3 text-start">
+                                    <label class="form-label small">Invoice No</label>
+                                    <input list="invoiceNumberList" id="invoiceNumberInput"
+                                        class="form-control form-control-sm" placeholder="Invoice No">
+                                    <datalist id="invoiceNumberList"></datalist>
+                                </div>
+
+                                <div class="col-md-2 text-start">
+                                    <label class="form-label small">Invoice Date</label>
+                                    <input type="date" id="invoiceDate" class="form-control form-control-sm" readonly>
+                                </div>
+
+                                <div class="col-md-2 text-start">
+                                    <label class="form-label small">Invoice Amount</label>
+                                    <input type="number" id="invoiceAmount" min="0" step="0.01" readonly
+                                        class="form-control form-control-sm">
+                                </div>
+
+                                <div class="col-md-2 text-start">
+                                    <label class="form-label small">Invoice Balance</label>
+                                    <input type="number" id="invoiceBalance" min="0" step="0.01" readonly
+                                        class="form-control form-control-sm">
+                                </div>
+
+                                <div class="col-md-2 text-start">
+                                    <label class="form-label small">Accounted Amount</label>
+                                    <input type="number" id="accountedAmount" min="0" step="0.01"
+                                        class="form-control form-control-sm">
+                                </div>
+
+                                <div class="col-md-2 text-start">
+                                    <label class="form-label small">Other Deduction</label>
+                                    <input type="number" id="otherDeuctionAmount" min="0" step="0.01"
+                                        class="form-control form-control-sm">
+                                </div>
+
+                                <div class="col-md-2 text-start">
+                                    <label class="form-label small">TDS Deduction</label>
+                                    <input type="number" id="tDSDeuctionAmount" min="0" step="0.01"
+                                        class="form-control form-control-sm">
+                                </div>
+
+                                <div class="col-md-6 text-start">
+                                    <label class="form-label small">Narration</label>
+                                    <input type="text" id="narration" class="form-control form-control-sm">
+                                </div>
+
+                                <div class="col-md-1 d-flex align-items-end">
+                                    <button type="button" id="addInvoiceDetailsButton"
+                                        class="btn btn-sm btn-primary w-100">Add</button>
+                                </div>
                             </div>
-                            <div id="taskBar" class="alert alert-danger d-none fade flex-grow-1 ms-2" role="alert">
+
+                            <!-- ALLOCATION TABLE -->
+                            <div class="table-responsive mt-3">
+                                <table class="table table-sm table-bordered text-center align-middle"
+                                    id="paymentDetails">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Invoice No</th>
+                                            <th>Narration</th>
+                                            <th>Allocated Amount</th>
+                                            <th>Other Deduction</th>
+                                            <th>TDS Deduction</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                    <tfoot>
+                                        <tr class="table-secondary fw-bold">
+                                            <td colspan="2" class="text-end">Total:</td>
+                                            <td id="totalAllocatedAmount" class="text-end">0.00</td>
+                                            <td id="totalOtherDeductionAmount" class="text-end">0.00</td>
+                                            <td id="totalTDSDeductionAmount" class="text-end">0.00</td>
+                                            <td colspan="2"></td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
                             </div>
                         </div>
                     </div>
@@ -195,17 +256,19 @@
         </div>
     </div>
 
-    <!-- Suspense Modal -->
-    <div class="modal fade" id="suspensePopup" tabindex="-1" aria-labelledby="suspensePopupLabel" aria-hidden="true">
+    <!-- SUSPENSE MODAL -->
+    <div class="modal fade" id="suspensePopup" tabindex="-1">
         <div class="modal-dialog modal-xl">
             <div class="modal-content">
+
                 <div class="modal-header">
-                    <h5 class="modal-title" id="suspensePopupLabel">Suspense Payments</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <h5 class="modal-title">Suspense Payments</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
+
                 <div class="modal-body">
-                    <div id="popupLoading" class="text-center my-3" style="display: none;">
-                        <div class="spinner-border text-primary" role="status"></div>
+                    <div id="popupLoading" class="text-center my-3 d-none">
+                        <div class="spinner-border text-primary"></div>
                         <p>Loading Suspense Payments...</p>
                     </div>
 
@@ -234,6 +297,7 @@
                         <span id="paginationInfo"></span>
                         <button id="nextPage" class="btn btn-secondary btn-sm">Next</button>
                     </div>
+
                 </div>
             </div>
         </div>
@@ -241,19 +305,21 @@
 
     <!-- JS Libraries -->
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" defer></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.14.0-beta3/js/bootstrap-select.min.js"
-        defer></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/2.3.10/purify.min.js" defer></script>
-    <script src="https://unpkg.com/@supabase/supabase-js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script
+        src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.14.0-beta3/js/bootstrap-select.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/2.3.10/purify.min.js"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js"></script>
 
     <!-- Project Scripts -->
-    <script src="../../assets/js/utils/server.js" defer></script>
-    <script src="../../assets/js/utils/navbar.js" defer></script>
-    <script src="../../assets/js/utils/footer.js" defer></script>
-    <script src="../../assets/js/utils/logout.js" defer></script>
-    <script src="../../assets/js/utils/utils.js" defer></script>
-    <script src="../../assets/js/Payment/PaymentDetails.js" defer></script>
+    <script src="../../assets/js/utils/server.js"></script>
+    <script src="../../assets/js/utils/navbar.js"></script>
+    <script src="../../assets/js/utils/footer.js"></script>
+    <script src="../../assets/js/utils/logout.js"></script>
+    <script src="../../assets/js/utils/utils.js"></script>
+    <!-- <script src="../../assets/js/Payment/PaymentDetails.js"></script> -->
+    <script src="../../assets/js/Payment/Payment.js"></script>
+
 </body>
 
 </html>

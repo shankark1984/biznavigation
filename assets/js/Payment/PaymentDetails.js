@@ -9,11 +9,9 @@ const paymentFormElements = {
     paymentMode: $("paymentMode"),
     inputBankName: $("inputBankName"),
     referenceNo: $("referenceNo"),
-    information: $("infomation"),
+    information: $("information"),
     paymentAmount: $("paymentAmount"),
     deductionAmount: $("deductionAmount"),
-    paymentAllocationBody: $("paymentAllocationBody"),
-    addRowButton: $("addRowButton"),
     totalAllocatedAmount: $("totalAllocatedAmount"),
     totalOtherDeductionAmount: $("totalOtherDeductionAmount"),
     totalTDSDeductionAmount: $("totalTDSDeductionAmount"),
@@ -85,7 +83,6 @@ function safeNumber(value) {
  */
 async function disableForm() {
     document.querySelectorAll('.form-control').forEach(el => el.disabled = true);
-    paymentFormElements.addRowButton.disabled = true;
     document.querySelectorAll('.delete-btn').forEach(btn => btn.disabled = true);
 }
 
@@ -120,8 +117,6 @@ async function resetForm() {
     saveButton.innerHTML = '<i class="bi bi-save"></i> Save';
     saveButton.disabled = false;
     modifyButton.disabled = true;
-    addRowButton.disabled = false;
-    paymentFormElements.paymentAllocationBody.innerHTML = '';
 
     // Initialize default rows, etc.
     updateTotals();
@@ -135,7 +130,6 @@ function enableFormForModification() {
     paymentFormElements.paymentID.disabled = true;
     saveButton.disabled = false;
     modifyButton.disabled = true;
-    paymentFormElements.addRowButton.disabled = false;
     saveButton.innerHTML = '<i class="bi bi-save"></i> Update';
     loadBankNameSuggestions();
     document.querySelectorAll('.delete-btn').forEach(btn => btn.disabled = false);
@@ -153,7 +147,6 @@ newButton.addEventListener('click', resetForm);
 modifyButton.addEventListener('click', enableFormForModification);
 saveButton.addEventListener('click', savePaymentDetails);
 paymentFormElements.partyName.addEventListener('change', handlePartyChange);
-paymentFormElements.addRowButton.addEventListener('click', () => addPaymentAllocationRow(CompanyID));
 
 
 document.addEventListener('DOMContentLoaded', initializeForm);
@@ -183,6 +176,7 @@ async function initializeForm() {
         alert("An unexpected error occurred while loading the form.");
     }
 }
+
 
 /**
  * Get a new Payment ID or returns the current if update.
@@ -313,29 +307,6 @@ function handlePostSaveActions(isUpdate) {
 }
 
 
-// ========== Payment ALLOCATION TABLE Logic ==========
-
-/**
- * Initialize table rows after reset
- */
-async function initializePaymentAllocationRows() {
-    for (let i = 0; i < 5; i++) addPaymentAllocationRow(CompanyID);
-}
-
-/**
- * Add row to the payment allocation table body
- */
-async function addPaymentAllocationRow(companyID, rowData = null) {
-    const uniqueID = `invoiceNoSuggestions_${Date.now()}`;
-    const row = document.createElement('tr');
-    row.innerHTML = createAllocationRowHTML(uniqueID);
-    paymentFormElements.paymentAllocationBody.appendChild(row);
-
-    setupRowEventListeners(row, companyID, uniqueID);
-    if (rowData) await populateRowWithData(row, rowData, companyID);
-    updateRowCounter();
-}
-
 function createAllocationRowHTML(uniqueID) {
     const classes = "form-control fs-7";
     const inputClass = "text-end";
@@ -439,15 +410,16 @@ async function fetchPaymentDetails(e) {
             .eq('company_id', CompanyID)
             .maybeSingle();
 
-        if (error || !data) {s
+        if (error || !data) {
+
             return;
         }
 
         // If data is valid, proceed normally
         await populateFormWithPaymentData(data);
-        await loadPaymentAllocations(selectedPaymentID);
+
         await handlePostFetchActions();
-        makeAllocationRowsReadonly();
+
     } catch (err) {
         console.error('Unexpected error:', err);
         alert('An unexpected error occurred. Please try again later.');
@@ -475,7 +447,6 @@ async function handlePostFetchActions() {
     saveButton.disabled = true;
     paymentFormElements.paymentID.disabled = true;
     modifyButton.disabled = false;
-    paymentFormElements.addRowButton.disabled = true;
     disableForm();
 }
 
@@ -635,8 +606,6 @@ async function handlePartyChange() {
     if (suspensePayments.length > 0) {
         await showSuspensePopup(suspensePayments);
         makeAllocationRowsReadonly();
-    } else {
-        initializePaymentAllocationRows();
     }
 }
 

@@ -158,24 +158,29 @@ function renderChargesTable(chargesMap) {
     document.getElementById('totalGrandAmt').textContent = totalGrandAmt.toFixed(2);
 }
 
-// Fetch pending invoices on button click
-document.getElementById('fetchPendingInvoices').addEventListener('click', async function () {
-    // Get the selected value from the movementType element
-    const movementTypeValue = document.getElementById('movementType').value;
+document.getElementById('fetchPendingInvoices').addEventListener('click', async () => {
 
-    // Normalize/trimming the value to prevent whitespace issues
-    const type = movementTypeValue.trim();
+    const movementTypeEl = document.getElementById('movementType');
+    const type = movementTypeEl.value.trim();
 
-    // Check the value and run the relevant function
-    if (type === 'Forwarding' || type === 'Import' || type === 'Export') {
-        console.log('Fetching pending invoices for Forwarding/Import/Export');
-        await getPendingInvoiceDetails();
-    }
-    else if (type === 'Customs Clearance') {
-        await CustomsClearanceInvoiceDetails();
-    }
-    else {
-        console.warn('Unknown movement type:', type);
+    const forwardingTypes = ['Forwarding', 'Import', 'Export'];
+
+    try {
+        if (forwardingTypes.includes(type)) {
+            console.log('Fetching pending invoices for Forwarding/Import/Export');
+            await getPendingInvoiceDetails();
+        }
+        else if (type === 'Customs Clearance') {
+            await CustomsClearanceInvoiceDetails();
+        }
+        else {
+            alert('Unknown movement type selected. Please select a valid type.');
+            movementTypeEl.focus();   // ✅ FIXED: setfocus → focus()
+            console.warn('Unknown movement type:', type);
+        }
+    } catch (error) {
+        console.error("Error fetching invoices:", error);
+        alert("Something went wrong while fetching invoices.");
     }
 });
 
