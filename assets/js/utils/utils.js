@@ -1035,3 +1035,19 @@ function showToast(message) {
     const toast = new bootstrap.Toast(toastElement);
     toast.show();
 }
+
+async function getCompanyProfile(companyId) {
+    try {
+        const { data, error } = await supabaseClient
+            .from('company_profile')
+            .select('*')
+            .eq('company_id', companyId)
+            .single();
+
+        if (error) throw error;
+        if (data) return data;
+    } catch (error) {
+        console.error('Error fetching company profile:', error.message);
+        return null;
+    }
+}

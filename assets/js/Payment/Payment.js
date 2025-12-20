@@ -902,38 +902,89 @@ async function generateReceiptPDF(header, lines) {
     /* ---------------------------------
        COMPANY DETAILS
     --------------------------------- */
+    // 🔥 Fetch company data from DB
+    const companyData = await getCompanyProfile(CompanyID);
+
     const company = {
-        name: "BIZ NAVIGATION PRIVATE LIMITED",
-        address: "No 21, MG Road, Bengaluru - 560001",
-        phone: "Ph: +91 98765 43210",
-        email: "accounts@biznavigation.com",
-        logo: "/assets/img/logo/CA0001.png"
+        name: companyData.company_name,
+        address: `${companyData.address}, ${companyData.city} - ${companyData.pin_code}, ${companyData.state}, ${companyData.country}`,
+        phone: `Ph: ${companyData.phone_no || "-"
+            } `,
+        email: companyData.e_mail || "-",
+        logo: companyData.logo_path
     };
 
     /* ---------------------------------
-       HEADER BOX + LOGO
-    --------------------------------- */
+   HEADER BOX + LOGO (OPTIMIZED)
+--------------------------------- */
+    const headerX = 10;
     const headerY = 10;
+    const headerW = 190;
     const headerH = 20;
 
-    doc.rect(10, headerY, 190, headerH);
+    const logoBoxW = headerW * 0.20;
+    const textBoxW = headerW * 0.80;
 
-    const logoSize = 18;
-    const logoY = headerY + (headerH - logoSize) / 2;
+    // 🔹 Only ONE outer border
+    safeRect(doc, headerX, headerY, headerW, headerH);
+
+    /* ---------- LOGO (AUTO FIT) ---------- */
+    const maxLogoW = logoBoxW - 6;
+    const maxLogoH = headerH - 4;
 
     const logoImg = await loadImage(company.logo);
     if (logoImg) {
-        doc.addImage(logoImg, "PNG", 15, logoY, logoSize, logoSize);
+        const ratio = logoImg.width / logoImg.height;
+
+        let logoW = maxLogoW;
+        let logoH = logoW / ratio;
+
+        if (logoH > maxLogoH) {
+            logoH = maxLogoH;
+            logoW = logoH * ratio;
+        }
+
+        const logoX = headerX + (logoBoxW - logoW) / 2;
+        const logoY = headerY + (headerH - logoH) / 2;
+
+        doc.addImage(logoImg, "PNG", logoX, logoY, logoW, logoH);
     }
 
-    const headerCenterY = headerY + headerH / 2;
+    /* ---------- TEXT (AUTO FIT) ---------- */
+    const textX = headerX + logoBoxW + 4;
+    const textW = textBoxW - 8;
+    const centerY = headerY + headerH / 2;
 
-    doc.setFontSize(14);
-    doc.text(company.name, 105, headerCenterY - 3, { align: "center" });
+    // Company Name (auto shrink)
+    let nameFontSize = 14;
+    doc.setFont("helvetica", "bold");
 
-    doc.setFontSize(9);
-    doc.text(company.address, 105, headerCenterY + 2, { align: "center" });
-    doc.text(`${company.phone} | ${company.email}`, 105, headerCenterY + 6, { align: "center" });
+    while (doc.getTextWidth(company.name) > textW && nameFontSize > 9) {
+        nameFontSize--;
+        doc.setFontSize(nameFontSize);
+    }
+
+    doc.text(company.name, textX + textW / 2, centerY - 4, {
+        align: "center"
+    });
+
+    // Address (wrap)
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
+
+    const addressLines = doc.splitTextToSize(company.address, textW);
+    doc.text(addressLines, textX + textW / 2, centerY + 1, {
+        align: "center"
+    });
+
+    // Phone + Email
+    doc.setFontSize(8);
+    doc.text(
+        `${company.phone} | ${company.email}`,
+        textX + textW / 2,
+        centerY + 7,
+        { align: "center" }
+    );
 
     /* ---------------------------------
        RECEIPT TITLE
@@ -961,19 +1012,19 @@ async function generateReceiptPDF(header, lines) {
     doc.setFontSize(8);
     let y = infoY + 7;
 
-    doc.text(`Receipt No : ${header.PaymentID || "-"}`, 15, y);
-    doc.text(`Date : ${header.ReceiptOn || "-"}`, 150, y);
+    doc.text(`Receipt No: ${header.PaymentID || "-"} `, 15, y);
+    doc.text(`Date: ${header.ReceiptOn || "-"} `, 150, y);
 
     y += lineGap;
-    doc.text(`Party : ${paymentFormElements?.partyName?.value || "-"}`, 15, y);
-    doc.text(`Payment Amount : ${safeNumber(header.PaymentAmount).toFixed(2)}`, 150, y);
+    doc.text(`Party: ${paymentFormElements?.partyName?.value || "-"} `, 15, y);
+    doc.text(`Payment Amount: ${safeNumber(header.PaymentAmount).toFixed(2)} `, 150, y);
 
     y += lineGap;
-    doc.text(`Payment Mode : ${header.PaymentMode || "-"}`, 15, y);
-    doc.text(`Deduction Amount : ${safeNumber(header.DeductionAmount).toFixed(2)}`, 150, y);
+    doc.text(`Payment Mode: ${header.PaymentMode || "-"} `, 15, y);
+    doc.text(`Deduction Amount: ${safeNumber(header.DeductionAmount).toFixed(2)} `, 150, y);
 
     y += lineGap;
-    doc.text(`Reference No : ${header.ReferenceNo || "-"}`, 15, y);
+    doc.text(`Reference No: ${header.ReferenceNo || "-"} `, 15, y);
 
     /* ---------------------------------
        INVOICE TABLE
@@ -1041,9 +1092,9 @@ async function generateReceiptPDF(header, lines) {
 
     safeRect(doc, 10, y, 190, 22);
 
-    doc.text(`Payment Amount : ${safeNumber(header.PaymentAmount).toFixed(2)}`, 15, y + 6);
-    doc.text(`Deduction Amount : ${safeNumber(header.DeductionAmount).toFixed(2)}`, 15, y + 12);
-    doc.text(`Suspense Amount : ${safeNumber(header.SuspenseAmount).toFixed(2)}`, 15, y + 18);
+    doc.text(`Payment Amount: ${safeNumber(header.PaymentAmount).toFixed(2)} `, 15, y + 6);
+    doc.text(`Deduction Amount: ${safeNumber(header.DeductionAmount).toFixed(2)} `, 15, y + 12);
+    doc.text(`Suspense Amount: ${safeNumber(header.SuspenseAmount).toFixed(2)} `, 15, y + 18);
 
 
     /* ---------------------------------
