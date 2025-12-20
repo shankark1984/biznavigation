@@ -994,8 +994,35 @@ async function generateReceiptPDF(header, lines) {
             startY: tableEndY,   // ✅ GAP ADDED
             head: [["Sl No.", "Invoice No", "Allocated", "Other Deduction", "TDS"]],
             body: tableData,
-            styles: { fontSize: 8 },
-            margin: { left: 10, right: 10 }
+            styles: {
+                fontSize: 8,
+                lineWidth: 0.2,          // 🔹 border thickness
+                lineColor: [0, 0, 0],    // 🔹 border color (black)
+                cellPadding: 2
+            },
+
+            headStyles: {
+                lineWidth: 0.2,
+                lineColor: [0, 0, 0],
+                fontStyle: "bold"
+            },
+
+            bodyStyles: {
+                lineWidth: 0.2,
+                lineColor: [0, 0, 0]
+            },
+
+            tableLineWidth: 0.2,        // 🔹 outer table border
+            tableLineColor: [0, 0, 0],
+
+            margin: { left: 10, right: 10 },
+            columnStyles: {
+                0: { halign: "center", cellWidth: 12 },
+                1: { halign: "left", cellWidth: 60 },
+                2: { halign: "right" },
+                3: { halign: "right" },
+                4: { halign: "right" }
+            }
         });
 
         if (doc.lastAutoTable && Number.isFinite(doc.lastAutoTable.finalY)) {
