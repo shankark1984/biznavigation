@@ -395,6 +395,12 @@ function safeNumber(v) {
     return isNaN(n) ? 0 : n;
 }
 
+function safeRect(doc, x, y, w, h) {
+    if ([x, y, w, h].every(v => Number.isFinite(v))) {
+        doc.rect(x, y, w, h);
+    }
+}
+
 // Load image safely
 function loadImage(url) {
     return new Promise((resolve) => {
@@ -972,7 +978,7 @@ async function generateReceiptPDF(header, lines) {
     /* ---------------------------------
        INVOICE TABLE
     --------------------------------- */
-    let tableEndY = infoY + infoH;
+    let tableEndY = infoY + infoH + 5;
 
     if (Array.isArray(lines) && lines.length > 0) {
 
@@ -985,22 +991,18 @@ async function generateReceiptPDF(header, lines) {
         ]));
 
         doc.autoTable({
-            startY: tableEndY,
+            startY: tableEndY + 5,   // ✅ GAP ADDED
             head: [["Sl No.", "Invoice No", "Allocated", "Other Deduction", "TDS"]],
             body: tableData,
             styles: { fontSize: 8 },
-            // headStyles: { fillColor: [230, 230, 230] },
             margin: { left: 10, right: 10 }
         });
 
-        if (doc.lastAutoTable) {
+        if (doc.lastAutoTable && Number.isFinite(doc.lastAutoTable.finalY)) {
             const table = doc.lastAutoTable;
             const height = table.finalY - table.startY;
 
-            if (!isNaN(table.startY) && !isNaN(height)) {
-                doc.rect(10, table.startY, 190, height);
-            }
-
+            safeRect(doc, 10, table.startY, 190, height);
             tableEndY = table.finalY;
         }
     }
@@ -1008,24 +1010,28 @@ async function generateReceiptPDF(header, lines) {
     /* ---------------------------------
        TOTALS BOX
     --------------------------------- */
-    y = tableEndY;
-    doc.rect(10, y, 190, 22);
+    y = tableEndY + 6;
 
-    doc.setFontSize(8);
+    safeRect(doc, 10, y, 190, 22);
+
     doc.text(`Payment Amount : ${safeNumber(header.PaymentAmount).toFixed(2)}`, 15, y + 6);
     doc.text(`Deduction Amount : ${safeNumber(header.DeductionAmount).toFixed(2)}`, 15, y + 12);
     doc.text(`Suspense Amount : ${safeNumber(header.SuspenseAmount).toFixed(2)}`, 15, y + 18);
 
+
     /* ---------------------------------
        FOOTER
     --------------------------------- */
-    y += 22;
-    doc.rect(10, y, 190, 20);
+    y += 26;
+    safeRect(doc, 10, y, 190, 20);
     doc.text("Authorized Signatory", 150, y + 14);
+
 
     /* ---------------------------------
        DOWNLOAD
     --------------------------------- */
+    doc.setFont("helvetica");
+
     doc.save(`Payment_Receipt_${header.PaymentID || "NA"}.pdf`);
 }
 
