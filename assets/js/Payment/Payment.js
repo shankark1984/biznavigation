@@ -985,11 +985,11 @@ async function generateReceiptPDF(header, lines) {
         ]));
 
         doc.autoTable({
-            startY: tableEndY + 5,
-            head: [["#", "Invoice No", "Allocated", "Other Deduction", "TDS"]],
+            startY: tableEndY,
+            head: [["Sl No.", "Invoice No", "Allocated", "Other Deduction", "TDS"]],
             body: tableData,
             styles: { fontSize: 8 },
-            headStyles: { fillColor: [230, 230, 230] },
+            // headStyles: { fillColor: [230, 230, 230] },
             margin: { left: 10, right: 10 }
         });
 
@@ -1008,7 +1008,7 @@ async function generateReceiptPDF(header, lines) {
     /* ---------------------------------
        TOTALS BOX
     --------------------------------- */
-    y = tableEndY + 6;
+    y = tableEndY;
     doc.rect(10, y, 190, 22);
 
     doc.setFontSize(8);
@@ -1019,7 +1019,7 @@ async function generateReceiptPDF(header, lines) {
     /* ---------------------------------
        FOOTER
     --------------------------------- */
-    y += 28;
+    y += 22;
     doc.rect(10, y, 190, 20);
     doc.text("Authorized Signatory", 150, y + 14);
 
