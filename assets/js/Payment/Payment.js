@@ -978,7 +978,7 @@ async function generateReceiptPDF(header, lines) {
     /* ---------------------------------
        INVOICE TABLE
     --------------------------------- */
-    let tableEndY = infoY + infoH + 5;
+    let tableEndY = infoY + infoH;
 
     if (Array.isArray(lines) && lines.length > 0) {
 
@@ -991,7 +991,7 @@ async function generateReceiptPDF(header, lines) {
         ]));
 
         doc.autoTable({
-            startY: tableEndY + 5,   // ✅ GAP ADDED
+            startY: tableEndY,   // ✅ GAP ADDED
             head: [["Sl No.", "Invoice No", "Allocated", "Other Deduction", "TDS"]],
             body: tableData,
             styles: { fontSize: 8 },
@@ -1010,7 +1010,7 @@ async function generateReceiptPDF(header, lines) {
     /* ---------------------------------
        TOTALS BOX
     --------------------------------- */
-    y = tableEndY + 6;
+    y = tableEndY;
 
     safeRect(doc, 10, y, 190, 22);
 
@@ -1022,7 +1022,7 @@ async function generateReceiptPDF(header, lines) {
     /* ---------------------------------
        FOOTER
     --------------------------------- */
-    y += 26;
+    y += 22;
     safeRect(doc, 10, y, 190, 20);
     doc.text("Authorized Signatory", 150, y + 14);
 
