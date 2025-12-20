@@ -885,6 +885,9 @@ async function downloadReceiptPDF(paymentID) {
     generateReceiptPDF(header, lines);
 }
 
+/* -------------------------------
+   GENERATE RECEIPT PDF
+-------------------------------- */
 async function generateReceiptPDF(header, lines) {
 
     const { jsPDF } = window.jspdf;
@@ -910,7 +913,7 @@ async function generateReceiptPDF(header, lines) {
     doc.rect(10, headerY, 190, headerH);
 
     const logoSize = 18;
-    const logoY = headerY + (headerH / 2) - (logoSize / 2);
+    const logoY = headerY + (headerH - logoSize) / 2;
 
     const logoImg = await loadImage(company.logo);
     if (logoImg) {
@@ -952,15 +955,15 @@ async function generateReceiptPDF(header, lines) {
     doc.setFontSize(8);
     let y = infoY + 7;
 
-    doc.text(`Receipt No : ${header.PaymentID}`, 15, y);
-    doc.text(`Date : ${header.ReceiptOn || ""}`, 150, y);
+    doc.text(`Receipt No : ${header.PaymentID || "-"}`, 15, y);
+    doc.text(`Date : ${header.ReceiptOn || "-"}`, 150, y);
 
     y += lineGap;
-    doc.text(`Party : ${paymentFormElements.partyName.value}`, 15, y);
+    doc.text(`Party : ${paymentFormElements?.partyName?.value || "-"}`, 15, y);
     doc.text(`Payment Amount : ${safeNumber(header.PaymentAmount).toFixed(2)}`, 150, y);
 
     y += lineGap;
-    doc.text(`Payment Mode : ${header.PaymentMode}`, 15, y);
+    doc.text(`Payment Mode : ${header.PaymentMode || "-"}`, 15, y);
     doc.text(`Deduction Amount : ${safeNumber(header.DeductionAmount).toFixed(2)}`, 150, y);
 
     y += lineGap;
@@ -969,10 +972,9 @@ async function generateReceiptPDF(header, lines) {
     /* ---------------------------------
        INVOICE TABLE
     --------------------------------- */
-    let tableStartY = infoY + infoH + 5;
-    let tableEndY = tableStartY;
+    let tableEndY = infoY + infoH;
 
-    if (lines && lines.length > 0) {
+    if (Array.isArray(lines) && lines.length > 0) {
 
         const tableData = lines.map((l, i) => ([
             i + 1,
@@ -983,7 +985,7 @@ async function generateReceiptPDF(header, lines) {
         ]));
 
         doc.autoTable({
-            startY: tableStartY,
+            startY: tableEndY + 5,
             head: [["#", "Invoice No", "Allocated", "Other Deduction", "TDS"]],
             body: tableData,
             styles: { fontSize: 8 },
@@ -991,18 +993,22 @@ async function generateReceiptPDF(header, lines) {
             margin: { left: 10, right: 10 }
         });
 
-        const table = doc.lastAutoTable;
-        tableEndY = table.finalY;
+        if (doc.lastAutoTable) {
+            const table = doc.lastAutoTable;
+            const height = table.finalY - table.startY;
 
-        // Outer border for table
-        doc.rect(10, table.startY, 190, table.finalY - table.startY);
+            if (!isNaN(table.startY) && !isNaN(height)) {
+                doc.rect(10, table.startY, 190, height);
+            }
+
+            tableEndY = table.finalY;
+        }
     }
 
     /* ---------------------------------
        TOTALS BOX
     --------------------------------- */
     y = tableEndY + 6;
-
     doc.rect(10, y, 190, 22);
 
     doc.setFontSize(8);
@@ -1020,6 +1026,6 @@ async function generateReceiptPDF(header, lines) {
     /* ---------------------------------
        DOWNLOAD
     --------------------------------- */
-    doc.save(`Payment_Receipt_${header.PaymentID}.pdf`);
+    doc.save(`Payment_Receipt_${header.PaymentID || "NA"}.pdf`);
 }
 
