@@ -1026,3 +1026,12 @@ function getGSTValue(label, str) {
     const match = str.match(regex);
     return match ? parseFloat(match[1]) : 0;
 }
+
+// ✅ Show toast notification with message
+function showToast(message) {
+    const toastElement = document.getElementById("errorToast");
+    document.getElementById("errorToastMessage").textContent = message;
+
+    const toast = new bootstrap.Toast(toastElement);
+    toast.show();
+}
