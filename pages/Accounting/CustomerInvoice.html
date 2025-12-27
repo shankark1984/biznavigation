@@ -33,6 +33,17 @@
             background-color: #f8f9fa;
             z-index: 1020;
         }
+
+        .text-right {
+            text-align: right;
+        }
+
+        th:last-child,
+        td:last-child {
+            position: sticky;
+            right: 0;
+            background: white;
+        }
     </style>
 </head>
 
@@ -48,7 +59,7 @@
             </div>
 
             <div class="card-body">
-                <form class="container">
+                <form class="invoiceForm">
                     <!-- Action Buttons -->
                     <div class="d-flex flex-wrap gap-1 mb-3">
                         <button type="button" class="btn btn-primary btn-sm" id="newButton" title="Create new booking">
@@ -67,11 +78,10 @@
                             <i class="bi bi-file-earmark-text"></i> Report
                         </button>
                         <button id="saveButton" class="btn btn-primary btn-sm" type="button" data-mode="insert">
-                            <span id="saveSpinner" class="spinner-border spinner-border-sm me-2 d-none" role="status"
-                                aria-hidden="true"></span>
+                            <span id="saveSpinnerBtn" class="spinner-border spinner-border-sm me-2 d-none"></span>
                             <i class="bi bi-save"></i> Save
                         </button>
-                        <div id="saveSpinner" class="spinner-border text-primary d-none" role="status"></div>
+                        <div id="saveSpinnerOverlay" class="spinner-border text-primary d-none"></div>
                         <input type="text" class="form-control bg-light d-none" id="status" value="New" readonly>
                     </div>
 
@@ -100,7 +110,7 @@
 
                                 <div class="col-md-4">
                                     <label for="invoiceDate" class="form-label">Booked Date</label>
-                                    <input type="date" class="form-control" id="invoiceDate">
+                                    <input type="date" class="form-control" id="invoiceDate" required>
                                 </div>
 
                                 <div class="col-md-4">
@@ -147,12 +157,20 @@
                                     <input type="date" class="form-control" id="endDate">
                                 </div>
 
-                                <div class="col-md-8">
+                                <div class="col-md-3">
+                                    <label for="department" class="form-label">Department</label>
+                                    <input type="text" class="form-control" id="department" list="departmentList"
+                                        placeholder="Select or type department" autocomplete="off">
+                                    <datalist id="departmentList"></datalist>
+                                </div>
+
+                                <div class="col-md-6">
                                     <label for="invoiceInformation" class="form-label">Information</label>
                                     <input type="text" class="form-control" id="invoiceInformation">
                                 </div>
 
-                                <div class="col-md-4 d-grid align-items-end">
+
+                                <div class="col-md-3 d-grid align-items-end">
                                     <button type="button" class="btn btn-primary mt-4" id="fetchPendingInvoices">
                                         <i class="bi bi-plus-circle"></i> Get Data
                                     </button>
@@ -223,7 +241,6 @@
                                             <th class="text-end" id="totalIGST">0.00</th>
                                             <th class="text-end" id="totalGST">0.00</th>
                                             <th class="text-end" id="totalGrand">0.00</th>
-                                            <th></th>
                                         </tr>
                                     </tfoot>
                                 </table>
@@ -270,7 +287,7 @@
                         <div class="col-md-4">
                             <label for="inputBankName" class="form-label">Bank Name</label>
                             <input list="bankNameSuggestions" class="form-control bg-light-input" id="inputBankName"
-                                required autocomplete="off">
+                                required autocomplete="off" required>
                             <datalist id="bankNameSuggestions"></datalist>
                         </div>
 
@@ -340,7 +357,8 @@
     <script src="../../assets/js/utils/navbar.js"></script>
     <script src="../../assets/js/utils/footer.js"></script>
     <script src="../../assets/js/utils/utils.js"></script>
-    <script src="../../assets/js/CustomerInvoice/CustomerInvoiceSetting.js"></script>
+    <!-- <script src="../../assets/js/CustomerInvoice/CustomerInvoiceSetting.js"></script> -->
+    <script src="../../assets/js/CustomerInvoice/Invoice.js"></script>
     <script src="../../assets/js/CustomerInvoice/InternationalBookingInvoice.js"></script>
     <script src="../../assets/js/CustomerInvoice/CustomsClearanceInvoice.js"></script>
     <script src="../../assets/js/utils/logout.js"></script>

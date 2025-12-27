@@ -392,7 +392,7 @@ function validateAccountedAmount() {
 // ------------------------------------------
 function safeNumber(v) {
     const n = parseFloat(v);
-    return isNaN(n) ? 0 : n;
+    return isNaN(n) ? 0 : Number(n.toFixed(2));
 }
 
 function safeRect(doc, x, y, w, h) {
@@ -899,217 +899,230 @@ async function generateReceiptPDF(header, lines) {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF("p", "mm", "a4");
 
-    /* ---------------------------------
-       COMPANY DETAILS
-    --------------------------------- */
-    // 🔥 Fetch company data from DB
+    /* ==============================
+       CONSTANTS
+    ============================== */
+    const PAGE = { x: 10, w: 190 };
+    const FONT = { header: 14, title: 10, body: 8, small: 7 };
+
+    let y = 10;
+
+    /* ==============================
+       SAFETY GUARDS
+    ============================== */
+    if (!Array.isArray(lines)) lines = [];
+
+    /* ==============================
+       COMPANY DETAILS (FROM DB)
+    ============================== */
     const companyData = await getCompanyProfile(CompanyID);
 
     const company = {
-        name: companyData.company_name,
-        address: `${companyData.address}, ${companyData.city} - ${companyData.pin_code}, ${companyData.state}, ${companyData.country}`,
-        phone: `Ph: ${companyData.phone_no || "-"
-            } `,
-        email: companyData.e_mail || "-",
-        logo: companyData.logo_path
+        name: companyData?.company_name || "",
+        address: [
+            companyData?.address,
+            companyData?.city && `${companyData.city} - ${companyData.pin_code}`,
+            companyData?.state,
+            companyData?.country
+        ].filter(Boolean).join(", "),
+        phone: companyData?.phone_no || "-",
+        email: companyData?.e_mail || "-",
+        gst: companyData?.gst_number || "-",
+        pan: companyData?.pan_number || "-",
+        logo: companyData?.logo_path
     };
 
-    /* ---------------------------------
-   HEADER BOX + LOGO (OPTIMIZED)
---------------------------------- */
-    const headerX = 10;
-    const headerY = 10;
-    const headerW = 190;
+    /* ==============================
+       HEADER (LOGO + TEXT)
+    ============================== */
     const headerH = 20;
+    const logoW = PAGE.w * 0.20;
+    const textW = PAGE.w * 0.75;
 
-    const logoBoxW = headerW * 0.20;
-    const textBoxW = headerW * 0.80;
+    safeRect(doc, PAGE.x, y, PAGE.w, headerH);
 
-    // 🔹 Only ONE outer border
-    safeRect(doc, headerX, headerY, headerW, headerH);
-
-    /* ---------- LOGO (AUTO FIT) ---------- */
-    const maxLogoW = logoBoxW - 6;
-    const maxLogoH = headerH - 4;
-
+    /* ---- LOGO AUTO FIT ---- */
     const logoImg = await loadImage(company.logo);
     if (logoImg) {
+        const maxW = logoW - 6;
+        const maxH = headerH - 4;
         const ratio = logoImg.width / logoImg.height;
 
-        let logoW = maxLogoW;
-        let logoH = logoW / ratio;
-
-        if (logoH > maxLogoH) {
-            logoH = maxLogoH;
-            logoW = logoH * ratio;
+        let w = maxW;
+        let h = w / ratio;
+        if (h > maxH) {
+            h = maxH;
+            w = h * ratio;
         }
 
-        const logoX = headerX + (logoBoxW - logoW) / 2;
-        const logoY = headerY + (headerH - logoH) / 2;
-
-        doc.addImage(logoImg, "PNG", logoX, logoY, logoW, logoH);
+        doc.addImage(
+            logoImg,
+            "PNG",
+            PAGE.x + (logoW - w) / 2,
+            y + (headerH - h) / 2,
+            w,
+            h
+        );
     }
 
-    /* ---------- TEXT (AUTO FIT) ---------- */
-    const textX = headerX + logoBoxW + 4;
-    const textW = textBoxW - 8;
-    const centerY = headerY + headerH / 2;
+    /* ---- HEADER TEXT ---- */
+    const textX = PAGE.x + logoW + 4;
+    const centerY = y + headerH / 2;
 
-    // Company Name (auto shrink)
-    let nameFontSize = 14;
     doc.setFont("helvetica", "bold");
-
-    while (doc.getTextWidth(company.name) > textW && nameFontSize > 9) {
-        nameFontSize--;
-        doc.setFontSize(nameFontSize);
+    let nameFont = FONT.header;
+    while (doc.getTextWidth(company.name) > textW - 8 && nameFont > 9) {
+        nameFont--;
+        doc.setFontSize(nameFont);
     }
 
-    doc.text(company.name, textX + textW / 2, centerY - 4, {
-        align: "center"
-    });
+    doc.text(company.name, textX + textW / 2, centerY - 4, { align: "center" });
 
-    // Address (wrap)
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(8);
-
-    const addressLines = doc.splitTextToSize(company.address, textW);
-    doc.text(addressLines, textX + textW / 2, centerY + 1, {
-        align: "center"
-    });
-
-    // Phone + Email
-    doc.setFontSize(8);
+    doc.setFontSize(FONT.body);
     doc.text(
-        `${company.phone} | ${company.email}`,
+        doc.splitTextToSize(company.address, textW - 8),
+        textX + textW / 2,
+        centerY + 1,
+        { align: "center" }
+    );
+
+    doc.setFontSize(FONT.small);
+    doc.text(
+        `Ph: ${company.phone} | ${company.email} | GST: ${company.gst} | PAN: ${company.pan}`,
         textX + textW / 2,
         centerY + 7,
         { align: "center" }
     );
 
-    /* ---------------------------------
+    y += headerH;
+
+    /* ==============================
        RECEIPT TITLE
-    --------------------------------- */
-    const titleY = headerY + headerH;
-    const titleH = 6;
+    ============================== */
+    safeRect(doc, PAGE.x, y, PAGE.w, 6);
+    doc.setFontSize(FONT.title);
+    doc.text("PAYMENT RECEIPT", PAGE.x + PAGE.w / 2, y + 4, { align: "center" });
+    y += 6;
 
-    doc.rect(10, titleY, 190, titleH);
+    /* ==============================
+       RECEIPT INFO
+    ============================== */
+    const infoH = 30;
+    safeRect(doc, PAGE.x, y, PAGE.w, infoH);
 
-    doc.setFontSize(10);
-    doc.text("PAYMENT RECEIPT", 105, titleY + titleH / 2, {
-        align: "center",
-        baseline: "middle"
+    doc.setFontSize(FONT.body);
+    let iy = y + 7;
+
+    doc.text(`Receipt No: ${header?.PaymentID || "-"}`, PAGE.x + 5, iy);
+    doc.text(`Date: ${formatDate(header?.ReceiptOn) || "-"}`, PAGE.x + 140, iy);
+
+
+    iy += 6;
+    doc.text(`Party: ${paymentFormElements?.partyName?.value || "-"}`, PAGE.x + 5, iy);
+    doc.text(`Payment Amount: ${safeNumber(header?.PaymentAmount).toFixed(2)}`, PAGE.x + 140, iy);
+
+    iy += 6;
+    doc.text(`Payment Mode: ${header?.PaymentMode || "-"}`, PAGE.x + 5, iy);
+    doc.text(`Deduction Amount: ${safeNumber(header?.DeductionAmount).toFixed(2)}`, PAGE.x + 140, iy);
+
+    iy += 6;
+    doc.text(`Reference No: ${header?.ReferenceNo || "-"}`, PAGE.x + 5, iy);
+
+    y += infoH;
+
+    /* ==============================
+       INVOICE TABLE + TOTALS
+    ============================== */
+    let totalAllocated = 0;
+    let totalOther = 0;
+    let totalTDS = 0;
+
+    lines.forEach(l => {
+        totalAllocated += safeNumber(l?.PaymentAmount);
+        totalOther += safeNumber(l?.OtherDeductionAmount);
+        totalTDS += safeNumber(l?.TDSDeductionAmount);
     });
 
-    /* ---------------------------------
-       RECEIPT INFO BOX
-    --------------------------------- */
-    const infoY = titleY + titleH;
-    const infoH = 30;
-    const lineGap = 6;
+    doc.autoTable({
+        startY: y,
+        margin: { left: PAGE.x, right: PAGE.x },
 
-    doc.rect(10, infoY, 190, infoH);
+        head: [["Sl", "Invoice No", "Allocated", "Other Deduction", "TDS Deduction"]],
 
-    doc.setFontSize(8);
-    let y = infoY + 7;
-
-    doc.text(`Receipt No: ${header.PaymentID || "-"} `, 15, y);
-    doc.text(`Date: ${header.ReceiptOn || "-"} `, 150, y);
-
-    y += lineGap;
-    doc.text(`Party: ${paymentFormElements?.partyName?.value || "-"} `, 15, y);
-    doc.text(`Payment Amount: ${safeNumber(header.PaymentAmount).toFixed(2)} `, 150, y);
-
-    y += lineGap;
-    doc.text(`Payment Mode: ${header.PaymentMode || "-"} `, 15, y);
-    doc.text(`Deduction Amount: ${safeNumber(header.DeductionAmount).toFixed(2)} `, 150, y);
-
-    y += lineGap;
-    doc.text(`Reference No: ${header.ReferenceNo || "-"} `, 15, y);
-
-    /* ---------------------------------
-       INVOICE TABLE
-    --------------------------------- */
-    let tableEndY = infoY + infoH;
-
-    if (Array.isArray(lines) && lines.length > 0) {
-
-        const tableData = lines.map((l, i) => ([
+        body: lines.map((l, i) => ([
             i + 1,
-            l.InvoiceNo || "",
-            safeNumber(l.PaymentAmount).toFixed(2),
-            safeNumber(l.OtherDeductionAmount).toFixed(2),
-            safeNumber(l.TDSDeductionAmount).toFixed(2)
-        ]));
+            l?.InvoiceNo || "",
+            safeNumber(l?.PaymentAmount).toFixed(2),
+            safeNumber(l?.OtherDeductionAmount).toFixed(2),
+            safeNumber(l?.TDSDeductionAmount).toFixed(2)
+        ])),
 
-        doc.autoTable({
-            startY: tableEndY,   // ✅ GAP ADDED
-            head: [["Sl No.", "Invoice No", "Allocated", "Other Deduction", "TDS"]],
-            body: tableData,
-            styles: {
-                fontSize: 8,
-                lineWidth: 0.2,          // 🔹 border thickness
-                lineColor: [0, 0, 0],    // 🔹 border color (black)
-                cellPadding: 2
-            },
+        foot: [[
+            "",
+            "TOTAL",
+            totalAllocated.toFixed(2),
+            totalOther.toFixed(2),
+            totalTDS.toFixed(2)
+        ]],
 
-            headStyles: {
-                lineWidth: 0.2,
-                lineColor: [0, 0, 0],
-                fontStyle: "bold"
-            },
+        styles: {
+            fontSize: FONT.body,
+            cellPadding: 2,
+            lineWidth: 0.2,
+            lineColor: [0, 0, 0],
+            textColor: [0, 0, 0]
+        },
 
-            bodyStyles: {
-                lineWidth: 0.2,
-                lineColor: [0, 0, 0]
-            },
+        headStyles: { fontStyle: "bold", halign: "center" },
+        footStyles: { fontStyle: "bold", halign: "right" },
 
-            tableLineWidth: 0.2,        // 🔹 outer table border
-            tableLineColor: [0, 0, 0],
-
-            margin: { left: 10, right: 10 },
-            columnStyles: {
-                0: { halign: "center", cellWidth: 12 },
-                1: { halign: "left", cellWidth: 60 },
-                2: { halign: "right" },
-                3: { halign: "right" },
-                4: { halign: "right" }
-            }
-        });
-
-        if (doc.lastAutoTable && Number.isFinite(doc.lastAutoTable.finalY)) {
-            const table = doc.lastAutoTable;
-            const height = table.finalY - table.startY;
-
-            safeRect(doc, 10, table.startY, 190, height);
-            tableEndY = table.finalY;
+        columnStyles: {
+            0: { halign: "center", cellWidth: 12 },
+            1: { halign: "right", cellWidth: 60 },
+            2: { halign: "right" },
+            3: { halign: "right" },
+            4: { halign: "right" }
         }
-    }
+    });
 
-    /* ---------------------------------
-       TOTALS BOX
-    --------------------------------- */
-    y = tableEndY;
+    y = doc.lastAutoTable.finalY;
+    safeRect(doc, PAGE.x, y - doc.lastAutoTable.height, PAGE.w, doc.lastAutoTable.height);
 
-    safeRect(doc, 10, y, 190, 22);
+    /* ==============================
+       TOTAL SUMMARY
+    ============================== */
+    safeRect(doc, PAGE.x, y, PAGE.w, 22);
+    doc.text(`Payment Amount: ${safeNumber(header?.PaymentAmount).toFixed(2)}`, PAGE.x + 5, y + 6);
+    doc.text(`Deduction Amount: ${safeNumber(header?.DeductionAmount).toFixed(2)}`, PAGE.x + 5, y + 12);
+    doc.text(`Suspense Amount: ${safeNumber(header?.SuspenseAmount).toFixed(2)}`, PAGE.x + 5, y + 18);
 
-    doc.text(`Payment Amount: ${safeNumber(header.PaymentAmount).toFixed(2)} `, 15, y + 6);
-    doc.text(`Deduction Amount: ${safeNumber(header.DeductionAmount).toFixed(2)} `, 15, y + 12);
-    doc.text(`Suspense Amount: ${safeNumber(header.SuspenseAmount).toFixed(2)} `, 15, y + 18);
-
-
-    /* ---------------------------------
-       FOOTER
-    --------------------------------- */
     y += 22;
-    safeRect(doc, 10, y, 190, 20);
-    doc.text("Authorized Signatory", 150, y + 14);
 
+    /* ==============================
+       FOOTER (AUTO HEIGHT – SINGLE LINE)
+    ============================== */
+    const footerText = "Thank you for your payment!";
+    doc.setFontSize(9);
 
-    /* ---------------------------------
+    const lineHeight = doc.getLineHeight(footerText) / doc.internal.scaleFactor;
+    const paddingY = 4;
+    const footerH = lineHeight + paddingY * 2;
+
+    safeRect(doc, PAGE.x, y, PAGE.w, footerH);
+
+    doc.text(
+        footerText,
+        PAGE.x + PAGE.w / 2,
+        y + footerH / 2,
+        { align: "center", baseline: "middle" }
+    );
+
+    /* ==============================
        DOWNLOAD
-    --------------------------------- */
-    doc.setFont("helvetica");
-
-    doc.save(`Payment_Receipt_${header.PaymentID || "NA"}.pdf`);
+    ============================== */
+    doc.save(`Payment_Receipt_${header?.PaymentID || "NA"}.pdf`);
 }
+
+
 

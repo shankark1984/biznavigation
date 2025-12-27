@@ -591,11 +591,6 @@ function resetInvoiceData() {
     };
 }
 
-window.addEventListener('beforeunload', async (event) => {
-    if (lockedBookingIds.length > 0) {
-        await autoUnlockRecords();
-    }
-});
 
 async function getInvoiceDetails(invoiceNo) {
     showSpinner();
@@ -725,4 +720,11 @@ window.addEventListener('beforeunload', async (event) => {
     event.returnValue = '';
     hideSpinner();
 });
+
+window.addEventListener('beforeunload', async (event) => {
+    if (lockedBookingIds.length > 0) {
+        await autoUnlockRecords();
+    }
+});
+
 

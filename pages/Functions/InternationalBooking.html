@@ -82,7 +82,7 @@
                         <div class="col-md-3 col-sm-6">
                             <label class="form-label">Docket No</label>
                             <input list="docketNoSuggestions" class="form-control bg-light-input" id="awbNo" required
-                                autocomplete="off" oninput="loadAWBNoDetails(this.value)">
+                                autocomplete="off">
                             <datalist id="docketNoSuggestions"></datalist>
                         </div>
 
@@ -168,8 +168,8 @@
 
                         <div class="col-md-2 col-sm-6">
                             <label class="form-label">Invoice Value</label>
-                            <input type="number" class="form-control" id="invoiceValue" value="0.00" step="0.01"
-                                min="0">
+                            <input type="number" class="form-control text-end" id="invoiceValue" value="0.00"
+                                step="0.01" min="0">
                         </div>
 
                         <div class="col-md-4 col-sm-6">
@@ -245,30 +245,38 @@
                         </div>
 
                         <!-- Weight Group -->
-                        <div class="col-md-2 col-sm-6">
+                        <div class="col-md-1 col-sm-6">
                             <label class="form-label">Quantity</label>
-                            <input type="number" class="form-control" id="quantity" placeholder="Enter Quantity"
-                                min="0">
-                        </div>
-
-                        <div class="col-md-2 col-sm-6">
-                            <label class="form-label">Act Wt</label>
-                            <input type="number" class="form-control" id="actualWeight" value="0" min="0" step="0.01">
-                        </div>
-
-                        <div class="col-md-2 col-sm-6">
-                            <label class="form-label">Vol Wt</label>
-                            <input type="number" class="form-control" id="volumetricWeight" value="0" min="0"
+                            <input type="number" class="form-control text-end" id="quantity" value="0" min="0"
                                 step="0.01">
                         </div>
 
-                        <div class="col-md-2 col-sm-6">
+                        <div class="col-md-1 col-sm-6">
+                            <label class="form-label">Act Wt</label>
+                            <input type="number" class="form-control text-end" id="actualWeight" value="0" min="0"
+                                step="0.01">
+                        </div>
+
+                        <div class="col-md-1 col-sm-6">
+                            <label class="form-label">Vol Wt</label>
+                            <input type="number" class="form-control text-end" id="volumetricWeight" value="0" min="0"
+                                step="0.01">
+                        </div>
+
+                        <div class="col-md-1 col-sm-6">
                             <label class="form-label">Char Wt</label>
-                            <input type="number" class="form-control" id="chargeableWeight" value="0" min="0"
+                            <input type="number" class="form-control text-end" id="chargeableWeight" value="0" min="0"
                                 step="0.01" disabled>
                         </div>
 
-                        <div class="col-md-4 col-sm-12">
+                        <div class="col-md-2 col-sm-6">
+                            <label for="department" class="form-label">Department</label>
+                            <input type="text" class="form-control" id="department" list="departmentList"
+                                placeholder="Select or type department" autocomplete="off">
+                            <datalist id="departmentList"></datalist>
+                        </div>
+
+                        <div class="col-md-6 col-sm-12">
                             <label class="form-label">Information</label>
                             <input type="text" class="form-control" id="infomation" placeholder="Enter Information">
                         </div>
@@ -610,7 +618,17 @@
             </div>
         </div>
     </div>
-
+    <!-- Toast Container -->
+    <div class="position-fixed top-0 end-0 p-3" style="z-index: 9999">
+        <div id="errorToast" class="toast align-items-center text-white bg-danger border-0" role="alert">
+            <div class="d-flex">
+                <div class="toast-body" id="errorToastMessage">
+                    Error message here...
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        </div>
+    </div>
     <!-- Optimized Script Loading -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -620,11 +638,13 @@
     <script src="../../assets/js/utils/server.js"></script>
     <script src="../../assets/js/utils/navbar.js"></script>
     <script src="../../assets/js/utils/footer.js"></script>
-    <script src="../../assets/js/utils/pincode-helper.js"></script>
-    <script src="../../assets/js/utils/taxDescription.js"></script>
+    <script src="../../assets/js/utils/utils.js"></script>
     <script src="../../assets/js/utils/logout.js"></script>
     <script src="../../assets/js/utils/dropdownLoader.js"></script>
-    <script src="../../assets/js/utils/utils.js"></script>
+    <script src="../../assets/js/utils/pincode-helper.js"></script>
+    <script src="../../assets/js/utils/taxDescription.js"></script>
+
+
     <script src="../../assets/js/InternationalBooking/International_Booking_ChargesTab.js"></script>
     <script src="../../assets/js/InternationalBooking/International_Booking.js"></script>
     <script src="../../assets/js/InternationalBooking/VolumetricCalculator.js"></script>

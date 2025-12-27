@@ -39,6 +39,10 @@ async function loadAWBNoDetails(query) {
 
 const awbNoInput = document.getElementById('awbNo');
 
+document.getElementById("awbNo")
+    .addEventListener("input", e => loadAWBNoDetails(e.target.value));
+
+
 awbNoInput.addEventListener('change', async () => {
     const docketNo = awbNoInput.value.trim();
     if (!docketNo) return;
@@ -69,7 +73,8 @@ awbNoInput.addEventListener('change', async () => {
         const { isUnbilled, invoiceNo } = await checkAWBBilledStatus(docketNo);
 
         if (!isUnbilled) {
-            alert(`This AWB has already been billed.\nInvoice Number: ${invoiceNo}`);
+            showToast('This AWB has already been billed.' + ` Invoice Number: ${invoiceNo}`);
+            // alert(`This AWB has already been billed.\nInvoice Number: ${invoiceNo}`);
             disableForm();
             saveButton.disabled = true;
             modifyButton.disabled = true;
