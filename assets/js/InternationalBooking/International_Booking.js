@@ -11,6 +11,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     await loadSuggestions('partySuggestions', 'PartyDetails', CompanyID, 'PartyCode', 'PartyName');
     await loadSuggestions('vendorSuggestions', 'PartyDetails', CompanyID, 'PartyCode', 'PartyName');
+    await loadDatalist('departmentList', 'Department');
 });
 
 async function loadAWBNoDetails(query) {
@@ -131,8 +132,9 @@ async function fetchDocketDetails(docketNo) {
     document.getElementById('originCountry').value = data.OriginName;
     document.getElementById('portOfLoading').value = data.PortofLoading;
     document.getElementById('destinationCountry').value = data.DestinationName;
-
+    document.getElementById('portOfDischarge').value = data.PortofDischarge;
     document.getElementById('packingType').value = data.PackingType;
+    document.getElementById('department').value = data.Department;
     document.getElementById('uOMType').value = data.UOMType;
     document.getElementById('quantity').value = data.NoofUnit;
     document.getElementById('actualWeight').value = data.AcutalWeight;
@@ -262,6 +264,7 @@ async function saveOrUpdateInternationalBooking() {
         ClearanceMode: document.getElementById("clearanceMode").value,
         PackingType: document.getElementById("packingType").value,
         ConsignmentValue: parseFloat(document.getElementById("invoiceValue").value) || 0,
+        Department: document.getElementById("department").value,
         UOMType: document.getElementById("uOMType").value,
         NoofUnit: parseInt(document.getElementById("quantity").value) || 0,
         AcutalWeight: parseFloat(document.getElementById("actualWeight").value) || 0,
@@ -297,7 +300,7 @@ async function saveOrUpdateInternationalBooking() {
             ID_IB: insertedID,
             docketNo: document.getElementById("awbNo").value,
             statusDate: document.getElementById("bookedDate").value,
-            arrivedAt: workingBranch,
+            arrivedAt: WorkingBranch,
             information: 'Shimpemt Booked',
         };
         const success = await insertBookingStatus(bookingData);
@@ -435,3 +438,7 @@ async function checkAWBBilledStatus(docketNo) {
     // If invoice exists → billed
     return { isUnbilled: false, invoiceNo: data.InvoiceNumber };
 }
+
+department.addEventListener('change', () =>
+    handleDatalistInsert(department, 'departmentList', 'Department')
+);

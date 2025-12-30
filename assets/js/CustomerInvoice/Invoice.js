@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     await loadBankNameSuggestions();
     await loadDefaultBank();
     await loadInvoiceNoSuggestions();
-    loadDepartments();
+    loadDatalist('departmentList', 'Department'); // Static data
 });
 
 /* =========================================================
@@ -134,7 +134,7 @@ document.getElementById('fetchPendingInvoices').addEventListener('click', async 
 document.getElementById('saveButton').addEventListener('click', async () => {
     const saveBtn = document.getElementById('saveButton');
     const spinner = document.getElementById('saveSpinnerBtn');
-
+    const bankID = document.getElementById('bankIDs').value.trim();
     const partyCode = document.getElementById('partyCode').value.trim();
     const invoiceDate = document.getElementById('invoiceDate').value;
     const invoiceType = document.getElementById('movementType').value;
@@ -142,19 +142,20 @@ document.getElementById('saveButton').addEventListener('click', async () => {
     const isInsert = saveBtn.dataset.mode === 'insert';
 
     if (!partyCode || !invoiceDate || !invoiceType || !invoiceAddress) {
-        alert('Fill all required fields');
+        showToast('Fill all required fields');
         return;
     }
+    console.log('Bank ID on Save:', bankID);
 
     if (!bankID) {
-        alert('Select valid Bank Name');
+        showToast('Select valid Bank Name');
         return;
     }
 
     let invoiceNo = document.getElementById('invoiceNo').value.trim();
     if (isInsert) {
         invoiceNo = await generateInvoiceNumber(invoiceDate);
-        if (!invoiceNo) return alert('Invoice number generation failed');
+        if (!invoiceNo) return showToast('Invoice number generation failed');
         document.getElementById('invoiceNo').value = invoiceNo;
     }
 
@@ -179,7 +180,7 @@ document.getElementById('saveButton').addEventListener('click', async () => {
         GrandTotalAmount: parseFloat(totalGrand.textContent) || 0,
     };
 
-    spinner.classList.remove('d-none');
+    // spinner.classList.remove('d-none');
     saveBtn.disabled = true;
 
     try {
@@ -196,17 +197,22 @@ document.getElementById('saveButton').addEventListener('click', async () => {
                 .eq('company_id', CompanyID);
         }
 
-        alert(`Invoice ${isInsert ? 'Saved' : 'Updated'} Successfully`);
+        showToast(`Invoice ${isInsert ? 'Saved' : 'Updated'} Successfully`);
 
         FORWARDING_TYPES.includes(invoiceType)
             ? await updateInvoiceNumbers(invoiceNo)
             : await updateInvoiceNumbers_cc(invoiceNo);
 
         disableForm();
+        modifyButton.disabled = false;
+        reportButton.disabled = false;
+        fetchPendingInvoices.disabled = true;
+
+        saveButton.innerHTML = '<i class="bi bi-save"></i> Save';
     } catch (e) {
-        alert(e.message || 'Save failed');
+        showToast(e.message || 'Save failed');
     } finally {
-        spinner.classList.add('d-none');
+        // spinner.classList.add('d-none');
     }
 });
 
@@ -230,53 +236,79 @@ window.addEventListener('beforeunload', () => {
 
 document.getElementById('newButton').addEventListener('click', newInvoice);
 
-function newInvoice() {
-    // 1️⃣ Unlock any previously locked records
+async function newInvoice() {
+    // 1️⃣ Unlock previous records (STRICT)
     try {
-        autoUnlockRecords();
-        unlockBooking_ib(UserLoginID);
-        unlockBooking_cc(UserLoginID);
+        await autoUnlockRecords();
+        await unlockBooking_ib(UserLoginID);
+        await unlockBooking_cc(UserLoginID);
     } catch (e) {
-        console.warn('Unlock skipped:', e);
+        console.error('Unlock failed:', e);
     }
 
-    // 2️⃣ Reset form
-    // document.getElementById('container').reset();
 
-    // 3️⃣ Clear invoice number & set INSERT mode
+
+    // 2️⃣ Reset form
+    const form = document.getElementById('container');
+    if (form) form.reset();
+
+    // 3️⃣ Insert mode
     const saveBtn = document.getElementById('saveButton');
     saveBtn.dataset.mode = 'insert';
+    saveBtn.disabled = false;
+    saveBtn.innerHTML = '<i class="bi bi-save"></i> Save';
+    document.getElementById('modifyButton').disabled = true;
+    document.getElementById('deleteButton').disabled = true;
+    document.getElementById('reportButton').disabled = true;
+    document.getElementById('fetchPendingInvoices').disabled = false; // Disable party code field
+    document.getElementById('addShipmentNo').disabled = true;
 
-    document.getElementById('invoiceNo').value = '';
-    document.getElementById('partyName').value = '';
-    document.getElementById('partyCode').value = '';
-    document.getElementById('invoiceAddress').value = '';
-    // 7️⃣ Set defaults
+    document.getElementById('newButton').disabled = false;
+
+    // 4️⃣ Clear fields
+    [
+        'invoiceNo',
+        'partyName',
+        'partyCode',
+        'invoiceAddress',
+        'movementType',
+        'transitType',
+        'department',
+        'modeType'
+    ].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+    });
+
+    // 5️⃣ Default date
     document.getElementById('invoiceDate').value =
         new Date().toISOString().split('T')[0];
 
-    document.getElementById('movementType').value = '';
-    document.getElementById('transitType').value = '';
-    document.getElementById('department').value = '';
-    document.getElementById('modeType').value = '';
-    document.getElementById('paymentType').value = '';
-
-    // 4️⃣ Clear global data
+    // 6️⃣ Reset globals
     invoiceData = {};
     invoiceChargesData = {};
     bankID = null;
 
-    // 5️⃣ Clear totals
+    // 7️⃣ Totals
     clearInvoiceTotals();
+    clearChargesTable();
 
-    // 6️⃣ Enable form
+    // 8️⃣ Load async data FIRST
+    await loadInvoiceNoSuggestions();
+
+    // 9️⃣ Enable form LAST (IMPORTANT)
     enableForm();
 
-    // 8️⃣ Focus first field
+    // 🔟 Focus + toast
     document.getElementById('partyName').focus();
+    showToast('🚀 New Invoice Ready');
 }
 
+
+
 function clearInvoiceTotals() {
+    const table1 = document.getElementById('pendingShipmentTable');
+    if (table1?.tBodies?.[0]) table1.tBodies[0].innerHTML = '';
     totalFreight.textContent = '0.00';
     totalFSCAmt.textContent = '0.00';
     totalOtherAmt.textContent = '0.00';
@@ -286,67 +318,210 @@ function clearInvoiceTotals() {
     totalGST.textContent = '0.00';
     totalGrand.textContent = '0.00';
 }
-
-function enableForm() {
-    document.querySelectorAll('#invoiceForm input, #invoiceForm select, #invoiceForm textarea')
-        .forEach(el => el.disabled = false);
+function clearChargesTable() {
+    const tbody = document.querySelector('#pendingShipmentCharges tbody');
+    if (tbody) tbody.innerHTML = '';
+    totalFreightAmt.textContent = '0.00';
+    totalSGSTAmt.textContent = '0.00';
+    totalCGSTAmt.textContent = '0.00';
+    totalIGSTAmt.textContent = '0.00';
+    totalGSTAmt.textContent = '0.00';
+    totalGrandAmt.textContent = '0.00';
 }
 
-async function loadDepartments() {
-    const { data, error } = await supabaseClient
-        .from('dropdown_list')
-        .select('description')
-        .eq('type_of_value', 'Department')
-        .eq('company_id', CompanyID)
-        .order('description', { ascending: true });
 
-    if (error) {
-        console.error('Load Department Error:', error);
-        return;
-    }
+function updateTotals(totals) {
+    const setValue = (id, value) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = value.toFixed(2);
+    };
 
-    const list = document.getElementById('departmentList');
-    list.innerHTML = '';
+    setValue('totalFreight', totals.totalFreight);
+    setValue('totalFSCAmt', totals.totalFSCAmt);
+    setValue('totalOtherAmt', totals.totalOtherAmt);
+    setValue('totalSGST', totals.totalSGST);
+    setValue('totalCGST', totals.totalCGST);
+    setValue('totalIGST', totals.totalIGST);
+    setValue('totalGST', totals.totalGST);
+    setValue('totalGrand', totals.totalGrand);
 
-    data.forEach(row => {
-        const option = document.createElement('option');
-        option.value = row.description;
-        list.appendChild(option);
+    // ✅ Still update invoiceData (guard with parseFloat defaults)
+    invoiceData.BasicAmount = parseFloat(totals.totalFreight) || 0;
+    invoiceData.OtherAmount = (parseFloat(totals.totalFSCAmt) || 0) + (parseFloat(totals.totalOtherAmt) || 0);
+    invoiceData.CGSTAmount = parseFloat(totals.totalCGST) || 0;
+    invoiceData.SGSTAmount = parseFloat(totals.totalSGST) || 0;
+    invoiceData.IGSTAmount = parseFloat(totals.totalIGST) || 0;
+    invoiceData.TotalGSTAmount = parseFloat(totals.totalGST) || 0;
+    invoiceData.GrandTotalAmount = parseFloat(totals.totalGrand) || 0;
+}
+
+function renderChargesTable(chargesMap) {
+    const tbody = document.querySelector('#pendingShipmentCharges tbody');
+    tbody.innerHTML = '';
+    console.log('Rendering charges table with chargesMap:', chargesMap);
+    let totalAmount = 0, totalSGST = 0, totalCGST = 0, totalIGST = 0, totalGSTAmt = 0, totalGrandAmt = 0;
+
+    Object.entries(chargesMap).forEach(([type, amounts]) => {
+        const row = document.createElement('tr');
+
+        row.innerHTML = `
+            <td>${type}</td>
+            <td class="text-end">${amounts.TotalAmount}</td>
+            <td class="text-end">${amounts.SGSTAmt}</td>
+            <td class="text-end">${amounts.CGSTAmt}</td>
+            <td class="text-end">${amounts.IGSTAmt}</td>
+            <td class="text-end">${amounts.TotalGSTAmt}</td>
+            <td class="text-end">${amounts.GrandTotalAmt}</td>
+        `;
+
+        tbody.appendChild(row);
+
+        totalAmount += amounts.TotalAmount;
+        totalSGST += amounts.SGSTAmt;
+        totalCGST += amounts.CGSTAmt;
+        totalIGST += amounts.IGSTAmt;
+        totalGSTAmt += amounts.TotalGSTAmt;
+        totalGrandAmt += amounts.GrandTotalAmt;
     });
+
+    document.getElementById('totalFreightAmt').textContent = totalAmount.toFixed(2);
+    document.getElementById('totalSGSTAmt').textContent = totalSGST.toFixed(2);
+    document.getElementById('totalCGSTAmt').textContent = totalCGST.toFixed(2);
+    document.getElementById('totalIGSTAmt').textContent = totalIGST.toFixed(2);
+    document.getElementById('totalGSTAmt').textContent = totalGSTAmt.toFixed(2);
+    document.getElementById('totalGrandAmt').textContent = totalGrandAmt.toFixed(2);
 }
 
-const departmentInput = document.getElementById('department');
+async function getInvoiceDetails(invoiceNo) {
+    showSpinner();
 
-departmentInput.addEventListener('change', async () => {
-    const value = departmentInput.value.trim();
-    if (!value) return;
+    try {
+        const { data, error } = await supabaseClient
+            .from('InvoiceDetails')
+            .select('*')
+            .eq('InvoiceNo', invoiceNo)
+            .eq('company_id', CompanyID)
+            .single(); // Expecting one invoice per number per company
 
-    // Check existing in datalist (case-insensitive)
-    const exists = Array.from(
-        document.getElementById('departmentList').options
-    ).some(opt => opt.value.toLowerCase() === value.toLowerCase());
+        if (error) throw error;
 
-    if (exists) return;
+        if (!data) {
+            alert('Invoice not found.');
+            return null;
+        }
 
-    // Insert into DB
-    const { error } = await supabaseClient
-        .from('dropdown_list')
-        .insert([{
-            description: value,
-            type_of_value: 'Department',
-            company_id: CompanyID,
-            created_by: UserLoginID,
-            created_at: new Date().toISOString()
-        }]);
+        // console.log('Fetched Invoice Details:', data);
+        return data;
 
-    if (error) {
-        console.error('Insert Department Error:', error);
-        alert('Failed to save department');
+    } catch (err) {
+        console.error('Error fetching invoice details:', err.message);
+        alert('Error loading invoice: ' + err.message);
+        return null;
+    } finally {
+        hideSpinner();
+    }
+}
+
+document.getElementById('invoiceNo').addEventListener('change', async (e) => {
+    const invoiceNo = e.target.value.trim();
+    if (invoiceNo.length === 0) return;
+
+    const invoiceDetails = await getInvoiceDetails(invoiceNo);
+
+    if (invoiceDetails) {
+        // Populate your form fields here
+        document.getElementById('partyCode').value = invoiceDetails.PartyCode || '';
+        document.getElementById('invoiceDate').value = invoiceDetails.InvoiceDate || '';
+        document.getElementById('invoiceAddress').value = invoiceDetails.InvoiceAddress || '';
+        document.getElementById('movementType').value = invoiceDetails.InvoiceType || '';
+        document.getElementById('bankIDs').value = getBankNameByCode(invoiceDetails.BankID) || '';
+        document.getElementById('inputBankName').value = invoiceDetails.id || '';
+        document.getElementById('invoiceInformation').value = invoiceDetails.Remarks || '';
+
+        // ✅ Fetch and update Party Name
+        const partyData = await getPartyDetailsByCode(invoiceDetails.PartyCode);
+        if (partyData) {
+            document.getElementById('partyName').value = partyData.PartyName || '';
+        } else {
+            alert('Party not found.');
+        }
+
+        // Load international_booking records linked to this invoice
+        disableForm(); // Disable form after loading invoice details
+
+        saveButton.disabled = true; // Disable save button
+        document.getElementById('modifyButton').disabled = false; // Enable modify button
+        document.getElementById('deleteButton').disabled = true; // Enable delete button
+        document.getElementById('reportButton').disabled = false; // Enable report button
+        document.getElementById('fetchPendingInvoices').disabled = true; // Disable party code field
+
+        // Check the value and run the relevant function
+        if (invoiceDetails.InvoiceType === 'Forwarding' || invoiceDetails.InvoiceType === 'Import' || invoiceDetails.InvoiceType === 'Export') {
+            console.log('Fetching pending invoices for Forwarding/Import/Export');
+            await createPendingShipmentTableHeaderAndFooter_ib();
+            await loadInvoiceBookings(invoiceNo);
+        }
+        else if (invoiceDetails.InvoiceType === 'Customs Clearance') {
+            await createPendingShipmentTableHeaderAndFooter();
+            await loadInvoiceLineItems_cc(invoiceNo); // Load Customs Clearance bookings if applicable
+        }
+        else {
+            console.warn('Unknown movement type:', type);
+        }
+    }
+});
+
+document.getElementById('addShipmentNo').addEventListener('click', async () => {
+    const shipmentNo = document.getElementById('shipmentNo').value.trim();
+    const invoiceNo = document.getElementById('invoiceNo').value.trim();
+    const saveSpinner = document.getElementById('saveSpinner');
+    const movementType = document.getElementById('movementType').value.trim();
+
+    console.log('Adding Shipment No:', shipmentNo, 'to Invoice No:', invoiceNo, 'for Movement Type:', movementType);
+    if (!shipmentNo) {
+        alert('Please enter/select a Shipment Number.');
         return;
     }
 
-    // Add to datalist instantly
-    const option = document.createElement('option');
-    option.value = value;
-    document.getElementById('departmentList').appendChild(option);
+    if (!invoiceNo) {
+        alert('Invoice Number is required.');
+        return;
+    }
+
+    // Show spinner and disable button
+    saveSpinner.classList.remove('d-none');
+
+    // Check the value and run the relevant function
+    if (movementType === 'Forwarding' || movementType === 'Import' || movementType === 'Export') {
+        console.log('Fetching pending invoices for Forwarding/Import/Export');
+        await addSingleShipmentToInvoice(shipmentNo, invoiceNo);
+    }
+    else if (movementType === 'Customs Clearance') {
+        console.log('Adding Shipment No to Customs Clearance Invoice');
+        await addSingleShipmentToInvoice_cc(shipmentNo, invoiceNo);
+    }
+    else {
+        console.warn('Unknown movement type:', type);
+    }
+
+    hideSpinner();
+});
+
+document.getElementById('modifyButton').addEventListener('click', () => {
+    // Enable all delete buttons
+    saveButton.disabled = false; // Enable save button
+    saveButton.innerHTML = '<i class="bi bi-save"></i> Update';
+    saveButton.dataset.mode = 'update';
+    document.getElementById('modifyButton').disabled = true; // Disable modify button
+    document.getElementById('deleteButton').disabled = true; // Enable delete button
+    document.getElementById('reportButton').disabled = true; // Enable report button
+    enableForm(); // Enable form for modification
+    document.getElementById('invoiceNo').disabled = true; // Disable invoice number field
+    document.getElementById('movementType').disabled = true; // Disable invoice date field
+    document.getElementById('partyName').disabled = true; // Disable party code field
+    document.getElementById('fetchPendingInvoices').disabled = true; // Disable party code field
+    document.querySelectorAll('.delete-btn').forEach(button => {
+        button.disabled = false;
+    });
+
 });

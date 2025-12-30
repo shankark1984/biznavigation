@@ -238,6 +238,13 @@
                         </div>
 
                         <div class="col-md-2 col-sm-6">
+                            <label for="department" class="form-label">Department</label>
+                            <input type="text" class="form-control" id="department" list="departmentList"
+                                placeholder="Select or type department" autocomplete="off">
+                            <datalist id="departmentList"></datalist>
+                        </div>
+
+                        <div class="col-md-2 col-sm-6">
                             <label class="form-label">UOM</label>
                             <input list="uOMTypeSuggestions" class="form-control" id="uOMType" required
                                 placeholder="Select UOM">
@@ -267,13 +274,6 @@
                             <label class="form-label">Char Wt</label>
                             <input type="number" class="form-control text-end" id="chargeableWeight" value="0" min="0"
                                 step="0.01" disabled>
-                        </div>
-
-                        <div class="col-md-2 col-sm-6">
-                            <label for="department" class="form-label">Department</label>
-                            <input type="text" class="form-control" id="department" list="departmentList"
-                                placeholder="Select or type department" autocomplete="off">
-                            <datalist id="departmentList"></datalist>
                         </div>
 
                         <div class="col-md-6 col-sm-12">

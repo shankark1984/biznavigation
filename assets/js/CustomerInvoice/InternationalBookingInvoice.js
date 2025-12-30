@@ -51,6 +51,16 @@ async function getPendingInvoiceDetails() {
             console.log('Fetching invoices for movement type:', movementType);
         }
 
+        const departmentElement = document.getElementById('department');
+        const department = departmentElement?.value?.trim();
+
+        // Department filter
+        if (department && department.toLowerCase() !== 'all') {
+            query = query.eq('Department', department);
+            console.log('Fetching invoices for department:', department);
+        } else {
+            console.log('Fetching invoices for ALL departments');
+        }
         const { data, error } = await query;
 
         if (error) throw error;

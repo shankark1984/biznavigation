@@ -1051,3 +1051,93 @@ async function getCompanyProfile(companyId) {
         return null;
     }
 }
+
+/**
+ * Auto-insert new value from input into dropdown_list table
+ * if it doesn't already exist in the datalist.
+ *
+ * @param {HTMLInputElement} inputEl
+ * @param {string} datalistId
+ * @param {string} valueType        // e.g. 'Department', 'Designation'
+ */
+async function handleDatalistInsert(inputEl, datalistId, valueType) {
+    const value = inputEl.value.trim();
+    if (!value) return;
+
+    const datalist = document.getElementById(datalistId);
+    if (!datalist) {
+        console.warn(`Datalist not found: ${datalistId}`);
+        return;
+    }
+
+    // Check existing option (case-insensitive)
+    const exists = Array.from(datalist.options)
+        .some(opt => opt.value.toLowerCase() === value.toLowerCase());
+
+    if (exists) return;
+
+    // Insert into DB
+    const { error } = await supabaseClient
+        .from('dropdown_list')
+        .insert([{
+            description: value,
+            type_of_value: valueType,
+            company_id: CompanyID,
+            created_by: UserLoginID,
+            created_at: new Date().toISOString()
+        }]);
+
+    if (error) {
+        console.error(`Insert ${valueType} Error:`, error);
+        showToast?.('error', `Failed to save ${valueType}`) || alert(`Failed to save ${valueType}`);
+        return;
+    }
+
+    // Add to datalist immediately
+    const option = document.createElement('option');
+    option.value = value;
+    datalist.appendChild(option);
+}
+
+/**
+ * Load values from dropdown_list table into a datalist
+ *
+ * @param {string} datalistId       // e.g. 'departmentList'
+ * @param {string} valueType        // e.g. 'Department'
+ */
+async function loadDatalist(datalistId, valueType) {
+    const datalist = document.getElementById(datalistId);
+    if (!datalist) {
+        console.warn(`Datalist not found: ${datalistId}`);
+        return;
+    }
+
+    datalist.innerHTML = '';
+
+    const { data, error } = await supabaseClient
+        .from('dropdown_list')
+        .select('description')
+        .eq('type_of_value', valueType)
+        .eq('company_id', CompanyID)
+        .order('description', { ascending: true });
+
+    if (error) {
+        console.error(`Error loading ${valueType}:`, error);
+        return;
+    }
+
+    data.forEach(({ description }) => {
+        const option = document.createElement('option');
+        option.value = description;
+        datalist.appendChild(option);
+    });
+}
+
+function showSpinner() {
+    const spinner = document.getElementById('loadingSpinner');
+    if (spinner) spinner.classList.remove('d-none');
+}
+function hideSpinner() {
+    const spinner = document.getElementById('loadingSpinner');
+    if (spinner) spinner.classList.add('d-none');
+}

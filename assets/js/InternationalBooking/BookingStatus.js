@@ -52,8 +52,8 @@ async function insertBookingStatus({ ID_IB, docketNo, statusDate, arrivedAt, inf
             StatusDate: statusDate,
             ArrivedAt: arrivedAt,
             Information: information,
-            company_id: companyID,
-            created_by: createdBy,
+            company_id: CompanyID,
+            created_by: UserLoginID,
             created_at: localtimeStamp
         }]);
 
