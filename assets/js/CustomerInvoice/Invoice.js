@@ -307,17 +307,32 @@ async function newInvoice() {
 
 
 function clearInvoiceTotals() {
-    const table1 = document.getElementById('pendingShipmentTable');
-    if (table1?.tBodies?.[0]) table1.tBodies[0].innerHTML = '';
-    totalFreight.textContent = '0.00';
-    totalFSCAmt.textContent = '0.00';
-    totalOtherAmt.textContent = '0.00';
-    totalSGST.textContent = '0.00';
-    totalCGST.textContent = '0.00';
-    totalIGST.textContent = '0.00';
-    totalGST.textContent = '0.00';
-    totalGrand.textContent = '0.00';
+
+    const table = document.getElementById('pendingShipmentTable');
+    if (table?.tBodies?.[0]) {
+        table.tBodies[0].innerHTML = '';
+    }
+
+    const totalIds = [
+        'totalFreight',
+        'totalFSCAmt',
+        'totalOtherAmt',
+        'totalSGST',
+        'totalCGST',
+        'totalIGST',
+        'totalGST',
+        'totalGrand'
+    ];
+
+    totalIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.textContent = '0.00';
+        }
+    });
 }
+
+
 function clearChargesTable() {
     const tbody = document.querySelector('#pendingShipmentCharges tbody');
     if (tbody) tbody.innerHTML = '';
@@ -525,3 +540,103 @@ document.getElementById('modifyButton').addEventListener('click', () => {
     });
 
 });
+
+document.getElementById('deleteButton').addEventListener('click', () => {
+    // Logic to delete the invoice
+    alert('Delete functionality not implemented yet.');
+});
+// Listen for input selection
+document.getElementById('inputBankName').addEventListener('input', function () {
+    const selectedValue = this.value;
+    if (bankMap[selectedValue]) {
+        bankID = bankMap[selectedValue];
+        const bankIDInput = document.getElementById('bankIDs');
+        bankIDInput.value = bankID;
+        console.log('Selected Bank ID:', bankID);
+    } else {
+        bankID = null; // Reset if not valid selection
+    }
+});
+
+
+
+document.getElementById('reportButton').addEventListener('click', async () => {
+    const invoiceNo = document.getElementById('invoiceNo').value.trim();
+    if (!invoiceNo) {
+        alert('Please enter/select an Invoice Number.');
+        return;
+    }
+    const invoiceDetails = await getInvoiceDetails(invoiceNo);
+    if (!invoiceDetails) return;
+    generateInvoicePDF(invoiceDetails);
+});
+
+// document.getElementById('reportButton').addEventListener('click', async () => {
+//     const invoiceNo = document.getElementById('invoiceNo').value;
+//     const partyName = document.getElementById('partyName').value;
+//     const invoiceType = document.getElementById('movementType').value;
+//     const reportType = document.getElementById('reportType').value;
+//     let url = null;
+//     console.log('Generating report for Invoice No:', invoiceNo, 'Party Name:', partyName, 'Invoice Type:', invoiceType);
+//     // Check the value and run the relevant function
+//     if (invoiceType === 'Forwarding' || invoiceType === 'Import' || invoiceType === 'Export') {
+//         if (reportType === '') {
+//             url = `../../pages/Print_Reports/rep_Invoice_Forwarding_Main.html?invoiceNo=${encodeURIComponent(invoiceNo)}&partyName=${encodeURIComponent(partyName)}`;
+//         } else if (reportType === 'Latter Head') {
+//             url = `rep_Invoice_Forwarding_Main.html?invoiceNo=${encodeURIComponent(invoiceNo)}&partyName=${encodeURIComponent(partyName)}`;
+//             console.log('Generating report for International Booking Invoice');
+//         } else if (reportType === 'Print Annexure') {
+//             url = `rep_Invoice_Forwarding_Annexure.html?invoiceNo=${encodeURIComponent(invoiceNo)}&partyName=${encodeURIComponent(partyName)}`;
+//             console.log('Generating report for International Booking Invoice Annexure');
+//         }
+//     }
+//     else if (invoiceType === 'Customs Clearance') {
+//         if (reportType === '') {
+//             url = `rep_Invoice_CustomsClearance_Main.html?invoiceNo=${encodeURIComponent(invoiceNo)}&partyName=${encodeURIComponent(partyName)}`;
+//             console.log('Generating report for Customs Clearance Invoice');
+//         } else if (reportType === 'Latter Head') {
+//             url = `rep_Invoice_CustomsClearance_Main.html?invoiceNo=${encodeURIComponent(invoiceNo)}&partyName=${encodeURIComponent(partyName)}`;
+//             console.log('Generating report for Customs Clearance Invoice');
+//         } else if (reportType === 'Print Annexure') {
+//             url = `rep_Invoice_CustomsClearance_Annexure.html?invoiceNo=${encodeURIComponent(invoiceNo)}&partyName=${encodeURIComponent(partyName)}`;
+//             console.log('Generating report for Customs Clearance Invoice Annexure');
+//         }
+//     }
+//     else if (invoiceType === 'Domestic') {
+//         if (reportType === '') {
+//             url = `rep_Invoice_Domestic_Main.html?invoiceNo=${encodeURIComponent(invoiceNo)}&partyName=${encodeURIComponent(partyName)}`;
+//             console.log('Generating report for Domestic Booking Invoice');
+//         } else if (reportType === 'Latter Head') {
+//             url = `rep_Invoice_Domestic_Main.html?invoiceNo=${encodeURIComponent(invoiceNo)}&partyName=${encodeURIComponent(partyName)}`;
+//             console.log('Generating report for Domestic Booking Invoice');
+//         } else if (reportType === 'Print Annexure') {
+//             url = `rep_Invoice_Domestic_Annexure.html?invoiceNo=${encodeURIComponent(invoiceNo)}&partyName=${encodeURIComponent(partyName)}`;
+//             console.log('Generating report for Domestic Booking Invoice Annexure');
+//         }
+//     }
+//     else if (invoiceType === 'FTL or FCL') {
+//         if (reportType === '') {
+//             url = `rep_Invoice_FTLFCL_Main.html?invoiceNo=${encodeURIComponent(invoiceNo)}&partyName=${encodeURIComponent(partyName)}`;
+//             console.log('Generating report for FTL or FCL Booking Invoice');
+//         } else if (reportType === 'Latter Head') {
+//             url = `rep_Invoice_FTLFCL_Main.html?invoiceNo=${encodeURIComponent(invoiceNo)}&partyName=${encodeURIComponent(partyName)}`;
+//             console.log('Generating report for FTL or FCL Booking Invoice');
+//         } else if (reportType === 'Print Annexure') {
+//             url = `rep_Invoice_FTLFCL_Annexure.html?invoiceNo=${encodeURIComponent(invoiceNo)}&partyName=${encodeURIComponent(partyName)}`;
+//             console.log('Generating report for FTL or FCL Booking Invoice Annexure');
+//         }
+//     } else {
+//         alert('Unknown invoice type selected. Please select a valid invoice type.');
+//         return;
+//     }
+//     // Open the report in a new window
+//     if (!url) {
+//         alert('Please select a valid invoice type to generate report.');
+//         return;
+//     }
+//     window.open(
+//         url,
+//         'InvoiceReportPopup',
+//         'width=1000,height=800,resizable=yes,scrollbars=yes'
+//     );
+// });

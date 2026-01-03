@@ -1051,6 +1051,21 @@ async function getCompanyProfile(companyId) {
         return null;
     }
 }
+async function getPartyProfile(partyCode) {
+    try {
+        const { data, error } = await supabaseClient
+            .from('PartyDetails')
+            .select('*')
+            .eq('PartyCode', partyCode)
+            .single();
+
+        if (error) throw error;
+        if (data) return data;
+    } catch (error) {
+        console.error('Error fetching Party profile:', error.message);
+        return null;
+    }
+}
 
 /**
  * Auto-insert new value from input into dropdown_list table
@@ -1140,4 +1155,94 @@ function showSpinner() {
 function hideSpinner() {
     const spinner = document.getElementById('loadingSpinner');
     if (spinner) spinner.classList.add('d-none');
+}
+
+function safeRect(doc, x, y, w, h) {
+    if ([x, y, w, h].every(v => Number.isFinite(v))) {
+        doc.rect(x, y, w, h);
+    }
+}
+// Load image safely
+function loadImage(url) {
+    return new Promise((resolve) => {
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        img.onload = () => resolve(img);
+        img.onerror = () => resolve(null);
+        img.src = url;
+    });
+}
+function safeNumber(v) {
+    const n = parseFloat(v);
+    return isNaN(n) ? 0 : Number(n.toFixed(2));
+}
+
+async function getInvoiceBankDetails(invoiceNo) {
+    try {
+        const invNo = invoiceNo.trim();
+        const { data: invoice, error: invError } = await supabaseClient
+            .from('InvoiceDetails')
+            .select('BankID')
+            .eq('InvoiceNo', invNo)
+            .eq('company_id', CompanyID)
+            .limit(1)
+
+        const { data, error } = await supabaseClient
+            .from('CompanyBankDetails')
+            .select('*')
+            .eq('CompanyID', CompanyID)
+            .eq('id', invoice?.[0]?.BankID)
+            .limit(1)
+            .single();
+        if (error) throw error;
+        return data;
+    } catch (err) {
+        console.error('Error fetching invoice bank details:', err.message);
+        return null;
+    };
+}
+
+async function loadUserTypes() {
+    try {
+        const { data, error } = await supabaseClient
+            .from('Roles')
+            .select('id, Types')
+            .gt('id', 1) // Exclude Superuser
+            .order('Types', { ascending: true });
+
+        if (error) throw error;
+        console.log('User types data:', data);
+        const select = document.getElementById('userType');
+        select.innerHTML = '<option value="">Select User Type</option>';
+
+        data.forEach(type => {
+            const option = document.createElement('option');
+            option.value = type.id;   // stored value
+            option.textContent = type.Types; // display
+            select.appendChild(option);
+        });
+
+        console.log(`Loaded ${data.length} user types`);
+
+    } catch (err) {
+        console.error('Failed to load user types:', err);
+        alert('Unable to load User Types');
+    }
+}
+
+async function getUserWorkingBranch(empID) {
+    try {
+        const { data, error } = await supabaseClient
+            .from('EmployeeWorkingDetails')
+            .select('WorkLocation')
+            .eq('EM_ID', empID)
+            .order('EffectiveDate', { ascending: false })
+            .limit(1)
+            .single();
+        if (error) throw error;
+        return data?.WorkLocation || WorkingBranch;
+    } catch (err) {
+        console.error('Error fetching user working branch:', err.message);
+        return null;
+    }
 }

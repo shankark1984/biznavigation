@@ -397,9 +397,9 @@ async function loadInvoiceBookings(invoiceNo) {
                 <td>${invoice.ModeType || ''}</td>
                 <td>${invoice.Origin || ''}</td>
                 <td>${invoice.Destination || ''}</td>
-                <td>${invoice.NoofUnit || ''} ${invoice.UOMType || ''}</td>
-                <td>${invoice.AcutalWeight || ''}</td>
-                <td>${invoice.ChargableWeight || ''}</td>
+                <td>${invoice.NoofUnit || ''}</td>
+                <td>${invoice.AcutalWeight || ''} ${invoice.UOMType || ''}</td>
+                <td>${invoice.ChargableWeight || ''} ${invoice.UOMType || ''}</td>
                 <td>${charges.BasicFrightAmt.toFixed(2)}</td>
                 <td>${charges.FSCAmt.toFixed(2)}</td>
                 <td>${charges.OtherAmt.toFixed(2)}</td>

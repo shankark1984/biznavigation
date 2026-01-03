@@ -19,7 +19,7 @@ async function initCompanyRegistration() {
     handleUserTypePermissions(userType);
 
     // Permission check
-    const accessGranted = await checkAccess(userLoginID, 'PartyRegistration');
+    const accessGranted = await checkAccess(userLoginID, 'companyProfile');
     if (!accessGranted) {
         alert("You do not have permission to view this form.");
         return;
@@ -49,29 +49,29 @@ function setButtonState(buttonIDs, enabled) {
 }
 
 /* ---------------------- 🔐 Access Check ---------------------- */
-async function checkAccess(userLoginID, formID) {
-    if (!userLoginID) return false;
-    try {
-        const { data, error } = await supabaseClient
-            .from('UserAccessRules')
-            .select('CanRead, CanWrite, CanDelete, CanUpdate')
-            .eq('UserLoginID', userLoginID)
-            .eq('FormID', formID)
-            .maybeSingle();
+// async function checkAccess(userLoginID, formID) {
+//     if (!userLoginID) return false;
+//     try {
+//         const { data, error } = await supabaseClient
+//             .from('UserAccessRules')
+//             .select('CanRead, CanWrite, CanDelete, CanUpdate')
+//             .eq('UserLoginID', userLoginID)
+//             .eq('FormID', formID)
+//             .maybeSingle();
 
-        if (error || !data) throw error;
+//         if (error || !data) throw error;
 
-        window.perRead = !!data.CanRead;
-        window.perWrite = !!data.CanWrite;
-        window.perDelete = !!data.CanDelete;
-        window.perUpdate = !!data.CanUpdate;
+//         window.perRead = !!data.CanRead;
+//         window.perWrite = !!data.CanWrite;
+//         window.perDelete = !!data.CanDelete;
+//         window.perUpdate = !!data.CanUpdate;
 
-        return window.perRead;
-    } catch (err) {
-        console.error("Access check failed:", err);
-        return false;
-    }
-}
+//         return window.perRead;
+//     } catch (err) {
+//         console.error("Access check failed:", err);
+//         return false;
+//     }
+// }
 
 /* ---------------------- 🏢 Company Data Handling ---------------------- */
 async function fetchCompanyData(companyID) {

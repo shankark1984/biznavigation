@@ -175,7 +175,8 @@ async function checkAccess(userLoginID, formID) {
       alert("Error checking permissions. Please try again.");
       return false;
     }
-
+    console.log("Permission data retrieved:", data );
+    
     if (!data) {
       alert("Permission denied. Kindly contact your administrator.");
       return false;

@@ -1,39 +1,3 @@
-// Function to check user permissions
-async function checkAccess(userLoginID, formID) {
-
-    try {
-        const { data, error } = await supabaseClient
-            .from('UserAccessRules')
-            .select('Read, Write, Delete, Update')
-            .eq('UserLoginID', userLoginID)
-            .eq('FormID', formID)
-            .maybeSingle();  // Allows 0 rows without throwing an error
-
-        if (error) {
-            console.error('Database error:', error);
-            alert('Error checking permissions. Please try again.');
-            return false;
-        }
-
-        if (!data) {
-            alert('Permission denied. Kindly contact your administrator.');
-            return false;
-        }
-
-        // Assign permissions to global variables
-        perRead = data.Read;
-        perWrite = data.Write;
-        perDelete = data.Delete;
-        perUpdate = data.Update;
-
-
-        return !!perRead; // true if Read permission exists
-    } catch (err) {
-        console.error('Unexpected error:', err);
-        alert('An unexpected error occurred while checking permissions.');
-        return false;
-    }
-}
 
 // Event listener for menu click
 document.addEventListener('DOMContentLoaded', function () {

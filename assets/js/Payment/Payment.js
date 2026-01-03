@@ -390,28 +390,6 @@ function validateAccountedAmount() {
 // ------------------------------------------
 // HELPERS
 // ------------------------------------------
-function safeNumber(v) {
-    const n = parseFloat(v);
-    return isNaN(n) ? 0 : Number(n.toFixed(2));
-}
-
-function safeRect(doc, x, y, w, h) {
-    if ([x, y, w, h].every(v => Number.isFinite(v))) {
-        doc.rect(x, y, w, h);
-    }
-}
-
-// Load image safely
-function loadImage(url) {
-    return new Promise((resolve) => {
-        const img = new Image();
-        img.crossOrigin = "anonymous";
-        img.onload = () => resolve(img);
-        img.onerror = () => resolve(null);
-        img.src = url;
-    });
-}
-
 
 function clearInvoiceInputs() {
     [
