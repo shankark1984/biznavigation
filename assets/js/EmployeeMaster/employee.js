@@ -292,7 +292,9 @@ function enableModifyMode() {
         document.getElementById('setUserID').disabled = false;
     } else {
         document.getElementById('resetPassword').disabled = false;
-        document.getElementById('setUserID').disabled = true;
+        document.getElementById('setUserID').disabled = false;
+        document.getElementById('setUserID').textContent = 'Update User Type';
+        document.getElementById('loginID').disabled = true;
     }
 
     // Enable buttons
@@ -303,8 +305,6 @@ function enableModifyMode() {
     // UI state
     document.getElementById('status').value = 'Editing';
     saveBtn.innerHTML = '<i class="bi bi-save"></i> Update';
-
-    console.log('Modify mode enabled');
 }
 
 document.getElementById('employeeStatus').addEventListener('change', function () {
