@@ -37,7 +37,7 @@ const setLoading = (isLoading) => {
 };
 
 // Main login handler
-// Main login handler
+
 async function login() {
     const username = el.username.value.trim();
     const password = el.password.value.trim();
@@ -51,7 +51,6 @@ async function login() {
     setLoading(true);
 
     try {
-        // Hash the password before comparing and convert to string
         const hashedPassword = sha256(password).toString();
 
         const { data, error, status } = await supabaseClient
@@ -63,12 +62,25 @@ async function login() {
 
         if (error && status !== 406) {
             showError('Login failed. Please check your credentials.');
-        } else if (!data) {
-            showError('Invalid username or password.');
-        } else {
-            storeUserDetails(data);
-            window.location.href = '/pages/Tools/home.html';
+            return;
         }
+
+        if (!data) {
+            showError('Invalid username or password.');
+            return;
+        }
+
+        storeUserDetails(data);
+
+        // 🔐 FORCE PASSWORD RESET
+        if (password === reSetPass) {
+            localStorage.setItem('ForcePasswordReset', 'true');
+            window.location.href = '/pages/auth/new-password.html';
+            return;
+        }
+
+        window.location.href = '/pages/Tools/home.html';
+
     } catch (err) {
         console.error('Login Error:', err);
         showError('An error occurred during login. Please try again.');
@@ -77,12 +89,3 @@ async function login() {
     }
 }
 
-// document.getElementById("forgotPasswordLink").addEventListener("click", function (e) {
-//     e.preventDefault();
-//     resetPassword();
-// });
-
-// document.getElementById("userActivationLink").addEventListener("click", function (e) {
-//     e.preventDefault();
-//     UserActivation();
-// });
