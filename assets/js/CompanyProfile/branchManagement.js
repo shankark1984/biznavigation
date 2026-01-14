@@ -28,7 +28,7 @@ branchAddBtn.addEventListener('click', async function () {
         BranchScope: document.getElementById('branchScope').value.trim(),
         Status: branchStatus,
         InactiveDate: branchInactiveDate,
-        CompanyID: CompanyID,
+        CompanyID: document.getElementById('companyCode').value.trim(),
         created_by: UserLoginID,
         created_at: localtimeStamp
     };
@@ -70,6 +70,7 @@ branchAddBtn.addEventListener('click', async function () {
 // Load Branch List
 async function loadBranches() {
     try {
+        const CompanyID = document.getElementById('companyCode').value.trim();
         const { data, error } = await supabaseClient
             .from('CompanyBranchDetails')
             .select('*')
@@ -141,9 +142,9 @@ document.addEventListener('change', async function (event) {
 
                 // Check if modifyButton is disabled and branchCode is selected (not empty)
                 if (modifyButton && modifyButton.disabled && branchCode.trim() !== '') {
-                    branchBankAddDetails.disabled = false; // Enable the button
+                    bankAddDetails.disabled = false; // Enable the button
                 } else {
-                    branchBankAddDetails.disabled = true;  // Keep it disabled if conditions are not met
+                    bankAddDetails.disabled = true;  // Keep it disabled if conditions are not met
                 }
 
                 // Change button text

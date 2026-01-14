@@ -8,9 +8,26 @@
     <!-- Bootstrap CSS & Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
-    <!-- Preload Bootstrap JS -->
-    <link rel="preload" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" as="script">
-    <link rel="preload" href="https://code.jquery.com/jquery-3.6.0.min.js" as="script">
+
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+
+    <style>
+        .tab-content {
+            min-height: 300px;
+        }
+
+        .text-upper {
+            text-transform: uppercase;
+        }
+
+        .text-cap {
+            text-transform: capitalize;
+        }
+    </style>
+
 </head>
 
 <body class="bg-light">
@@ -18,16 +35,20 @@
         <div class="card shadow-lg rounded">
             <div class="card-header bg-primary text-white mt-5">
                 <div class="d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">Company Registration - (<span id="compID">...</span>)</h5>
-                    <img id="companylogo" class="company-logo" alt="Company Logo" height="32" loading="lazy">
+                    <h5 class="mb-0">
+                        Company Registration –(<span id="compID"></span>)
+                    </h5>
+                    <img id="companylogo" class="company-logo" src="../../assets/img/logo/default.png"
+                        alt="Company Logo" height="32" loading="lazy">
                 </div>
+
                 <!-- Metadata Inputs -->
                 <input type="hidden" id="tempFormID">
-                <input type="hidden" id="partyCode">
+                <input type="hidden" id="companyCode">
                 <input type="hidden" id="vendorCode">
             </div>
             <div class="card-body">
-                <form class="container" autocomplete="off">
+                <form autocomplete="off">
                     <!-- Button Group -->
                     <div class="d-flex flex-wrap gap-1 mb-2">
                         <button type="button" class="btn btn-primary btn-sm" id="newButton" aria-label="New"><i
@@ -40,33 +61,43 @@
                             disabled><i class="bi bi-file-earmark-text"></i> Report</button>
                         <button type="button" class="btn btn-success btn-sm" id="saveButton" data-mode="insert"
                             aria-label="Save"><i class="bi bi-save"></i> Save</button>
+
                     </div>
                     <div class="row g-1">
+                        <!-- Search Company Selection -->
+                        <div class="col-md-12 col-sm-6" id="companySelectWrapper" style="display:none;">
+                            <label class="form-label small">Company Name Search</label>
+                            <select class="form-select" id="selectCompany">
+                                <option value="">Select company</option>
+                            </select>
+                        </div>
+
                         <!-- Company Basic Info -->
                         <div class="col-md-1 col-sm-6">
                             <label for="shortCode" class="form-label small">Short Code</label>
-                            <input type="text" class="form-control" id="shortCode" required
-                                style="text-transform: uppercase;" autocomplete="off">
+                            <input type="text" class="form-control text-upper" id="shortCode" required
+                                autocomplete="off">
                         </div>
                         <div class="col-md-5 col-sm-6">
                             <label for="companyName" class="form-label small">Company Name</label>
-                            <input type="text" class="form-control" id="companyName" required placeholder="Company Name"
-                                style="text-transform: capitalize;" autocomplete="organization">
+                            <input type="text" class="form-control text-cap" id="companyName" list="companyList"
+                                placeholder="Company Name">
+                            <datalist id="companyList"></datalist>
                         </div>
+
                         <div class="col-md-3 col-sm-6">
                             <label for="cinNo" class="form-label small">CIN No</label>
-                            <input type="text" class="form-control" id="cinNo" required placeholder="CIN No"
-                                style="text-transform: uppercase;">
+                            <input type="text" class="form-control text-upper" id="cinNo" required placeholder="CIN No">
                         </div>
                         <div class="col-md-3 col-sm-6">
                             <label for="uaNo" class="form-label small">UA No</label>
-                            <input type="text" class="form-control" id="uaNo" required placeholder="Udyog Aadhaar No"
-                                style="text-transform: uppercase;">
+                            <input type="text" class="form-control text-upper" id="uaNo" required
+                                placeholder="Udyog Aadhaar No">
                         </div>
                         <div class="col-md-6 col-sm-6">
                             <label for="address" class="form-label small">Address</label>
-                            <textarea class="form-control" id="address" required rows="1" placeholder="Enter address"
-                                style="text-transform: capitalize;"></textarea>
+                            <textarea class="form-control text-cap" id="address" required rows="1"
+                                placeholder="Enter address"></textarea>
                         </div>
                         <div class="col-md-1 col-sm-6">
                             <label for="pinCode" class="form-label small">Pin Code</label>
@@ -89,14 +120,14 @@
                         </div>
                         <div class="col-md-2 col-sm-6">
                             <label for="panNumber" class="form-label small">Pan Number</label>
-                            <input type="text" class="form-control" id="panNumber" required
-                                placeholder="Enter Pan Number" style="text-transform: uppercase;">
+                            <input type="text" class="form-control text-upper" id="panNumber" required
+                                placeholder="Enter Pan Number">
                             <div id="panFeedback" class="invalid-feedback d-none">Invalid or duplicate PAN Number</div>
                         </div>
                         <div class="col-md-2 col-sm-6">
                             <label for="gstNumber" class="form-label small">GST Number</label>
-                            <input type="text" class="form-control" id="gstNumber" required
-                                placeholder="Enter GST Number" style="text-transform: uppercase;">
+                            <input type="text" class="form-control text-upper" id="gstNumber" required
+                                placeholder="Enter GST Number">
                             <div id="gstFeedback" class="invalid-feedback d-none">Invalid or duplicate GST Number</div>
                         </div>
                         <div class="col-md-2 col-sm-6">
@@ -125,6 +156,16 @@
                             <button class="nav-link" id="bank-tab" data-bs-toggle="tab" data-bs-target="#bank"
                                 type="button" role="tab" aria-selected="false">Bank Details</button>
                         </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="adminUserSetting-tab" data-bs-toggle="tab"
+                                data-bs-target="#adminUserSetting" type="button" role="tab" aria-selected="false">New
+                                Admin User Setting</button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link" id="subscription-tab" data-bs-toggle="tab"
+                                data-bs-target="#subscription" type="button">Subscription
+                            </button>
+                        </li>
                     </ul>
                     <div class="tab-content p-3 border border-top-0" id="branchTabsContent">
                         <!-- Branch Details Tab -->
@@ -132,8 +173,7 @@
                             <div class="row g-1">
                                 <div class="col-md-1 col-sm-6">
                                     <label for="branchCode" class="form-label small">Branch Code</label>
-                                    <input type="text" class="form-control" id="branchCode"
-                                        style="text-transform: uppercase;">
+                                    <input type="text" class="form-control text-upper" id="branchCode">
                                 </div>
                                 <div class="col-md-5 col-sm-6">
                                     <label for="branchAddress" class="form-label small">Address</label>
@@ -202,8 +242,8 @@
                                         placeholder="Enter branch scope"></textarea>
                                 </div>
                                 <div class="col-md-2 d-flex align-items-end">
-                                    <button type="button" class="btn btn-primary" id="branchAddDetails">Add
-                                        Branch</button>
+                                    <button type="button" class="btn btn-primary" id="branchAddDetails"
+                                        aria-label="Add Branch">Add Branch</button>
                                 </div>
                             </div>
                             <!-- Branch Details Table -->
@@ -284,8 +324,8 @@
                                     <input type="date" class="form-control" id="bankInactiveDate">
                                 </div>
                                 <div class="col-md-2 d-flex align-items-end">
-                                    <button type="button" class="btn btn-primary" id="branchBankAddDetails">Add
-                                        Branch</button>
+                                    <button type="button" class="btn btn-primary" id="bankAddDetails">Add
+                                        Bank</button>
                                 </div>
                             </div>
                             <!-- Branch Bank Details Table -->
@@ -311,32 +351,126 @@
                                 </table>
                             </div>
                         </div>
+                        <!-- Admin User Setting Tab -->
+                        <div class="tab-pane fade" id="adminUserSetting" role="tabpanel"
+                            aria-labelledby="adminUserSetting-tab">
+
+                            <div class="row g-2">
+                                <div class="col-md-3 col-sm-6">
+                                    <label for="userName" class="form-label small">User Name</label>
+                                    <input type="text" class="form-control" id="userName" placeholder="Enter User Name">
+                                </div>
+
+                                <div class="col-md-3 col-sm-6">
+                                    <label for="userLogID" class="form-label small">User ID</label>
+                                    <input type="text" class="form-control" id="userLogID" placeholder="Enter User ID">
+                                </div>
+
+                                <div class="col-md-2 d-flex align-items-end">
+                                    <button type="button" class="btn btn-primary" id="resetPasswordBtn">
+                                        Reset Password
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Subscription Tab -->
+                        <div class="tab-pane fade" id="subscription" role="tabpanel">
+
+                            <div class="row g-2">
+
+                                <div class="col-md-3">
+                                    <label class="form-label small">Plan</label>
+                                    <select id="planId" class="form-select"></select>
+                                </div>
+
+                                <div class="col-md-2">
+                                    <label class="form-label small">Start Date</label>
+                                    <input type="date" id="subStartDate" class="form-control">
+                                </div>
+
+                                <div class="col-md-2">
+                                    <label class="form-label small">End Date</label>
+                                    <input type="date" id="subEndDate" class="form-control" readonly>
+                                </div>
+
+                                <div class="col-md-2">
+                                    <label class="form-label small">Amount</label>
+                                    <input type="number" id="amountPaid" class="form-control">
+                                </div>
+
+                                <div class="col-md-2">
+                                    <label class="form-label small">Payment Status</label>
+                                    <select id="paymentStatus" class="form-select">
+                                        <option value="Paid">Paid</option>
+                                        <option value="Pending">Pending</option>
+                                    </select>
+                                </div>
+
+                                <div class="col-md-1 d-flex align-items-end">
+                                    <button type="button" class="btn btn-success" id="saveSubscription">
+                                        Save
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Subscription History -->
+                            <div class="table-responsive mt-3">
+                                <table class="table table-bordered table-sm">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Plan</th>
+                                            <th>Start</th>
+                                            <th>End</th>
+                                            <th>Amount</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="subscriptionTable"></tbody>
+                                </table>
+                            </div>
+
+                        </div>
                     </div>
                 </form>
             </div>
         </div>
     </div>
 
-    <!-- JavaScript Files -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js" defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" defer></script>
-    <script src="https://unpkg.com/@supabase/supabase-js" defer></script>
-    <script src="../../assets/js/utils/server.js" defer></script>
-    <script src="../../assets/js/utils/navbar.js" defer></script>
-    <script src="../../assets/js/utils/footer.js" defer></script>
-    <script src="../../assets/js/utils/utils.js" defer></script>
-    <script src="../../assets/js/CompanyProfile/bankManagement.js" defer></script>
-    <script src="../../assets/js/CompanyProfile/branchManagement.js" defer></script>
-    <script src="../../assets/js/CompanyProfile/companyProfile.js" defer></script>
-    <script src="../../assets/js/utils/pincode-helper.js" defer></script>
-    <script src="../../assets/js/utils/logout.js" defer></script>
+    <!-- Toast Container -->
+    <div class="position-fixed top-0 end-0 p-3" style="z-index: 9999">
+        <div id="errorToast" class="toast align-items-center text-white bg-danger border-0" role="alert"
+            aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body" id="errorToastMessage">
+                    Error message here...
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        </div>
+    </div>
 
-    <!-- Tab Initialization -->
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            new bootstrap.Tab(document.querySelector('#branch-tab')).show();
-        });
-    </script>
+    <!-- Core -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Vendor -->
+    <script src="https://cdn.jsdelivr.net/npm/js-sha256@0.9.0/build/sha256.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <!-- Utils -->
+    <script src="../../assets/js/utils/server.js"></script>
+    <script src="../../assets/js/utils/utils.js"></script>
+    <script src="../../assets/js/utils/pincode-helper.js"></script>
+    <script src="../../assets/js/utils/navbar.js"></script>
+    <script src="../../assets/js/utils/footer.js"></script>
+    <script src="../../assets/js/utils/logout.js"></script>
+
+    <!-- Feature Modules -->
+    <script src="../../assets/js/CompanyProfile/companyProfile.js" defer></script>
+    <script src="../../assets/js/CompanyProfile/branchManagement.js" defer></script>
+    <script src="../../assets/js/CompanyProfile/bankManagement.js" defer></script>
+    <script src="../../assets/js/CompanyProfile/subscription.js" defer></script>
+
 </body>
 
 </html>

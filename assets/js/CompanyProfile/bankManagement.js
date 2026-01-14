@@ -1,8 +1,8 @@
 const branchBankForm = document.getElementById('bank');
-const branchBankAddBtn = document.getElementById('branchBankAddDetails');
+const bankAddBtn = document.getElementById('bankAddDetails');
 const bankTableBody = document.getElementById('branchBankTableBody');
 
-branchBankAddBtn.addEventListener('click', async function () {
+bankAddBtn.addEventListener('click', async function () {
     const bankData = {
         BankName: document.getElementById('branchBankName').value.trim(),
         AccountNo: document.getElementById('branchAccountNo').value.trim(),
@@ -73,6 +73,7 @@ function resetBranchBankForm() {
 // Load bank List
 async function loadBanks() {
     try {
+        const CompanyID = document.getElementById('companyCode').value.trim();
         const { data, error } = await supabaseClient
             .from('CompanyBankDetails')
             .select('*')
@@ -144,7 +145,7 @@ document.addEventListener('change', async function (event) {
                 document.getElementById('branchBankAddress').value = data.Address || '';
                 document.getElementById('branchDefaultBank').value = data.DefaultBank || '';
                 document.getElementById('branchAccountStatus').value = data.BankStatus || '';
-                document.getElementById('branchBankAddDetails').innerText = 'Edit Bank';
+                document.getElementById('bankAddDetails').innerText = 'Edit Bank';
                 // Scroll to form smoothly
                 branchForm.scrollIntoView({ behavior: 'smooth' });
 

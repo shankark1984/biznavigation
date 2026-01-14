@@ -3,7 +3,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const accessGranted = await checkAccess(UserLoginID, 'PartyRegistration');
     if (!accessGranted) {
         disableForm();
-        alert("You do not have permission to view this form.");
+        showToast("You do not have permission to view this form.");
         return;
     }
 
@@ -83,16 +83,20 @@ document.getElementById('partyCurrentStatus').addEventListener('change', () => {
 document.getElementById('partyNameReg').addEventListener('change', async () => {
     const partyCode = fields.partyCodes.value.trim();
     if (!partyCode) return;
-
-    await fetchSelectedPartyDetails(partyCode);
-    await loadBillingAddresses({ billingTableBody: document.querySelector('#billingAddressTable tbody'), partyCodeSelect: fields.partyCodes });
-    await fetchTariffs(partyCode);
     disableForm();
 
     document.getElementById("addbillingAddress").disabled = true;
     saveButton.disabled = true;
     modifyButton.disabled = false;
     newButton.disabled = false;
+
+    await fetchSelectedPartyDetails(partyCode);
+    await loadBillingAddresses({
+        billingTableBody: document.querySelector('#billingAddressTable tbody'),
+        partyCodeSelect: fields.partyCodes
+    });
+    await fetchTariffs(partyCode);
+
 });
 
 async function fetchSelectedPartyDetails(partyCode) {
@@ -146,50 +150,108 @@ saveButton.addEventListener('click', async (e) => {
         : fields.partyCodes.value.trim();
 
     if (!partyCode) {
-        alert("Party Code is missing!");
+        showToast("Party Code is missing!");
         saveButton.disabled = false;
         newButton.disabled = false;
         return;
     }
 
-    const formData = {
-        PartyCode: partyCode,
-        PartyType: fields.partyType.value,
-        PartyName: partyName,
-        ContactPerson: fields.partyContactPerson.value,
-        ContactNumber: fields.partyContactNumber.value,
-        EmailID: fields.partyEmailID.value,
-        Address: fields.partyAddress.value,
-        City: fields.city.value,
-        PinCode: fields.pinCode.value,
-        State: fields.state.value,
-        Country: fields.country.value,
-        PanNumber: fields.panNumber.value,
-        GSTNumber: fields.gstNumber.value,
-        DefaultTax: fields.defaultTax.value || 'CGST 0% SGST 0% IGST 0%',
-        CurrentStatus: fields.partyCurrentStatus.value,
-        DeactiveDate: fields.partyDeActiveDate.value || null,
-        company_id: CompanyID,
-        created_by: UserLoginID,
-        created_at: localtimeStamp
-    };
+    fields.partyType.value = fields.partyType.value || "Customer";
+    fields.partyCurrentStatus.value =
+        fields.partyCurrentStatus.value || "Active";
 
-    Object.keys(formData).forEach(key => {
-        if (formData[key] === "") formData[key] = null;
-    });
+    const partyType = fields.partyType.value;
+    const partyStatus = fields.partyCurrentStatus.value;
 
     const isInsert = saveButton.textContent.trim() === 'Save';
-    const { data, error } = isInsert
-        ? await supabaseClient.from('PartyDetails').insert([formData])
-        : await supabaseClient.from('PartyDetails').update(formData).eq('PartyCode', partyCode).select();
+
+    const formData = {
+        PartyCode: partyCode,
+        PartyType: partyType,
+        PartyName: partyName,
+        ContactPerson: fields.partyContactPerson.value || null,
+        ContactNumber: fields.partyContactNumber.value || null,
+        EmailID: fields.partyEmailID.value || null,
+        Address: fields.partyAddress.value || null,
+        City: fields.city.value || null,
+        PinCode: fields.pinCode.value || null,
+        State: fields.state.value || null,
+        Country: fields.country.value || null,
+        PanNumber: fields.panNumber.value || null,
+        GSTNumber: fields.gstNumber.value || null,
+        DefaultTax: fields.defaultTax.value || 'CGST 0% SGST 0% IGST 0%',
+        CurrentStatus: partyStatus,
+        DeactiveDate: fields.partyDeActiveDate.value || null,
+        company_id: CompanyID
+    };
+
+    let response;
+
+    if (isInsert) {
+        response = await supabaseClient
+            .from('PartyDetails')
+            .insert([{
+                ...formData,
+                created_by: UserLoginID,
+                created_at: localtimeStamp
+            }])
+            .select();
+    } else {
+        response = await supabaseClient
+            .from('PartyDetails')
+            .update({
+                ...formData,
+                updated_by: UserLoginID,
+                updated_at: localtimeStamp
+            })
+            .eq('PartyCode', partyCode)
+            .select();
+    }
+
+    const { data, error } = response;
 
     if (error) {
-        alert(`Error ${isInsert ? 'saving' : 'updating'} party details`);
+        showToast(`Error ${isInsert ? 'saving' : 'updating'} party details`);
         console.error(error);
-    } else {
-        alert(`Party details ${isInsert ? 'saved' : 'updated'} successfully!`);
-        if (isInsert) fields.partyCodes.value = partyCode;
+        saveButton.disabled = false;
+        newButton.disabled = false;
+        return; // 🚨 STOP HERE
     }
+
+    if (isInsert) {
+        fields.partyCodes.value = partyCode;
+
+        // ✅ Insert default billing address ONLY on insert
+        const { error: billingError } = await supabaseClient
+            .from('PartyBillingAddress')
+            .insert([{
+                PartyCode: partyCode,
+                ContactName: formData.ContactPerson || "NA",
+                ContactNumber: formData.ContactNumber || "9999999999",
+                Address: formData.Address,
+                PinCode: formData.PinCode,
+                City: formData.City,
+                State: formData.State,
+                Country: formData.Country,
+                DefaultActive: true,
+                Status: 'Active',
+                company_id: CompanyID,
+                created_by: UserLoginID,
+                created_at: localtimeStamp
+            }]);
+
+        if (billingError) {
+            console.error('Billing insert error:', billingError);
+            alert('Party saved, but billing address failed');
+        }
+    }
+
+    await loadBillingAddresses({
+        billingTableBody: document.querySelector('#billingAddressTable tbody'),
+        partyCodeSelect: fields.partyCodes
+    });
+
+    showToast(`Party ${isInsert ? 'saved' : 'updated'} successfully!`);
 
     disableForm();
     saveButton.innerHTML = '<i class="bi bi-save"></i> Update';
@@ -197,6 +259,7 @@ saveButton.addEventListener('click', async (e) => {
     newButton.disabled = false;
     toggleButtons(".edit-row, .delete-row, .editTariff", false);
 });
+
 
 document.getElementById('modeType').addEventListener('change', async function () {
     const container = document.getElementById('containerType')?.closest('.col-md-2');
@@ -215,4 +278,8 @@ document.getElementById('modeType').addEventListener('change', async function ()
     } else {
         container.classList.add('d-none');
     }
+});
+
+document.getElementById('partyNameReg').addEventListener('input', async () => {
+    await loadSuggestions('partySuggestions', 'PartyDetails', CompanyID);
 });

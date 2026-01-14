@@ -188,4 +188,4 @@ let invoiceNo = null;
 let partyName = null;
 let customerGSTRate = null;
 
-
+const reSetPass = '12345'; // Default password for new users

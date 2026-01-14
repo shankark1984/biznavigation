@@ -52,8 +52,6 @@ async function loadEmployeeList() {
             datalist.appendChild(option);
         });
 
-        console.log(`Loaded ${data.length} employees`);
-        console.table(data);
 
     } catch (err) {
         console.error('Error loading employee list:', err);
@@ -92,8 +90,6 @@ async function loadEmployeeDetails(employeeCode) {
         empID = data.id;
         await populateEmployeeForm(data);
         setModifyMode();
-
-        console.log("Employee loaded:", data);
 
     } catch (err) {
         console.error('Failed to load employee details:', err);
@@ -368,7 +364,7 @@ async function saveUpdateUserCredentials() {
         const userType = document.getElementById('userType').value; // Role ID
         const employeeCode = document.getElementById('employeeCode').value;
         const employeeName = document.getElementById('employeeName').value.trim();
-        const tempPassword = sha256("12345"); // Default password
+        const tempPassword = sha256(reSetPass); // Default password
         const workingBranch = await getUserWorkingBranch(empID);
 
         /* ==============================
@@ -478,7 +474,7 @@ async function resetUserPassword() {
             showToast("Login ID cannot be the same as Employee Code");
             return;
         }
-        const tempPassword = sha256("123456"); // Default password
+        const tempPassword = sha256(reSetPass); // Default password
 
         const { error } = await supabaseClient
             .from('user_login')

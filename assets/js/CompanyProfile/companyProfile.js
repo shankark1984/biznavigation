@@ -1,22 +1,29 @@
+let selectedCompanyID = null;
+let COMPANY_MAP = {};   // company_name → full record
+
 // 🌐 Company Registration Initialization
 document.addEventListener("DOMContentLoaded", async () => {
     try {
         await initCompanyRegistration();
+        await loadCompaniesDropdown();
     } catch (err) {
         console.error("Initialization error:", err);
         alert("Error initializing the page.");
     }
 });
+document.getElementById('resetPasswordBtn')?.addEventListener('click', resetUserPassword);
 
 async function initCompanyRegistration() {
     const companyID = localStorage.getItem('CompanyID');
     const userLoginID = localStorage.getItem('UserLoginID');
     const userType = parseInt(localStorage.getItem('UserType'), 10) || 0;
-
+    selectedCompanyID = companyID;
     // Initial UI setup
     setFormState(false);
-    setButtonState(['branchAddDetails', 'branchBankAddDetails'], false);
+    setButtonState(['branchAddDetails', 'bankAddDetails'], false);
     handleUserTypePermissions(userType);
+
+    handleAdminUserTabVisibility(); // 👈 ADD THIS
 
     // Permission check
     const accessGranted = await checkAccess(userLoginID, 'companyProfile');
@@ -28,12 +35,15 @@ async function initCompanyRegistration() {
     // Fetch company data if exists
     if (companyID) await fetchCompanyData(companyID);
     else console.warn("⚠️ No CompanyID found in localStorage");
+    document.getElementById('compID').textContent = companyID || 'New Company';
 
     // Update logo
     updateCompanyLogo(companyID);
+    toggleCompanySelect(userType);
 
     // Bind Events
     bindEvents(userType);
+    saveButton.disabled = true;
 }
 
 /* ---------------------- 🔧 Utility Functions ---------------------- */
@@ -48,38 +58,14 @@ function setButtonState(buttonIDs, enabled) {
     });
 }
 
-/* ---------------------- 🔐 Access Check ---------------------- */
-// async function checkAccess(userLoginID, formID) {
-//     if (!userLoginID) return false;
-//     try {
-//         const { data, error } = await supabaseClient
-//             .from('UserAccessRules')
-//             .select('CanRead, CanWrite, CanDelete, CanUpdate')
-//             .eq('UserLoginID', userLoginID)
-//             .eq('FormID', formID)
-//             .maybeSingle();
-
-//         if (error || !data) throw error;
-
-//         window.perRead = !!data.CanRead;
-//         window.perWrite = !!data.CanWrite;
-//         window.perDelete = !!data.CanDelete;
-//         window.perUpdate = !!data.CanUpdate;
-
-//         return window.perRead;
-//     } catch (err) {
-//         console.error("Access check failed:", err);
-//         return false;
-//     }
-// }
 
 /* ---------------------- 🏢 Company Data Handling ---------------------- */
-async function fetchCompanyData(companyID) {
+async function fetchCompanyData(selectedCompanyID) {
     try {
         const { data, error } = await SupabaseService.client
             .from('company_profile')
             .select('*')
-            .eq('company_id', companyID)
+            .eq('company_id', selectedCompanyID)
             .single();
 
         if (error) throw error;
@@ -92,7 +78,9 @@ async function fetchCompanyData(companyID) {
 
 function populateCompanyForm(data) {
     const fieldMap = {
-        CompID: data.company_id,
+        compID: data.company_id,
+        compName: data.company_name,
+        companyCode: data.company_id,
         shortCode: data.short_code,
         companyName: data.company_name,
         address: data.address,
@@ -110,6 +98,7 @@ function populateCompanyForm(data) {
     };
     Object.entries(fieldMap).forEach(([id, value]) => {
         const el = document.getElementById(id);
+        // console.log(`Setting ${id} to ${value}`);
         if (el) el.value = value || '';
     });
     const logo = document.getElementById('companylogo');
@@ -138,12 +127,13 @@ function enableEditFields(fields, editable) {
 
 /* ---------------------- 🧼 Form Management ---------------------- */
 function clearForm() {
-    document.querySelectorAll('input, textarea').forEach(el => el.value = '');
+    document.querySelectorAll('input, textarea,select').forEach(el => el.value = '');
     document.querySelectorAll('input[type="checkbox"]').forEach(el => el.checked = false);
     const logo = document.getElementById('companylogo');
     if (logo) logo.src = '../../assets/img/logo/default.png';
     const compID = document.getElementById('CompID');
     if (compID) compID.textContent = '';
+
 }
 
 /* ---------------------- 🎛️ Event Handlers ---------------------- */
@@ -190,8 +180,9 @@ function onModifyClick() {
     const panNumber = document.getElementById('panNumber');
     if (gstNumber) gstNumber.disabled = true;
     if (panNumber) panNumber.disabled = true;
+    document.getElementById('selectCompany').disabled = true;
 
-    setButtonState(['branchAddDetails', 'branchBankAddDetails'], true);
+    setButtonState(['branchAddDetails', 'bankAddDetails'], true);
 }
 
 
@@ -206,7 +197,8 @@ function onNewClick() {
     }
     setEmptyTableMessage('branchTableBody', 'No branches created');
     setEmptyTableMessage('branchBankTableBody', 'No bank created');
-    setButtonState(['branchAddDetails', 'branchBankAddDetails'], false);
+    setButtonState(['branchAddDetails', 'bankAddDetails'], false);
+
 }
 
 /* ---------------------- 💾 Save / Update ---------------------- */
@@ -216,21 +208,49 @@ async function onSaveClick(e) {
     const mode = saveBtn.dataset.mode || 'insert';
     const isInsert = mode === 'insert';
 
-    const companyName = document.getElementById('companyName')?.value.trim();
+    selectedCompanyID = document.getElementById('companyCode')?.value.trim();
+
+    const companyName = document.getElementById('companyName')?.value.trim() || '';
+    const adminUserName =
+        document.getElementById('userName')?.value?.trim() || '';
+
+    const adminUserId =
+        document.getElementById('userLogID')?.value?.trim() || '';
+
     if (!companyName) return alert('Please enter a company name.');
+
+    if (isInsert && (!adminUserName || !adminUserId)) {
+        return alert('Please enter admin user details.');
+    }
 
     const companyID = isInsert
         ? await generateNewCompanyID(companyName)
         : localStorage.getItem('CompanyID');
 
-    const formData = gatherFormData(companyID);
+    const formData = gatherFormData(selectedCompanyID);
 
     try {
         const { error } = isInsert
             ? await supabaseClient.from('company_profile').insert([formData])
-            : await supabaseClient.from('company_profile').update(formData).eq('company_id', companyID);
+            : await supabaseClient.from('company_profile').update(formData).eq('company_id', selectedCompanyID);
 
         if (error) throw error;
+
+        const adminData = {
+            emp_code: formData.company_id,
+            user_name: adminUserName,
+            user_login_id: adminUserId,
+            user_password: sha256(reSetPass),
+            user_type: 2,
+            company_id: companyID,
+            working_branch: companyID,
+            created_by: UserLoginID,
+            created_at: localtimeStamp,
+        }
+        if (isInsert) {
+            const { error: adminError } = await supabaseClient.from('user_login').insert([adminData]);
+            if (adminError) throw adminError;
+        }
 
         alert(`Company ${isInsert ? 'saved' : 'updated'} successfully!`);
         saveBtn.innerHTML = '<i class="bi bi-pencil-square"></i> Update';
@@ -238,7 +258,7 @@ async function onSaveClick(e) {
         saveBtn.disabled = true;
         document.getElementById('modifyButton').disabled = false;
         setFormState(false);
-        setButtonState(['branchAddDetails', 'branchBankAddDetails'], false);
+        setButtonState(['branchAddDetails', 'bankAddDetails'], false);
         modifyButton.disabled = false;
 
     } catch (err) {
@@ -316,3 +336,149 @@ function updateCompanyLogo(companyID) {
     logo.onload = () => { logo.alt = `Logo for ${companyID}`; };
     logo.src = companyID ? path : fallback;
 }
+
+function handleAdminUserTabVisibility() {
+    const userType = parseInt(localStorage.getItem('UserType'), 10);
+    const adminTab = document.getElementById('adminUserSetting');
+    const adminTabBtn = document.getElementById('adminUserSetting-tab');
+
+    if (!adminTab) return;
+
+    if (userType === 1) {
+        // Super Admin → show
+        adminTab.classList.remove('d-none');
+        adminTabBtn?.classList.remove('d-none');
+    } else {
+        // Others → hide
+        adminTab.classList.add('d-none');
+        adminTabBtn?.classList.add('d-none');
+    }
+}
+
+async function resetUserPassword() {
+    try {
+
+        const userLogID = document.getElementById('userLogID').value;
+        const compID = document.getElementById('companyCode').value;
+
+        if (!userLogID) {
+            showToast("Login ID cannot be empty");
+            return;
+        }
+        if (!compID) {
+            showToast("Company ID cannot be empty");
+            return;
+        }
+
+        const tempPassword = sha256(reSetPass); // Default password
+
+        const { error } = await supabaseClient
+            .from('user_login')
+            .update({
+                user_password: tempPassword
+            })
+            .eq('company_id', compID)
+            .eq('user_login_id', userLogID);
+        if (error) throw error;
+
+        showToast("Password reset successfully to default, password is: " + reSetPass);
+    } catch (err) {
+        console.error("Failed to reset user password:", err);
+        showToast(err.message || "Error resetting user password");
+    }
+}
+
+async function getAdminUser(companyID) {
+    try {
+
+        const { data, error } = await supabaseClient
+            .from('user_login')
+            .select('*')
+            .eq('company_id', companyID)
+            .eq('user_type', 2)
+            .maybeSingle();
+
+        if (error) throw error;
+
+        const userName = data.user_name;
+        const userLoginID = data.user_login_id;
+        console.log("Populating admin user fields:", { userName, userLoginID });
+
+
+        if (data) {
+            // ✅ Admin exists
+            document.getElementById('userName').value = data.user_name || '';
+            document.getElementById('userLogID').value = data.user_login_id || '';
+        } else {
+            // ✅ No admin yet → clear fields
+            document.getElementById('userName').value = '';
+            document.getElementById('userLogID').value = '';
+        }
+
+        return data;
+
+    } catch (err) {
+        console.error("Failed to fetch admin user:", err);
+        return null;
+    }
+}
+
+document.getElementById('adminUserSetting-tab')?.addEventListener(
+    'shown.bs.tab',
+    () => {
+        const companyCode = document.getElementById('companyCode').value;
+        if (companyCode) getAdminUser(companyCode);
+
+    }
+);
+branchStatus.addEventListener("change", e => {
+    branchInactiveDate.disabled = e.target.value !== "Inactive";
+});
+
+async function loadCompaniesDropdown() {
+    const { data, error } = await supabaseClient
+        .from("company_profile")
+        .select("company_id, company_name");
+
+    if (error) return console.error(error);
+
+    const select = document.getElementById("selectCompany");
+
+    data.forEach(c => {
+        const opt = new Option(c.company_name, c.company_id);
+        select.add(opt);
+    });
+
+    // Activate searchable dropdown
+    // $("#selectCompany").select2({
+    //     placeholder: "Select company",
+    //     width: "100%"
+    // });
+}
+
+
+// Get selected companyId
+$("#selectCompany").on("change", async function () {
+    const selectedCompanyID = this.value;
+
+    if (selectedCompanyID) {
+        // Get company data
+        saveButton.disabled = true;
+        if (typeof disableForm === "function") disableForm();
+        await fetchCompanyData(selectedCompanyID);
+        await loadSubscriptions(selectedCompanyID);
+        if (typeof loadBranches === "function") await loadBranches();
+    }
+});
+
+function toggleCompanySelect(userType) {
+    const wrapper = document.getElementById("companySelectWrapper");
+
+    if (Number(userType) === 1) {
+        wrapper.style.display = "block";
+    } else {
+        wrapper.style.display = "none";
+        document.getElementById("selectCompany").value = "";
+    }
+}
+
