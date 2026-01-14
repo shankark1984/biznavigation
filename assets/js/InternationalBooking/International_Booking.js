@@ -21,6 +21,7 @@ async function loadAWBNoDetails(query) {
         .from('international_booking')
         .select('DocketNo')
         .ilike('DocketNo', `${query}%`)
+        .eq('company_id', CompanyID)
         .limit(10);
 
     if (error) {
