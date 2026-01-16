@@ -62,7 +62,7 @@ window.addEventListener('DOMContentLoaded', () => {
     if (tempFormIDElement) {
         const tempFormID = generateTempFormID();
         tempFormIDElement.value = tempFormID;
-        console.log('TempFormID generated:', tempFormID);
+        // console.log('TempFormID generated:', tempFormID);
     }
 });
 
@@ -76,7 +76,7 @@ function openTab(evt, tabName) {
 }
 
 // ✅ Capitalize first letter of each word safely
-function capitalize(text) {
+function capitalizeFirstLetter(text) {
     if (typeof text !== 'string') return '';
     return text.toLowerCase().split(' ')
         .map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
@@ -1245,4 +1245,57 @@ async function getUserWorkingBranch(empID) {
         console.error('Error fetching user working branch:', err.message);
         return null;
     }
+}
+
+function createLoader() {
+    if (document.getElementById('loadingOverlay')) return;
+
+    const overlay = document.createElement('div');
+    overlay.id = 'loadingOverlay';
+    overlay.className = 'position-fixed top-0 start-0 w-100 h-100 d-none d-flex align-items-center justify-content-center';
+    overlay.style.cssText = 'background: rgba(255,255,255,0.6); z-index:1055;';
+
+    const spinner = document.createElement('div');
+    spinner.className = 'spinner-border text-primary';
+    spinner.setAttribute('role', 'status');
+
+    const hiddenText = document.createElement('span');
+    hiddenText.className = 'visually-hidden';
+    hiddenText.textContent = 'Loading...';
+
+    spinner.appendChild(hiddenText);
+    overlay.appendChild(spinner);
+    document.body.appendChild(overlay);
+}
+
+function showLoader() {
+    createLoader();
+    document.getElementById('loadingOverlay')?.classList.remove('d-none');
+}
+
+function hideLoader() {
+    document.getElementById('loadingOverlay')?.classList.add('d-none');
+}
+/*************************************************
+ * Helpers
+ *************************************************/
+function capitalize(str) {
+    if (!str) return '';
+    return str.toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+}
+
+function canModify() {
+    const USER_TYPE = Number(UserType)
+    return USER_TYPE === 1 || USER_TYPE === 2;
+}
+
+function createCell(text) {
+    const td = document.createElement('td');
+    td.textContent = text ?? '';
+    return td;
+}
+
+// Escape quotes to safely inject into HTML
+function escapeQuotes(str) {
+    return str.replace(/'/g, "\\'");
 }

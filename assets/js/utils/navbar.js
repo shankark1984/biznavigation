@@ -161,7 +161,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 // ✅ Check permission from Supabase
 async function checkAccess(userLoginID, formID) {
-  console.log("Checking access for:", userLoginID, formID);
+  // console.log("Checking access for:", userLoginID, formID);
   try {
     const { data, error } = await supabaseClient
       .from("UserAccessRules")
@@ -175,8 +175,8 @@ async function checkAccess(userLoginID, formID) {
       alert("Error checking permissions. Please try again.");
       return false;
     }
-    console.log("Permission data retrieved:", data );
-    
+    // console.log("Permission data retrieved:", data);
+
     if (!data) {
       alert("Permission denied. Kindly contact your administrator.");
       return false;

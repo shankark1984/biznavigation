@@ -1,142 +1,329 @@
+/*************************************************
+ * PORT DETAILS – ADD / EDIT / DELETE
+ *************************************************/
+
+// Global cache
+let portDetails = [];
+
+
+/*************************************************
+ * INIT
+ *************************************************/
 document.addEventListener('DOMContentLoaded', async () => {
-    if (!await checkAccess(UserLoginID, 'ApplicationSettings')) {
-        disableForm();
-        alert("You do not have permission to view this form.");
+    createLoader();
+
+    const addPortBtn = document.getElementById('addPortDetails');
+    addPortBtn.addEventListener('click', savePort);
+
+
+    const checkPermission = () => {
+        addPortBtn.disabled = !canModify();
+    };
+
+    checkPermission();
+    setTimeout(checkPermission, 300);
+
+    await fetchPorts();
+    setupFilterListeners();
+
+});
+
+/*************************************************
+ * FETCH & RENDER PORTS
+ *************************************************/
+async function fetchPorts() {
+    showLoader();
+
+    try {
+        const { data, error } = await supabaseClient
+            .from('PortsDetails')
+            .select('*')
+            .order('PortName');
+
+        if (error) throw error;
+
+        const tableBody = document.querySelector('#portTable tbody');
+        tableBody.innerHTML = '';
+
+        if (!data?.length) return;
+
+        // Sort by country
+        data.sort((a, b) => (a.PortCountry || '').localeCompare(b.PortCountry || ''));
+
+        // Render table
+        data.forEach((port, i) => {
+            const row = document.createElement('tr');
+            row.dataset.id = port.id;
+            row.dataset.country = port.PortCountry;
+            row.dataset.code = port.PortCode;
+            row.dataset.name = port.PortName;
+            row.dataset.type = port.PortType;
+
+            row.innerHTML = `
+                <td>${i + 1}</td>
+                <td>${port.PortCountry}</td>
+                <td>${port.PortCode}</td>
+                <td>${port.PortName}</td>
+                <td>${port.PortType}</td>
+                <td>
+                    ${canModify() ? `
+                        <button class="btn btn-sm btn-warning edit-btn me-1">
+                            <i class="bi bi-pencil-square"></i>
+                        </button>
+                        <button class="btn btn-sm btn-danger delete-btn">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    ` : '<span class="text-muted small">Read Only</span>'}
+                </td>
+            `;
+            tableBody.appendChild(row);
+        });
+
+        // Update global cache
+        portDetails = data.map(port => ({
+            portCountry: port.PortCountry,
+            portCode: port.PortCode,
+            portName: port.PortName,
+            portType: port.PortType
+        }));
+
+        // Populate datalists
+        populatePortDatalists();
+
+        // Attach edit/delete events
+        attachPortTableEvents();
+
+    } catch (err) {
+        console.error(err);
+        alert('Failed to load ports.');
+    } finally {
+        hideLoader();
+    }
+}
+
+/*************************************************
+ * ATTACH EDIT / DELETE EVENTS
+ *************************************************/
+function attachPortTableEvents() {
+    document.querySelectorAll('.edit-btn').forEach(btn => {
+        btn.addEventListener('click', e => {
+            const row = btn.closest('tr');
+            editPortDetails(
+                row.dataset.id,
+                row.dataset.country,
+                row.dataset.code,
+                row.dataset.name,
+                row.dataset.type,
+                e
+            );
+        });
+    });
+
+    document.querySelectorAll('.delete-btn').forEach(btn => {
+        btn.addEventListener('click', async e => {
+            const row = btn.closest('tr');
+            if (!confirm(`Delete port ${row.dataset.name}?`)) return;
+            await deletePort(row.dataset.id, e);
+        });
+    });
+}
+
+/*************************************************
+ * SAVE PORT (ADD / EDIT)
+ *************************************************/
+async function savePort() {
+    if (!canModify()) {
+        alert('You do not have permission to add or edit ports.');
         return;
     }
 
-    const isEditableUser = UserType === 1 || UserType === 2;
-    const getField = id => document.getElementById(id);
+    const btn = document.getElementById('addPortDetails');
+    const mode = btn.dataset.mode; // insert | update
+    const id = document.getElementById('tempFormID').value;
 
-    const formFields = {
-        country: getField('portCountryName'),
-        code: getField('portCode'),
-        name: getField('portName'),
-        type: getField('portPort'),
-    };
+    const portCountryName = capitalize(document.getElementById('portCountryName').value.trim());
+    const portCode = toUpperCase(document.getElementById('portCode').value.trim());
+    const portName = document.getElementById('portName').value.trim();
+    const portType = document.getElementById('portType').value; // Corrected
 
-    const messageDiv = getField('formMessage');
-    const addPortButton = getField('addPortDetails');
-    const actionColumnHeader = document.getElementById('portActionColumn');
-
-    if (!isEditableUser) {
-        addPortButton.disabled = true;
-        addPortButton.classList.add('disabled');
-        if (actionColumnHeader) actionColumnHeader.style.display = 'none';
+    if (!portCountryName || !portCode || !portName || !portType) {
+        console.log(portCountryName, portCode, portName, portType);
+        alert('Please enter all port details.');
+        return;
     }
 
-    const showMessage = (text, isError = true) => {
-        messageDiv.textContent = text;
-        messageDiv.className = `mt-2 ${isError ? 'text-danger' : 'text-success'}`;
-    };
+    try {
+        if (mode === 'insert') {
+            const exists = portDetails.some(p => p.portCode.toLowerCase() === portCode.toLowerCase());
+            if (exists) {
+                alert('Port code already exists.');
+                return;
+            }
 
-    const clearForm = () => {
-        Object.values(formFields).forEach(field => field.value = '');
-    };
-
-    const loadPortTable = async () => {
-        const { data, error } = await supabaseClient.from('PortsDetails').select('*').order('PortCode');
-        if (error) return console.error('Load error:', error);
-
-        const tbody = getField('portTableBody');
-        tbody.innerHTML = '';
-
-        data.forEach((row, i) => {
-            const actions = isEditableUser ? `
-        <button class="btn btn-sm btn-primary edit-btn">Edit</button>
-        <button class="btn btn-sm btn-danger delete-btn">Delete</button>
-      ` : '';
-
-            tbody.innerHTML += `
-        <tr data-code="${row.PortCode}">
-          <td>${i + 1}</td>
-          <td>${row.PortCountry}</td>
-          <td>${row.PortCode}</td>
-          <td>${row.PortName}</td>
-          <td>${row.PortType}</td>
-          <td style="${!isEditableUser ? 'display: none;' : ''}">${actions}</td>
-        </tr>`;
-        });
-
-        if (isEditableUser) {
-            document.querySelectorAll('.edit-btn').forEach(btn => {
-                btn.addEventListener('click', async () => {
-                    const code = btn.closest('tr').dataset.code;
-                    const { data } = await supabaseClient.from('PortsDetails').select('*').eq('PortCode', code).maybeSingle();
-                    if (data) {
-                        formFields.country.value = data.PortCountry || '';
-                        formFields.code.value = data.PortCode || '';
-                        formFields.name.value = data.PortName || '';
-                        formFields.type.value = data.PortType || '';
-                        showMessage(`Editing port: ${code}`, false);
-                    }
-                });
-            });
-
-            document.querySelectorAll('.delete-btn').forEach(btn => {
-                btn.addEventListener('click', async () => {
-                    const code = btn.closest('tr').dataset.code;
-                    if (!confirm(`Delete ${code}?`)) return;
-                    const { error } = await supabaseClient.from('PortsDetails').delete().eq('PortCode', code);
-                    if (error) return showMessage('Delete failed.', true);
-                    showMessage('Deleted successfully.', false);
-                    await loadPortTable();
-                    clearForm();
-                });
-            });
-        }
-    };
-
-    addPortButton.addEventListener('click', async () => {
-        const portCountryName = formFields.country.value.trim();
-        const portCode = formFields.code.value.trim().toUpperCase();
-        const portName = formFields.name.value.trim();
-        const portType = formFields.type.value;
-
-        if (!portCountryName || !portCode || !portName || !portType)
-            return showMessage('All fields are required.', true);
-
-        try {
-            const { data: existing } = await supabaseClient.from('PortsDetails').select('PortCode').eq('PortCode', portCode).maybeSingle();
-            const payload = {
-                PortName: portName,
-                PortType: portType,
-                PortCountry: portCountryName,
-                [`${existing ? 'updated' : 'created'}_by`]: userLoginID,
-                [`${existing ? 'updated' : 'created'}_at`]: localtimeStamp,
-            };
-
-            const { error } = existing
-                ? await supabaseClient.from('PortsDetails').update(payload).eq('PortCode', portCode)
-                : await supabaseClient.from('PortsDetails').insert([{ PortCode: portCode, ...payload }]);
-
+            const { error } = await supabaseClient
+                .from('PortsDetails')
+                .insert([{
+                    PortCountry: portCountryName,
+                    PortCode: portCode,
+                    PortName: portName,
+                    PortType: portType,
+                    created_by: UserLoginID,
+                    created_at: localtimeStamp
+                }]);
             if (error) throw error;
-            showMessage(`${existing ? 'Updated' : 'Added'} successfully!`, false);
-            clearForm();
-            await loadPortTable();
-        } catch (err) {
-            showMessage('Error saving port details.', true);
-            console.error(err);
+
+            alert('Port added successfully.');
+
+        } else {
+            const { error } = await supabaseClient
+                .from('PortsDetails')
+                .update({
+                    PortCountry: portCountryName,
+                    PortCode: portCode,
+                    PortName: portName,
+                    PortType: portType,
+                    updated_by: UserLoginID,
+                    updated_at: localtimeStamp
+                })
+                .eq('id', id);
+            if (error) throw error;
+
+            alert('Port updated successfully.');
         }
-    });
 
-    // Filter Feature
-    ['portCountryName', 'portCode', 'portName', 'portPort'].forEach(id => {
-        document.getElementById(id).addEventListener('input', filterPortTable);
-    });
+        // Reset form
+        document.getElementById('tempFormID').value = '';
+        btn.innerText = 'Add';
+        btn.classList.remove('btn-warning');
+        btn.classList.add('btn-primary');
+        btn.dataset.mode = 'insert';
+        document.getElementById('portCountryName').value = '';
+        document.getElementById('portCode').value = '';
+        document.getElementById('portName').value = '';
+        document.getElementById('portType').value = '';
 
-    function filterPortTable() {
-        const country = formFields.country.value.toLowerCase();
-        const code = formFields.code.value.toLowerCase();
-        const name = formFields.name.value.toLowerCase();
-        const type = formFields.type.value.toLowerCase();
+        await fetchPorts();
 
-        document.querySelectorAll('#portTableBody tr').forEach(row => {
-            const [, c, pcode, pname, ptype] = [...row.cells].map(c => c.textContent.toLowerCase());
-            const visible = (!country || c.includes(country)) && (!code || pcode.includes(code)) && (!name || pname.includes(name)) && (!type || ptype.includes(type));
-            row.style.display = visible ? '' : 'none';
-        });
+    } catch (err) {
+        console.error('Save port error:', err);
+        alert('Failed to save port.');
+    }
+}
+
+/*************************************************
+ * DELETE PORT
+ *************************************************/
+async function deletePort(id, event) {
+    if (event) event.preventDefault();
+
+    if (!canModify()) return;
+    if (!confirm('Are you sure you want to delete this port?')) return;
+
+    try {
+        const { error } = await supabaseClient
+            .from('PortsDetails')
+            .delete()
+            .eq('id', id);
+
+        if (error) throw error;
+
+        alert('Port deleted successfully.');
+        await fetchPorts();
+
+    } catch (err) {
+        console.error('Delete port error:', err);
+        alert('Failed to delete port.');
+    }
+}
+
+/*************************************************
+ * EDIT PORT
+ *************************************************/
+function editPortDetails(id, portCountryName, portCode, portName, portType, event) {
+    if (event) event.preventDefault();
+    if (!canModify()) return;
+
+    const countryInput = document.getElementById('portCountryName');
+    const codeInput = document.getElementById('portCode');
+    const nameInput = document.getElementById('portName');
+    const typeInput = document.getElementById('portType'); // Corrected
+    const addBtn = document.getElementById('addPortDetails');
+
+    if (!countryInput || !codeInput || !nameInput || !portType || !addBtn) {
+        console.error('Form inputs not found. Cannot edit port.');
+        return;
     }
 
-    loadPortTable();
-});
+    document.getElementById('tempFormID').value = id;
+    countryInput.value = portCountryName;
+    codeInput.value = portCode;
+    nameInput.value = portName;
+    typeInput.value = portType; // Now works
+
+    addBtn.innerText = 'Edit';
+    addBtn.classList.remove('btn-primary');
+    addBtn.classList.add('btn-warning');
+    addBtn.dataset.mode = 'update';
+}
+
+
+/*************************************************
+ * DATASLISTS
+ *************************************************/
+function populatePortDatalists() {
+    const countryList = document.getElementById('portCountryNameSuggestions');
+    const codeList = document.getElementById('portCodeSuggestions');
+    const nameList = document.getElementById('portNameSuggestions');
+
+    [countryList, codeList, nameList].forEach(dl => dl.innerHTML = '');
+
+    const uniqueCountries = [...new Set(portDetails.map(p => p.portCountry).filter(c => c))];
+    const uniqueCodes = [...new Set(portDetails.map(p => p.portCode).filter(c => c))];
+    const uniqueNames = [...new Set(portDetails.map(p => p.portName).filter(c => c))];
+
+    uniqueCountries.forEach(c => { const o = document.createElement('option'); o.value = c; countryList.appendChild(o); });
+    uniqueCodes.forEach(c => { const o = document.createElement('option'); o.value = c; codeList.appendChild(o); });
+    uniqueNames.forEach(n => { const o = document.createElement('option'); o.value = n; nameList.appendChild(o); });
+}
+
+// -------------------------------
+// Setup Filter Inputs
+// -------------------------------
+function setupFilterListeners() {
+    const countryInput = document.getElementById('portCountryName');
+    const codeInput = document.getElementById('portCode');
+    const nameInput = document.getElementById('portName');
+    const typeInput = document.getElementById('portType'); // ✅ correct ID
+
+    const inputs = [countryInput, codeInput, nameInput, typeInput];
+
+    inputs.forEach(input => {
+        if (!input) return;
+
+        input.addEventListener('input', () => {
+            const country = countryInput.value.toLowerCase();
+            const code = codeInput.value.toLowerCase();
+            const name = nameInput.value.toLowerCase();
+            const type = typeInput.value.toLowerCase();
+
+            document.querySelectorAll('#portTable tbody tr').forEach(row => {
+                const cells = row.cells;
+
+                const rowCountry = cells[1]?.textContent.toLowerCase() || '';
+                const rowCode = cells[2]?.textContent.toLowerCase() || '';
+                const rowName = cells[3]?.textContent.toLowerCase() || '';
+                const rowType = cells[4]?.textContent.toLowerCase() || '';
+
+                const visible =
+                    (!country || rowCountry.includes(country)) &&
+                    (!code || rowCode.includes(code)) &&
+                    (!name || rowName.includes(name)) &&
+                    (!type || rowType.includes(type));
+
+                row.style.display = visible ? '' : 'none';
+            });
+        });
+    });
+}
+
+

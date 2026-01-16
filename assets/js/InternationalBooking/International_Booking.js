@@ -46,7 +46,7 @@ document.getElementById("awbNo")
 
 
 awbNoInput.addEventListener('change', async () => {
-    const docketNo = awbNoInput.value.trim();
+    const docketNo = awbNoInput.value;
     if (!docketNo) return;
 
     try {
@@ -98,6 +98,8 @@ async function fetchDocketDetails(docketNo) {
         .eq('company_id', CompanyID)
         .maybeSingle();
 
+    console.log(data);
+    console.log(docketNo, CompanyID);
     if (error) {
         console.error('Error fetching docket details:', error);
         return;
@@ -240,7 +242,7 @@ async function saveOrUpdateInternationalBooking() {
     const actionType = document.getElementById("saveButton").textContent.trim();
     const updateID = document.getElementById('tempFormID').value;
     const formData = {
-        DocketNo: document.getElementById("awbNo").value,
+        DocketNo: document.getElementById("awbNo").value.trim(),
         BookedDate: document.getElementById("bookedDate").value,
         CustomerCode: document.getElementById("partyCode").value,
         CustomerName: document.getElementById("partyName").value,

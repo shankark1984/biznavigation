@@ -187,5 +187,6 @@ let totalPageCount = 1;
 let invoiceNo = null;
 let partyName = null;
 let customerGSTRate = null;
+// const USER_TYPE = Number(UserType);
 
 const reSetPass = '12345'; // Default password for new users
