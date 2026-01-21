@@ -180,6 +180,13 @@
                                 Tariff
                             </button>
                         </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="fixedCharges-tab" data-bs-toggle="tab"
+                                data-bs-target="#fixedCharges" type="button" role="tab" aria-controls="fixedCharges"
+                                aria-selected="false">
+                                Fixed Charges
+                            </button>
+                        </li>
                     </ul>
 
                     <!-- Tab Content -->
@@ -421,6 +428,94 @@
                                 </table>
                             </div>
                         </div>
+
+                        <!-- Fixed Charges -->
+                        <div class="tab-pane fade" id="fixedCharges" role="tabpanel" aria-labelledby="fixedCharges-tab">
+                            <div class="row g-3">
+                                <div class="col-md-2">
+                                    <label for="fixedChargesEffectiveDate" class="form-label">Effective Date</label>
+                                    <input type="date" class="form-control" id="fixedChargesEffectiveDate" required>
+                                </div>
+
+                                <div class="col-md-2">
+                                    <label for="fixedChargesMovementType" class="form-label">Movement Type</label>
+                                    <select id="fixedChargesMovementType" class="form-select"></select>
+                                </div>
+
+                                <div class="col-md-2">
+                                    <label for="fixedChargesTransitType" class="form-label">Transit Type</label>
+                                    <select id="fixedChargesTransitType" class="form-select"></select>
+                                </div>
+
+                                <div class="col-md-2">
+                                    <label for="fixedChargesModeType" class="form-label">Mode Type</label>
+                                    <select id="fixedChargesModeType" class="form-select"></select>
+                                </div>
+
+                                <div class="col-md-2">
+                                    <label for="fixedChargesShippingType" class="form-label">Shipping Type</label>
+                                    <select id="fixedChargesShippingType" class="form-select"></select>
+                                </div>
+
+                                <div class="col-md-2">
+                                    <label for="fixedChargesType" class="form-label">Charges Type</label>
+                                    <input type="text" id="fixedChargesType" list="fixedChargesTypelist"
+                                        class="form-control" required autocomplete="off">
+                                    <datalist id="fixedChargesTypelist"></datalist>
+                                </div>
+                                <div class="col-md-2">
+                                    <label for="fixedChargesPercentage" class="form-label">Fixed Percentage</label>
+                                    <input type="number" class="form-control" id="fixedChargesPercentage" step="0.01">
+                                </div>
+
+                                <div class="col-md-2">
+                                    <label for="fixedChargesAmount" class="form-label">Fixed Amount</label>
+                                    <input type="number" class="form-control" id="fixedChargesAmount" step="0.01">
+                                </div>
+                                <div class="col-md-2">
+                                    <label for="fixedChargesFor" class="form-label">Fixed For</label>
+                                    <select id="fixedChargesFor" class="form-select" required>
+                                        <option value="" disabled selected>Select type</option>
+                                        <option value="Buy">Buy</option>
+                                        <option value="Sell">Sell</option>
+                                    </select>
+                                </div>
+
+                                <div class="col-md-2 d-grid">
+                                    <button type="button" class="btn btn-primary mt-4" id="addTariffButton">
+                                        <i class="bi bi-plus-circle"></i> Add Fixed Charges
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Fixed Charges Table -->
+                            <div class="table-responsive mt-3">
+                                <table class="table table-sm table-bordered text-center align-middle"
+                                    id="fixedChargesTable">
+                                    <thead class="table-dark">
+                                        <tr>
+                                            <th>S.No</th>
+                                            <th>Effective Date</th>
+                                            <th>Movement Type</th>
+                                            <th>Transit Type</th>
+                                            <th>Mode Type</th>
+                                            <th>Shipping Type</th>
+                                            <th>Charges Type</th>
+                                            <th>Fixed Percentage</th>
+                                            <th>Fixed Amount</th>
+                                            <th>Fixed For</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="fixedChargesTableBody">
+                                        <tr>
+                                            <td colspan="14" class="text-center text-muted">No fixed charges added</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
                     </div>
                 </form>
             </div>

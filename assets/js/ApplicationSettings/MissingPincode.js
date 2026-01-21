@@ -4,7 +4,7 @@ let missingPincodeDetails = [];
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', async () => {
-    createLoader();
+    // createLoader();
     const addMissingPincodeButton = document.getElementById('addMissingPincode');
     addMissingPincodeButton.addEventListener('click', saveMissingPincode);
 
@@ -16,6 +16,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     setTimeout(checkPermission, 300);
 
     await fetchMissingPincodes();
+    setupFilterListeners();
 
 });
 
@@ -100,7 +101,7 @@ function attachMissingPincodeTableEvents() {
     document.querySelectorAll('.edit-btn').forEach(btn => {
         btn.addEventListener('click', e => {
             const row = btn.closest('tr');
-            editPortDetails(
+            editPincodeDetails(
                 row.dataset.id,
                 row.dataset.pincode,
                 row.dataset.city,
@@ -121,11 +122,12 @@ function attachMissingPincodeTableEvents() {
 }
 
 /*************************************************
- * SAVE PORT (ADD / EDIT)
+ * SAVE Pincode (ADD / EDIT)
  *************************************************/
 async function saveMissingPincode() {
+    showLoader();
     if (!canModify()) {
-        alert('You do not have permission to add or edit ports.');
+        showToast('You do not have permission to add or edit ports.');
         return;
     }
 
@@ -134,22 +136,29 @@ async function saveMissingPincode() {
     const id = document.getElementById('tempFormID').value;
 
     const missingPincode = document.getElementById('missingPincode').value.trim();
-    const missingCity = toUpperCase(document.getElementById('missingCity').value.trim());
+    const missingCity = capitalizeFirstLetter(document.getElementById('missingCity').value.trim());
     const missingState = document.getElementById('missingState').value.trim();
     const missingCountry = document.getElementById('missingCountry').value; // Corrected
 
     if (!missingPincode || !missingCity || !missingState || !missingCountry) {
-        alert('Please enter missing pincode details.');
+        showToast('Please enter missing pincode details.');
         return;
     }
 
     try {
         if (mode === 'insert') {
-            const exists = missingPincodeDetails.some(p => p.pincode.toLowerCase() === pincode.toLowerCase());
-            if (exists) {
-                alert('Port code already exists.');
+            const { data: existing } = await supabaseClient
+                .from('missing_pincodes')
+                .select('id')
+                .eq('pincode', missingPincode)
+
+            console.log(missingPincode);
+
+            if (existing?.length) {
+                showToast('Pincode already exists.');
                 return;
             }
+
 
             const { error } = await supabaseClient
                 .from('missing_pincodes')
@@ -163,7 +172,7 @@ async function saveMissingPincode() {
                 }]);
             if (error) throw error;
 
-            alert('Port added successfully.');
+            showToast('Pincode added successfully.');
 
         } else {
             const { error } = await supabaseClient
@@ -172,14 +181,12 @@ async function saveMissingPincode() {
                     pincode: missingPincode,
                     city: missingCity,
                     state: missingState,
-                    country: missingCountry,
-                    updated_by: UserLoginID,
-                    updated_at: localtimeStamp
+                    country: missingCountry
                 })
                 .eq('id', id);
             if (error) throw error;
 
-            alert('Missing pincode updated successfully.');
+            showToast('Missing pincode updated successfully.');
         }
 
         // Reset form
@@ -193,22 +200,24 @@ async function saveMissingPincode() {
         document.getElementById('missingState').value = '';
         document.getElementById('missingCountry').value = '';
 
-        await fetchPorts();
+        await fetchMissingPincodes();
 
     } catch (err) {
         console.error('Save missing pincode error:', err);
-        alert('Failed to save missing pincode.');
+        showToast('Failed to save missing pincode.');
+    } finally {
+        hideLoader();
     }
 }
 
 /*************************************************
- * DELETE PORT
+ * DELETE Pincode
  *************************************************/
 async function deleteMissingPincode(id, event) {
     if (event) event.preventDefault();
 
     if (!canModify()) return;
-    if (!confirm('Are you sure you want to delete this port?')) return;
+    if (!confirm('Are you sure you want to delete this pincode?')) return;
 
     try {
         const { error } = await supabaseClient
@@ -218,16 +227,19 @@ async function deleteMissingPincode(id, event) {
 
         if (error) throw error;
 
-        alert('Port deleted successfully.');
-        await fetchPorts();
+        showToast('Pincode deleted successfully.');
+        await fetchMissingPincodes();
 
     } catch (err) {
-        console.error('Delete port error:', err);
-        alert('Failed to delete port.');
+        console.error('Delete pincode error:', err);
+        showToast('Failed to delete pincode.');
     }
 }
 
-function editPortDetails(id, missingPincode, missingCity, missingState, missingCountry, event) {
+/*************************************************
+ * EDIT Pincode
+ *************************************************/
+function editPincodeDetails(id, missingPincode, missingCity, missingState, missingCountry, event) {
     if (event) event.preventDefault();
     if (!canModify()) return;
 
@@ -235,7 +247,7 @@ function editPortDetails(id, missingPincode, missingCity, missingState, missingC
     const cityInput = document.getElementById('missingCity');
     const stateInput = document.getElementById('missingState');
     const countryInput = document.getElementById('missingCountry'); // Corrected
-    const addBtn = document.getElementById('addMissingPincode');
+    const addPincodeBtn = document.getElementById('addMissingPincode');
 
     if (!pincodeInput || !cityInput || !stateInput || !countryInput) {
         console.error('Form inputs not found. Cannot edit missing pincode.');
@@ -244,17 +256,20 @@ function editPortDetails(id, missingPincode, missingCity, missingState, missingC
 
     document.getElementById('tempFormID').value = id;
 
-    pincodeInput.value = portType;
-    cityInput.value = portCode;
-    stateInput.value = portName;
-    countryInput.value = portCountryName;
+    pincodeInput.value = missingPincode;
+    cityInput.value = missingCity;
+    stateInput.value = missingState;
+    countryInput.value = missingCountry;
 
-    addBtn.innerText = 'Edit';
-    addBtn.classList.remove('btn-primary');
-    addBtn.classList.add('btn-warning');
-    addBtn.dataset.mode = 'update';
+    addPincodeBtn.innerText = 'Edit';
+    addPincodeBtn.classList.remove('btn-primary');
+    addPincodeBtn.classList.add('btn-warning');
+    addPincodeBtn.dataset.mode = 'update';
 }
 
+/*************************************************
+ * POPULATE MISSING PINCODE DATALISTS
+ * *************************************************/
 function populatemissingPincodeDatalists() {
     const pincodeList = document.getElementById('missingPincodeSuggestions');
     const cityList = document.getElementById('missingCitySuggestions');

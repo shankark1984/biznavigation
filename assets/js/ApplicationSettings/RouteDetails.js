@@ -101,6 +101,7 @@ async function saveRoute() {
     const btn = document.getElementById('addRouteDetails');
     const mode = btn.dataset.mode;   // insert | update
     const id = document.getElementById('tempFormID').value;
+    showLoader();
 
     if (!canModify()) {
         alert('You do not have permission to add or edit routes.');
@@ -159,14 +160,16 @@ async function saveRoute() {
 
             if (error) throw error;
 
-            alert('Route updated successfully.');
+            showToast('Route updated successfully.');
         }
 
         fetchRoutes();
 
     } catch (err) {
         console.error('Save error:', err);
-        alert('Failed to save route.');
+        showToast('Failed to save route.');
+    } finally {
+        hideLoader();
     }
 }
 

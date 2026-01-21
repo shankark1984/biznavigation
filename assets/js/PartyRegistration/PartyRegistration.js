@@ -6,7 +6,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         showToast("You do not have permission to view this form.");
         return;
     }
-
+    createLoader();
     if (perWrite) saveButton.disabled = false;
     enableForm();
     await loadSuggestions('partySuggestions', 'PartyDetails', CompanyID);

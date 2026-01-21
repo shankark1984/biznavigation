@@ -5,7 +5,6 @@
 // Global cache
 let portDetails = [];
 
-
 /*************************************************
  * INIT
  *************************************************/
@@ -81,11 +80,13 @@ async function fetchPorts() {
 
         // Update global cache
         portDetails = data.map(port => ({
+            id: port.id,
             portCountry: port.PortCountry,
             portCode: port.PortCode,
             portName: port.PortName,
             portType: port.PortType
         }));
+
 
         // Populate datalists
         populatePortDatalists();
@@ -95,7 +96,7 @@ async function fetchPorts() {
 
     } catch (err) {
         console.error(err);
-        alert('Failed to load ports.');
+        showToast('Failed to load ports.');
     } finally {
         hideLoader();
     }
@@ -133,7 +134,7 @@ function attachPortTableEvents() {
  *************************************************/
 async function savePort() {
     if (!canModify()) {
-        alert('You do not have permission to add or edit ports.');
+        showToast('You do not have permission to add or edit ports.');
         return;
     }
 
@@ -141,22 +142,26 @@ async function savePort() {
     const mode = btn.dataset.mode; // insert | update
     const id = document.getElementById('tempFormID').value;
 
-    const portCountryName = capitalize(document.getElementById('portCountryName').value.trim());
-    const portCode = toUpperCase(document.getElementById('portCode').value.trim());
-    const portName = document.getElementById('portName').value.trim();
+    const portCountryName = document.getElementById('portCountryName').value.trim().toUpperCase();
+    const portCode = document.getElementById('portCode').value.trim().toUpperCase();
+    const portName = document.getElementById('portName').value.trim().toUpperCase();
     const portType = document.getElementById('portType').value; // Corrected
 
     if (!portCountryName || !portCode || !portName || !portType) {
         console.log(portCountryName, portCode, portName, portType);
-        alert('Please enter all port details.');
+        showToast('Please enter all port details.');
         return;
     }
 
     try {
         if (mode === 'insert') {
-            const exists = portDetails.some(p => p.portCode.toLowerCase() === portCode.toLowerCase());
+            const exists = portDetails.some(p =>
+                p.portCode.toLowerCase() === portCode.toLowerCase() &&
+                (mode === 'insert' || p.id !== id)
+            );
+
             if (exists) {
-                alert('Port code already exists.');
+                showToast('Port code already exists.');
                 return;
             }
 
@@ -172,7 +177,7 @@ async function savePort() {
                 }]);
             if (error) throw error;
 
-            alert('Port added successfully.');
+            showToast('Port added successfully.');
 
         } else {
             const { error } = await supabaseClient
@@ -188,7 +193,7 @@ async function savePort() {
                 .eq('id', id);
             if (error) throw error;
 
-            alert('Port updated successfully.');
+            showToast('Port updated successfully.');
         }
 
         // Reset form
@@ -206,7 +211,7 @@ async function savePort() {
 
     } catch (err) {
         console.error('Save port error:', err);
-        alert('Failed to save port.');
+        showToast('Failed to save port.');
     }
 }
 
@@ -215,9 +220,7 @@ async function savePort() {
  *************************************************/
 async function deletePort(id, event) {
     if (event) event.preventDefault();
-
     if (!canModify()) return;
-    if (!confirm('Are you sure you want to delete this port?')) return;
 
     try {
         const { error } = await supabaseClient
@@ -227,14 +230,14 @@ async function deletePort(id, event) {
 
         if (error) throw error;
 
-        alert('Port deleted successfully.');
+        showToast('Port deleted successfully.');
         await fetchPorts();
-
     } catch (err) {
         console.error('Delete port error:', err);
-        alert('Failed to delete port.');
+        showToast('Failed to delete port.');
     }
 }
+
 
 /*************************************************
  * EDIT PORT
@@ -301,29 +304,33 @@ function setupFilterListeners() {
         if (!input) return;
 
         input.addEventListener('input', () => {
-            const country = countryInput.value.toLowerCase();
-            const code = codeInput.value.toLowerCase();
-            const name = nameInput.value.toLowerCase();
-            const type = typeInput.value.toLowerCase();
+            clearTimeout(filterTimer);
 
-            document.querySelectorAll('#portTable tbody tr').forEach(row => {
-                const cells = row.cells;
+            filterTimer = setTimeout(() => {
+                const country = countryInput.value.toLowerCase();
+                const code = codeInput.value.toLowerCase();
+                const name = nameInput.value.toLowerCase();
+                const type = typeInput.value.toLowerCase();
 
-                const rowCountry = cells[1]?.textContent.toLowerCase() || '';
-                const rowCode = cells[2]?.textContent.toLowerCase() || '';
-                const rowName = cells[3]?.textContent.toLowerCase() || '';
-                const rowType = cells[4]?.textContent.toLowerCase() || '';
+                document.querySelectorAll('#portTable tbody tr').forEach(row => {
+                    const cells = row.cells;
 
-                const visible =
-                    (!country || rowCountry.includes(country)) &&
-                    (!code || rowCode.includes(code)) &&
-                    (!name || rowName.includes(name)) &&
-                    (!type || rowType.includes(type));
+                    const rowCountry = cells[1]?.textContent.toLowerCase() || '';
+                    const rowCode = cells[2]?.textContent.toLowerCase() || '';
+                    const rowName = cells[3]?.textContent.toLowerCase() || '';
+                    const rowType = cells[4]?.textContent.toLowerCase() || '';
 
-                row.style.display = visible ? '' : 'none';
-            });
+                    const visible =
+                        (!country || rowCountry.includes(country)) &&
+                        (!code || rowCode.includes(code)) &&
+                        (!name || rowName.includes(name)) &&
+                        (!type || rowType.includes(type));
+
+                    row.style.display = visible ? '' : 'none';
+                });
+            }, 150);
         });
     });
-}
 
+}
 
