@@ -3,22 +3,34 @@ let missingPincodeDetails = [];
 
 
 // Initialize on page load
-document.addEventListener('DOMContentLoaded', async () => {
-    // createLoader();
-    const addMissingPincodeButton = document.getElementById('addMissingPincode');
-    addMissingPincodeButton.addEventListener('click', saveMissingPincode);
 
-    const checkPermission = () => {
-        addMissingPincodeButton.disabled = !canModify();
-    };
+let missingPinCodeTabInitialized = false;
 
-    checkPermission();
-    setTimeout(checkPermission, 300);
+document.getElementById('missingPinCode-tab')
+    .addEventListener('shown.bs.tab', async () => {
 
-    await fetchMissingPincodes();
-    setupFilterListeners();
+        // Prevent reloading every time
+        if (missingPinCodeTabInitialized) return;
+        missingPinCodeTabInitialized = true;
 
-});
+        createLoader();
+
+        const addMissingPincodeButton = document.getElementById('addMissingPincode');
+        if (!addMissingPincodeButton) return;
+
+        addMissingPincodeButton.removeEventListener('click', saveMissingPincode);
+        addMissingPincodeButton.addEventListener('click', saveMissingPincode);
+
+        const checkPermission = () => {
+            addMissingPincodeButton.disabled = !canModify();
+        };
+
+        checkPermission();
+        setTimeout(checkPermission, 150);
+
+        await fetchMissingPincodes();
+        setupFilterListeners();
+    });
 
 /*************************************************
  * FETCH & RENDER Missing Pincodes in API
@@ -60,7 +72,7 @@ async function fetchMissingPincodes() {
                 <td>${missingPincode.country}</td>
                 <td>
                     ${canModify() ? `
-                        <button class="btn btn-sm btn-warning edit-btn me-1">
+                        <button class="btn btn-sm btn-warning edit-btn-missingpincode me-1">
                             <i class="bi bi-pencil-square"></i>
                         </button>
                         <button class="btn btn-sm btn-danger delete-btn">
@@ -98,7 +110,7 @@ async function fetchMissingPincodes() {
  * ATTACH EDIT / DELETE EVENTS
  *************************************************/
 function attachMissingPincodeTableEvents() {
-    document.querySelectorAll('.edit-btn').forEach(btn => {
+    document.querySelectorAll('.edit-btn-missingpincode').forEach(btn => {
         btn.addEventListener('click', e => {
             const row = btn.closest('tr');
             editPincodeDetails(
@@ -115,7 +127,7 @@ function attachMissingPincodeTableEvents() {
     document.querySelectorAll('.delete-btn').forEach(btn => {
         btn.addEventListener('click', async e => {
             const row = btn.closest('tr');
-            if (!confirm(`Delete pincode ${row.dataset.pincode}?`)) return;
+
             await deleteMissingPincode(row.dataset.id, e);
         });
     });
@@ -128,12 +140,13 @@ async function saveMissingPincode() {
     showLoader();
     if (!canModify()) {
         showToast('You do not have permission to add or edit ports.');
+        hideLoader();
         return;
     }
 
     const btn = document.getElementById('addMissingPincode');
     const mode = btn.dataset.mode; // insert | update
-    const id = document.getElementById('tempFormID').value;
+    const id = Number(document.getElementById('tempFormID').value);
 
     const missingPincode = document.getElementById('missingPincode').value.trim();
     const missingCity = capitalizeFirstLetter(document.getElementById('missingCity').value.trim());
@@ -142,6 +155,7 @@ async function saveMissingPincode() {
 
     if (!missingPincode || !missingCity || !missingState || !missingCountry) {
         showToast('Please enter missing pincode details.');
+        hideLoader();
         return;
     }
 
@@ -150,12 +164,11 @@ async function saveMissingPincode() {
             const { data: existing } = await supabaseClient
                 .from('missing_pincodes')
                 .select('id')
-                .eq('pincode', missingPincode)
-
-            console.log(missingPincode);
+                .eq('pincode', missingPincode);
 
             if (existing?.length) {
                 showToast('Pincode already exists.');
+                hideLoader();
                 return;
             }
 
@@ -249,7 +262,7 @@ function editPincodeDetails(id, missingPincode, missingCity, missingState, missi
     const countryInput = document.getElementById('missingCountry'); // Corrected
     const addPincodeBtn = document.getElementById('addMissingPincode');
 
-    if (!pincodeInput || !cityInput || !stateInput || !countryInput) {
+    if (!pincodeInput || !cityInput || !stateInput || !countryInput || !addPincodeBtn) {
         console.error('Form inputs not found. Cannot edit missing pincode.');
         return;
     }
@@ -279,13 +292,13 @@ function populatemissingPincodeDatalists() {
     [pincodeList, cityList, stateList, countryList].forEach(dl => dl.innerHTML = '');
 
     const uniqueMissingPincodes = [...new Set(missingPincodeDetails.map(p => p.pincode).filter(c => c))];
-    const uniqueMissingCitys = [...new Set(missingPincodeDetails.map(p => p.city).filter(c => c))];
+    const uniqueMissingCities = [...new Set(missingPincodeDetails.map(p => p.city).filter(c => c))];
     const uniqueMissingStates = [...new Set(missingPincodeDetails.map(p => p.state).filter(c => c))];
     const uniqueCountries = [...new Set(missingPincodeDetails.map(p => p.country).filter(c => c))];
 
 
     uniqueMissingPincodes.forEach(c => { const o = document.createElement('option'); o.value = c; pincodeList.appendChild(o); });
-    uniqueMissingCitys.forEach(c => { const o = document.createElement('option'); o.value = c; cityList.appendChild(o); });
+    uniqueMissingCities.forEach(c => { const o = document.createElement('option'); o.value = c; cityList.appendChild(o); });
     uniqueMissingStates.forEach(n => { const o = document.createElement('option'); o.value = n; stateList.appendChild(o); });
     uniqueCountries.forEach(n => { const o = document.createElement('option'); o.value = n; countryList.appendChild(o); });
 }

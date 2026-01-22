@@ -1,74 +1,180 @@
-/*  accordion icon --------------------------------------------------- */
+/* =========================================================
+   ACCORDION ICON
+========================================================= */
+[data-sp-accordion] .toggle-icon {
+    transition: transform .25s ease, color .25s ease;
+}
+
 [data-sp-accordion] button[aria-expanded="true"] .toggle-icon {
     transform: rotate(45deg);
     color: red;
 }
 
-[data-sp-accordion] .toggle-icon {
-    transition: transform .25s ease, color .25s ease;
-}
-
-/*  busy-button spinner ---------------------------------------------- */
+/* =========================================================
+   BUSY BUTTON / SPINNER
+========================================================= */
 button[data-busy] {
     pointer-events: none;
-    /* stops extra clicks */
     opacity: .6;
-}
-
-button[data-busy] .spinner {
-    display: inline-block;
 }
 
 button .spinner {
     display: none;
 }
 
-body {
-    background-color: #f8f9fa
+button[data-busy] .spinner {
+    display: inline-block;
 }
 
-label {
-    font-weight: 500
+/* =========================================================
+   BASE STYLES
+========================================================= */
+body {
+    background-color: #f8f9fa;
+}
+
+label,
+.form-label {
+    font-weight: 500;
 }
 
 input:required {
-    border-left: 3px solid #198754
+    border-left: 3px solid #198754;
 }
 
+/* =========================================================
+   SCROLL WRAPPER
+========================================================= */
 #scroll-wrapper {
     scrollbar-width: thin;
-    scrollbar-color: #ccc transparent
-}
-
-.card-header {
-    margin-top: 0 !important;
-    padding-top: 0 !important;
-    padding-bottom: 0 !important;
-    font-size: 1.1rem
-}
-
-#setting-parameters-container .card:first-child {
-    margin-top: 0 !important
-}
-
-.form-label {
-    font-weight: 500
-}
-
-.toggle-icon {
-    transition: transform .3s ease
-}
-
-.collapsing+.toggle-icon,
-.collapse.show+.toggle-icon {
-    transform: rotate(180deg)
+    scrollbar-color: #ccc transparent;
 }
 
 #scroll-wrapper::-webkit-scrollbar {
-    width: 8px
+    width: 8px;
 }
 
 #scroll-wrapper::-webkit-scrollbar-thumb {
     background-color: #aaa;
-    border-radius: 4px
+    border-radius: 4px;
+}
+
+/* =========================================================
+   CARD / ACCORDION
+========================================================= */
+.card-header {
+    margin-top: 0 !important;
+    padding: 0 !important;
+    font-size: 1.1rem;
+}
+
+.toggle-icon {
+    transition: transform .3s ease;
+}
+
+.collapsing+.toggle-icon,
+.collapse.show+.toggle-icon {
+    transform: rotate(180deg);
+}
+
+/* =========================================================
+   TABLE – DESKTOP DEFAULT
+========================================================= */
+.table {
+    font-size: 0.85rem;
+}
+
+.table th,
+.table td {
+    padding: 0.35rem 0.5rem;
+    vertical-align: middle;
+}
+
+.table thead th {
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+/* Compact table option */
+.table.compact {
+    font-size: 0.8rem;
+}
+
+.table.compact th,
+.table.compact td {
+    padding: 0.25rem 0.4rem;
+}
+
+/* Table buttons */
+.table .btn {
+    padding: 0.15rem 0.4rem;
+    font-size: 0.75rem;
+}
+
+.table .btn i {
+    font-size: 0.85rem;
+}
+
+/* Scrollable table wrapper */
+.table-scroll {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+/* =========================================================
+   MOBILE OPTIMIZATION (≤ 768px)
+========================================================= */
+@media (max-width: 768px) {
+
+    /* Table sizing */
+    .table {
+        font-size: 0.75rem;
+    }
+
+    .table th,
+    .table td {
+        padding: 0.25rem 0.35rem;
+        white-space: nowrap;
+    }
+
+    /* Sticky header */
+    .table thead th {
+        position: sticky;
+        top: 0;
+        z-index: 2;
+        background-color: #f8f9fa;
+        font-size: 0.7rem;
+    }
+
+    /* Table container scroll */
+    .table-responsive {
+        max-height: 260px;
+        overflow-x: auto;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .table-scroll {
+        max-height: 220px;
+    }
+
+    /* Buttons */
+    .table .btn {
+        padding: 0.15rem 0.35rem;
+        font-size: 0.7rem;
+        line-height: 1;
+    }
+
+    .table .btn i {
+        font-size: 0.8rem;
+    }
+
+    /* Row interaction */
+    .table tbody tr {
+        cursor: pointer;
+    }
+
+    .table tbody tr:hover {
+        background-color: rgba(0, 0, 0, 0.04);
+    }
 }

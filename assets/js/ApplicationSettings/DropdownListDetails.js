@@ -7,22 +7,34 @@ let filtersInitialized = false;
 /*************************************************
  * INIT
  *************************************************/
-document.addEventListener('DOMContentLoaded', async () => {
-    createLoader();
 
-    const addBtn = document.getElementById('addDropdownMenuList');
-    addBtn.addEventListener('click', saveDropdownItem);
+let dropdownMenuListTabInitialized = false;
 
-    const checkPermission = () => {
-        addBtn.disabled = !canModify();
-    };
+document.getElementById('dropdownListdetails-tab')
+    .addEventListener('shown.bs.tab', async () => {
 
-    checkPermission();
-    setTimeout(checkPermission, 300);
+        // Prevent reloading every time
+        if (dropdownMenuListTabInitialized) return;
+        dropdownMenuListTabInitialized = true;
 
-    await fetchDropdownList();
-    setupFilterListeners();
-});
+        createLoader();
+
+        const addDropdownMenuListBtn = document.getElementById('addDropdownMenuList');
+        if (!addDropdownMenuListBtn) return;
+
+        addDropdownMenuListBtn.removeEventListener('click', saveDropdownItem);
+        addDropdownMenuListBtn.addEventListener('click', saveDropdownItem);
+
+        const checkPermission = () => {
+            addDropdownMenuListBtn.disabled = !canModify();
+        };
+
+        checkPermission();
+        setTimeout(checkPermission, 150);
+
+        await fetchDropdownList();
+        setupFilterListeners();
+    });
 
 /*************************************************
  * FETCH DROPDOWN LIST
@@ -67,10 +79,10 @@ async function fetchDropdownList() {
                 <td>${item.hsn_code}</td>
                 <td>
                     ${canModify() ? `
-                        <button class="btn btn-sm btn-warning edit-btn me-1">
+                        <button class="btn btn-sm btn-warning edit-btn-dropdownitem me-1">
                             <i class="bi bi-pencil-square"></i>
                         </button>
-                        <button class="btn btn-sm btn-danger delete-btn">
+                        <button class="btn btn-sm btn-danger delete-btn-dropdownitem">
                             <i class="bi bi-trash"></i>
                         </button>
                     ` : '<span class="text-muted small">Read Only</span>'}
@@ -103,7 +115,7 @@ async function fetchDropdownList() {
  * ATTACH EDIT / DELETE EVENTS
  *************************************************/
 function attachDropdownListTableEvents() {
-    document.querySelectorAll('.edit-btn').forEach(btn => {
+    document.querySelectorAll('.edit-btn-dropdownitem').forEach(btn => {
         btn.onclick = e => {
             const row = btn.closest('tr');
             editDropdownDetails(
@@ -118,7 +130,7 @@ function attachDropdownListTableEvents() {
         };
     });
 
-    document.querySelectorAll('.delete-btn').forEach(btn => {
+    document.querySelectorAll('.delete-btn-dropdownitem').forEach(btn => {
         btn.onclick = async e => {
             const row = btn.closest('tr');
             if (!confirm(`Delete "${row.dataset.description}" ?`)) return;
@@ -135,7 +147,7 @@ async function saveDropdownItem() {
 
     const btn = document.getElementById('addDropdownMenuList');
     const mode = btn.dataset.mode || 'insert';
-    const id = document.getElementById('tempFormID').value;
+    const id = Number(document.getElementById('tempFormID').value);
 
     const valueassignedto = document.getElementById('valueassignedto').value.trim();
     const description = document.getElementById('description').value.trim().toUpperCase();

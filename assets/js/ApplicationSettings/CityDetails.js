@@ -1,190 +1,227 @@
 // Global variable to store city data
-let cityData = [];
-let currentPage = 1;
-let rowsPerPage = 100;
-let totalRows = 0;
-let totalPages = 1;
+let cityDetails = [];
 
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', async () => {
+    // createLoader();
+    const addCityDetailsButton = document.getElementById('addCityDetails');
+    addCityDetailsButton.addEventListener('click', saveCityDetails);
 
-// Escape special characters for HTML rendering
-function escapeHtml(str) {
-    if (str === null || str === undefined) return '';
-    return String(str)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "\\'");
-}
+    const checkPermission = () => {
+        addCityDetailsButton.disabled = !canModify();
+    };
+
+    checkPermission();
+    setTimeout(checkPermission, 300);
+
+    await fetchCityData();
+    setupFilterListeners();
+
+});
+
+/*************************************************
+ * FETCH & RENDER Missing Pincodes in API
+ *************************************************/
 
 async function fetchCityData() {
+    showLoader();
+
     try {
-        let allData = [];
-        let from = 0;
-        const chunkSize = 1000;
-        let fetchMore = true;
+        const { data, error } = await supabaseClient
+            .from('CityDetails')
+            .select('*')
+            .order('CityName');
 
-        while (fetchMore) {
-            const { data, error, count } = await supabaseClient
-                .from('CityDetails')
-                .select('*', { count: 'exact' })
-                .order('CityName', { ascending: true })
-                .range(from, from + chunkSize - 1);
-
-            if (error) throw error;
-
-            allData = allData.concat(data);
-            fetchMore = data.length === chunkSize;
-            from += chunkSize;
-        }
+        if (error) throw error;
 
         const tableBody = document.querySelector('#cityDetailsTable tbody');
         tableBody.innerHTML = '';
 
-        if (allData.length === 0) {
-            tableBody.innerHTML =
-                `<tr><td colspan="6" class="text-center text-muted">No records found.</td></tr>`;
+        if (!data?.length) {
+            hideLoader();
             return;
         }
 
-        cityData = allData;
+        // Sort by country
+        data.sort((a, b) => (a.CityName || '').localeCompare(b.CityName || ''));
 
-        allData.forEach((item, index) => {
+        // Render table
+        data.forEach((city, i) => {
             const row = document.createElement('tr');
-            const canEdit = UserType === 1 || UserType === 2;
-            const canDelete = UserType === 1;
+            row.dataset.id = city.id;
+            row.dataset.cityName = city.CityName;
+            row.dataset.stateName = city.State;
+            row.dataset.zoneName = city.Zone;
+            row.dataset.countryName = city.Country;
+
 
             row.innerHTML = `
-                <td>${index + 1}</td>
-                <td>${escapeHtml(item.CityName)}</td>
-                <td>${escapeHtml(item.State)}</td>
-                <td>${escapeHtml(item.Zone)}</td>
-                <td>${escapeHtml(item.Country)}</td>
+                <td>${i + 1}</td>
+                <td>${city.CityName}</td>
+                <td>${city.State}</td>
+                <td>${city.Zone}</td>
+                <td>${city.Country}</td>
                 <td>
-                  ${canEdit ? `
-                    <button type="button" class="btn btn-sm btn-warning me-1"
-                      onclick="editCityItem(${item.id}, '${escapeHtml(item.CityName)}',
-                      '${escapeHtml(item.State)}', '${escapeHtml(item.Zone)}',
-                      '${escapeHtml(item.Country)}', event)"
-                      title="Edit"><i class="bi bi-pencil-square"></i></button>` : ''}
-                  ${canDelete ? `
-                    <button type="button" class="btn btn-sm btn-danger me-1"
-                      onclick="deleteCityItem(${item.id}, event)"
-                      title="Delete"><i class="bi bi-trash"></i></button>` : ''}
-                  ${!canEdit && !canDelete ? `<span class="text-muted small">Read Only</span>` : ''}
-                </td>`;
+                    ${canModify() ? `
+                        <button class="btn btn-sm btn-warning edit-btn-citydetails me-1">
+                            <i class="bi bi-pencil-square"></i>
+                        </button>
+                        <button class="btn btn-sm btn-danger delete-btn-citydetails">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    ` : '<span class="text-muted small">Read Only</span>'}
+                </td>
+            `;
             tableBody.appendChild(row);
         });
+
+        // Update global cache
+        cityDetails = data.map(city => ({
+            cityName: city.CityName,
+            stateName: city.State,
+            zoneName: city.Zone,
+            countryName: city.Country
+        }));
+
+
+        attachCityTableEvents();
+        populateCityDatalists();
+
     } catch (error) {
-        console.error('Error fetching city data:', error);
-        alert('Failed to fetch city data.');
+        console.error('Error fetching missing pincodes:', error);
+        hideLoader();
     }
 }
 
+/*************************************************
+ * ATTACH EDIT / DELETE EVENTS
+ *************************************************/
+function attachCityTableEvents() {
+    document.querySelectorAll('.edit-btn-citydetails').forEach(btn => {
+        btn.addEventListener('click', e => {
+            const row = btn.closest('tr');
+            editCityData(
+                row.dataset.id,
+                row.dataset.cityName,
+                row.dataset.stateName,
+                row.dataset.zoneName,
+                row.dataset.countryName,
+                e
+            );
+        });
+    });
 
-
-// Clear form fields
-function clearForm() {
-    document.getElementById('cityName').value = '';
-    document.getElementById('stateName').value = '';
-    document.getElementById('zoneName').value = '';
-    document.getElementById('cityCountryName').value = '';
-    document.getElementById('tempFormID').value = '';
-    document.getElementById('addCityDetails').innerText = 'Add';
+    document.querySelectorAll('.delete-btn-citydetails').forEach(btn => {
+        btn.addEventListener('click', e => {
+            const row = btn.closest('tr');
+            deleteCityItem(row.dataset.id, e);
+        });
+    });
 }
 
-// Add or update city
-async function addCityItem() {
-    const cityName = capitalize(document.getElementById('cityName').value.trim());
-    const stateName = capitalize(document.getElementById('stateName').value.trim());
-    const zoneName = capitalize(document.getElementById('zoneName').value.trim());
-    const cityCountryName = capitalize(document.getElementById('cityCountryName').value.trim());
+
+/*************************************************
+ * SAVE Pincode (ADD / EDIT)
+ *************************************************/
+async function saveCityDetails() {
+    showLoader();
+    if (!canModify()) {
+        showToast('You do not have permission to add or edit city.');
+        hideLoader();
+        return;
+    }
+
+    const btn = document.getElementById('addCityDetails');
+    const mode = btn.dataset.mode || 'insert'; // insert | update
+    const id = Number(document.getElementById('tempFormID').value);
+
+    const cityName = document.getElementById('cityName').value.trim();
+    const stateName = capitalizeFirstLetter(document.getElementById('stateName').value.trim());
+    const zoneName = document.getElementById('zoneName').value.trim();
+    const cityCountryName = document.getElementById('cityCountryName').value; // Corrected
 
     if (!cityName || !stateName || !zoneName || !cityCountryName) {
-        alert('City, State, Zone and Country are required fields.');
+        showToast('Please enter city details.');
+        hideLoader();
         return;
     }
-
-    const button = document.getElementById('addCityDetails');
-    const action = button.innerText;
-    const id = document.getElementById('tempFormID').value;
-
-    const cityObj = {
-        CityName: cityName,
-        State: stateName,
-        Zone: zoneName,
-        Country: cityCountryName,
-    };
 
     try {
-        if (action === 'Add') {
-            const exists = cityData.some(item =>
-                item.CityName.trim().toLowerCase() === cityName.toLowerCase() &&
-                item.State.trim().toLowerCase() === stateName.toLowerCase() &&
-                item.Zone.trim().toLowerCase() === zoneName.toLowerCase() &&
-                item.Country.trim().toLowerCase() === cityCountryName.toLowerCase()
-            );
+        if (mode === 'insert') {
+            const { data: existing } = await supabaseClient
+                .from('CityDetails')
+                .select('id')
+                .eq('CityName', cityName);
 
-            if (exists) {
-                alert('This city already exists.');
+            if (existing?.length) {
+                showToast('City already exists.');
+                hideLoader();
                 return;
             }
 
+
             const { error } = await supabaseClient
                 .from('CityDetails')
-                .insert([{ ...cityObj, created_by: UserLoginID, created_at: localtimeStamp }]);
-
+                .insert([{
+                    CityName: cityName,
+                    State: stateName,
+                    Zone: zoneName,
+                    Country: cityCountryName,
+                    created_by: UserLoginID,
+                    created_at: localtimeStamp
+                }]);
             if (error) throw error;
 
-            alert('City item added successfully.');
+            showToast('City added successfully.');
 
-        } else if (action === 'Edit') {
-            const original = cityData.find(item => item.id == id);
-            if (!original) {
-                alert('Original item not found.');
-                return;
-            }
-
+        } else {
             const { error } = await supabaseClient
                 .from('CityDetails')
-                .update({ ...cityObj, updated_by: UserLoginID, updated_at: localtimeStamp })
+                .update({
+                    CityName: cityName,
+                    State: stateName,
+                    Zone: zoneName,
+                    Country: cityCountryName,
+                    updated_by: UserLoginID,
+                    updated_at: localtimeStamp
+
+                })
                 .eq('id', id);
-
             if (error) throw error;
 
-            alert('City item updated successfully.');
+            showToast('City updated successfully.');
         }
 
-        clearForm();
+        // Reset form
+        document.getElementById('tempFormID').value = '';
+        btn.innerText = 'Add';
+        btn.classList.remove('btn-warning');
+        btn.classList.add('btn-primary');
+        btn.dataset.mode = 'insert';
+        document.getElementById('cityName').value = '';
+        document.getElementById('stateName').value = '';
+        document.getElementById('zoneName').value = '';
+        document.getElementById('cityCountryName').value = '';
+
         await fetchCityData();
 
-    } catch (error) {
-        console.error('Error saving city item:', error);
-        alert('Failed to save city item.');
+    } catch (err) {
+        console.error('Save city error:', err);
+        showToast('Failed to save city.');
+    } finally {
+        hideLoader();
     }
 }
 
-// Fill form to edit a city
-function editCityItem(id, cityName, stateName, zoneName, countryName, event) {
-    event.preventDefault();
-    console.log(`Editing city item with ID: ${countryName}`);
-    document.getElementById('tempFormID').value = id;
-    document.getElementById('cityName').value = cityName;
-    document.getElementById('stateName').value = stateName;
-    document.getElementById('zoneName').value = zoneName;
-    document.getElementById('cityCountryName').value = countryName;
-    document.getElementById('addCityDetails').innerText = 'Edit';
-}
 
-// Delete a city
+/*************************************************
+ * DELETE Pincode
+ *************************************************/
 async function deleteCityItem(id, event) {
-    event.preventDefault();
-    if (UserType !== 1) {
-        alert('You do not have permission to delete this item.');
-        return;
-    }
+    if (event) event.preventDefault();
 
-    if (!confirm('Are you sure you want to delete this city item?')) return;
+    if (!canModify()) return;
+    if (!confirm('Are you sure you want to delete this city?')) return;
 
     try {
         const { error } = await supabaseClient
@@ -194,112 +231,111 @@ async function deleteCityItem(id, event) {
 
         if (error) throw error;
 
-        alert('City item deleted successfully.');
+        showToast('City deleted successfully.');
         await fetchCityData();
 
-    } catch (error) {
-        console.error('Error deleting city item:', error);
-        alert('Failed to delete city item.');
+    } catch (err) {
+        console.error('Delete city error:', err);
+        showToast('Failed to delete city.');
     }
 }
 
-// Initialize on page load
-document.addEventListener('DOMContentLoaded', async () => {
 
-    fetchCityData();
+/*************************************************
+ * EDIT Pincode
+ *************************************************/
+function editCityData(id, cityName, stateName, zoneName, countryName, event) {
+    if (event) event.preventDefault();
+    if (!canModify()) return;
 
-    const addButton = document.getElementById('addCityDetails');
-    if (UserType === 1 || UserType === 2) {
-        addButton.addEventListener('click', addCityItem);
-    } else {
-        addButton.disabled = true;
-        document.querySelectorAll('#cityDetailsForm input').forEach(input => input.disabled = true);
-    }
-});
+    const cityNameInput = document.getElementById('cityName');
+    const stateNameInput = document.getElementById('stateName');
+    const zoneNameInput = document.getElementById('zoneName');
+    const countryNameInput = document.getElementById('cityCountryName');
+    const addCityDetailsBtn = document.getElementById('addCityDetails');
 
-
-function filterTable() {
-    const city = document.getElementById('cityName').value.trim().toLowerCase();
-    const state = document.getElementById('stateName').value.trim().toLowerCase();
-    const zone = document.getElementById('zoneName').value.trim().toLowerCase();
-    const country = document.getElementById('cityCountryName').value.trim().toLowerCase();
-
-    const tableBody = document.querySelector('#cityDetailsTable tbody');
-    tableBody.innerHTML = '';
-
-    const filteredData = cityData.filter(item =>
-        item.CityName.toLowerCase().includes(city) &&
-        item.State.toLowerCase().includes(state) &&
-        item.Zone.toLowerCase().includes(zone) &&
-        item.Country.toLowerCase().includes(country)
-    );
-
-    if (filteredData.length === 0) {
-        const row = document.createElement('tr');
-        row.innerHTML = `<td colspan="5" class="text-muted">No matching records found.</td>`;
-        tableBody.appendChild(row);
+    if (!cityNameInput || !stateNameInput || !zoneNameInput || !countryNameInput || !addCityDetailsBtn) {
+        console.error('Form inputs not found. Cannot edit missing pincode.');
         return;
     }
 
-    filteredData.forEach((item, index) => {
-        const row = document.createElement('tr');
-        const canEdit = UserType === 1 || UserType === 2;
-        const canDelete = UserType === 1;
+    document.getElementById('tempFormID').value = id;
 
-        row.innerHTML = `
-             <td>${index + 1}</td>
-            <td>${escapeHtml(item.CityName)}</td>
-            <td>${escapeHtml(item.State)}</td>
-            <td>${escapeHtml(item.Zone)}</td>
-            <td>${escapeHtml(item.Country)}</td>
-            <td>
-                ${canEdit ? `
-                    <button type="button" class="btn btn-sm btn-warning me-1" 
-                        onclick="editCityItem(${item.id}, '${escapeHtml(item.CityName)}', 
-                        '${escapeHtml(item.State)}', '${escapeHtml(item.Zone)}', 
-                        '${escapeHtml(item.Country)}', event)" 
-                        title="Edit"><i class="bi bi-pencil-square"></i></button>
-                ` : ''}
-                ${canDelete ? `
-                    <button type="button" class="btn btn-sm btn-danger me-1"
-                        onclick="deleteCityItem(${item.id}, event)" 
-                        title="Delete"><i class="bi bi-trash"></i></button>
-                ` : ''}
-                ${!canEdit && !canDelete ? `<span class="text-muted small">Read Only</span>` : ''}
-            </td>
-        `;
-        tableBody.appendChild(row);
-    });
+    cityNameInput.value = cityName;
+    stateNameInput.value = stateName;
+    zoneNameInput.value = zoneName;
+    countryNameInput.value = countryName;
+
+    addCityDetailsBtn.innerText = 'Edit';
+    addCityDetailsBtn.classList.remove('btn-primary');
+    addCityDetailsBtn.classList.add('btn-warning');
+    addCityDetailsBtn.dataset.mode = 'update';
 }
 
-function populateSuggestions(field, key) {
-    const uniqueValues = [...new Set(cityData.map(item => item[key]))]
-        .filter(val => val && val.toLowerCase().includes(field.value.toLowerCase()))
-        .sort();
+/*************************************************
+ * POPULATE MISSING PINCODE DATALISTS
+ * *************************************************/
+function populateCityDatalists() {
+    const cityNameList = document.getElementById('cityNameSuggestions');
+    const stateNameList = document.getElementById('stateNameSuggestions');
+    const zoneNameList = document.getElementById('zoneNameSuggestions');
+    const countryNameList = document.getElementById('cityCountryNameSuggestions');
 
-    const datalistId = field.getAttribute('list');
-    const datalist = document.getElementById(datalistId);
-    datalist.innerHTML = '';
+    [cityNameList, stateNameList, zoneNameList, countryNameList]
+        .filter(Boolean)
+        .forEach(dl => dl.innerHTML = '');
 
-    uniqueValues.forEach(value => {
-        const option = document.createElement('option');
-        option.value = capitalize(value);
-        datalist.appendChild(option);
-    });
+
+    const uniqueCityNames = [...new Set(cityDetails.map(p => p.cityName).filter(c => c))];
+    const uniqueStateNames = [...new Set(cityDetails.map(p => p.stateName).filter(c => c))];
+    const uniqueZoneNames = [...new Set(cityDetails.map(p => p.zoneName).filter(c => c))];
+    const uniqueCountryNames = [...new Set(cityDetails.map(p => p.countryName).filter(c => c))];
+
+    uniqueCityNames.forEach(c => { const o = document.createElement('option'); o.value = c; cityNameList.appendChild(o); });
+    uniqueStateNames.forEach(c => { const o = document.createElement('option'); o.value = c; stateNameList.appendChild(o); });
+    uniqueZoneNames.forEach(n => { const o = document.createElement('option'); o.value = n; zoneNameList.appendChild(o); });
+    uniqueCountryNames.forEach(n => { const o = document.createElement('option'); o.value = n; countryNameList.appendChild(o); });
+
 }
 
-// Attach events
-['cityName', 'stateName', 'zoneName', 'cityCountryName'].forEach(id => {
-    const input = document.getElementById(id);
-    input.addEventListener('input', () => {
-        filterTable();
-        let key = '';
-        switch (id) {
-            case 'cityName': key = 'CityName'; break;
-            case 'stateName': key = 'State'; break;
-            case 'zoneName': key = 'Zone'; break;
-            case 'cityCountryName': key = 'Country'; break;
-        }
-        populateSuggestions(input, key);
+// -------------------------------
+// Setup Filter Inputs
+// -------------------------------
+function setupFilterListeners() {
+
+    const cityNameInput = document.getElementById('cityName');
+    const stateNameInput = document.getElementById('stateName');
+    const zoneNameInput = document.getElementById('zoneName');
+    const countryNameInput = document.getElementById('cityCountryName');
+
+    const inputs = [cityNameInput, stateNameInput, zoneNameInput, countryNameInput];
+
+    inputs.forEach(input => {
+        if (!input) return;
+
+        input.addEventListener('input', () => {
+
+            const cityName = cityNameInput.value.toLowerCase();
+            const stateName = stateNameInput.value.toLowerCase();
+            const zoneName = zoneNameInput.value.toLowerCase();
+            const countryName = countryNameInput.value.toLowerCase();
+
+            document.querySelectorAll('#cityDetailsTable tbody tr').forEach(row => {
+                const cells = row.cells;
+
+                const row_cityName = cells[1]?.textContent.toLowerCase() || '';
+                const row_stateName = cells[2]?.textContent.toLowerCase() || '';
+                const row_zoneName = cells[3]?.textContent.toLowerCase() || '';
+                const row_countryName = cells[4]?.textContent.toLowerCase() || '';
+
+                const visible =
+                    (!cityName || row_cityName.includes(cityName)) &&
+                    (!stateName || row_stateName.includes(stateName)) &&
+                    (!zoneName || row_zoneName.includes(zoneName)) &&
+                    (!countryName || row_countryName.includes(countryName));
+
+                row.style.display = visible ? '' : 'none';
+            });
+        });
     });
-});
+}

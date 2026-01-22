@@ -11,7 +11,7 @@ let routeDetails = [];
 document.addEventListener('DOMContentLoaded', async () => {
     if (!await checkAccess(UserLoginID, 'ApplicationSettings')) {
         disableForm();
-        alert("You do not have permission to view this form.");
+        showToast("You do not have permission to view this form.");
         return;
     }
     const addRouteBtn = document.getElementById('addRouteDetails');
@@ -30,9 +30,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     checkPermission();
 
     // Run again if UserType is set later
-    setTimeout(checkPermission, 300);
+    setTimeout(checkPermission, 150);
 
-    fetchRoutes();
+    await fetchRoutes();
+
+    const form = document.getElementById('applicationSettingsForm');
+    if (form) {
+        form.addEventListener('submit', e => e.preventDefault());
+    }
 });
 
 
@@ -82,13 +87,15 @@ async function fetchRoutes() {
             tableBody.appendChild(row);
         });
         routeDetails = data.map(route => ({
+            id: route.id,
             routeDescription: route.route_description,
             routeDistance: route.distance
-        })); routeDetailsSuggestions();
+        }));
+        routeDetailsSuggestions();
 
     } catch (err) {
         console.error(err);
-        alert('Failed to load routes.');
+        showToast('Failed to load routes.');
     } finally {
         hideLoader();
     }
@@ -99,39 +106,48 @@ async function fetchRoutes() {
  *************************************************/
 async function saveRoute() {
     const btn = document.getElementById('addRouteDetails');
-    const mode = btn.dataset.mode;   // insert | update
-    const id = document.getElementById('tempFormID').value;
-    showLoader();
-
-    if (!canModify()) {
-        alert('You do not have permission to add or edit routes.');
-        return;
-    }
-
-
-
+    const mode = btn.dataset.mode || 'insert';   // insert | update
+    const id = Number(document.getElementById('tempFormID').value);
     let routeDescription = document.getElementById('routeDescription').value.trim();
     let distance = parseFloat(document.getElementById('distance').value);
 
+    showLoader();
+
+    if (!canModify()) {
+        showToast('You do not have permission to add or edit routes.');
+        hideLoader();
+        return;
+    }
+
     if (!routeDescription || isNaN(distance)) {
-        alert('Please enter valid route and distance.');
+        showToast('Please enter valid route and distance.');
+        hideLoader();
+        return;
+    }
+
+    if (distance <= 0) {
+        showToast('Distance must be greater than zero.');
+        hideLoader();
         return;
     }
 
     routeDescription = capitalize(routeDescription);
 
     try {
+        const exists = routeDetails.some(r =>
+            r.routeDescription.toLowerCase() === routeDescription.toLowerCase() &&
+            (mode === 'insert' || r.id !== id)
+        );
+
+        if (exists) {
+            showToast('Route already exists.');
+            hideLoader();
+            return;
+        }
+
         if (mode === 'insert') {
+
             // 🔹 INSERT
-            const exists = routeDetails.some(
-                r => r.routeDescription.toLowerCase() === routeDescription.toLowerCase()
-            );
-
-            if (exists) {
-                alert('Route already exists.');
-                return;
-            }
-
             const { error } = await supabaseClient
                 .from('route_master')
                 .insert([{
@@ -144,7 +160,7 @@ async function saveRoute() {
 
             if (error) throw error;
 
-            alert('Route added successfully.');
+            showToast('Route added successfully.');
         } else {
             // 🔹 UPDATE
             const { error } = await supabaseClient
@@ -164,6 +180,14 @@ async function saveRoute() {
         }
 
         fetchRoutes();
+
+        document.getElementById('tempFormID').value = '';
+        btn.innerText = 'Add';
+        btn.classList.remove('btn-warning');
+        btn.classList.add('btn-primary');
+        btn.dataset.mode = 'insert';
+        document.getElementById('routeDescription').value = '';
+        document.getElementById('distance').value = '';
 
     } catch (err) {
         console.error('Save error:', err);
@@ -192,12 +216,12 @@ async function deleteRoute(id, event) {
 
         if (error) throw error;
 
-        alert('Route deleted successfully.');
+        showToast('Route deleted successfully.');
         fetchRoutes();
 
     } catch (err) {
         console.error('Delete failed:', err);
-        alert('Failed to delete route.');
+        showToast('Failed to delete route.');
     }
 }
 
@@ -240,14 +264,9 @@ function routeDetailsSuggestions() {
 document.getElementById('routeDescription')
     .addEventListener('input', e => {
         const route = routeDetails.find(
-            r => r.routeDescription === e.target.value
+            r => r.routeDescription.toLowerCase() === e.target.value.toLowerCase()
         );
         if (route) {
             document.getElementById('distance').value = route.routeDistance;
         }
     });
-
-
-document.getElementById('applicationSettingsForm')
-    .addEventListener('submit', e => e.preventDefault());
-

@@ -207,17 +207,35 @@ if (originInput && destinationInput) {
 });
 
 
-function validateAgainstDatalist(inputEl, datalistEl, errorMessage = 'Invalid entry!') {
-    const inputValue = inputEl.value.trim().toLowerCase();
-    const options = Array.from(datalistEl.options).map(opt => opt.value.toLowerCase());
+function validateAgainstDatalist(
+    inputEl,
+    datalistEl,
+    errorMessage = 'Invalid entry!'
+) {
+    // Safety checks
+    if (!inputEl || !datalistEl) {
+        // console.warn('validateAgainstDatalist: input or datalist missing');
+        return;
+    }
 
-    if (!options.includes(inputValue)) {
+    if (!datalistEl.options || !datalistEl.options.length) {
+        // No options yet → don't mark invalid
+        resetError?.(inputEl);
+        return;
+    }
+
+    const inputValue = inputEl.value.trim().toLowerCase();
+    const options = Array.from(datalistEl.options).map(opt =>
+        opt.value.toLowerCase()
+    );
+
+    if (inputValue && !options.includes(inputValue)) {
         displayError(inputEl, errorMessage);
-        // inputEl.value = ''; // optional: clear invalid entry
     } else {
         resetError(inputEl);
     }
 }
+
 
 // 👇 Attach blur + input listeners for validation
 if (originInput && destinationInput) {
@@ -253,9 +271,17 @@ async function fetchCurrencySuggestions(term, limit = 10) {
 
 
 function updateCurrencyDatalist(datalistEl, items) {
+    if (!datalistEl) {
+        // console.warn('Currency datalist element not found');
+        return;
+    }
+
     datalistEl.innerHTML = '';
-    const seen = new Set(); // Avoid duplicates if same code in multiple countries
+
+    const seen = new Set();
     items.forEach(item => {
+        if (!item?.CurrencyCode) return;
+
         if (!seen.has(item.CurrencyCode)) {
             const option = document.createElement('option');
             option.value = item.CurrencyCode;

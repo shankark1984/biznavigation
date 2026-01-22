@@ -4,28 +4,38 @@
 
 // Global cache
 let portDetails = [];
-
+let filterTimer;
 /*************************************************
  * INIT
  *************************************************/
-document.addEventListener('DOMContentLoaded', async () => {
-    createLoader();
 
-    const addPortBtn = document.getElementById('addPortDetails');
-    addPortBtn.addEventListener('click', savePort);
+let portTabInitialized = false;
 
+document.getElementById('portDetails-tab')
+    .addEventListener('shown.bs.tab', async () => {
 
-    const checkPermission = () => {
-        addPortBtn.disabled = !canModify();
-    };
+        // Prevent reloading every time
+        if (portTabInitialized) return;
+        portTabInitialized = true;
 
-    checkPermission();
-    setTimeout(checkPermission, 300);
+        createLoader();
 
-    await fetchPorts();
-    setupFilterListeners();
+        const addPortBtn = document.getElementById('addPortDetails');
+        if (!addPortBtn) return;
 
-});
+        addPortBtn.removeEventListener('click', savePort);
+        addPortBtn.addEventListener('click', savePort);
+
+        const checkPermission = () => {
+            addPortBtn.disabled = !canModify();
+        };
+
+        checkPermission();
+        setTimeout(checkPermission, 150);
+
+        await fetchPorts();
+        setupFilterListeners();
+    });
 
 /*************************************************
  * FETCH & RENDER PORTS
@@ -111,7 +121,7 @@ function attachPortTableEvents() {
             const row = btn.closest('tr');
             editPortDetails(
                 row.dataset.id,
-                row.dataset.country,
+                row.dataset.country1,
                 row.dataset.code,
                 row.dataset.name,
                 row.dataset.type,
@@ -140,7 +150,7 @@ async function savePort() {
 
     const btn = document.getElementById('addPortDetails');
     const mode = btn.dataset.mode; // insert | update
-    const id = document.getElementById('tempFormID').value;
+    const id = Number(document.getElementById('tempFormID').value);
 
     const portCountryName = document.getElementById('portCountryName').value.trim().toUpperCase();
     const portCode = document.getElementById('portCode').value.trim().toUpperCase();
@@ -154,17 +164,18 @@ async function savePort() {
     }
 
     try {
+        const exists = portDetails.some(p =>
+            p.portCode.toLowerCase() === portCode.toLowerCase() &&
+            (mode === 'insert' || p.id !== id)
+        );
+
+        if (exists) {
+
+            showToast('Port code already exists.');
+            return;
+        }
+
         if (mode === 'insert') {
-            const exists = portDetails.some(p =>
-                p.portCode.toLowerCase() === portCode.toLowerCase() &&
-                (mode === 'insert' || p.id !== id)
-            );
-
-            if (exists) {
-                showToast('Port code already exists.');
-                return;
-            }
-
             const { error } = await supabaseClient
                 .from('PortsDetails')
                 .insert([{
