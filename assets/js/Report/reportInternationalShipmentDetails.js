@@ -5,11 +5,6 @@ let sortColumn = null;
 let sortOrder = 'asc';
 
 document.addEventListener('DOMContentLoaded', async () => {
-    if (!await checkAccess(UserLoginID, "reportInternationalShipmentDetails")) {
-        disableForm();
-        alert("You do not have permission to view this form.");
-        return;
-    }
 
     flatpickr("#dateRange", { mode: "range", dateFormat: "Y-m-d" });
 

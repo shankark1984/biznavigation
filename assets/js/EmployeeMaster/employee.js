@@ -1,11 +1,7 @@
 let empID = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
-    if (!await checkAccess(UserLoginID, 'EmployeeMaster')) {
-        disableForm();
-        alert("You do not have permission to view this form.");
-        return;
-    }
+
     const today = new Date().toISOString().split("T")[0];
     document.getElementById("dateOfJoining").max = today;
     document.getElementById("dateOfBirth").max = today;

@@ -9,11 +9,7 @@ let routeDetails = [];
  * INIT
  *************************************************/
 document.addEventListener('DOMContentLoaded', async () => {
-    if (!await checkAccess(UserLoginID, 'ApplicationSettings')) {
-        disableForm();
-        showToast("You do not have permission to view this form.");
-        return;
-    }
+
     const addRouteBtn = document.getElementById('addRouteDetails');
     createLoader();
     addRouteBtn.addEventListener('click', saveRoute);

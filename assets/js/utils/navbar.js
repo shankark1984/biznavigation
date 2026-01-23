@@ -1,4 +1,4 @@
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
   // Redirect to login if not logged in
   const userLoginID = localStorage.getItem('UserLoginID');
   if (!userLoginID) {
@@ -6,25 +6,12 @@ document.addEventListener("DOMContentLoaded", () => {
     return;
   }
 
-  // Helper: create dropdown section
-  const menuSection = (title, items) => `
-    <li class="nav-item dropdown">
-        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">${title}</a>
-        <ul class="dropdown-menu">
-            ${items.map(item =>
-    item === 'divider'
-      ? '<li><hr class="dropdown-divider" /></li>'
-      : `<li><a class="dropdown-item menu-item" href="${item.href}" data-form-id="${generateFormID(item)}">${item.label}</a></li>`
-  ).join('')}
-        </ul>
-    </li>`;
-
-  // ✅ Generate FormID
+  // Helper: Generate FormID
   const generateFormID = (item) => {
     if (item.href.includes("PaymentDetails.html")) {
       const url = new URL(item.href, window.location.origin);
       const type = url.searchParams.get("type") || "";
-      return `PaymentDetails${type}`; // Example: PaymentDetailsCredit
+      return `PaymentDetails${type}`;
     }
     return item.href
       .replace("/pages/master/", "")
@@ -37,7 +24,20 @@ document.addEventListener("DOMContentLoaded", () => {
       .replace(/[^a-zA-Z0-9]/g, "");
   };
 
-  // ✅ Navbar HTML
+  // Helper: Create dropdown section
+  const menuSection = (title, items) => `
+    <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">${title}</a>
+        <ul class="dropdown-menu">
+            ${items.map(item =>
+    item === 'divider'
+      ? '<li><hr class="dropdown-divider" /></li>'
+      : `<li><a class="dropdown-item menu-item" href="${item.href}" data-form-id="${generateFormID(item)}">${item.label}</a></li>`
+  ).join('')}
+        </ul>
+    </li>`;
+
+  // Navbar HTML
   const header = `
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
         <div class="container-fluid">
@@ -112,6 +112,7 @@ document.addEventListener("DOMContentLoaded", () => {
     { label: "Application Settings", href: "/pages/Tools/ApplicationSettings.html" },
     { label: "Pincode Master", href: "/pages/Tools/PincodeMaster.html" }
   ])}
+
                 </ul>
 
                 <div class="d-flex align-items-center">
@@ -139,59 +140,60 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // ✅ Permission check on menu clicks
-  document.querySelectorAll(".menu-item").forEach(item => {
-    item.addEventListener("click", async e => {
-      e.preventDefault();
-      const formID = item.getAttribute("data-form-id");
-      const href = item.getAttribute("href");
+  // ✅ Permission check for all menu items
+  const menuItems = document.querySelectorAll(".menu-item");
 
-      if (!formID || !href) {
-        alert("Missing form data.");
-        return;
-      }
+  // Fetch all permissions for the user at once
+  const permissions = await fetchAllPermissions(userLoginID);
 
-      const accessGranted = await checkAccess(userLoginID, formID);
-      if (accessGranted) {
+  menuItems.forEach(item => {
+    const formID = item.getAttribute("data-form-id");
+    const href = item.getAttribute("href");
+
+    if (!formID || !href) return;
+
+    const accessGranted = permissions[formID]?.CanRead ?? false;
+
+    if (!accessGranted) {
+      item.classList.add("disabled");
+      item.setAttribute("aria-disabled", "true");
+      item.removeAttribute("href");
+      item.style.pointerEvents = "none";
+      item.style.opacity = "0.5";
+    } else {
+      item.addEventListener("click", (e) => {
         window.location.href = href;
-      }
-    });
+      });
+    }
   });
 });
 
-// ✅ Check permission from Supabase
-async function checkAccess(userLoginID, formID) {
-  // console.log("Checking access for:", userLoginID, formID);
+// ✅ Fetch all permissions for the user
+async function fetchAllPermissions(userLoginID) {
   try {
     const { data, error } = await supabaseClient
       .from("UserAccessRules")
-      .select("CanRead, CanWrite, CanDelete, CanUpdate")
-      .eq("UserLoginID", userLoginID)
-      .eq("FormID", formID)
-      .maybeSingle();
+      .select("*")
+      .eq("UserLoginID", userLoginID);
 
     if (error) {
-      console.error("Database error:", error);
-      alert("Error checking permissions. Please try again.");
-      return false;
-    }
-    // console.log("Permission data retrieved:", data);
-
-    if (!data) {
-      alert("Permission denied. Kindly contact your administrator.");
-      return false;
+      console.error("Error fetching permissions:", error);
+      return {};
     }
 
-    // Assign permissions
-    perRead = data.CanRead ?? false;
-    perWrite = data.CanWrite ?? false;
-    perDelete = data.CanDelete ?? false;
-    perUpdate = data.CanUpdate ?? false;
+    const permissionMap = {};
+    data.forEach(row => {
+      permissionMap[row.FormID] = {
+        CanRead: row.CanRead ?? false,
+        CanWrite: row.CanWrite ?? false,
+        CanDelete: row.CanDelete ?? false,
+        CanUpdate: row.CanUpdate ?? false
+      };
+    });
+    return permissionMap;
 
-    return !!perRead;
   } catch (err) {
-    console.error("Unexpected error:", err);
-    alert("An unexpected error occurred while checking permissions.");
-    return false;
+    console.error("Unexpected error fetching permissions:", err);
+    return {};
   }
 }

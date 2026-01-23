@@ -1,49 +1,34 @@
+const awbNoInput = document.getElementById('awbNo');
+
 // On DOM load
 document.addEventListener("DOMContentLoaded", async () => {
-    if (!await checkAccess(UserLoginID, 'InternationalBooking')) {
-        disableForm();
-        alert("You do not have permission to view this form.");
-        return;
-    }
-    // handleUserTypePermissions();
-
     enableForm();
+    await Promise.all([
+        loadSuggestions('partySuggestions', 'PartyDetails', CompanyID, 'PartyCode', 'PartyName'),
+        loadSuggestions('vendorSuggestions', 'PartyDetails', CompanyID, 'PartyCode', 'PartyName'),
+        loadDatalist('departmentList', 'Department')
+    ]);
+    await initChargeableWeightCalculator("#actualWeight", "#volumetricWeight", "#chargeableWeight", "#uOMType");
 
-    await loadSuggestions('partySuggestions', 'PartyDetails', CompanyID, 'PartyCode', 'PartyName');
-    await loadSuggestions('vendorSuggestions', 'PartyDetails', CompanyID, 'PartyCode', 'PartyName');
-    await loadDatalist('departmentList', 'Department');
+    const containerTabContent = document.getElementById('container-details');
+    const containerTabButton = document.getElementById('container-details-tab');
+
+    if (containerTabContent) containerTabContent.style.display = 'none';
+    if (containerTabButton) containerTabButton.style.display = 'none';
+
+    const ports = await fetchPortList();
+    populateDatalist('portOfLoadingDatalist', ports);
+    populateDatalist('portOfDischargeDatalist', ports);
+
+    document.getElementById('chargeableWeight').disabled = true;
+
+    populateContainerTypes();
+    setupEventListeners();
+    loadDatalist('tabPackingTypeSuggestions', 'PackingType'); // Static data
 });
-
-async function loadAWBNoDetails(query) {
-    if (!query) return;
-
-    const { data, error } = await supabaseClient
-        .from('international_booking')
-        .select('DocketNo')
-        .ilike('DocketNo', `${query}%`)
-        .eq('company_id', CompanyID)
-        .limit(10);
-
-    if (error) {
-        console.error('Error fetching docket numbers:', error);
-        return;
-    }
-
-    const dataList = document.getElementById('docketNoSuggestions');
-    dataList.innerHTML = '';
-
-    data.forEach(item => {
-        const option = document.createElement('option');
-        option.value = item.DocketNo;
-        dataList.appendChild(option);
-    });
-}
-
-const awbNoInput = document.getElementById('awbNo');
 
 document.getElementById("awbNo")
     .addEventListener("input", e => loadAWBNoDetails(e.target.value));
-
 
 awbNoInput.addEventListener('change', async () => {
     const docketNo = awbNoInput.value;
@@ -58,7 +43,7 @@ awbNoInput.addEventListener('change', async () => {
         await setupChargeTypeValidation();
 
         // 4) Read temp form ID
-        const tempFormID = freightElements.tempFormID.value.trim();
+        const tempFormID = document.getElementById('tempFormID').value.trim();
 
         // If TEMP docket, stop here (do not load other details)
         if (tempFormID.includes('TEMP')) return;
@@ -89,6 +74,186 @@ awbNoInput.addEventListener('change', async () => {
     }
 });
 
+document.getElementById('newButton').addEventListener('click', function () {
+    clearForm();
+    enableForm();
+    toggleEditMode(true);
+
+    // Button States
+    saveButton.disabled = false;
+    modifyButton.disabled = true;
+    deleteButton.disabled = true;
+    reportButton.disabled = true;
+    saveButton.innerHTML = '<i class="bi bi-save"></i> Save';
+
+    // Enable adding freight
+    document.getElementById('addFreightRow').disabled = false;
+
+    // Clear Freight Table
+    document.querySelector('#freightTable tbody').innerHTML = '';
+
+    // Clear Container Details Table
+    document.querySelector('#containerDetailsTable tbody').innerHTML = '';
+
+    // Clear Volumetric Table
+    document.querySelector('#volumetricTable tbody').innerHTML = '';
+
+    // Recalculate Totals
+    recalcTotals();
+    updateTotals(); // Reset totals display
+    const tbody = document.querySelector('#bookingStatusTable tbody').innerHTML = ''; // Clear previous data
+
+    // Disable calculated weight fields
+    ['totalActualWtV', 'volumeWtV', 'totalVolumeWtV', 'chargeableWtV', 'chargeableWeight'].forEach(id => {
+        document.getElementById(id).disabled = true;
+    });
+});
+
+
+document.getElementById('modifyButton').addEventListener('click', async function () {
+    enableForm();
+    saveButton.disabled = false;
+    modifyButton.disabled = true;
+    deleteButton.disabled = false;
+    reportButton.disabled = true;
+    saveButton.innerHTML = '<i class="bi bi-save"></i> Update';
+    document.getElementById('awbNo').disabled = true;
+    document.getElementById('addFreightRow').disabled = false;
+
+    document.getElementById('chargeableWeight').disabled = true;
+    document.getElementById('totalActualWtV').disabled = true;
+    document.getElementById('volumeWtV').disabled = true;
+    document.getElementById('totalVolumeWtV').disabled = true;
+    document.getElementById('chargeableWtV').disabled = true;
+
+    toggleEditMode(false);
+});
+
+
+document.getElementById('deleteButton').addEventListener('click', async function () {
+    const awbNoInput = document.getElementById('awbNo');
+    const docketNo = awbNoInput.value.trim();
+
+    // Reset button states
+    saveButton.disabled = false;
+    modifyButton.disabled = true;
+    deleteButton.disabled = true;
+    reportButton.disabled = true;
+    saveButton.innerHTML = '<i class="bi bi-save"></i> Save';
+
+    console.log('userType: ', userType, '| DocketNo: ', docketNo);
+
+    if (userType === 1 || userType === 2) {
+        const { data, error } = await supabaseClient
+            .from('international_booking')
+            .delete()
+            .eq('DocketNo', docketNo);
+
+        if (error) {
+            console.error("Error deleting record:", error.message);
+        } else {
+            console.log("Record deleted successfully:", data);
+            // Optional: reload page after deletion
+            // location.reload();
+        }
+    } else {
+        console.warn("You do not have permission to delete this record.");
+    }
+});
+
+document.getElementById('saveButton').addEventListener('click', async function () {
+    await saveOrUpdateInternationalBooking();
+
+    saveButton.disabled = true;
+    modifyButton.disabled = false;
+    reportButton.disabled = false;
+    saveButton.innerHTML = '<i class="bi bi-save"></i> Update';
+    deleteButton.disabled = true;
+    await saveFreightCharges();
+    await saveNewVolumetricRows();
+    await saveContainerDetails();
+    document.getElementById('addFreightRow').disabled = true;
+    disableForm();
+    toggleEditMode(true);
+    insertedID = null; // Reset insertedID after save
+});
+
+document.getElementById('modeTypeI').addEventListener('change', async function () {
+    const modeType = this.value;
+
+    const containerElement = document.getElementById('containerType');
+    const containerNumberElement = document.getElementById('containerNumber');
+    const containerTypeLabel = document.querySelector('label[for="containerType"]');
+    const containerNumberLabel = document.querySelector('label[for="containerNumber"]');
+
+    const containerTabContent = document.getElementById('container-details');
+    const containerTabButton = document.getElementById('container-details-tab');
+
+    if (!containerElement || !containerTabContent || !containerTabButton) {
+        console.error('Required elements not found.');
+        return;
+    }
+
+    if (modeType === 'FTL') {
+        await loadDropdownOptions('VehicleType', 'containerType');
+        containerTabContent.style.display = 'block';
+        containerTabButton.style.display = 'inline-block';
+        containerTabButton.textContent = "Vehicle Details"; // Change label for FTL
+
+        // Update labels and placeholders for FTL
+        containerTypeLabel.textContent = "Vehicle Type";
+        containerNumberLabel.textContent = "Vehicle Number";
+        containerNumberElement.placeholder = "Enter Vehicle Number";
+    } else if (modeType === 'FCL') {
+        await loadDropdownOptions('ContainerType', 'containerType');
+        containerTabContent.style.display = 'block';
+        containerTabButton.style.display = 'inline-block';
+        containerTabButton.textContent = "Container Details"; // Change label for FCL
+
+        // Update labels and placeholders for FCL
+        containerTypeLabel.textContent = "Container Type";
+        containerNumberLabel.textContent = "Container Number";
+        containerNumberElement.placeholder = "Enter Container Number";
+    } else {
+        containerElement.innerHTML = '';
+        containerTabContent.style.display = 'none';
+        containerTabButton.style.display = 'none';
+    }
+});
+
+// Ensure datalist is always shown, including "Add New Consignee"
+document.getElementById('consigneeName').addEventListener('focus', function () {
+    this.setAttribute('list', 'consigneeNameSuggestions');
+});
+
+department.addEventListener('change', () =>
+    handleDatalistInsert(department, 'departmentList', 'Department')
+);
+
+async function loadAWBNoDetails(query) {
+    if (!query) return;
+
+    const { data, error } = await supabaseClient
+        .from('international_booking')
+        .select('DocketNo')
+        .ilike('DocketNo', `${query}%`)
+        .eq('company_id', CompanyID)
+        .limit(10);
+
+    if (error) {
+        console.error('Error fetching docket numbers:', error);
+        return;
+    }
+
+    const dataList = document.getElementById('docketNoSuggestions');
+    dataList.innerHTML = '';
+
+    data.forEach(item => {
+        const option = document.createElement('option');
+        option.value = item.DocketNo;
+        dataList.appendChild(option);
+    });
+}
 
 async function fetchDocketDetails(docketNo) {
     const { data, error } = await supabaseClient
@@ -98,15 +263,12 @@ async function fetchDocketDetails(docketNo) {
         .eq('company_id', CompanyID)
         .maybeSingle();
 
-    console.log(data);
-    console.log(docketNo, CompanyID);
     if (error) {
         console.error('Error fetching docket details:', error);
         return;
     }
 
     if (!data) {
-        console.log('No record found for this Docket No');
         return;
     }
     // Map fields
@@ -151,91 +313,6 @@ async function fetchDocketDetails(docketNo) {
     reportButton.disabled = false;
     document.getElementById('addFreightRow').disabled = true;
 }
-
-document.getElementById('newButton').addEventListener('click', function () {
-    clearForm();
-    enableForm();
-    toggleEditMode(true);
-
-    // Button States
-    saveButton.disabled = false;
-    modifyButton.disabled = true;
-    deleteButton.disabled = true;
-    reportButton.disabled = true;
-    saveButton.innerHTML = '<i class="bi bi-save"></i> Save';
-
-    // Enable adding freight
-    document.getElementById('addFreightRow').disabled = false;
-
-    // Clear Freight Table
-    document.querySelector('#freightTable tbody').innerHTML = '';
-
-    // Clear Container Details Table
-    document.querySelector('#containerDetailsTable tbody').innerHTML = '';
-
-    // Clear Volumetric Table
-    document.querySelector('#volumetricTable tbody').innerHTML = '';
-
-    // Recalculate Totals
-    recalcTotals();
-    updateTotals(); // Reset totals display
-    const tbody = document.querySelector('#bookingStatusTable tbody').innerHTML = ''; // Clear previous data
-
-    // Disable calculated weight fields
-    ['totalActualWtV', 'volumeWtV', 'totalVolumeWtV', 'chargeableWtV', 'chargeableWeight'].forEach(id => {
-        document.getElementById(id).disabled = true;
-    });
-});
-
-document.getElementById('modifyButton').addEventListener('click', async function () {
-    enableForm();
-    saveButton.disabled = false;
-    modifyButton.disabled = true;
-    deleteButton.disabled = false;
-    reportButton.disabled = true;
-    saveButton.innerHTML = '<i class="bi bi-save"></i> Update';
-    document.getElementById('awbNo').disabled = true;
-    document.getElementById('addFreightRow').disabled = false;
-
-    document.getElementById('chargeableWeight').disabled = true;
-    document.getElementById('totalActualWtV').disabled = true;
-    document.getElementById('volumeWtV').disabled = true;
-    document.getElementById('totalVolumeWtV').disabled = true;
-    document.getElementById('chargeableWtV').disabled = true;
-
-    toggleEditMode(false);
-});
-
-document.getElementById('deleteButton').addEventListener('click', async function () {
-    const awbNoInput = document.getElementById('awbNo');
-    const docketNo = awbNoInput.value.trim();
-
-    // Reset button states
-    saveButton.disabled = false;
-    modifyButton.disabled = true;
-    deleteButton.disabled = true;
-    reportButton.disabled = true;
-    saveButton.innerHTML = '<i class="bi bi-save"></i> Save';
-
-    console.log('userType: ', userType, '| DocketNo: ', docketNo);
-
-    if (userType === 1 || userType === 2) {
-        const { data, error } = await supabaseClient
-            .from('international_booking')
-            .delete()
-            .eq('DocketNo', docketNo);
-
-        if (error) {
-            console.error("Error deleting record:", error.message);
-        } else {
-            console.log("Record deleted successfully:", data);
-            // Optional: reload page after deletion
-            // location.reload();
-        }
-    } else {
-        console.warn("You do not have permission to delete this record.");
-    }
-});
 
 async function saveOrUpdateInternationalBooking() {
     // Get the button type: "save" or "update"
@@ -328,33 +405,29 @@ async function saveOrUpdateInternationalBooking() {
     }
 }
 
-document.getElementById('saveButton').addEventListener('click', async function () {
-    await saveOrUpdateInternationalBooking();
+/**
+ * Initialize chargeable weight calculation for a set of inputs.
+ * @param {string|HTMLElement} actualSelector - Actual weight input element or selector
+ * @param {string|HTMLElement} volumetricSelector - Volumetric weight input element or selector
+ * @param {string|HTMLElement} chargeableSelector - Chargeable weight input element or selector
+ * @param {string|HTMLElement} uomSelector - Unit of Measure input/select element or selector
+ */
+async function initChargeableWeightCalculator(actualSelector, volumetricSelector, chargeableSelector, uomSelector) {
+    const actualWeightInput = typeof actualSelector === "string" ? document.querySelector(actualSelector) : actualSelector;
+    const volumetricWeightInput = typeof volumetricSelector === "string" ? document.querySelector(volumetricSelector) : volumetricSelector;
+    const chargeableWeightInput = typeof chargeableSelector === "string" ? document.querySelector(chargeableSelector) : chargeableSelector;
+    const uOMTypeInput = typeof uomSelector === "string" ? document.querySelector(uomSelector) : uomSelector;
 
-    saveButton.disabled = true;
-    modifyButton.disabled = false;
-    reportButton.disabled = false;
-    saveButton.innerHTML = '<i class="bi bi-save"></i> Update';
-    deleteButton.disabled = true;
-    await saveFreightCharges();
-    await saveNewVolumetricRows();
-    await saveContainerDetails();
-    document.getElementById('addFreightRow').disabled = true;
-    disableForm();
-    toggleEditMode(true);
-    insertedID = null; // Reset insertedID after save
-});
-
-document.addEventListener("DOMContentLoaded", function () {
-    const actualWeightInput = document.getElementById("actualWeight");
-    const volumetricWeightInput = document.getElementById("volumetricWeight");
-    const chargeableWeightInput = document.getElementById("chargeableWeight");
-    const uOMTypeInput = document.getElementById("uOMType");
+    if (!actualWeightInput || !volumetricWeightInput || !chargeableWeightInput || !uOMTypeInput) {
+        console.warn("One or more elements not found for chargeable weight calculator.");
+        return;
+    }
 
     function applyRounding(uom, chargeable, actual) {
         uom = uom?.trim().toLowerCase();
         switch (uom) {
             case 'kgs':
+                return Math.ceil(chargeable);
             case 'tons':
                 return Math.ceil(chargeable);
             case 'gms':
@@ -362,9 +435,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     return chargeable;
                 } else {
                     const decimal = chargeable - Math.floor(chargeable);
-                    return (decimal <= 0.5)
-                        ? Math.floor(chargeable) + 0.5
-                        : Math.ceil(chargeable);
+                    return (decimal <= 0.5) ? Math.floor(chargeable) + 0.5 : Math.ceil(chargeable);
                 }
             case 'fixed':
                 return actual;
@@ -378,9 +449,8 @@ document.addEventListener("DOMContentLoaded", function () {
         const volVal = volumetricWeightInput.value;
         const uomVal = uOMTypeInput?.value;
 
-        // Only proceed if all three values are entered
         if (actualVal === "" || volVal === "" || !uomVal) {
-            chargeableWeightInput.value = ""; // Clear if incomplete
+            chargeableWeightInput.value = "";
             return;
         }
 
@@ -391,39 +461,15 @@ document.addEventListener("DOMContentLoaded", function () {
         chargeableWeightInput.value = roundedChargeable.toFixed(2);
     }
 
+    // Attach event listeners
     actualWeightInput.addEventListener("input", updateChargeableWeight);
     volumetricWeightInput.addEventListener("input", updateChargeableWeight);
     uOMTypeInput.addEventListener("change", updateChargeableWeight);
-});
 
+    // Optional: initial calculation
+    updateChargeableWeight();
+}
 
-document.addEventListener('DOMContentLoaded', function () {
-    document.getElementById('modeTypeI').addEventListener('change', async function () {
-        const modeType = this.value;
-        const containerElement = document.getElementById('containerType');
-
-        if (!containerElement) {
-            console.error('Element with id="containerType" not found.');
-            return;
-        }
-        if (modeType === 'FTL') {
-            await loadDropdownOptions('VehicleType', 'containerType');
-        } else if (modeType === 'FCL') {
-            await loadDropdownOptions('ContainerType', 'containerType');
-        } else {
-            containerElement.innerHTML = ''; // Clear options if modeType is neither FTL nor FCL
-        }
-    });
-});
-document.addEventListener('DOMContentLoaded', async () => {
-    const ports = await fetchPortList();
-    populateDatalist('portOfLoadingDatalist', ports);
-    populateDatalist('portOfDischargeDatalist', ports);
-});
-// Ensure datalist is always shown, including "Add New Consignee"
-document.getElementById('consigneeName').addEventListener('focus', function () {
-    this.setAttribute('list', 'consigneeNameSuggestions');
-});
 // AWB alreday billed check in database table is "international_booking" column "InvoiceNumber" is not null or empty its unbilled otherwise billed
 async function checkAWBBilledStatus(docketNo) {
     const { data, error } = await supabaseClient
@@ -441,7 +487,3 @@ async function checkAWBBilledStatus(docketNo) {
     // If invoice exists → billed
     return { isUnbilled: false, invoiceNo: data.InvoiceNumber };
 }
-
-department.addEventListener('change', () =>
-    handleDatalistInsert(department, 'departmentList', 'Department')
-);

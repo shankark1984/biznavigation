@@ -7,12 +7,6 @@ const FORWARDING_TYPES = ['Forwarding', 'Import', 'Export'];
    DOM READY
 ========================================================= */
 document.addEventListener('DOMContentLoaded', async () => {
-    if (!await checkAccess(UserLoginID, 'ApplicationSettings')) {
-        disableForm();
-        alert("You do not have permission to view this form.");
-        return;
-    }
-
     await loadSuggestions('partySuggestions', 'PartyDetails', CompanyID);
     await loadBankNameSuggestions();
     await loadDefaultBank();
@@ -373,7 +367,7 @@ function updateTotals(totals) {
 function renderChargesTable(chargesMap) {
     const tbody = document.querySelector('#pendingShipmentCharges tbody');
     tbody.innerHTML = '';
-    console.log('Rendering charges table with chargesMap:', chargesMap);
+    // console.log('Rendering charges table with chargesMap:', chargesMap);
     let totalAmount = 0, totalSGST = 0, totalCGST = 0, totalIGST = 0, totalGSTAmt = 0, totalGrandAmt = 0;
 
     Object.entries(chargesMap).forEach(([type, amounts]) => {
@@ -472,7 +466,7 @@ document.getElementById('invoiceNo').addEventListener('change', async (e) => {
 
         // Check the value and run the relevant function
         if (invoiceDetails.InvoiceType === 'Forwarding' || invoiceDetails.InvoiceType === 'Import' || invoiceDetails.InvoiceType === 'Export') {
-            console.log('Fetching pending invoices for Forwarding/Import/Export');
+            // console.log('Fetching pending invoices for Forwarding/Import/Export');
             await createPendingShipmentTableHeaderAndFooter_ib();
             await loadInvoiceBookings(invoiceNo);
         }

@@ -39,13 +39,6 @@ let paymentIDTimer = null;
 // DOM LOADED
 // ------------------------------------------
 document.addEventListener("DOMContentLoaded", async () => {
-    const accessGranted = await checkAccess(UserLoginID, "PaymentDetailsCredit");
-
-    if (!accessGranted) {
-        disableForm();
-        alert("You do not have permission to view this form.");
-        return;
-    }
 
     enableForm();
     await loadSuggestions("partySuggestions", "PartyDetails", CompanyID);

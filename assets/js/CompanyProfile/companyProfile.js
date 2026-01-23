@@ -25,13 +25,6 @@ async function initCompanyRegistration() {
 
     handleAdminUserTabVisibility(); // 👈 ADD THIS
 
-    // Permission check
-    const accessGranted = await checkAccess(userLoginID, 'companyProfile');
-    if (!accessGranted) {
-        alert("You do not have permission to view this form.");
-        return;
-    }
-
     // Fetch company data if exists
     if (companyID) await fetchCompanyData(companyID);
     else console.warn("⚠️ No CompanyID found in localStorage");
@@ -390,7 +383,6 @@ async function resetUserPassword() {
 
 async function getAdminUser(companyID) {
     try {
-
         const { data, error } = await supabaseClient
             .from('user_login')
             .select('*')
@@ -400,28 +392,33 @@ async function getAdminUser(companyID) {
 
         if (error) throw error;
 
-        const userName = data.user_name;
-        const userLoginID = data.user_login_id;
-        console.log("Populating admin user fields:", { userName, userLoginID });
-
-
         if (data) {
             // ✅ Admin exists
-            document.getElementById('userName').value = data.user_name || '';
-            document.getElementById('userLogID').value = data.user_login_id || '';
+            const userName = data.user_name || '';
+            const userLoginID = data.user_login_id || '';
+            // console.log("Populating admin user fields:", { userName, userLoginID });
+
+            document.getElementById('userName').value = userName;
+            document.getElementById('userLogID').value = userLoginID;
+
+            return data;
         } else {
             // ✅ No admin yet → clear fields
             document.getElementById('userName').value = '';
             document.getElementById('userLogID').value = '';
+            // console.warn("No admin user found for company:", companyID);
+            return null;
         }
-
-        return data;
 
     } catch (err) {
         console.error("Failed to fetch admin user:", err);
+        // Clear fields in case of error
+        document.getElementById('userName').value = '';
+        document.getElementById('userLogID').value = '';
         return null;
     }
 }
+
 
 document.getElementById('adminUserSetting-tab')?.addEventListener(
     'shown.bs.tab',

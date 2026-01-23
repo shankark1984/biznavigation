@@ -203,8 +203,3 @@ function setupEventListeners() {
     });
 }
 
-// ---------- DOM Ready ----------
-document.addEventListener('DOMContentLoaded', () => {
-    populateContainerTypes();
-    setupEventListeners();
-});

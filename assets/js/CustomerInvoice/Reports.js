@@ -272,7 +272,6 @@ async function generateInvoicePDF(header, lines = []) {
         doc.text(t, x1 + 2, y + rowH * (i + 2) - 1);
     });
     const bankInfo = await getInvoiceBankDetails(header?.InvoiceNo);
-    console.log("Bank Info:", bankInfo);
 
     // Bank details
     const bankDetails = [

@@ -1,11 +1,5 @@
 // On DOM load
 document.addEventListener("DOMContentLoaded", async () => {
-    const accessGranted = await checkAccess(UserLoginID, 'PartyRegistration');
-    if (!accessGranted) {
-        disableForm();
-        showToast("You do not have permission to view this form.");
-        return;
-    }
     createLoader();
     if (perWrite) saveButton.disabled = false;
     enableForm();

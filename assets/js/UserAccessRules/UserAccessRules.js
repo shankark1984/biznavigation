@@ -15,12 +15,7 @@ let userRoles = [];
 
 // On DOM load
 document.addEventListener("DOMContentLoaded", async () => {
-    if (!await checkAccess(UserLoginID, 'UserAccessRules')) {
-        disableForm();
-        alert("You do not have permission to view this form.");
-        return;
-    }
-    handleUserTypePermissions();
+
     if (perWrite) {
         saveButton.disabled = false;
         newButton.disabled = false; // Enable new button when form is accessible

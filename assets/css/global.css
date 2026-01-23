@@ -178,3 +178,25 @@ input:required {
         background-color: rgba(0, 0, 0, 0.04);
     }
 }
+
+/* Simplified CSS */
+#freightTable th:nth-child(13),
+#freightTable td:nth-child(13) {
+    display: none;
+}
+
+.form-control-sm {
+    min-height: calc(1.5em + 0.5rem + 2px);
+}
+
+.card-header {
+    padding: 0.75rem 1.25rem;
+}
+
+.nav-tabs .nav-link {
+    padding: 0.5rem 1rem;
+}
+
+.bg-light-input {
+    background-color: #e6f7ff;
+}

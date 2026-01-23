@@ -1,3 +1,8 @@
+// Event listeners
+document.getElementById('addFreightRow').addEventListener('click', addFreightRow);
+document.getElementById('chargesTypeInput').addEventListener('change', onChargeTypeChange);
+document.getElementById('chargesTypeInput').addEventListener('change', onChargeTypeOrPartyChange);
+
 // Cache DOM elements that are reused
 const freightElements = {
     awbNo: document.getElementById('awbNo'),
@@ -61,7 +66,6 @@ function clearFreightInputs() {
     freightElements.remarksDetails.value = '';
     freightElements.partyDefaultTax.value = '';
 }
-
 async function addFreightRow() {
     const {
         awbNo,
@@ -180,7 +184,8 @@ async function saveFreightCharges() {
                 IGSTAmt: parseFloat(cells[8].textContent) || 0,
                 TotalGSTAmt: parseFloat(cells[9].textContent) || 0,
                 GrandTotalAmt: parseFloat(cells[10].textContent) || 0,
-                created_by: userLoginID
+                created_by: userLoginID,
+                created_at: localtimeStamp
             });
         }
 
@@ -243,6 +248,7 @@ async function loadFreightCharges() {
     }
 }
 
+
 // Helper to reconstruct tax type text from stored values
 function getTaxTypeText(item) {
     const parts = [];
@@ -274,54 +280,34 @@ function recalcTotals() {
     });
 }
 
-// Event listeners
-document.getElementById('addFreightRow').addEventListener('click', addFreightRow);
-document.getElementById('chargesTypeInput').addEventListener('change', onChargeTypeChange);
-document.getElementById('chargesTypeInput').addEventListener('change', onChargeTypeOrPartyChange);
-
 // Make sure freightElements.freightTable references the <tbody>:
-const tbody = freightElements.freightTable;
 
-tbody.addEventListener('click', async function (e) {
+freightElements.freightTable.addEventListener('click', async function (e) {
     if (!e.target.classList.contains('delete-row')) return;
 
-    // 1. Identify the row and extract key values
     const row = e.target.closest('tr');
     const cells = row.querySelectorAll('td');
-
-    // Assuming AWB No is in an input elsewhere:
     const docketNo = freightElements.awbNo.value.trim();
     const chargesType = cells[0].textContent.trim();
+    const tempFormID = freightElements.tempFormID.value.trim();
 
-    if (!docketNo || !chargesType) {
-        return alert('Missing DocketNo or ChargesType!');
-    }
+    if (!docketNo || !chargesType) return alert('Missing DocketNo or ChargesType!');
 
-    // Confirm deletion
-    if (!confirm(`Delete charge "${chargesType}" for AWB ${docketNo}?`)) {
-        return;
-    }
+    if (!confirm(`Delete charge "${chargesType}" for AWB ${docketNo}?`)) return;
 
     try {
-        // 2. Call Supabase delete
-        const tempFormID = freightElements.tempFormID.value.trim(); // Assuming this is a hidden input field
-
         const { error } = await supabaseClient
             .from('InternationalBookingCharges')
             .delete()
             .match({ ID_IB: tempFormID, DocketNo: docketNo, ChargesType: chargesType });
 
-        if (error) {
-            console.error('Delete error:', error.message);
-            return alert('Failed to delete charge. See console.');
-        }
+        if (error) throw error;
 
-        // 3. On success, remove the row & recalc
         row.remove();
         recalcTotals();
         console.log(`Deleted ${chargesType} for AWB ${docketNo}`);
     } catch (err) {
         console.error('Unexpected error:', err);
-        alert('An unexpected error occurred during deletion.');
+        alert('Failed to delete charge. See console.');
     }
 });

@@ -6,11 +6,6 @@ let sortOrder = 'asc';
 let partyNameCache = {};
 
 document.addEventListener('DOMContentLoaded', async () => {
-    if (!await checkAccess(UserLoginID, "reportCustomerInvoiceDetails")) {
-        disableForm();
-        alert("You do not have permission to view this form.");
-        return;
-    }
 
     flatpickr("#dateRange", { mode: "range", dateFormat: "Y-m-d" });
 
