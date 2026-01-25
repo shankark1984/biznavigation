@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById("dateOfBirth").max = today;
     await loadEmployeeList();
     await loadUserTypes();
-
+    loadDatalist('bloodGroupList', 'BloodGroup');
 });
 
 document.getElementById('employeeName')

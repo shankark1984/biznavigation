@@ -9,6 +9,25 @@ let filterTimer;
  * INIT
  *************************************************/
 
+document.addEventListener('DOMContentLoaded', async () => {
+    createLoader();
+
+    const addPortBtn = document.getElementById('addPortDetails');
+    addPortBtn.addEventListener('click', savePort);
+
+
+    const checkPermission = () => {
+        addPortBtn.disabled = !canModify();
+    };
+
+    checkPermission();
+    setTimeout(checkPermission, 300);
+
+    await fetchPorts();
+    setupFilterListeners();
+
+});
+
 let portTabInitialized = false;
 
 document.getElementById('portDetails-tab')
@@ -31,7 +50,7 @@ document.getElementById('portDetails-tab')
         };
 
         checkPermission();
-        setTimeout(checkPermission, 150);
+        setTimeout(checkPermission, 300);
 
         await fetchPorts();
         setupFilterListeners();
@@ -121,7 +140,7 @@ function attachPortTableEvents() {
             const row = btn.closest('tr');
             editPortDetails(
                 row.dataset.id,
-                row.dataset.country1,
+                row.dataset.country,
                 row.dataset.code,
                 row.dataset.name,
                 row.dataset.type,
@@ -150,7 +169,7 @@ async function savePort() {
 
     const btn = document.getElementById('addPortDetails');
     const mode = btn.dataset.mode; // insert | update
-    const id = Number(document.getElementById('tempFormID').value);
+    const id = document.getElementById('tempFormID').value;
 
     const portCountryName = document.getElementById('portCountryName').value.trim().toUpperCase();
     const portCode = document.getElementById('portCode').value.trim().toUpperCase();
@@ -170,7 +189,6 @@ async function savePort() {
         );
 
         if (exists) {
-
             showToast('Port code already exists.');
             return;
         }

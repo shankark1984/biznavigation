@@ -4,6 +4,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (perWrite) saveButton.disabled = false;
     enableForm();
     await loadSuggestions('partySuggestions', 'PartyDetails', CompanyID);
+    await loadDatalist('fixedChargesModeTypeList', 'ModeType');
+    await loadDatalist('fixedChargesShippingTypeList', 'ShippingType');
+    await loadDatalist('fixedChargesTypelist', 'ChargesType');
+
 });
 
 // Global variables
@@ -68,7 +72,7 @@ function convertDateToNumberAndSum(date) {
     return date.getTime().toString().split('').reduce((sum, d) => sum + parseInt(d), 0);
 }
 
-document.getElementById('partyCurrentStatus').addEventListener('change', () => {
+document.getElementById('partyCurrentStatus').addEventListener('change', async () => {
     const status = fields.partyCurrentStatus.value;
     fields.partyDeActiveDate.disabled = status === 'Active';
     if (status === 'Active') fields.partyDeActiveDate.value = '';
@@ -90,6 +94,7 @@ document.getElementById('partyNameReg').addEventListener('change', async () => {
         partyCodeSelect: fields.partyCodes
     });
     await fetchTariffs(partyCode);
+    await loadFixedChargesFromDB();
 
 });
 
@@ -244,6 +249,8 @@ saveButton.addEventListener('click', async (e) => {
         billingTableBody: document.querySelector('#billingAddressTable tbody'),
         partyCodeSelect: fields.partyCodes
     });
+
+    await saveFixedChargesToDB();
 
     showToast(`Party ${isInsert ? 'saved' : 'updated'} successfully!`);
 

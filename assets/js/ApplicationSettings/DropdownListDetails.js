@@ -46,6 +46,7 @@ async function fetchDropdownList() {
         const { data, error } = await supabaseClient
             .from('dropdown_list')
             .select('*')
+            .order('type_of_value')
             .order('description');
 
         if (error) throw error;
@@ -149,41 +150,46 @@ async function saveDropdownItem() {
     const mode = btn.dataset.mode || 'insert';
     const id = Number(document.getElementById('tempFormID').value);
 
-    const valueassignedto = document.getElementById('valueassignedto').value.trim();
-    const description = document.getElementById('description').value.trim().toUpperCase();
+    const type_of_value = document.getElementById('valueassignedto').value.trim();
+    const description = document.getElementById('description').value.trim();
     const condition = document.getElementById('condition').value.trim();
     const fixedvalue = document.getElementById('fixedvalue').value.trim();
     const hsncode = document.getElementById('hsncode').value.trim();
 
-    if (!valueassignedto || !description || !condition || !fixedvalue || !hsncode) {
+    if (!type_of_value || !description || !condition || !fixedvalue || !hsncode) {
         return showToast('All fields are required.');
     }
 
     try {
         if (mode === 'insert') {
-            const exists = dropdownListData.some(
-                d => d.description.toLowerCase() === description.toLowerCase()
+            const exists = dropdownListData.some(d =>
+                d.description?.toLowerCase() === description.toLowerCase() &&
+                d.type_of_value?.toLowerCase() === type_of_value.toLowerCase()
             );
+
             if (exists) return showToast('Item already exists.');
 
-            const { error } = await supabaseClient.from('dropdown_list').insert([{
-                type_of_value: valueassignedto,
-                description,
-                condition,
-                value: fixedvalue,
-                hsn_code: hsncode,
-                company_id: CompanyID,
-                created_by: UserLoginID,
-                created_at: localtimeStamp
-            }]);
+            const { error } = await supabaseClient
+                .from('dropdown_list')
+                .insert([{
+                    type_of_value,
+                    description,
+                    condition,
+                    value: fixedvalue,
+                    hsn_code: hsncode,
+                    company_id: CompanyID,
+                    created_by: UserLoginID,
+                    created_at: localtimeStamp
+                }]);
 
             if (error) throw error;
             showToast('Dropdown item added.');
 
         } else {
-            const { error } = await supabaseClient.from('dropdown_list')
+            const { error } = await supabaseClient
+                .from('dropdown_list')
                 .update({
-                    type_of_value: valueassignedto,
+                    type_of_value,
                     description,
                     condition,
                     value: fixedvalue,
@@ -203,6 +209,7 @@ async function saveDropdownItem() {
         showToast('Save failed.');
     }
 }
+
 
 /*************************************************
  * DELETE

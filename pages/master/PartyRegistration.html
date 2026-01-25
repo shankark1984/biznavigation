@@ -34,21 +34,17 @@
             <div class="card-body">
                 <form class="needs-validation" novalidate>
                     <!-- Action Buttons -->
-                    <div class="d-flex flex-wrap gap-2 mb-3">
-                        <button type="button" class="btn btn-primary btn-sm" id="newButton" title="Create new party">
-                            <i class="bi bi-file-earmark-plus"></i> New
-                        </button>
-                        <button type="button" class="btn btn-warning btn-sm" id="modifyButton" title="Modify party"
-                            disabled><i class="bi bi-pencil"></i> Modify
-                        </button>
-                        <button type="button" class="btn btn-danger btn-sm" id="deleteButton" title="Delete party"
-                            disabled><i class="bi bi-trash"></i> Delete
-                        </button>
-                        <button type="button" class="btn btn-info btn-sm" id="reportButton" title="Generate report"
-                            disabled><i class="bi bi-file-earmark-text"></i> Report
-                        </button>
-                        <button type="button" class="btn btn-success btn-sm" id="saveButton" title="Save changes">
-                            <i class="bi bi-save"></i> Save</button>
+                    <div class="d-flex flex-wrap gap-1 mb-2">
+                        <button type="button" class="btn btn-primary btn-sm" id="newButton" aria-label="New"><i
+                                class="bi bi-file-earmark-plus"></i> New</button>
+                        <button type="button" class="btn btn-warning btn-sm" id="modifyButton" aria-label="Modify"><i
+                                class="bi bi-pencil"></i> Modify</button>
+                        <button type="button" class="btn btn-danger btn-sm" id="deleteButton" aria-label="Delete"
+                            disabled><i class="bi bi-trash"></i> Delete</button>
+                        <button type="button" class="btn btn-info btn-sm" id="reportButton" aria-label="Report"
+                            disabled><i class="bi bi-file-earmark-text"></i> Report</button>
+                        <button type="button" class="btn btn-success btn-sm" id="saveButton" data-mode="insert"
+                            aria-label="Save"><i class="bi bi-save"></i> Save</button>
                     </div>
 
                     <!-- Main Form Sections -->
@@ -439,38 +435,58 @@
 
                                 <div class="col-md-2">
                                     <label for="fixedChargesMovementType" class="form-label">Movement Type</label>
-                                    <select id="fixedChargesMovementType" class="form-select"></select>
+                                    <select class="form-control" id="fixedChargesMovementType" required>
+                                        <option value="">Choose...</option>
+                                        <option value="Customs Clearance">Customs Clearance</option>
+                                        <option value="Domestic">Domestic</option>
+                                        <option value="Export">Export</option>
+                                        <option value="Forwarding">Forwarding</option>
+                                        <option value="FTL or FCL">FTL or FCL</option>
+                                        <option value="Import">Import</option>
+                                    </select>
                                 </div>
-
                                 <div class="col-md-2">
                                     <label for="fixedChargesTransitType" class="form-label">Transit Type</label>
-                                    <select id="fixedChargesTransitType" class="form-select"></select>
+                                    <input list="transitTypeList" class="form-control" id="fixedChargesTransitType"
+                                        name="fixedChargesTransitType" required autocomplete="off">
+                                    <datalist id="transitTypeList"></datalist>
                                 </div>
 
                                 <div class="col-md-2">
                                     <label for="fixedChargesModeType" class="form-label">Mode Type</label>
-                                    <select id="fixedChargesModeType" class="form-select"></select>
+                                    <input list="fixedChargesModeTypeList" class="form-control"
+                                        id="fixedChargesModeType" name="fixedChargesModeType" required
+                                        autocomplete="off">
+                                    <datalist id="fixedChargesModeTypeList"></datalist>
+
                                 </div>
 
                                 <div class="col-md-2">
                                     <label for="fixedChargesShippingType" class="form-label">Shipping Type</label>
-                                    <select id="fixedChargesShippingType" class="form-select"></select>
+                                    <input list="fixedChargesShippingTypeList" class="form-control"
+                                        id="fixedChargesShippingType" name="fixedChargesShippingType" required
+                                        autocomplete="off">
+                                    <datalist id="fixedChargesShippingTypeList"></datalist>
                                 </div>
 
-                                <div class="col-md-2">
+                                <div class="col-md-4">
                                     <label for="fixedChargesType" class="form-label">Charges Type</label>
                                     <input type="text" id="fixedChargesType" list="fixedChargesTypelist"
                                         class="form-control" required autocomplete="off">
                                     <datalist id="fixedChargesTypelist"></datalist>
                                 </div>
                                 <div class="col-md-2">
-                                    <label for="fixedChargesPercentage" class="form-label">Fixed Percentage</label>
-                                    <input type="number" class="form-control" id="fixedChargesPercentage" step="0.01">
+                                    <label for="fixedChargesPercentage" class="form-label">Percentage</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control text-end" id="fixedChargesPercentage"
+                                            step="0.01" min="0" max="100" placeholder="0.00">
+                                        <span class="input-group-text">%</span>
+                                    </div>
                                 </div>
 
                                 <div class="col-md-2">
-                                    <label for="fixedChargesAmount" class="form-label">Fixed Amount</label>
-                                    <input type="number" class="form-control" id="fixedChargesAmount" step="0.01">
+                                    <label for="fixedChargesAmount" class="form-label">Amount</label>
+                                    <input type="number" class="form-control text-end" id="fixedChargesAmount" step="0.01">
                                 </div>
                                 <div class="col-md-2">
                                     <label for="fixedChargesFor" class="form-label">Fixed For</label>
@@ -482,7 +498,7 @@
                                 </div>
 
                                 <div class="col-md-2 d-grid">
-                                    <button type="button" class="btn btn-primary mt-4" id="addTariffButton">
+                                    <button type="button" class="btn btn-primary mt-4" id="addFixedChargesButton">
                                         <i class="bi bi-plus-circle"></i> Add Fixed Charges
                                     </button>
                                 </div>
@@ -556,8 +572,10 @@
     <script src="../../assets/js/utils/taxDescription.js" defer></script>
     <script src="../../assets/js/PartyRegistration/PartyBillingAddress.js" defer></script>
     <script src="../../assets/js/PartyRegistration/Tariff.js" defer></script>
+
     <script src="../../assets/js/PartyRegistration/PartyRegistration.js" defer></script>
     <script src="../../assets/js/utils/dropdownLoader.js" defer></script>
+    <script src="../../assets/js/PartyRegistration/FixedCharges.js" defer></script>
     <script src="../../assets/js/utils/logout.js" defer></script>
 
     <!-- Form Validation -->

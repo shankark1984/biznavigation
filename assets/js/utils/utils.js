@@ -1127,13 +1127,14 @@ async function loadDatalist(datalistId, valueType) {
         return;
     }
 
+    console.log(`Loading datalist for: ${valueType}`);
     datalist.innerHTML = '';
 
     const { data, error } = await supabaseClient
         .from('dropdown_list')
         .select('description')
         .eq('type_of_value', valueType)
-        .eq('company_id', CompanyID)
+        .in('company_id', ['All', CompanyID])
         .order('description', { ascending: true });
 
     if (error) {
@@ -1141,12 +1142,20 @@ async function loadDatalist(datalistId, valueType) {
         return;
     }
 
+    if (!data || data.length === 0) {
+        console.warn(`No values found for ${valueType}`);
+        return;
+    }
+
+    console.log(`Loaded ${data.length} options for ${valueType}`);
+
     data.forEach(({ description }) => {
         const option = document.createElement('option');
-        option.value = description;
+        option.value = description; // ✅ REQUIRED for datalist
         datalist.appendChild(option);
     });
 }
+
 
 function showSpinner() {
     const spinner = document.getElementById('loadingSpinner');
