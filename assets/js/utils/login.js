@@ -95,7 +95,7 @@ async function login() {
         }
 
         /* ---------- CREATE / UPDATE SESSION ---------- */
-        
+        // sessionToken = crypto.randomUUID();
 
         await supabaseClient
             .from('user_sessions')
@@ -129,6 +129,8 @@ async function login() {
         setLoading(false);
     }
 }
+// store locally
+localStorage.setItem('session_token', sessionToken);
 
 document.getElementById('logoutOtherSessionsBtn')
     .addEventListener('click', async () => {

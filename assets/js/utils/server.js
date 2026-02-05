@@ -186,14 +186,12 @@ function getDeviceId() {
 }
 
 
-const sessionToken = crypto.randomUUID();
-sessionStorage.setItem('session_token', sessionToken);
-
 async function checkSessionToken() {
-    const sessionToken = sessionStorage.getItem('session_token');
-    const userId = UserLoginID;
+    const sessionToken = localStorage.getItem('session_token');
 
-    if (!sessionToken || !userId) {
+    console.log("Checking session token:", sessionToken, UserLoginID);
+
+    if (!sessionToken || !UserLoginID) {
         redirectToLogin();
         return;
     }
@@ -201,24 +199,29 @@ async function checkSessionToken() {
     const { data, error } = await supabaseClient
         .from('user_sessions')
         .select('is_active')
-        .eq('user_id', userId)
+        .eq('user_id', UserLoginID)
         .eq('session_token', sessionToken)
         .maybeSingle();
 
     if (error || !data || !data.is_active) {
-        // sessionStorage.removeItem('session_token');
-        // window.location.replace('/index.html');
+        clearSession();
+        redirectToLogin();
         return;
     }
 
-
-    // Update last_active (optional but recommended)
     await supabaseClient
         .from('user_sessions')
         .update({ last_active: new Date().toISOString() })
         .eq('session_token', sessionToken);
 }
 
+
+function clearSession() {
+    sessionStorage.removeItem('session_token');
+}
+function redirectToLogin() {
+    window.location.replace('/index.html');
+}
 
 const now = new Date();
 const localtimeStamp = now.toLocaleString(); // Local date and time
@@ -250,3 +253,4 @@ let customerGSTRate = null;
 // const USER_TYPE = Number(UserType);
 
 const reSetPass = '12345'; // Default password for new users
+const sessionToken = crypto.randomUUID();

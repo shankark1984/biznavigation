@@ -155,7 +155,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (!formID || !href) return;
 
     const accessGranted = permissions[formID]?.CanRead ?? false;
-
+    checkSessionToken();
     if (!accessGranted) {
       item.classList.add("disabled");
       item.setAttribute("aria-disabled", "true");
@@ -173,7 +173,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 // ✅ Fetch all permissions for the user
 async function fetchAllPermissions(userLoginID) {
   try {
-    checkSessionToken();
+    // checkSessionToken();
     const { data, error } = await supabaseClient
       .from("UserAccessRules")
       .select("*")
