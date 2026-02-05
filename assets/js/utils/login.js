@@ -89,11 +89,13 @@ async function login() {
             !activeSessions.some(s => s.device_id === deviceId)) {
 
             showError('You are already logged in from another device.');
+            // Optionally, you could add a "Logout Other Sessions" button here to allow the user to terminate other sessions.
+            document.getElementById('logoutOtherSessionsBtn').classList.remove('d-none');
             return;
         }
 
         /* ---------- CREATE / UPDATE SESSION ---------- */
-        const sessionToken = crypto.randomUUID();
+        
 
         await supabaseClient
             .from('user_sessions')
@@ -128,12 +130,20 @@ async function login() {
     }
 }
 
+document.getElementById('logoutOtherSessionsBtn')
+    .addEventListener('click', async () => {
 
-function getDeviceId() {
-    let deviceId = localStorage.getItem('device_id');
-    if (!deviceId) {
-        deviceId = crypto.randomUUID();
-        localStorage.setItem('device_id', deviceId);
-    }
-    return deviceId;
-}
+        const username = el.username.value.trim();
+
+
+        const result = await logoutOtherSessions(username);
+
+        if (!result.success) {
+            alert('Failed to terminate sessions');
+            return;
+        }
+
+        alert('Other sessions logged out. Please login again.');
+        location.reload();
+    });
+

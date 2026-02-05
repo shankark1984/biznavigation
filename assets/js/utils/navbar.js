@@ -134,7 +134,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Logout functionality
   const logoutBtn = document.querySelector(".logout-btn");
   if (logoutBtn) {
-    logoutBtn.addEventListener("click", () => {
+    logoutBtn.addEventListener("click", async () => {
+      console.log("Logging out...", userLoginID);
+      await logoutOtherSessions(userLoginID);
       localStorage.clear();
       location.replace("/index.html");
     });
@@ -171,6 +173,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 // ✅ Fetch all permissions for the user
 async function fetchAllPermissions(userLoginID) {
   try {
+    checkSessionToken();
     const { data, error } = await supabaseClient
       .from("UserAccessRules")
       .select("*")

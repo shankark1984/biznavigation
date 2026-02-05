@@ -16,8 +16,10 @@ function checkIdleTime() {
 }
 
 // Function to log out the user
-function logoutUser() {
+async function logoutUser() {
+
     logoutlocalstorage();
+
     // alert("You have been logged out due to inactivity.");
     // window.location.href = '/logout'; 
     // Redirect to your logout route
@@ -39,8 +41,10 @@ window.onload = function () {
     // Check every minute if the user is idle
     setInterval(checkIdleTime, 60 * 1000); // Check every 1 minute
 };
-function logoutlocalstorage() {
+async function logoutlocalstorage() {
     // Clear user data from localStorage
+    await logoutOtherSessions(UserLoginID);
+    clearPermissionCache(localStorage.getItem('UserLoginID'));
     localStorage.removeItem('EmpCode');
     localStorage.removeItem('UserName');
     localStorage.removeItem('UserLoginID');
@@ -48,6 +52,7 @@ function logoutlocalstorage() {
     localStorage.removeItem('CompanyID');
     localStorage.removeItem('WorkingBranch');
     localStorage.removeItem('CompanyShortCode');
+    sessionStorage.removeItem('session_token');
 
     window.location.href = '../../index.html';
 }

@@ -160,6 +160,66 @@ function handleUserTypePermissions() {
     newButton.disabled = UserType !== 1;
 }
 
+async function logoutOtherSessions(userId) {
+    try {
+        const { error } = await supabaseClient
+            .from('user_sessions')
+            .update({ is_active: false })
+            .eq('user_id', userId);
+
+        if (error) throw error;
+
+        return { success: true };
+    } catch (err) {
+        console.error('Logout other sessions failed:', err);
+        return { success: false, error: err };
+    }
+}
+
+function getDeviceId() {
+    let deviceId = localStorage.getItem('device_id');
+    if (!deviceId) {
+        deviceId = crypto.randomUUID();
+        localStorage.setItem('device_id', deviceId);
+    }
+    return deviceId;
+}
+
+
+const sessionToken = crypto.randomUUID();
+sessionStorage.setItem('session_token', sessionToken);
+
+async function checkSessionToken() {
+    const sessionToken = sessionStorage.getItem('session_token');
+    const userId = UserLoginID;
+
+    if (!sessionToken || !userId) {
+        redirectToLogin();
+        return;
+    }
+
+    const { data, error } = await supabaseClient
+        .from('user_sessions')
+        .select('is_active')
+        .eq('user_id', userId)
+        .eq('session_token', sessionToken)
+        .maybeSingle();
+
+    if (error || !data || !data.is_active) {
+        // sessionStorage.removeItem('session_token');
+        // window.location.replace('/index.html');
+        return;
+    }
+
+
+    // Update last_active (optional but recommended)
+    await supabaseClient
+        .from('user_sessions')
+        .update({ last_active: new Date().toISOString() })
+        .eq('session_token', sessionToken);
+}
+
+
 const now = new Date();
 const localtimeStamp = now.toLocaleString(); // Local date and time
 let rowIDEdit = null;
