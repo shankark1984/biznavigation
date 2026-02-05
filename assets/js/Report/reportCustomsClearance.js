@@ -38,6 +38,9 @@ function getFilters() {
         financialYear: document.getElementById('financialYear').value.trim(),
         invoiceStatus: document.getElementById('invoiceStatus').value.trim(),
         customsBroker: document.getElementById('customsBroker').value.trim(),
+        transitType: document.getElementById('transitType').value.trim(),
+        clearanceCountry: document.getElementById('clearanceCountry').value.trim(),
+        clearancePort: document.getElementById('clearancePort').value.trim(),
     };
 }
 function enableSortableHeaders() {
@@ -76,7 +79,7 @@ async function loadReportSuggestions() {
     populateDatalists(data, 'CustomsBroker', 'customsBrokerList');
 
     const financialYears = [...new Set(data.map(item => {
-        const year = new Date(item.BookedDate).getFullYear();
+        const year = new Date(item.JobDate).getFullYear();
         return `${year}-${year + 1}`;
     }))];
 
@@ -199,7 +202,7 @@ function renderTable(data) {
             <td>${row.IGSTAmt || '0'}</td>
             <td>${row.TotalGSTAmt || ''}</td>
             <td>${row.GrandTotalAmt || ''}</td>
-            <td>${row.InvoiceNumber || ''}</td>
+            <td>${row.InvoiceNo || ''}</td>
             <td>${row.InvoiceStatus || ''}</td>
         </tr>
     `).join('');
@@ -262,7 +265,7 @@ async function exportToExcel() {
             <td>${row.IGSTAmt || '0'}</td>
             <td>${row.TotalGSTAmt || ''}</td>
             <td>${row.GrandTotalAmt || ''}</td>
-            <td>${row.InvoiceNumber || ''}</td>
+            <td>${row.InvoiceNo || ''}</td>
             <td>${row.InvoiceStatus || ''}</td>
         </tr>`;
     });
@@ -300,7 +303,7 @@ async function exportToPdf() {
         i + 1,
         row.JobID || '',
         formatDate(row.JobDate),
-        row.CustomerName || '',
+        row.PartyName || '',
         row.BLAWBNo || '',
         formatDate(row.BLAWBDate),
         row.BENo || '',
@@ -323,7 +326,7 @@ async function exportToPdf() {
         formatNumber(row.IGSTAmt),
         formatNumber(row.TotalGSTAmt),
         formatNumber(row.GrandTotalAmt),
-        row.InvoiceNumber || '',
+        row.InvoiceNo || '',
         row.InvoiceStatus || ''
     ]);
 
@@ -354,7 +357,7 @@ async function fetchAllFilteredData(filters = {}) {
             .eq('company_id', CompanyID);
 
 
-        if (filters.JobID) query = query.ilike('JobID', `%${filters.jobNo}%`);
+        if (filters.JobID) query = query.ilike('JobID', `%${filters.JobID}%`);
         if (filters.bLAWBNo) query = query.ilike('BLAWBNo', `%${filters.bLAWBNo}%`);
         if (filters.bENo) query = query.ilike('BENo', `%${filters.bENo}%`);
         if (filters.customerName) query = query.ilike('PartyName', `%${filters.customerName}%`);
