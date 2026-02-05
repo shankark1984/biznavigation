@@ -16,6 +16,16 @@
         background-color: #fff3cd !important;
         transition: background-color 1s ease;
     }
+
+    body {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+    }
+
+    #root {
+        flex: 1;
+    }
 </style>
 
 <body class="bg-light">
@@ -486,7 +496,8 @@
 
                                 <div class="col-md-2">
                                     <label for="fixedChargesAmount" class="form-label">Amount</label>
-                                    <input type="number" class="form-control text-end" id="fixedChargesAmount" step="0.01">
+                                    <input type="number" class="form-control text-end" id="fixedChargesAmount"
+                                        step="0.01">
                                 </div>
                                 <div class="col-md-2">
                                     <label for="fixedChargesFor" class="form-label">Fixed For</label>
