@@ -25,6 +25,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     populateContainerTypes();
     setupEventListeners();
     loadDatalist('tabPackingTypeSuggestions', 'PackingType'); // Static data
+    initDatalistValidation();
 });
 
 document.getElementById("awbNo")

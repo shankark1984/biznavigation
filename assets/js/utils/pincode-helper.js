@@ -11,7 +11,9 @@ const currencyDatalist = document.getElementById('currencyListDatalist');
 // Attach pin code listeners on DOM load
 document.addEventListener('DOMContentLoaded', function () {
     setupPincodeListener('originPinCode', 'orgincity');
+    setupPincodeListener('originPinCode', 'originCity');
     setupPincodeListener('destinationPinCode', 'destinationcity');
+    setupPincodeListener('destinationPincode', 'destinationCity');
     setupPincodeListener('pinCode', 'city');
     setupPincodeListener('billingPinCode', 'billingCity', 'billingState', 'billingCountry');
     setupPincodeListener('branchPinCode', 'branchCity', 'branchState', 'branchCountry');

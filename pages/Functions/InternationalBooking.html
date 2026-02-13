@@ -94,7 +94,8 @@
                         <div class="col-md-5 col-sm-6">
                             <label class="form-label">Customer Name</label>
                             <input list="partySuggestions" class="form-control" id="partyName" required
-                                placeholder="Choose..." autocomplete="off">
+                                placeholder="Choose..." data-force-list="true" data-list-id="partySuggestions"
+                                autocomplete="off">
                             <datalist id="partySuggestions"></datalist>
                         </div>
                         <!-- Movement Type Group -->
@@ -149,7 +150,8 @@
                         <div class="col-md-4 col-sm-6">
                             <label class="form-label">Service Provider</label>
                             <input list="vendorSuggestions" class="form-control" id="serviceProvider" required
-                                placeholder="Choose..." autocomplete="off">
+                                data-force-list="true" data-list-id="vendorSuggestions" placeholder="Choose..."
+                                autocomplete="off">
                             <datalist id="vendorSuggestions"></datalist>
                         </div>
                         <div class="col-md-4 col-sm-6">
@@ -204,28 +206,32 @@
                         <div class="col-md-2 col-sm-6">
                             <label class="form-label">Origin</label>
                             <input list="originCountrySuggestions" class="form-control" id="originCountry" required
-                                placeholder="Choose..." autocomplete="new-password"
+                                placeholder="Choose..." autocomplete="new-password" data-force-list="true"
+                                data-list-id="originCountrySuggestions"
                                 oninput="CountryDetails(this.value, 'originCountrySuggestions', 'originCountry')">
                             <datalist id="originCountrySuggestions"></datalist>
                         </div>
                         <div class="col-md-2">
                             <label for="portOfLoading" class="form-label">Port of Loading</label>
-                            <input type="text" id="portOfLoading" list="portOfLoadingDatalist" class="form-control"
-                                required autocomplete="off">
+                            <input type="text" id="portOfLoading" list="portOfLoadingDatalist" originCountrySuggestions
+                                class="form-control" required autocomplete="off" data-force-list="true"
+                                data-list-id="portOfLoadingDatalist">
                             <datalist id="portOfLoadingDatalist"></datalist>
                         </div>
 
                         <div class="col-md-2 col-sm-6">
                             <label class="form-label">Destination</label>
                             <input list="destinationCountrySuggestions" class="form-control" id="destinationCountry"
-                                required placeholder="Choose..." autocomplete="new-password"
+                                required placeholder="Choose..." autocomplete="new-password" data-force-list="true"
+                                data-list-id="destinationCountrySuggestions"
                                 oninput="CountryDetails(this.value, 'destinationCountrySuggestions', 'destinationCountry')">
                             <datalist id="destinationCountrySuggestions"></datalist>
                         </div>
                         <div class="col-md-2">
                             <label for="portOfDischarge" class="form-label">Port of Discharge</label>
                             <input type="text" id="portOfDischarge" list="portOfDischargeDatalist" class="form-control"
-                                required autocomplete="off">
+                                required autocomplete="off" data-force-list="true"
+                                data-list-id="portOfDischargeDatalist">
                             <datalist id="portOfDischargeDatalist"></datalist>
                         </div>
 
@@ -247,7 +253,7 @@
                         <div class="col-md-2 col-sm-6">
                             <label class="form-label">UOM</label>
                             <input list="uOMTypeSuggestions" class="form-control" id="uOMType" required
-                                placeholder="Select UOM">
+                                placeholder="Select UOM" data-force-list="true" data-list-id="uOMTypeSuggestions">
                             <datalist id="uOMTypeSuggestions"></datalist>
                         </div>
 
@@ -310,8 +316,9 @@
                                 <div class="row g-2 text-center">
                                     <div class="col-md-3 col-sm-4 text-start">
                                         <label for="chargesTypeInput" class="form-label small">Charges</label>
-                                        <input list="chargesTypeList" id="chargesTypeInput"
-                                            class="form-control form-control-sm" placeholder="Charges Type">
+                                        <input list="chargesTypeList" id="chargesTypeInput" data-force-list="true"
+                                            data-list-id="chargesTypeList" class="form-control form-control-sm"
+                                            placeholder="Charges Type">
                                         <datalist id="chargesTypeList"></datalist>
                                     </div>
                                     <div class="col-md-1 col-sm-2 text-start">

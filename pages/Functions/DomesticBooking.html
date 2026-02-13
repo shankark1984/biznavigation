@@ -42,7 +42,7 @@
         <div class="card shadow-lg rounded">
             <div class="card-header bg-primary text-white">
                 <h3 class="mb-0">Domestic Booking</h3>
-                <input type="hidden" id="tempFormID" />
+                <input type="" id="tempFormID" />
                 <input type="hidden" id="partyCode" />
                 <input type="hidden" id="consignorCode" />
                 <input type="hidden" id="serviceProviderCode" />
@@ -88,10 +88,12 @@
                         </div>
                         <div class="col-md-4 col-sm-6">
                             <label for="customerName" class="form-label">Customer Name</label>
-                            <input list="customerNameSuggestions" id="customerName" class="form-control"
-                                placeholder="Choose..." autocomplete="off" required />
+                            <input list="customerNameSuggestions" id="customerName" data-force-list="true"
+                                data-list-id="customerNameSuggestions" class="form-control" placeholder="Choose..."
+                                autocomplete="off" required />
                             <datalist id="customerNameSuggestions"></datalist>
                         </div>
+
                         <div class="col-md-2 col-sm-6">
                             <label for="shippingTypeD" class="form-label">Shipping Type</label>
                             <select id="shippingTypeD" class="form-select" required>
@@ -129,8 +131,9 @@
                         </div>
                         <div class="col-md-3 col-sm-6">
                             <label class="form-label">Service Provider</label>
-                            <input list="serviceProviderSuggestions" class="form-control" id="serviceProviderName"
-                                required placeholder="Choose..." autocomplete="off">
+                            <input list="serviceProviderSuggestions" id="serviceProviderName" data-force-list="true"
+                                data-list-id="serviceProviderSuggestions" class="form-control" required
+                                placeholder="Choose..." autocomplete="off">
                             <datalist id="serviceProviderSuggestions"></datalist>
                         </div>
                         <div class="col-md-3 col-sm-6">
@@ -158,7 +161,8 @@
                         <div class="col-md-3 col-sm-6">
                             <label class="form-label">Consignor Name</label>
                             <input list="consignorNameSuggestions" class="form-control" id="consignorName" required
-                                placeholder="Choose..." autocomplete="off">
+                                data-force-list="true" data-list-id="consignorNameSuggestions" placeholder="Choose..."
+                                autocomplete="off">
                             <datalist id="consignorNameSuggestions"></datalist>
                         </div>
                         <div class="col-md-2 col-sm-6">

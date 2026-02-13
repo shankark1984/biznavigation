@@ -7,6 +7,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         await loadSuggestions('consignorNameSuggestions', 'PartyDetails', CompanyID, 'PartyCode', 'PartyName'),
         await loadSuggestions('serviceProviderSuggestions', 'PartyDetails', CompanyID, 'PartyCode', 'PartyName'),
     ]);
+    await setupPincodeListener('originPinCode', 'orgincity');
     await initChargeableWeightCalculator("#actualWeight", "#volumetricWeight", "#chargeableWeight", "#uOMType");
 
     document.getElementById('chargeableWeight').disabled = true;
@@ -14,6 +15,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     populateContainerTypes();
     setupEventListeners();
     loadDatalist('tabPackingTypeSuggestions', 'PackingType'); // Static data
+    initDatalistValidation();
 });
 
 document.getElementById("docketNo")
@@ -22,9 +24,8 @@ document.getElementById("docketNo")
 docketNoInput.addEventListener('change', async () => {
     const docketNo = docketNoInput.value;
     if (!docketNo) return;
-
     try {
-
+        console.log('Docket number changed:', docketNo);
         // 2) Load basic docket details
         await fetchDocketDetails(docketNo);
 
@@ -262,6 +263,7 @@ document.getElementById('newButton').addEventListener('click', () => {
     });
     resetVolumetricTotals();
     toggleContainerTab("");
+    setTempFormID();
 });
 
 modifyButton.addEventListener('click', () => {
@@ -281,10 +283,8 @@ document.getElementById('saveButton').addEventListener('click', async () => {
     const docketNoInput = document.getElementById('docketNo');
     const mode = document.getElementById('saveButton').dataset.mode || 'insert';
 
-    // Helper: safely get element value
     const val = id => document.getElementById(id)?.value || "";
 
-    // Collect form data
     const formData = {
         DocketNo: val('docketNo'),
         BookingDate: val('bookedDate'),
@@ -313,16 +313,13 @@ document.getElementById('saveButton').addEventListener('click', async () => {
         UOMType: val('uOMType')
     };
 
-    console.log('mode:', mode);
-    console.log('Form data to save:', formData);
-    // Add audit fields
     if (mode === 'insert') {
         Object.assign(formData, {
             created_by: UserLoginID,
             created_at: localtimeStamp,
             company_id: CompanyID
         });
-    } else if (mode === 'update') {
+    } else {
         Object.assign(formData, {
             update_by: UserLoginID,
             update_at: localtimeStamp
@@ -330,41 +327,45 @@ document.getElementById('saveButton').addEventListener('click', async () => {
     }
 
     try {
-        let query = supabaseClient.from('DomesticBookingDetails');
         let response;
 
         if (mode === 'insert') {
-            response = await query.insert([formData]).select('id');
-        } else if (mode === 'update') {
-            response = await query
+            const { data, error } = await supabaseClient
+                .from('DomesticBookingDetails')
+                .insert(formData)
+                .select('id')     // IMPORTANT
+                .single();        // ensures single row returned
+
+            if (error) throw error;
+
+            insertedID = data.id;     // <-- ID RECEIVED HERE
+        } else {
+            const { data, error } = await supabaseClient
+                .from('DomesticBookingDetails')
                 .update(formData)
                 .eq('DocketNo', docketNoInput.value)
                 .eq('company_id', CompanyID)
-                .select('id');
-        } else {
-            throw new Error('Invalid mode for saveButton');
+                .select('id')
+                .single();
+
+            if (error) throw error;
+
+            insertedID = data.id;
         }
 
-        if (response.error) throw response.error;
+        console.log("Inserted/Updated ID:", insertedID);
+        document.getElementById('tempFormID').value = insertedID; // Store ID for related tables
 
-        insertedID = response.data?.[0]?.id;
-        saveFreightCharges(); // Save freight charges after main record is saved
-        saveNewVolumetricRows(); // Save volumetric details after main record is saved
-        saveEquipmentDetails(); // Save container details after main record is saved
-        console.log(`Booking details ${mode} successful:`, response.data);
+        await saveFreightCharges();
+        await saveNewVolumetricRows();
+        await saveEquipmentDetails();
+
         showToast(`Booking details ${mode} successful!`);
 
-        // Update button states
-        const saveBtn = document.getElementById('saveButton');
-        saveBtn.disabled = true;
-        saveBtn.dataset.mode = 'update'; // ensure mode is updated
-        if (typeof modifyButton !== "undefined") modifyButton.disabled = false;
-        toggleEditMode(true);
     } catch (err) {
-        console.error(`Error while ${mode} booking details:`, err);
+        console.error(`Error while ${mode}:`, err);
     }
 });
-
 
 document.getElementById('modeTypeD').addEventListener('change', function () {
     toggleContainerTab(this.value);

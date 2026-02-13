@@ -1,3 +1,5 @@
+let deletedEquipmentNumbers = [];
+
 function validateContainerNumber(containerNumber) {
     // Ensure input is uppercase
     containerNumber = containerNumber.toUpperCase().trim();
@@ -29,7 +31,7 @@ function validateContainerNumber(containerNumber) {
             value = parseInt(char, 10);
         }
 
-        sum += value * Math.pow(base, i);
+        sum += value * (1 << i);   // faster (2^i)
     }
 
     const expectedCheckDigit = sum % 11 % 10;
@@ -54,17 +56,20 @@ document.getElementById('containerNumber').addEventListener('input', function ()
     input.value = input.value.toUpperCase();
 
     const feedback = document.getElementById('containerFeedback');
-    const modeValue = document.getElementById('modeTypeD').value; // FCL / FTL
+    const modeValue = document.getElementById('modeTypeD').value;
 
-    // If Vehicle (FTL) → no validation required
     if (modeValue === 'FTL') {
-        input.classList.remove('is-invalid');
-        input.classList.remove('is-valid');
+        input.classList.remove('is-invalid', 'is-valid');
         feedback.classList.add('d-none');
         return;
     }
 
-    // Validate only for Container (FCL)
+    if (input.value.length < 11) {
+        input.classList.remove('is-invalid', 'is-valid');
+        feedback.classList.add('d-none');
+        return;
+    }
+
     const result = validateContainerNumber(input.value);
 
     if (!result.valid) {
@@ -80,92 +85,125 @@ document.getElementById('containerNumber').addEventListener('input', function ()
 });
 
 
-
 function addContainerRow(containerType, containerNumber) {
+
     const tableBody = document.querySelector('#containerDetailsTable tbody');
+
+    // Prevent duplicate equipment number
+    const exists = Array.from(tableBody.rows)
+        .some(r => r.cells[2].textContent.toUpperCase() === containerNumber.toUpperCase());
+
+    if (exists) {
+        alert('This equipment number already exists in the list.');
+        return;
+    }
+
     const rowCount = tableBody.rows.length + 1;
+
     const newRow = document.createElement('tr');
+    newRow.classList.add('new-row');          // mark NEW row
+    newRow.dataset.rowType = 'new';
+
     newRow.innerHTML = `
         <td>${rowCount}</td>
         <td>${containerType}</td>
         <td>${containerNumber}</td>
         <td>
-            <button class="btn btn-danger btn-sm remove-row" onclick="removeContainerRow(this)">Remove</button>
+            <button class="btn btn-danger btn-sm remove-row"
+                onclick="removeContainerRow(this)">Remove</button>
         </td>
     `;
+
     tableBody.appendChild(newRow);
-    document.getElementById('containerNumber').value = ''; // Clear input after adding
-    document.getElementById('containerType').value = ''; // Clear container type after adding
-    document.getElementById('containerFeedback').classList.add('d-none'); // Hide feedback
+
+    document.getElementById('containerNumber').value = '';
+    document.getElementById('containerType').value = '';
+    document.getElementById('containerFeedback').classList.add('d-none');
 }
-function removeContainerRow(button) {
-    const row = button.closest('tr');
-    row.parentNode.removeChild(row);
-    // Reorder rows after removal
-    const tableBody = document.querySelector('#containerDetailsTable tbody');
-    Array.from(tableBody.rows).forEach((row, index) => {
-        row.cells[0].textContent = index + 1; // Update S No.
-    });
-}
-// Add event listener for the "Add Container" button
+
 document.getElementById('addContainer').addEventListener('click', function () {
+
     const containerType = document.getElementById('containerType').value.trim();
-    const containerNumber = document.getElementById('containerNumber').value.trim();
+    const containerNumber = document.getElementById('containerNumber').value.trim().toUpperCase();
+    const modeValue = document.getElementById('modeTypeD').value;
 
     if (!containerType || !containerNumber) {
-        alert('Please enter both Container Type and Container Number.');
+        alert('Please enter both Equipment Type and Number.');
         return;
     }
 
-    const validationResult = validateContainerNumber(containerNumber);
-    if (!validationResult.valid) {
-        alert(`Invalid Container Number: ${validationResult.error}`);
-        return;
+    if (modeValue === 'FCL') {
+        const validationResult = validateContainerNumber(containerNumber);
+        if (!validationResult.valid) {
+            alert(`Invalid Container Number: ${validationResult.error}`);
+            return;
+        }
     }
 
-    addContainerRow(containerType, validationResult.containerNumber);
+    addContainerRow(containerType, containerNumber);
 });
 
-// save container details as add "containerDetailsTable" to supabase table 
-// ID_IB, EquipmentType, EquipmentNumber, created_by and created_at
-
 async function saveEquipmentDetails() {
-    const tableBody = document.querySelector(`#containerDetailsTable tbody`);
+
+    const tableBody = document.querySelector('#containerDetailsTable tbody');
     const rows = Array.from(tableBody.rows);
-    insertedID = document.getElementById('tempFormID').value; // Assuming you have an input field with ID 'insertedID'
-    if (rows.length === 0) {
-        // alert('No container details to save.');
+
+    const insertedID = document.getElementById('tempFormID').value;
+
+    if (!insertedID) {
+        alert('Booking ID not available.');
         return;
     }
 
-    const containerDetails = rows.map(row => {
-        return {
+    // ---------- INSERT NEW ----------
+    const newRows = rows.filter(row => row.dataset.rowType === 'new');
+
+    if (newRows.length > 0) {
+
+        const equipmentDetails = newRows.map(row => ({
             ID_DB: insertedID,
             EquipmentType: row.cells[1].textContent.trim(),
             EquipmentNumber: row.cells[2].textContent.trim(),
             created_by: UserLoginID,
             created_at: localtimeStamp
-        };
-    });
+        }));
 
-    try {
-        const { data, error } = await supabaseClient
+        const { error: insertError } = await supabaseClient
             .from('DomesticEquipmentDetails')
-            .insert(containerDetails);
+            .insert(equipmentDetails);
 
-        if (error) {
-            console.error('Error saving container details:', error);
-            alert('Error saving container details. Please try again.');
-        } else {
-            // alert('Container details saved successfully!');
+        if (insertError) {
+            console.error(insertError);
+            alert('Error saving new equipment.');
+            return;
         }
-    } catch (error) {
-        console.error('Unexpected error:', error);
-        alert('Unexpected error. Please try again.');
+
+        // mark saved rows as OLD
+        newRows.forEach(row => {
+            row.dataset.rowType = 'old';
+            row.classList.remove('new-row');
+        });
+    }
+
+    // ---------- DELETE REMOVED OLD ----------
+    if (deletedEquipmentNumbers.length > 0) {
+
+        const { error: deleteError } = await supabaseClient
+            .from('DomesticEquipmentDetails')
+            .delete()
+            .eq('ID_DB', insertedID)
+            .in('EquipmentNumber', deletedEquipmentNumbers);
+
+        if (deleteError) {
+            console.error(deleteError);
+            alert('Error deleting removed equipment.');
+            return;
+        }
+
+        deletedEquipmentNumbers = []; // clear tracker
     }
 }
 
-//fetchContainerDetails from supabaseClient to containerDetailsTable
 async function fetchEquipmentDetails(bookingID) {
     try {
         const { data, error } = await supabaseClient
@@ -179,20 +217,29 @@ async function fetchEquipmentDetails(bookingID) {
         }
 
         const tableBody = document.querySelector('#containerDetailsTable tbody');
-        tableBody.innerHTML = ''; // Clear existing rows
+        tableBody.innerHTML = '';
+        deletedEquipmentNumbers = [];
 
         data.forEach((item, index) => {
+
             const newRow = document.createElement('tr');
+            newRow.classList.add('old-row');   // mark OLD line
+            newRow.dataset.rowType = 'old';
+
             newRow.innerHTML = `
                 <td>${index + 1}</td>
                 <td>${item.EquipmentType}</td>
                 <td>${item.EquipmentNumber}</td>
                 <td>
-                    <button class="btn btn-danger btn-sm remove-row" onclick="removeContainerRow(this)" disabled>Remove</button>
+                    <button class="btn btn-danger btn-sm remove-row"
+                        onclick="removeContainerRow(this)">
+                        Remove
+                    </button>
                 </td>
             `;
             tableBody.appendChild(newRow);
         });
+
     } catch (error) {
         console.error('Unexpected error:', error);
     }
@@ -238,4 +285,27 @@ function toggleContainerTab(modeValue) {
         tab.show();
     }
 }
+
+function removeContainerRow(button) {
+
+    const row = button.closest('tr');
+
+    // If OLD row → track for DB delete
+    if (row.dataset.rowType === 'old') {
+        const equipmentNumber = row.cells[2].textContent.trim();
+
+        if (!deletedEquipmentNumbers.includes(equipmentNumber)) {
+            deletedEquipmentNumbers.push(equipmentNumber);
+        }
+    }
+
+    row.remove();
+
+    // Reorder rows
+    const tableBody = document.querySelector('#containerDetailsTable tbody');
+    Array.from(tableBody.rows).forEach((row, index) => {
+        row.cells[0].textContent = index + 1;
+    });
+}
+
 

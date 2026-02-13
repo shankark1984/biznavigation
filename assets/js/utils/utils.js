@@ -56,15 +56,20 @@ function generateTempFormID() {
     return `TEMP-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
 }
 
-// ✅ Set tempFormID on page load
+// Reusable function to set TempFormID
+function setTempFormID(elementId = 'tempFormID') {
+    const el = document.getElementById(elementId);
+    if (!el) return null;
+
+    const tempFormID = generateTempFormID();
+    el.value = tempFormID;
+    return tempFormID;
+}
+
 window.addEventListener('DOMContentLoaded', () => {
-    const tempFormIDElement = document.getElementById('tempFormID');
-    if (tempFormIDElement) {
-        const tempFormID = generateTempFormID();
-        tempFormIDElement.value = tempFormID;
-        // console.log('TempFormID generated:', tempFormID);
-    }
+    setTempFormID(); // default tempFormID
 });
+
 
 // ✅ Tab switching logic
 function openTab(evt, tabName) {
@@ -1308,4 +1313,39 @@ function createCell(text) {
 // Escape quotes to safely inject into HTML
 function escapeQuotes(str) {
     return str.replace(/'/g, "\\'");
+}
+
+function initDatalistValidation() {
+
+    const inputs = document.querySelectorAll('input[data-force-list="true"]');
+
+    inputs.forEach(input => {
+
+        const listId = input.dataset.listId;
+        const list = document.getElementById(listId);
+        if (!list) return;
+
+        function validateValue() {
+
+            const value = input.value.trim().toLowerCase();
+
+            if (!value) return;
+
+            const exists = Array.from(list.options)
+                .some(opt => opt.value.toLowerCase() === value);
+
+            if (!exists) {
+                input.classList.add('is-invalid');
+                input.classList.remove('is-valid');
+            } else {
+                input.classList.remove('is-invalid');
+                input.classList.add('is-valid');
+            }
+        }
+
+        input.addEventListener('blur', validateValue);
+        input.addEventListener('input', () => {
+            input.classList.remove('is-invalid');
+        });
+    });
 }
