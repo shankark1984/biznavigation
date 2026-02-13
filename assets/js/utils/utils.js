@@ -169,7 +169,7 @@ async function loadSuggestions(
     attachPartyCodeFiller('serviceProvider', 'vendorSuggestions', 'serviceProviderCode');
     attachPartyCodeFiller('userID', 'userLoginSuggestions', 'userName');
     attachPartyCodeFiller('partyName', 'partySuggestions', 'partyCode');
-    attachPartyCodeFiller('customerName', 'customerNameSuggestions', 'customerCode');
+    attachPartyCodeFiller('customerName', 'customerNameSuggestions', 'partyCode');
     attachPartyCodeFiller('consignorName', 'consignorNameSuggestions', 'consignorCode');
     attachPartyCodeFiller('serviceProviderName', 'serviceProviderSuggestions', 'serviceProviderCode');
 }

@@ -5,7 +5,7 @@ document.getElementById('chargesTypeInput').addEventListener('change', onChargeT
 
 // Cache DOM elements that are reused
 const freightElements = {
-    awbNo: document.getElementById('awbNo'),
+    docketNo: document.getElementById('docketNo'),
     chargesTypeInput: document.getElementById('chargesTypeInput'),
     hsnNumber: document.getElementById('hsnNumber'),
     freightAmount: document.getElementById('freightAmount'),
@@ -40,7 +40,6 @@ function parseTaxPercentages(taxString) {
     return taxes;
 }
 
-// Helper function to calculate tax amounts
 function calculateTaxes(amount, { cgst, sgst, igst }) {
     const sgstAmt = (amount * sgst) / 100;
     const cgstAmt = (amount * cgst) / 100;
@@ -66,9 +65,10 @@ function clearFreightInputs() {
     freightElements.remarksDetails.value = '';
     freightElements.partyDefaultTax.value = '';
 }
+
 async function addFreightRow() {
     const {
-        awbNo,
+        docketNo,
         chargesTypeInput,
         hsnNumber,
         freightAmount,
@@ -76,7 +76,7 @@ async function addFreightRow() {
         partyDefaultTax
     } = freightElements;
 
-    const awbNoValue = awbNo.value.trim();
+    const docketNoValue = docketNo.value.trim();
     const chargesType = chargesTypeInput.value.trim();
     const freightAmountValue = parseFloat(freightAmount.value) || 0;
     const chargeableWeight = parseFloat(document.getElementById('chargeableWeight').value);
@@ -84,7 +84,7 @@ async function addFreightRow() {
 
     // console.log("chargeableWeight", chargeableWeight + uOMType);
     // Validation
-    if (!awbNoValue) return alert('AWB No cannot be empty!');
+    if (!docketNoValue) return alert('Docket no cannot be empty!');
     if (!chargesType) return alert('Charges Type cannot be empty!');
     if (!freightAmountValue) return alert('Freight Amount cannot be empty!');
 
@@ -140,41 +140,47 @@ freightElements.freightTable.addEventListener('click', (e) => {
 
 
 async function saveFreightCharges() {
-    const awbNoValue = freightElements.awbNo.value.trim();
 
-    if (!awbNoValue) return alert('AWB No (Docket No) cannot be empty!');
-    const tempFormID = document.getElementById('tempFormID')?.value; // Assuming this is a hidden input field
+    const docketNo = freightElements.docketNo.value.trim();
+    const tempFormID = freightElements.tempFormID.value.trim();
+
+    if (!docketNo) return alert('Docket No cannot be empty!');
 
     const rows = Array.from(freightElements.freightTable.querySelectorAll('tr'));
     if (!rows.length) return alert('No charges to save!');
 
     try {
+
         /* STEP 1 : Delete old records */
         const { error: deleteError } = await supabaseClient
-            .from('InternationalBookingCharges')
+            .from('DomesticBookingCharges')
             .delete()
-            .eq('ID_IB', tempFormID);
+            .eq('ID_DB', tempFormID);
 
         if (deleteError) throw deleteError;
 
+        /* STEP 2 : Build insert data from CURRENT TABLE VIEW */
         const insertData = [];
 
         for (const row of rows) {
+
             const cells = row.querySelectorAll('td');
 
             const taxTypeText = cells[12].textContent.trim();
             const taxDetails = await fetchTaxDetails(taxTypeText);
 
+            const qty = parseFloat(cells[4].textContent) || 0;
+            const rate = parseFloat(cells[5].textContent) || 0;
 
             insertData.push({
-                DocketNo: awbNoValue,
+                DocketNo: docketNo,
                 ChargesType: cells[0].textContent.trim(),
-                ID_IB: tempFormID,
+                ID_DB: tempFormID,
                 Remarks: cells[2].textContent.trim(),
                 HSNCode: cells[1].textContent.trim(),
-                Quantity: cells[4].textContent.trim() || "0 Nos",
-                PerQtyAmt: parseFloat(cells[5].textContent) || 0,
-                TotalAmount: parseFloat(cells[5].textContent) || 0, // Quantity is always 1
+                Quantity: qty,
+                PerQtyAmt: rate,
+                TotalAmount: qty * rate,
                 TaxID: taxDetails?.taxId || null,
                 TaxRate: taxDetails?.taxRate || null,
                 SGSTAmt: parseFloat(cells[6].textContent) || 0,
@@ -182,38 +188,42 @@ async function saveFreightCharges() {
                 IGSTAmt: parseFloat(cells[8].textContent) || 0,
                 TotalGSTAmt: parseFloat(cells[9].textContent) || 0,
                 GrandTotalAmt: parseFloat(cells[10].textContent) || 0,
-                created_by: userLoginID,
+                created_by: UserLoginID,
                 created_at: localtimeStamp
             });
         }
 
-        // if (!insertData.length) return console.log('No new charges to save (all are duplicates).');
+        if (!insertData.length) return alert("Nothing to insert");
 
-        const { error } = await supabaseClient
-            .from('InternationalBookingCharges')
+        /* STEP 3 : Insert */
+        const { error: insertError } = await supabaseClient
+            .from('DomesticBookingCharges')
             .insert(insertData);
 
-        if (error) throw error;
-        // console.log('Charges saved successfully!');
+        if (insertError) throw insertError;
+
+        console.log("Charges replaced successfully");
+
     } catch (error) {
-        console.error('Error:', error.message);
-        alert(error.message || 'An error occurred while saving charges.');
+        console.error(error);
+        alert(error.message || "Error saving charges");
     }
 }
 
+
 async function loadFreightCharges() {
-    const awbNoValue = freightElements.awbNo.value.trim();
+    const docketNoValue = freightElements.docketNo.value.trim();
     const tempFormID = freightElements.tempFormID.value.trim(); // Assuming this is a hidden input field
-    if (!tempFormID) return alert('Please select a valid Temp Form ID!');
-    if (!awbNoValue) return alert('Please select a valid AWB No!');
+    if (!tempFormID) return;
+    if (!docketNoValue) return alert('Please select a valid Docket No!');
 
     freightElements.freightTable.innerHTML = ''; // Clear table
 
     try {
         const { data, error } = await supabaseClient
-            .from('InternationalBookingCharges')
+            .from('DomesticBookingCharges')
             .select('*')
-            .eq('ID_IB', tempFormID);
+            .eq('ID_DB', tempFormID);
 
         if (error) throw error;
 
@@ -223,7 +233,7 @@ async function loadFreightCharges() {
                 <td>${item.ChargesType || ''}</td>
                 <td>${item.HSNCode || ''}</td>
                 <td>${item.Remarks || ''}</td>
-                <td class="text-end">${(item.TaxRate || 0).toFixed(2)}%</td>
+                <td class="text-end">${parseFloat(item.TaxRate || 0).toFixed(2)}%</td>
                 <td class="text-end">${item.Quantity || 0}</td>
                 <td class="text-end">${(item.PerQtyAmt || 0).toFixed(2)}</td>
                 <td class="text-end">${(item.SGSTAmt || 0).toFixed(2)}</td>
@@ -232,9 +242,9 @@ async function loadFreightCharges() {
                 <td class="text-end">${(item.TotalGSTAmt || 0).toFixed(2)}</td>
                 <td class="text-end">${(item.GrandTotalAmt || 0).toFixed(2)}</td>
                 <td class="text-center">
-                    <button type="button" class="btn btn-sm btn-danger delete-row">Delete</button>
+                    <button type="button" class="btn btn-sm btn-danger delete-row" disabled>Delete</button>
                 </td>
-                <td>${getTaxTypeText(item)}</td>
+                <td class="text-center d-none">${getTaxTypeText(item)}</td>
             `;
             freightElements.freightTable.appendChild(row);
         });
@@ -277,4 +287,3 @@ function recalcTotals() {
         el.textContent = totals[key].toFixed(2);
     });
 }
-

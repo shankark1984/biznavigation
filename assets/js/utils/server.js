@@ -189,8 +189,6 @@ function getDeviceId() {
 async function checkSessionToken() {
     const sessionToken = localStorage.getItem('session_token');
 
-    console.log("Checking session token:", sessionToken, UserLoginID);
-
     if (!sessionToken || !UserLoginID) {
         redirectToLogin();
         return;

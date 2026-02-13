@@ -3,14 +3,15 @@ function getValue(id) {
 }
 
 async function fetchTariffRate() {
-    const partyCode = getValue('customerCode');
+    const partyCode = getValue('partyCode');
     const bookedDate = getValue('bookingDate');
     const chargeType = getValue('chargesTypeInput');
+    console.log('Fetching tariff rate for:', { partyCode, bookedDate, chargeType });
 
     if (chargeType !== "Freight Amount") return;
 
     if (!partyCode || !bookedDate) {
-        alert('Party Code and Booked Date are required');
+        alert('Party Code and Booked Date are required!');
         return;
     }
     if (!isValidDate(bookedDate)) {
@@ -73,6 +74,6 @@ async function fetchTariffRate() {
 //when customer as been selected, fetch tariff rate for Freight Amount & other fixed charges details from table "FixedCharges" 
 // in the database supabase table and add to charges table
 
-document.getElementById('customerCode').addEventListener('change', async () => {
+document.getElementById('partyCode').addEventListener('change', async () => {
     await fetchTariffRate();
 });

@@ -91,12 +91,13 @@ function vendorpopulateDropdown(tax_data) {
 }
 
 async function fetchTaxDetails(taxType) {
+    console.log("Fetching tax details for:", taxType); // For debugging
     try {
         const { data, error } = await supabaseClient
             .from('tax_details')
             .select('id, tax_rate')
             .eq('tax_description', taxType)
-            .single(); // because we expect only 1 match
+            .maybeSingle(); // because we expect only 1 match
 
         if (error) {
             console.error('Error fetching tax details:', error.message);

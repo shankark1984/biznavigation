@@ -90,7 +90,7 @@ async function fetchTariffRate() {
     if (chargeType !== "Freight Amount") return;
 
     if (!partyCode || !bookedDate) {
-        alert('Party Code and Booked Date are required');
+        alert('Party Code and Booked Date are required2');
         return;
     }
     if (!isValidDate(bookedDate)) {
