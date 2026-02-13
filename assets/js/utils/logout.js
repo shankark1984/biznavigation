@@ -1,50 +1,63 @@
-const maxIdleTime = 5 * 60 * 1000; // 5 minutes in milliseconds
+const maxIdleTime = 5 * 60 * 1000; // 5 minutes
+let idleInterval = null;
+let sessionInterval = null;
 
-// Update the last activity time in localStorage
+/* ------------------ Activity Tracking ------------------ */
+
+// Update last activity time
 function updateLastActivityTime() {
     localStorage.setItem('lastActivityTime', Date.now());
 }
 
-// Check if the user is idle for more than the max idle time
+// Check idle logout
 function checkIdleTime() {
-    const lastActivityTime = localStorage.getItem('lastActivityTime');
+    const lastActivityTime = Number(localStorage.getItem('lastActivityTime') || 0);
     const currentTime = Date.now();
-    console.log(lastActivityTime + ' ' + currentTime);
-    if (lastActivityTime && currentTime - lastActivityTime >= maxIdleTime) {
+    // console.log("Checking idle time:", {
+    //     lastActivityTime: new Date(lastActivityTime).toLocaleTimeString(),
+    //     currentTime: new Date(currentTime).toLocaleTimeString()
+    // });
+    if (lastActivityTime && (currentTime - lastActivityTime >= maxIdleTime)) {
         logoutUser();
     }
 }
 
-// Function to log out the user
-async function logoutUser() {
+/* ------------------ Session Validation ------------------ */
 
-    logoutlocalstorage();
+// Run session validation every 30 seconds
+function startSessionValidation() {
+    if (sessionInterval) clearInterval(sessionInterval);
 
-    // alert("You have been logged out due to inactivity.");
-    // window.location.href = '/logout'; 
-    // Redirect to your logout route
-
+    sessionInterval = setInterval(() => {
+        checkSessionToken().catch(err =>
+            console.error("Session token check failed:", err)
+        );
+    }, 30000);
 }
 
-// Initialize event listeners and set an interval to check idle time
-window.onload = function () {
-    // Update the last activity time on user activity
-    window.addEventListener('mousemove', updateLastActivityTime);
-    window.addEventListener('keydown', updateLastActivityTime);
-    window.addEventListener('mousedown', updateLastActivityTime);
-    window.addEventListener('touchstart', updateLastActivityTime);
-    window.addEventListener('scroll', updateLastActivityTime);
+/* ------------------ Idle Monitor ------------------ */
 
-    // Set the initial last activity time
-    updateLastActivityTime();
+function startIdleMonitor() {
+    if (idleInterval) clearInterval(idleInterval);
 
-    // Check every minute if the user is idle
-    setInterval(checkIdleTime, 60 * 1000); // Check every 1 minute
-};
+    idleInterval = setInterval(checkIdleTime, 30000);
+}
+
+/* ------------------ Logout ------------------ */
+
+async function logoutUser() {
+    await logoutlocalstorage();
+
+    // notify other tabs
+    localStorage.setItem('logout-event', Date.now());
+}
+
 async function logoutlocalstorage() {
-    // Clear user data from localStorage
+
     await logoutOtherSessions(UserLoginID);
+
     clearPermissionCache(localStorage.getItem('UserLoginID'));
+
     localStorage.removeItem('EmpCode');
     localStorage.removeItem('UserName');
     localStorage.removeItem('UserLoginID');
@@ -52,6 +65,7 @@ async function logoutlocalstorage() {
     localStorage.removeItem('CompanyID');
     localStorage.removeItem('WorkingBranch');
     localStorage.removeItem('CompanyShortCode');
+
     sessionStorage.removeItem('session_token');
 
     window.location.href = '../../index.html';
@@ -65,50 +79,26 @@ function clearPermissionCache(userLoginID) {
     });
 }
 
-let notificationTimeout;
+/* ------------------ Multi-Tab Logout Sync ------------------ */
 
-function showNotification(message) {
-    const taskBar = document.getElementById('taskBar');
-
-    // Clear previous timeout if exists
-    if (notificationTimeout) {
-        clearTimeout(notificationTimeout);
+window.addEventListener('storage', function (event) {
+    if (event.key === 'logout-event') {
+        window.location.href = '../../index.html';
     }
+});
 
-    if (message && message.trim() !== '') {
-        // Show browser notification
-        if (window.Notification && Notification.permission === 'granted') {
-            new Notification('Validation Error', { body: message });
-        }
+/* ------------------ Initialize ------------------ */
 
-        taskBar.textContent = message;
-        taskBar.classList.remove('d-none', 'fade'); // Make visible without fade-out
-        void taskBar.offsetWidth; // Force reflow for fade-in to work
-        taskBar.classList.add('show'); // Bootstrap fade-in
-        return; // Exit early if showing a message
+document.addEventListener("DOMContentLoaded", () => {
 
-        // Auto-hide after 3 seconds
-        notificationTimeout = setTimeout(() => {
-            taskBar.classList.remove('show'); // Start fade-out
+    // activity listeners
+    ['mousemove', 'keydown', 'mousedown', 'touchstart', 'scroll']
+        .forEach(evt =>
+            window.addEventListener(evt, updateLastActivityTime, { passive: true })
+        );
 
-            const hideHandler = () => {
-                taskBar.classList.add('d-none'); // Hide after fade-out
-                taskBar.textContent = ''; // Clear old message
-                taskBar.removeEventListener('transitionend', hideHandler);
-            };
+    updateLastActivityTime();
 
-            taskBar.addEventListener('transitionend', hideHandler);
-        }, 3000);
-    } else {
-        taskBar.classList.remove('show'); // Start fade-out
-
-        const hideHandler = () => {
-            taskBar.classList.add('d-none'); // Hide after fade-out
-            taskBar.textContent = ''; // Clear old message
-            taskBar.removeEventListener('transitionend', hideHandler);
-        };
-
-        taskBar.addEventListener('transitionend', hideHandler);
-    }
-}
-
+    startIdleMonitor();        // idle logout checker
+    startSessionValidation();  // session token checker
+});

@@ -42,6 +42,7 @@ docketNoInput.addEventListener('change', async () => {
 
             loadFreightCharges(),
             loadVolumetricDetails(),
+            fetchEquipmentDetails(tempFormID),
             // fetchContainerDetails(tempFormID),
             // loadBookingStatus(docketNo)
         ]);
@@ -260,6 +261,7 @@ document.getElementById('newButton').addEventListener('click', () => {
         document.getElementById(id).disabled = true;
     });
     resetVolumetricTotals();
+    toggleContainerTab("");
 });
 
 modifyButton.addEventListener('click', () => {
@@ -348,6 +350,7 @@ document.getElementById('saveButton').addEventListener('click', async () => {
         insertedID = response.data?.[0]?.id;
         saveFreightCharges(); // Save freight charges after main record is saved
         saveNewVolumetricRows(); // Save volumetric details after main record is saved
+        saveEquipmentDetails(); // Save container details after main record is saved
         console.log(`Booking details ${mode} successful:`, response.data);
         showToast(`Booking details ${mode} successful!`);
 

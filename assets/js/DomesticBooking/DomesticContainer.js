@@ -49,10 +49,22 @@ function validateContainerNumber(containerNumber) {
 }
 
 document.getElementById('containerNumber').addEventListener('input', function () {
+
     const input = this;
-    input.value = input.value.toUpperCase(); // Auto-uppercase as user types
+    input.value = input.value.toUpperCase();
 
     const feedback = document.getElementById('containerFeedback');
+    const modeValue = document.getElementById('modeTypeD').value; // FCL / FTL
+
+    // If Vehicle (FTL) → no validation required
+    if (modeValue === 'FTL') {
+        input.classList.remove('is-invalid');
+        input.classList.remove('is-valid');
+        feedback.classList.add('d-none');
+        return;
+    }
+
+    // Validate only for Container (FCL)
     const result = validateContainerNumber(input.value);
 
     if (!result.valid) {
@@ -67,6 +79,8 @@ document.getElementById('containerNumber').addEventListener('input', function ()
     }
 });
 
+
+
 function addContainerRow(containerType, containerNumber) {
     const tableBody = document.querySelector('#containerDetailsTable tbody');
     const rowCount = tableBody.rows.length + 1;
@@ -76,7 +90,7 @@ function addContainerRow(containerType, containerNumber) {
         <td>${containerType}</td>
         <td>${containerNumber}</td>
         <td>
-            <button class="btn btn-danger btn-sm" onclick="removeContainerRow(this)">Remove</button>
+            <button class="btn btn-danger btn-sm remove-row" onclick="removeContainerRow(this)">Remove</button>
         </td>
     `;
     tableBody.appendChild(newRow);
@@ -115,7 +129,7 @@ document.getElementById('addContainer').addEventListener('click', function () {
 // save container details as add "containerDetailsTable" to supabase table 
 // ID_IB, EquipmentType, EquipmentNumber, created_by and created_at
 
-async function saveContainerDetails() {
+async function saveEquipmentDetails() {
     const tableBody = document.querySelector(`#containerDetailsTable tbody`);
     const rows = Array.from(tableBody.rows);
     insertedID = document.getElementById('tempFormID').value; // Assuming you have an input field with ID 'insertedID'
@@ -126,17 +140,17 @@ async function saveContainerDetails() {
 
     const containerDetails = rows.map(row => {
         return {
-            ID_IB: insertedID,
+            ID_DB: insertedID,
             EquipmentType: row.cells[1].textContent.trim(),
             EquipmentNumber: row.cells[2].textContent.trim(),
-            created_by: userLoginID,
+            created_by: UserLoginID,
             created_at: localtimeStamp
         };
     });
 
     try {
         const { data, error } = await supabaseClient
-            .from('EquipmentDetails')
+            .from('DomesticEquipmentDetails')
             .insert(containerDetails);
 
         if (error) {
@@ -152,12 +166,12 @@ async function saveContainerDetails() {
 }
 
 //fetchContainerDetails from supabaseClient to containerDetailsTable
-async function fetchContainerDetails(bookingID) {
+async function fetchEquipmentDetails(bookingID) {
     try {
         const { data, error } = await supabaseClient
-            .from('EquipmentDetails')
+            .from('DomesticEquipmentDetails')
             .select('*')
-            .eq('ID_IB', bookingID);
+            .eq('ID_DB', bookingID);
 
         if (error) {
             console.error('Error fetching container details:', error);
@@ -174,7 +188,7 @@ async function fetchContainerDetails(bookingID) {
                 <td>${item.EquipmentType}</td>
                 <td>${item.EquipmentNumber}</td>
                 <td>
-                    <button class="btn btn-danger btn-sm" onclick="removeContainerRow(this)">Remove</button>
+                    <button class="btn btn-danger btn-sm remove-row" onclick="removeContainerRow(this)" disabled>Remove</button>
                 </td>
             `;
             tableBody.appendChild(newRow);
@@ -190,15 +204,29 @@ function toggleContainerTab(modeValue) {
     const containerTabButton = document.getElementById('container-details-tab');
     const containerTypeLabel = document.getElementById('containerTypeLabel');
     const freightTabButton = document.getElementById('freight-tab');
+    const containerNumberLabel = document.getElementById('containerNumberLabel');
 
     if (modeValue === 'FCL' || modeValue === 'FTL') {
 
         containerTabContent.classList.remove('d-none');
         containerTabButton.classList.remove('d-none');
 
+        // Change tab name
+        containerTabButton.textContent =
+            modeValue === 'FTL' ? 'Vehicle Details' : 'Container Details';
+
         // Change label
         containerTypeLabel.textContent =
             modeValue === 'FTL' ? 'Vehicle Type' : 'Container Type';
+        containerNumberLabel.textContent =
+            modeValue === 'FTL' ? 'Vehicle Number' : 'Container Number';
+
+        // Update datalist
+        if (modeValue === 'FTL') {
+            loadDatalist('containerTypeList', 'VehicleType');
+        } else {
+            loadDatalist('containerTypeList', 'ContainerType');
+        }
 
     } else {
 
@@ -210,3 +238,4 @@ function toggleContainerTab(modeValue) {
         tab.show();
     }
 }
+

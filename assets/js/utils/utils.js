@@ -1137,6 +1137,7 @@ async function loadDatalist(datalistId, valueType) {
         .in('company_id', ['All', CompanyID])
         .order('description', { ascending: true });
 
+
     if (error) {
         console.error(`Error loading ${valueType}:`, error);
         return;

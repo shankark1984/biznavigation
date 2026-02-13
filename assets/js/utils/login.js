@@ -47,6 +47,8 @@ async function login() {
     const username = el.username.value.trim();
     const password = el.password.value.trim();
     const deviceId = getDeviceId();
+    // store locally
+    localStorage.setItem('session_token', sessionToken);
 
     if (!username || !password) {
         showError('Please enter both username and password.');
@@ -129,8 +131,7 @@ async function login() {
         setLoading(false);
     }
 }
-// store locally
-localStorage.setItem('session_token', sessionToken);
+
 
 document.getElementById('logoutOtherSessionsBtn')
     .addEventListener('click', async () => {

@@ -42,10 +42,10 @@
         <div class="card shadow-lg rounded">
             <div class="card-header bg-primary text-white">
                 <h3 class="mb-0">Domestic Booking</h3>
-                <input type="" id="tempFormID" />
-                <input type="" id="partyCode" />
-                <input type="" id="consignorCode" />
-                <input type="" id="serviceProviderCode" />
+                <input type="hidden" id="tempFormID" />
+                <input type="hidden" id="partyCode" />
+                <input type="hidden" id="consignorCode" />
+                <input type="hidden" id="serviceProviderCode" />
                 <input type="hidden" id="currentStatus" value="New" class="form-control" />
             </div>
 
@@ -462,13 +462,16 @@
                                     <div class="col-md-4 col-sm-6">
                                         <label id="containerTypeLabel" for="containerType"
                                             class="form-label small text-start">Container Type</label>
-                                        <select id="containerType" class="form-select form-select-sm"></select>
+                                        <input list="containerTypeList" id="containerType"
+                                            class="form-control form-control-sm">
+                                        <datalist id="containerTypeList"></datalist>
                                     </div>
                                     <div class="col-md-4 col-sm-6">
-                                        <label for="containerNumber" class="form-label small text-start">Container
+                                        <label for="containerNumber" id="containerNumberLabel"
+                                            class="form-label small text-start">Container
                                             Number</label>
                                         <input type="text" class="form-control form-control-sm" id="containerNumber"
-                                            placeholder="Enter Container Number" maxlength="11" />
+                                            maxlength="11" />
                                     </div>
                                     <div class="col-md-1 col-sm-2 pt-sm-1">
                                         <label class="invisible">Add</label>
