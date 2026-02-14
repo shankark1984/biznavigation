@@ -79,8 +79,10 @@ async function addFreightRow() {
     const docketNoValue = docketNo.value.trim();
     const chargesType = chargesTypeInput.value.trim();
     const freightAmountValue = parseFloat(freightAmount.value) || 0;
-    const chargeableWeight = parseFloat(document.getElementById('chargeableWeight').value);
-    const uOMType = document.getElementById('uOMType').value;
+    const chargeableWeightInput = document.getElementById('chargeableWeight');
+    const chargeableWeight = parseFloat(chargeableWeightInput?.value) || 0;
+
+    const uOMType = document.getElementById('uOMType')?.value || '';
 
     // console.log("chargeableWeight", chargeableWeight + uOMType);
     // Validation
@@ -90,25 +92,31 @@ async function addFreightRow() {
 
     const taxes = parseTaxPercentages(partyDefaultTax.value);
     const taxCalculations = calculateTaxes(freightAmountValue, taxes);
+    const isFreight = chargesType.includes('Freight');
 
-    // determine quantity display
-    let quantityDisplay;
-    if (chargesType.includes('Freight')) {
-        // assume these globals exist:
-        //   - chargeableWeight  (e.g. 123.45)
-        //   - uOMType           (e.g. "KG")
-        quantityDisplay = `${chargeableWeight} ${uOMType}`;
-    } else {
-        quantityDisplay = '1 Nos';
+    let quantityDisplay = isFreight
+        ? `${chargeableWeight} ${uOMType}`
+        : '1 Nos';
+
+    let perQty = freightAmountValue;
+
+    if (isFreight) {
+        if (!chargeableWeight || chargeableWeight <= 0) {
+            return alert("Chargeable weight must be greater than 0");
+        }
+        perQty = freightAmountValue / chargeableWeight;
     }
 
+
     const newRow = document.createElement('tr');
+    newRow.dataset.rowState = "new";
     newRow.innerHTML = `
         <td>${chargesType}</td>
         <td>${hsnNumber.value}</td>
         <td>${remarksDetails.value}</td>
         <td class="text-end">${taxCalculations.totalRate}%</td>
-        <td class="text-end">${quantityDisplay}</td>
+        <td class="text-end" data-qty="${isFreight ? chargeableWeight : 1}">${quantityDisplay}</td>
+        <td class="text-end">${(perQty).toFixed(2)}</td>
         <td class="text-end">${freightAmountValue.toFixed(2)}</td>
         <td class="text-end">${taxCalculations.sgstAmt.toFixed(2)}</td>
         <td class="text-end">${taxCalculations.cgstAmt.toFixed(2)}</td>
@@ -126,130 +134,163 @@ async function addFreightRow() {
     clearFreightInputs();
 }
 
-// Event delegation for delete button
 freightElements.freightTable.addEventListener('click', (e) => {
     if (!e.target.classList.contains('delete-row')) return;
 
     const row = e.target.closest('tr');
-
     if (!confirm("Remove this row?")) return;
 
-    row.remove();
+    if (row.dataset.rowState === "old") {
+        row.dataset.rowState = "deleted";
+        row.style.display = "none";
+    } else {
+        row.remove(); // new rows removed directly
+    }
+
     recalcTotals();
 });
 
-
-async function saveFreightCharges() {
-
-    const docketNo = freightElements.docketNo.value.trim();
-    const tempFormID = freightElements.tempFormID.value.trim();
-
-    if (!docketNo) return alert('Docket No cannot be empty!');
+async function saveFreightCharges(masterID) {
 
     const rows = Array.from(freightElements.freightTable.querySelectorAll('tr'));
-    if (!rows.length) return alert('No charges to save!');
 
-    try {
+    const insertData = [];
+    const deleteIDs = [];
 
-        /* STEP 1 : Delete old records */
-        const { error: deleteError } = await supabaseClient
-            .from('DomesticBookingCharges')
-            .delete()
-            .eq('ID_DB', tempFormID);
+    saveButton.disabled = true; // Disable save until next change
+    modifyButton.disabled = false;
+    reportButton.disabled = false;
+    saveButton.innerHTML = '<i class="bi bi-save"></i> Save';
 
-        if (deleteError) throw deleteError;
+    rows.forEach(row => {
 
-        /* STEP 2 : Build insert data from CURRENT TABLE VIEW */
-        const insertData = [];
+        const state = row.dataset.rowState;
+        const cells = row.querySelectorAll('td');
 
-        for (const row of rows) {
+        // Handle deleted rows
+        if (state === "deleted" && row.dataset.id) {
+            deleteIDs.push(row.dataset.id);
+            return;
+        }
 
-            const cells = row.querySelectorAll('td');
-
-            const taxTypeText = cells[12].textContent.trim();
-            const taxDetails = await fetchTaxDetails(taxTypeText);
-
-            const qty = parseFloat(cells[4].textContent) || 0;
-            const rate = parseFloat(cells[5].textContent) || 0;
-
+        // Handle new rows
+        if (state === "new") {
             insertData.push({
-                DocketNo: docketNo,
+                DocketNo: freightElements.docketNo.value.trim(),
+                ID_DB: masterID,
                 ChargesType: cells[0].textContent.trim(),
-                ID_DB: tempFormID,
-                Remarks: cells[2].textContent.trim(),
                 HSNCode: cells[1].textContent.trim(),
-                Quantity: qty,
-                PerQtyAmt: rate,
-                TotalAmount: qty * rate,
-                TaxID: taxDetails?.taxId || null,
-                TaxRate: taxDetails?.taxRate || null,
-                SGSTAmt: parseFloat(cells[6].textContent) || 0,
-                CGSTAmt: parseFloat(cells[7].textContent) || 0,
-                IGSTAmt: parseFloat(cells[8].textContent) || 0,
-                TotalGSTAmt: parseFloat(cells[9].textContent) || 0,
-                GrandTotalAmt: parseFloat(cells[10].textContent) || 0,
+                Remarks: cells[2].textContent.trim(),
+                TaxRate: parseFloat(cells[3].textContent) || 0,
+                Quantity: parseFloat(cells[4].dataset.qty) || 0,
+                PerQtyAmt: parseFloat(cells[5].textContent) || 0,
+                TotalAmount: parseFloat(cells[6].textContent) || 0,
+                SGSTAmt: parseFloat(cells[7].textContent) || 0,
+                CGSTAmt: parseFloat(cells[8].textContent) || 0,
+                IGSTAmt: parseFloat(cells[9].textContent) || 0,
+                TotalGSTAmt: parseFloat(cells[10].textContent) || 0,
+                GrandTotalAmt: parseFloat(cells[11].textContent) || 0,
                 created_by: UserLoginID,
                 created_at: localtimeStamp
             });
         }
+    });
 
-        if (!insertData.length) return alert("Nothing to insert");
-
-        /* STEP 3 : Insert */
-        const { error: insertError } = await supabaseClient
+    if (deleteIDs.length) {
+        await supabaseClient
             .from('DomesticBookingCharges')
-            .insert(insertData);
-
-        if (insertError) throw insertError;
-
-        console.log("Charges replaced successfully");
-
-    } catch (error) {
-        console.error(error);
-        alert(error.message || "Error saving charges");
+            .delete()
+            .in('id', deleteIDs);
+        rows.forEach(r => {
+            if (r.dataset.rowState === "deleted")
+                r.remove();
+        });
     }
-}
+
+    if (insertData.length) {
+
+        const { data, error } = await supabaseClient
+            .from('DomesticBookingCharges')
+            .insert(insertData)
+            .select('id');
+
+        if (error) {
+            console.error("Insert error:", error);
+            alert("Insert failed: " + error.message);
+            return;
+        }
+
+        if (!data || data.length === 0) {
+            console.warn("Insert returned no IDs");
+            return;
+        }
+
+        let i = 0;
+        rows.forEach(r => {
+            if (r.dataset.rowState === "new") {
+                r.dataset.rowState = "old";
+                r.dataset.id = data[i]?.id || '';
+                i++;
+            }
+        });
+    }
+
+};
 
 
-async function loadFreightCharges() {
+async function loadFreightCharges(masterID) {
+
     const docketNoValue = freightElements.docketNo.value.trim();
-    const tempFormID = freightElements.tempFormID.value.trim(); // Assuming this is a hidden input field
-    if (!tempFormID) return;
+    if (!masterID) return;
     if (!docketNoValue) return alert('Please select a valid Docket No!');
 
-    freightElements.freightTable.innerHTML = ''; // Clear table
+    const tbody = freightElements.freightTable;
+    tbody.replaceChildren();
 
     try {
         const { data, error } = await supabaseClient
             .from('DomesticBookingCharges')
             .select('*')
-            .eq('ID_DB', tempFormID);
+            .eq('ID_DB', masterID);
 
         if (error) throw error;
 
+        if (!data || data.length === 0) {
+            recalcTotals();
+            return;
+        }
+
         data.forEach(item => {
+
             const row = document.createElement('tr');
+            row.dataset.rowState = "old";
+            row.dataset.id = item.id ? String(item.id) : '';
+
             row.innerHTML = `
                 <td>${item.ChargesType || ''}</td>
                 <td>${item.HSNCode || ''}</td>
                 <td>${item.Remarks || ''}</td>
                 <td class="text-end">${parseFloat(item.TaxRate || 0).toFixed(2)}%</td>
-                <td class="text-end">${item.Quantity || 0}</td>
+                <td class="text-end" data-qty="${item.Quantity}">${item.Quantity} ${item.UOM || ''}</td>
                 <td class="text-end">${(item.PerQtyAmt || 0).toFixed(2)}</td>
+                <td class="text-end">${(item.TotalAmount || 0).toFixed(2)}</td>
                 <td class="text-end">${(item.SGSTAmt || 0).toFixed(2)}</td>
                 <td class="text-end">${(item.CGSTAmt || 0).toFixed(2)}</td>
                 <td class="text-end">${(item.IGSTAmt || 0).toFixed(2)}</td>
                 <td class="text-end">${(item.TotalGSTAmt || 0).toFixed(2)}</td>
                 <td class="text-end">${(item.GrandTotalAmt || 0).toFixed(2)}</td>
                 <td class="text-center">
-                    <button type="button" class="btn btn-sm btn-danger delete-row" disabled>Delete</button>
+                    <button type="button" class="btn btn-sm btn-danger delete-row">Delete</button>
                 </td>
                 <td class="text-center d-none">${getTaxTypeText(item)}</td>
             `;
-            freightElements.freightTable.appendChild(row);
+
+            tbody.appendChild(row);
         });
+
         toggleEditMode(true);
         recalcTotals();
+
     } catch (error) {
         console.error('Error:', error.message);
         alert('Failed to load charges: ' + error.message);
@@ -260,9 +301,18 @@ async function loadFreightCharges() {
 // Helper to reconstruct tax type text from stored values
 function getTaxTypeText(item) {
     const parts = [];
-    if (item.SGSTAmt) parts.push(`SGST ${((item.SGSTAmt / item.PerQtyAmt) * 100).toFixed(0)}%`);
-    if (item.CGSTAmt) parts.push(`CGST ${((item.CGSTAmt / item.PerQtyAmt) * 100).toFixed(0)}%`);
-    if (item.IGSTAmt) parts.push(`IGST ${((item.IGSTAmt / item.PerQtyAmt) * 100).toFixed(0)}%`);
+
+    if (item.TotalAmount > 0) {
+        if (item.SGSTAmt)
+            parts.push(`SGST ${((item.SGSTAmt / item.TotalAmount) * 100).toFixed(2)}%`);
+
+        if (item.CGSTAmt)
+            parts.push(`CGST ${((item.CGSTAmt / item.TotalAmount) * 100).toFixed(2)}%`);
+
+        if (item.IGSTAmt)
+            parts.push(`IGST ${((item.IGSTAmt / item.TotalAmount) * 100).toFixed(2)}%`);
+    }
+
     return parts.join(' ') || 'No taxes';
 }
 
@@ -271,16 +321,18 @@ function recalcTotals() {
     const totals = { freight: 0, sgst: 0, cgst: 0, igst: 0, gst: 0, grand: 0 };
 
     rows.forEach(row => {
+
+        if (row.dataset.rowState === "deleted") return;
+
         const cells = row.querySelectorAll('td');
-        // If we don’t have at least 11 data cells, skip this row
         if (cells.length < 11) return;
 
-        totals.freight += parseFloat(cells[5].textContent) || 0;
-        totals.sgst += parseFloat(cells[6].textContent) || 0;
-        totals.cgst += parseFloat(cells[7].textContent) || 0;
-        totals.igst += parseFloat(cells[8].textContent) || 0;
-        totals.gst += parseFloat(cells[9].textContent) || 0;
-        totals.grand += parseFloat(cells[10].textContent) || 0;
+        totals.freight += parseFloat(cells[6].textContent) || 0;
+        totals.sgst += parseFloat(cells[7].textContent) || 0;
+        totals.cgst += parseFloat(cells[8].textContent) || 0;
+        totals.igst += parseFloat(cells[9].textContent) || 0;
+        totals.gst += parseFloat(cells[10].textContent) || 0;
+        totals.grand += parseFloat(cells[11].textContent) || 0;
     });
 
     Object.entries(freightElements.totalElements).forEach(([key, el]) => {

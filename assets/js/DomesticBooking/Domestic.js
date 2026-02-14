@@ -41,7 +41,7 @@ docketNoInput.addEventListener('change', async () => {
         // 5) Load remaining sections in parallel (faster)
         await Promise.all([
 
-            loadFreightCharges(),
+            loadFreightCharges(tempFormID),
             loadVolumetricDetails(),
             fetchEquipmentDetails(tempFormID),
             // fetchContainerDetails(tempFormID),
@@ -356,7 +356,7 @@ document.getElementById('saveButton').addEventListener('click', async () => {
         console.log("Inserted/Updated ID:", insertedID);
         document.getElementById('tempFormID').value = insertedID; // Store ID for related tables
 
-        await saveFreightCharges();
+        await saveFreightCharges(insertedID);
         await saveNewVolumetricRows();
         await saveEquipmentDetails();
 
