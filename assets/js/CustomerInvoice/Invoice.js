@@ -28,13 +28,14 @@ document.getElementById('partyName').addEventListener('change', async function (
     }
 
     const partyCode = document.getElementById('partyCode').value;
+    console.log('Selected PartyCode:', partyCode);
 
     try {
         const { data, error } = await supabaseClient
             .from('PartyBillingAddress')
             .select('*')
             .eq('PartyCode', partyCode)
-            .eq('Status', 'True');
+            .eq('Status', 'Active');
 
         if (error) throw error;
 

@@ -31,7 +31,7 @@ document.getElementById('partyName').addEventListener('change', async function (
             .from('PartyBillingAddress')
             .select('*')
             .eq('PartyCode', partyCode)
-            .eq('Status', 'True');
+            .eq('Status', 'Active');
 
         if (error) throw error;
 

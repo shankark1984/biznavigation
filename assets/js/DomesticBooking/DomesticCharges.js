@@ -90,6 +90,12 @@ async function addFreightRow() {
     if (!chargesType) return alert('Charges Type cannot be empty!');
     if (!freightAmountValue) return alert('Freight Amount cannot be empty!');
 
+
+    const taxDetails = await fetchTaxDetails(partyDefaultTax.value);
+    const taxID = taxDetails?.taxId;
+
+    if (!taxID) return alert('Tax details not found!');
+
     const taxes = parseTaxPercentages(partyDefaultTax.value);
     const taxCalculations = calculateTaxes(freightAmountValue, taxes);
     const isFreight = chargesType.includes('Freight');
@@ -126,7 +132,8 @@ async function addFreightRow() {
         <td class="text-center">
             <button type="button" class="btn btn-sm btn-danger delete-row">Delete</button>
         </td>
-        <td>${partyDefaultTax.value}</td>
+        <td class="d-none">${partyDefaultTax.value}</td>
+        <td class="d-none">${taxID}</td>
     `;
 
     freightElements.freightTable.appendChild(newRow);
@@ -190,6 +197,7 @@ async function saveFreightCharges(masterID) {
                 IGSTAmt: parseFloat(cells[9].textContent) || 0,
                 TotalGSTAmt: parseFloat(cells[10].textContent) || 0,
                 GrandTotalAmt: parseFloat(cells[11].textContent) || 0,
+                TaxID: cells[14].textContent.trim(),
                 created_by: UserLoginID,
                 created_at: localtimeStamp
             });
@@ -282,7 +290,8 @@ async function loadFreightCharges(masterID) {
                 <td class="text-center">
                     <button type="button" class="btn btn-sm btn-danger delete-row">Delete</button>
                 </td>
-                <td class="text-center d-none">${getTaxTypeText(item)}</td>
+                <td class="text-center d-none"">${getTaxTypeText(item)}</td>
+                <td class="text-center d-none"">${item.TaxID || ''}</td>
             `;
 
             tbody.appendChild(row);
@@ -296,7 +305,6 @@ async function loadFreightCharges(masterID) {
         alert('Failed to load charges: ' + error.message);
     }
 }
-
 
 // Helper to reconstruct tax type text from stored values
 function getTaxTypeText(item) {

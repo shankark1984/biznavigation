@@ -105,7 +105,7 @@ async function fetchTaxDetails(taxType) {
         }
 
         if (data) {
-            // console.log('Fetched Tax Details:', data);
+            console.log('Fetched Tax Details:', data);
             return {
                 taxId: data.id,
                 taxRate: data.tax_rate

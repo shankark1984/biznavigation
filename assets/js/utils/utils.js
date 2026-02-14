@@ -1132,7 +1132,7 @@ async function loadDatalist(datalistId, valueType) {
         return;
     }
 
-    console.log(`Loading datalist for: ${valueType}`);
+    // console.log(`Loading datalist for: ${valueType}`);
     datalist.innerHTML = '';
 
     const { data, error } = await supabaseClient
@@ -1152,8 +1152,6 @@ async function loadDatalist(datalistId, valueType) {
         console.warn(`No values found for ${valueType}`);
         return;
     }
-
-    console.log(`Loaded ${data.length} options for ${valueType}`);
 
     data.forEach(({ description }) => {
         const option = document.createElement('option');

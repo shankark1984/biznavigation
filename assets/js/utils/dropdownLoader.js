@@ -249,7 +249,7 @@ async function setupChargeTypeValidation() {
     const style = document.createElement('style');
     style.textContent = `
       #chargesTypeInput.invalid {
-        border-color: #dc3545 !important;
+        border-color: #35dc4b !important;
         box-shadow: 0 0 0 0.2rem rgba(220,53,69,.25);
       }
     `;
@@ -258,14 +258,18 @@ async function setupChargeTypeValidation() {
     // 2) Validation logic
     function validate() {
         const sel = chargeInput.value.trim();
+
         if (!sel) {
             chargeInput.classList.remove('invalid');
             addBtn.disabled = false;
             return;
         }
-        // get existing charge types
-        const existing = Array.from(tableBody.querySelectorAll('tr td:first-child'))
-            .map(td => td.textContent.trim());
+
+        // get existing charge types (IGNORE deleted rows)
+        const existing = Array.from(tableBody.querySelectorAll('tr'))
+            .filter(tr => tr.dataset.rowState !== 'deleted')   // important
+            .map(tr => tr.querySelector('td:first-child')?.textContent.trim());
+
         if (existing.includes(sel)) {
             chargeInput.classList.add('invalid');
             addBtn.disabled = true;
@@ -274,6 +278,7 @@ async function setupChargeTypeValidation() {
             addBtn.disabled = false;
         }
     }
+
 
     // 3) Wire it up
     chargeInput.addEventListener('change', validate);

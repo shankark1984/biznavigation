@@ -26,13 +26,20 @@
 
     <!-- UI Enhancements -->
     <style>
+        #root {
+            flex: 1;
+        }
+
         body {
             font-family: 'Segoe UI', sans-serif;
             background-color: #f8f9fa;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
 
         .table-responsive {
-            max-height: 500px;
+            max-height: 400px;
             overflow-y: auto;
             overflow-x: auto;
             background: #fff;
@@ -94,7 +101,7 @@
 </head>
 
 <body class="p-3">
-    <div class="container-fluid" style="margin-top: 55px;">
+    <div class="container-fluid" style="margin-top: 55px;" id="root">
 
         <!-- Filter Toggle -->
         <div class="mb-3 d-flex justify-content-between align-items-center flex-wrap">
@@ -112,24 +119,19 @@
                 <div class="col-12 col-md-6 col-lg-3">
                     <label for="customerName" class="form-label">Customer Name</label>
                     <input id="customerName" class="form-control" list="customerNameList"
-                        placeholder="Enter Customer Name">
+                        placeholder="Enter Customer Name" autocomplete="off">
                     <datalist id="customerNameList"></datalist>
                 </div>
 
                 <div class="col-6 col-md-6 col-lg-2">
                     <label for="docketNo" class="form-label">Docket No</label>
-                    <input id="docketNo" class="form-control" list="docketNoList" placeholder="Enter Docket No">
+                    <input id="docketNo" class="form-control" list="docketNoList" placeholder="Enter Docket No"
+                        autocomplete="off">
                     <datalist id="docketNoList"></datalist>
                 </div>
                 <div class="col-6 col-md-6 col-lg-3">
                     <label for="dateRange" class="form-label">Booked Date Range</label>
                     <input id="dateRange" class="form-control" placeholder="Select Date Range" readonly>
-                </div>
-                <div class="col-6 col-md-6 col-lg-2">
-                    <label for="movementType" class="form-label">Movement Type</label>
-                    <input id="movementType" class="form-control" list="movementTypeList" autocomplete="off"
-                        placeholder="Enter Movement Type">
-                    <datalist id="movementTypeList"></datalist>
                 </div>
                 <div class="col-6 col-md-6 col-lg-2">
                     <label for="transitType" class="form-label">Transit Type</label>
@@ -180,33 +182,41 @@
                 <thead class="table-dark text-center">
                     <tr>
                         <th data-key="RowID">Sr No</th>
-                        <th data-key="JobID">Job ID</th>
-                        <th data-key="JobDate">Job Date</th>
-                        <th data-key="PartyName">Customer Name</th>
-                        <th data-key="BLAWBNo">BL / AWB No</th>
-                        <th data-key="BLAWBDate">BL / AWB Date</th>
-                        <th data-key="BENo">BE No</th>
-                        <th data-key="BEDate">BE Date</th>
-                        <th data-key="MovementType">Movement Type</th>
-                        <th data-key="TransitType">Transit Type</th>
-                        <th data-key="ModeType">Mode Type</th>
-                        <th data-key="Consignee">Consignee</th>
-                        <th data-key="CustomsBroker">Customs Broker</th>
-                        <th data-key="ClearancePort">Clearance Port</th>
-                        <th data-key="ClearanceCountry">Clearance Country</th>
-                        <th data-key="Quantity">Quantity</th>
-                        <th data-key="CargoWeight">Cargo Weight</th>
-                        <th data-key="ClearanceMode">Clearance Mode</th>
-                        <th data-key="Commodity">Commodity</th>
-                        <th data-key="AnyInformation">Any Information</th>
-                        <th data-key="TotalAmount">Total Amount</th>
-                        <th data-key="SGST">SGST</th>
-                        <th data-key="CGST">CGST</th>
-                        <th data-key="IGST">IGST</th>
-                        <th data-key="GST">Total GST</th>
-                        <th data-key="GrandTotal">Grand Total</th>
-                        <th data-key="InvoiceNo">Invoice No</th>
-                        <th data-key="InvoiceStatus">Invoice Status</th>
+                        <th data-key="t_DocketNo">Docket No</th>
+                        <th data-key="t_BookingDate">Booking Date</th>
+                        <th data-key="t_CustomerName">Customer Name</th>
+                        <th data-key="t_ShippingType">Shipping Type</th>
+                        <th data-key="t_ConsignorName">Consignor Name</th>
+                        <th data-key="t_OriginPincode">Origin Pincode</th>
+                        <th data-key="t_OriginCity">Origin City</th>
+                        <th data-key="t_OriginAddress">Origin Address</th>
+                        <th data-key="t_ConsigneeName">Consignee Name</th>
+                        <th data-key="t_DestinationPincode">DestinationPincode</th>
+                        <th data-key="t_DestinationCity">DestinationCity</th>
+                        <th data-key="t_DestinationAddress">DestinationAddress</th>
+                        <th data-key="t_TransitType">TransitType</th>
+                        <th data-key="t_ModeType">ModeType</th>
+                        <th data-key="t_ServiceProvider">ServiceProvider</th>
+                        <th data-key="t_CustomerReferenceNo">CustomerReferenceNo</th>
+                        <th data-key="t_InvoiceValue">InvoiceValue</th>
+                        <th data-key="t_Quantity">Quantity</th>
+                        <th data-key="t_UOMType">UOMType</th>
+                        <th data-key="t_ActualWeight">ActualWeight</th>
+                        <th data-key="t_VolumetricWeight">VolumetricWeight</th>
+                        <th data-key="t_ChargeableWeight">ChargeableWeight</th>
+                        <th data-key="t_CargoDescription">CargoDescription</th>
+                        <th data-key="t_PaymentType">PaymentType</th>
+                        <th data-key="t_FreightAmount">FreightAmount</th>
+                        <th data-key="t_FuelSurcharge">FuelSurcharge</th>
+                        <th data-key="t_OtherCharges">OtherCharges</th>
+                        <th data-key="t_TotalAmount">TotalAmount</th>
+                        <th data-key="t_SGSTAmt">SGSTAmt</th>
+                        <th data-key="t_CGSTAmt">CGSTAmt</th>
+                        <th data-key="t_IGSTAmt">IGSTAmt</th>
+                        <th data-key="t_TotalGST">TotalGST</th>
+                        <th data-key="t_GrandTotal">GrandTotal</th>
+                        <th data-key="t_InvoiceNo">Invoice No</th>
+                        <th data-key="t_InvoiceStatus">Invoice Status</th>
                     </tr>
                 </thead>
                 <tbody></tbody>
@@ -233,7 +243,7 @@
     <script src="../../assets/js/utils/navbar.js"></script>
     <script src="../../assets/js/utils/footer.js"></script>
     <script src="../../assets/js/utils/utils.js"></script>
-    <script src="../../assets/js/Report/reportCustomsClearance.js"></script>
+    <script src="../../assets/js/Report/reportDomesticDetails.js"></script>
     <script src="../../assets/js/utils/logout.js"></script>
 </body>
 

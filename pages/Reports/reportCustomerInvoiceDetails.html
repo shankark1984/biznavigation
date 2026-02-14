@@ -15,9 +15,16 @@
 
     <!-- Styles -->
     <style>
+        #root {
+            flex: 1;
+        }
+
         body {
             font-family: 'Segoe UI', sans-serif;
             background-color: #f8f9fa;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
 
         .table-responsive {
@@ -71,7 +78,7 @@
 </head>
 
 <body class="p-4">
-    <div class="container-fluid mt-5">
+    <div class="container-fluid" style="margin-top: 55px;" id="root">
 
         <!-- Header & Filter Toggle -->
         <div class="d-flex justify-content-between align-items-center flex-wrap mb-3">

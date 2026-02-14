@@ -25,7 +25,6 @@ docketNoInput.addEventListener('change', async () => {
     const docketNo = docketNoInput.value;
     if (!docketNo) return;
     try {
-        console.log('Docket number changed:', docketNo);
         // 2) Load basic docket details
         await fetchDocketDetails(docketNo);
 
@@ -149,7 +148,7 @@ async function initChargeableWeightCalculator(actualSelector, volumetricSelector
 }
 
 async function fetchDocketDetails(docketNo) {
-    console.log('Fetching details for docket:', docketNo);
+
     const { data, error } = await supabaseClient
         .from('DomesticBookingDetails')
         .select('*')
@@ -353,12 +352,13 @@ document.getElementById('saveButton').addEventListener('click', async () => {
             insertedID = data.id;
         }
 
-        console.log("Inserted/Updated ID:", insertedID);
+        // console.log("Inserted/Updated ID:", insertedID);
         document.getElementById('tempFormID').value = insertedID; // Store ID for related tables
 
         await saveFreightCharges(insertedID);
         await saveNewVolumetricRows();
         await saveEquipmentDetails();
+        toggleEditMode(true);
 
         showToast(`Booking details ${mode} successful!`);
 

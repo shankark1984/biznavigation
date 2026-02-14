@@ -207,7 +207,7 @@ function updateTotals() {
 
 async function saveNewVolumetricRows() {
     try {
-        console.log('Saving new volumetric rows...');
+
         const ID_DB = document.getElementById('tempFormID').value;
         const DocketNo = document.getElementById('docketNo').value;
 
@@ -284,7 +284,7 @@ async function loadVolumetricDetails() {
         }
 
         if (!data || data.length === 0) {
-            console.log('No volumetric records found.');
+            // console.log('No volumetric records found.');
             return;
         }
 
