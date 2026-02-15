@@ -113,7 +113,13 @@ addbillingAddress.addEventListener('click', async function (event) {
         // addbillingAddress.disabled = false;
         return;
     }
+    const billingAddressStatus = $('#billingAddressStatus').val();
 
+    if (!billingAddressStatus) {
+        billingAddressStatus == 'Active'
+    } else {
+        billingAddressStatus == 'Inactive'
+    }
     // Gather form values
     const formData = {
         PartyCode: $("#partyCodes").val(),
@@ -124,7 +130,7 @@ addbillingAddress.addEventListener('click', async function (event) {
         City: $("#billingCity").val(),
         State: $("#billingState").val(),
         Country: $("#billingCountry").val(),
-        Status: $("#billingAddressStatus").val() === "Active",     // Boolean
+        Status: billingAddressStatus,    // Boolean
         DefaultActive: $("#defaultBilling").is(":checked"),               // Boolean
         company_id: CompanyID,     // must exist
         created_by: UserLoginID,   // must exist

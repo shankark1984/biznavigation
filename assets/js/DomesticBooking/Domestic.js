@@ -6,6 +6,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         await loadSuggestions('customerNameSuggestions', 'PartyDetails', CompanyID, 'PartyCode', 'PartyName'),
         await loadSuggestions('consignorNameSuggestions', 'PartyDetails', CompanyID, 'PartyCode', 'PartyName'),
         await loadSuggestions('serviceProviderSuggestions', 'PartyDetails', CompanyID, 'PartyCode', 'PartyName'),
+        loadDatalist('departmentList', 'Department')
     ]);
     await setupPincodeListener('originPinCode', 'orgincity');
     await initChargeableWeightCalculator("#actualWeight", "#volumetricWeight", "#chargeableWeight", "#uOMType");
@@ -192,6 +193,7 @@ async function fetchDocketDetails(docketNo) {
     document.getElementById('volumetricWeight').value = data.VolumetricWeight;
     document.getElementById('chargeableWeight').value = data.ChargeableWeight;
     document.getElementById('cargoDescription').value = data.CargoDescription;
+    document.getElementById('department').value = data.Department;
 
     toggleContainerTab(data.ModeType);
 
@@ -277,7 +279,6 @@ modifyButton.addEventListener('click', () => {
 
 });
 
-
 document.getElementById('saveButton').addEventListener('click', async () => {
     const docketNoInput = document.getElementById('docketNo');
     const mode = document.getElementById('saveButton').dataset.mode || 'insert';
@@ -309,7 +310,8 @@ document.getElementById('saveButton').addEventListener('click', async () => {
         ChargeableWeight: val('chargeableWeight'),
         CargoDescription: val('cargoDescription'),
         PaymentType: val('paymentType'),
-        UOMType: val('uOMType')
+        UOMType: val('uOMType'),
+        Department: val('department')
     };
 
     if (mode === 'insert') {
@@ -370,5 +372,6 @@ document.getElementById('saveButton').addEventListener('click', async () => {
 document.getElementById('modeTypeD').addEventListener('change', function () {
     toggleContainerTab(this.value);
 });
-
-
+department.addEventListener('change', () =>
+    handleDatalistInsert(department, 'departmentList', 'Department')
+);

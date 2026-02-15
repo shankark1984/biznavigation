@@ -170,7 +170,7 @@ function renderTable(data) {
             <td>${row.IGSTAmt || '0'}</td>
             <td>${row.TotalGSTAmt || '0'}</td>
             <td>${row.GrandTotalAmt || '0'}</td>
-            <td>${row.InvoiceNo || ''}</td>
+            <td>${row.InvoiceNumber || ''}</td>
             <td>${row.InvoiceStatus || ''}</td>
         </tr>
     `).join('');
