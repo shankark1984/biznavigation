@@ -115,6 +115,11 @@ document.getElementById('fetchPendingInvoices').addEventListener('click', async 
             await getPendingInvoiceDetails();
         } else if (type === 'Customs Clearance') {
             await CustomsClearanceInvoiceDetails();
+        } else if (type === 'Domestic') {
+            // await ImportInvoiceDetails();
+        } else if (type === 'FTL or FCL') {
+            // await ExportInvoiceDetails();
+            console.log('FTL or FCL --- Coming Soon');
         } else {
             alert('Select valid Movement Type');
         }

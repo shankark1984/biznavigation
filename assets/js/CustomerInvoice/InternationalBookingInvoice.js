@@ -1,3 +1,4 @@
+
 async function getPendingInvoiceDetails() {
     const partyCode = document.getElementById('partyCode').value.trim();
     const invoiceDateElement = document.getElementById('invoiceDate');
@@ -518,7 +519,6 @@ async function addSingleShipmentToInvoice(shipmentNo, invoiceNo) {
     }
 }
 
-
 async function unlockBooking_ib(userID) {
     if (!userID) {
         console.warn("No user ID provided. Cannot unlock booking.");
@@ -540,7 +540,6 @@ async function unlockBooking_ib(userID) {
         console.error("Unexpected error during unlock:", err);
     }
 }
-
 
 // Function to create table header & footer dynamically
 async function createPendingShipmentTableHeaderAndFooter_ib() {
