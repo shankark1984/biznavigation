@@ -1,10 +1,8 @@
-async function generateInvoicePDF(header, lines = []) {
+async function generate_DomesticReports_InvoicePDF(header, lines = []) {
 
     // Import jsPDF library
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF("p", "mm", "a4"); // Portrait, millimeters, A4 size
-
-
 
     const PAGE = { x: 10, w: 190, h: 297 }; // Page margins and width/height
     const FONT = { header: 14, title: 10, body: 8, small: 7, tiny: 6 }; // Font sizes
@@ -16,7 +14,8 @@ async function generateInvoicePDF(header, lines = []) {
     /* ==============================
        COMPANY DETAILS
     ============================== */
-    const companyData = await getCompanyProfile(CompanyID); // Fetch company info from API
+    const companyData = await getCompanyProfile(header?.CompanyID || CompanyID);
+    // Fetch company info from API
     const company = {
         name: companyData?.company_name || "",
         address: [
@@ -145,27 +144,27 @@ async function generateInvoicePDF(header, lines = []) {
     const tableData = Array.from(table.querySelectorAll("tbody tr")).map((tr, i) => {
         const c = tr.querySelectorAll("td");
 
-        const freight = safeNumber(c[10]?.innerText);
-        const fsc = safeNumber(c[11]?.innerText);
-        const other = safeNumber(c[12]?.innerText);
+        const freight = safeNumber(c[9]?.innerText);
+        const fsc = safeNumber(c[10]?.innerText);
+        const other = safeNumber(c[11]?.innerText);
 
         totalFreight += freight;
         totalFSC += fsc;
         totalOther += other;
 
         return [
-            i + 1,
-            c[1]?.innerText || "",
-            c[0]?.innerText || "",
-            c[3]?.innerText || "",
-            c[5]?.innerText || "",
-            c[6]?.innerText || "",
-            c[4]?.innerText || "",
-            c[9]?.innerText || "",
-            freight.toFixed(2),
-            fsc.toFixed(2),
-            other.toFixed(2),
-            (freight + fsc + other).toFixed(2)
+            i + 1, // Sl No
+            formatDate(c[1]?.innerText) || "", // Date
+            c[0]?.innerText || "", // Docket
+            c[2]?.innerText || "", // Transit
+            c[3]?.innerText || "",// Mode
+            c[4]?.innerText || "", // Origin
+            c[5]?.innerText || "", // Destination
+            c[7]?.innerText || "", // Wt/CBM
+            freight.toFixed(2), // Freight
+            fsc.toFixed(2), // FSC
+            other.toFixed(2), // Other
+            (freight + fsc + other).toFixed(2) // Total
         ];
     });
 
@@ -176,8 +175,8 @@ async function generateInvoicePDF(header, lines = []) {
         startY: y,
         margin: { left: PAGE.x, right: PAGE.x },
         head: [[
-            "Sl", "Date", "Docket", "Mode",
-            "Origin", "Dest", "Cmdty",
+            "Sl", "Date", "Docket", "Transit", "Mode",
+            "Origin", "Dest",
             "Wt/CBM", "Freight", "FSC", "Other", "Total"
         ]],
         body: tableData,
@@ -213,13 +212,16 @@ async function generateInvoicePDF(header, lines = []) {
         didDrawPage: d => { y = d.cursor.y; } // Update Y position after table
     });
 
-    y = doc.lastAutoTable.finalY;
+    y = doc.lastAutoTable?.finalY || y;
+
 
     /* ==============================
        GST CALCULATION
     ============================== */
     const taxable = totalFreight + totalFSC + totalOther;
-    const isInterState = party.state !== company.state;
+    const isInterState =
+        (party.state || "").trim().toLowerCase() !==
+        (company.state || "").trim().toLowerCase();
 
     const cgst = isInterState ? 0 : taxable * 0.09;
     const sgst = isInterState ? 0 : taxable * 0.09;
@@ -301,9 +303,39 @@ async function generateInvoicePDF(header, lines = []) {
         ["GRAND TOTAL", grandTotal]
     ];
     doc.setFontSize(FONT.small);
+
     rowsData.forEach((r, i) => {
         const ry = y + rowH * (i + 2) - 1;
-        doc.setFont("helvetica", r[0] === "GRAND TOTAL" ? "bold" : "normal");
+
+        const highlightRows = ["GRAND TOTAL", "Sub Total", "Total GST"];
+        const isHighlight = highlightRows.includes(r[0]);
+
+        const cellY = ry - 3;
+
+        if (isHighlight) {
+
+            doc.setFillColor(220, 230, 241);
+
+            // Fill each cell separately
+            doc.rect(x2, cellY, col2, rowH, "F");
+            doc.rect(x3, cellY, col3, rowH, "F");
+            doc.rect(x4, cellY, col4, rowH, "F");
+
+            // Bold border for each cell
+            doc.setDrawColor(0, 0, 0);
+            doc.setLineWidth(0.1);
+
+            doc.rect(x2, cellY, col2, rowH);
+            doc.rect(x3, cellY, col3, rowH);
+            doc.rect(x4, cellY, col4, rowH);
+
+            doc.setFont("helvetica", "bold");
+
+        } else {
+            doc.setLineWidth(0.2);
+            doc.setFont("helvetica", "normal");
+        }
+
         doc.text(r[0], x2 + col2 / 2, ry, { align: "center" });
         doc.text("0.00", x3 + col3 - 2, ry, { align: "right" });
         doc.text(r[1].toFixed(2), x4 + col4 - 2, ry, { align: "right" });
@@ -330,6 +362,7 @@ async function generateInvoicePDF(header, lines = []) {
     y += boxH;
 
     // Footer function
+    doc.setFont("helvetica", "bold").setFontSize(6.5);
     const addFooter = (doc, pageNumber, totalPages) => {
         const footerY = PAGE.h - 5;
         doc.text("Powered by AllEdge", PAGE.x, footerY, { align: "left" });

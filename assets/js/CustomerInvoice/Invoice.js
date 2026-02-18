@@ -2,7 +2,7 @@
    CONSTANTS
 ========================================================= */
 const FORWARDING_TYPES = ['Forwarding', 'Import', 'Export'];
-
+const totalFreight = 0;
 /* =========================================================
    DOM READY
 ========================================================= */
@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     await loadBankNameSuggestions();
     await loadDefaultBank();
     await loadInvoiceNoSuggestions();
-    loadDatalist('departmentList', 'Department'); // Static data
+    await loadDatalist('departmentList', 'Department'); // Static data
 });
 
 /* =========================================================
@@ -570,8 +570,6 @@ document.getElementById('inputBankName').addEventListener('input', function () {
     }
 });
 
-
-
 document.getElementById('reportButton').addEventListener('click', async () => {
     const invoiceNo = document.getElementById('invoiceNo').value.trim();
     if (!invoiceNo) {
@@ -580,7 +578,18 @@ document.getElementById('reportButton').addEventListener('click', async () => {
     }
     const invoiceDetails = await getInvoiceDetails(invoiceNo);
     if (!invoiceDetails) return;
-    generateInvoicePDF(invoiceDetails);
+    if (FORWARDING_TYPES.includes(invoiceDetails.InvoiceType)) {
+        await generateInvoicePDF(invoiceDetails); // Generate PDF for Forwarding/Import/Export
+    } else if (invoiceDetails.InvoiceType === 'Customs Clearance') {
+        await generate_CustmsClearance_InvoicePDF(invoiceDetails); // Generate PDF for Customs Clearance
+    } else if (invoiceDetails.InvoiceType === 'Domestic') {
+        await generate_DomesticReports_InvoicePDF(invoiceDetails); // Generate PDF for Domestic
+    } else if (invoiceDetails.InvoiceType === 'FTL or FCL') {
+        // invoiceDetails.lineItems = await getInvoiceLineItems_export(invoiceNo);
+        console.log('FTL or FCL --- Coming Soon');
+    } else {
+        console.warn('Unknown movement type:', invoiceDetails.InvoiceType);
+    }
 });
 
 function showAddressSelectionModal(addresses) {
@@ -626,4 +635,3 @@ function showAddressSelectionModal(addresses) {
 
     modal.show();
 }
-

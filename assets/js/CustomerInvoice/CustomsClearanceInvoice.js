@@ -161,7 +161,9 @@ async function CustomsClearanceInvoiceDetails() {
                 <td>${invoice.TotalGSTAmt.toFixed(2)}</td>
                 <td>${invoice.GrandTotalAmt.toFixed(2)}</td>
                 <td><button class="btn btn-danger btn-sm delete-btn" onclick="removeRow_cc(this)" disabled><i class="bi bi-trash"></i></button></td>
-            `;
+                <td style="display:none;">${invoice.id}</td>
+                `;
+
             tableBody.appendChild(row);
         }
 
@@ -188,21 +190,16 @@ async function getBookingCharges_cc(bookingID) {
             .from('CustomsClearanceCharges')
             .select('ChargesType, TotalAmount, SGSTAmt, CGSTAmt, IGSTAmt, TotalGSTAmt, GrandTotalAmt')
             .eq('ID_CC', bookingID);
-        console.log('Fetching booking charges for ID:', bookingID, 'Data:', data);
+
         if (error) throw error;
-
-
-        if (data.length === 0) return null;
-
+        if (!data || data.length === 0) return null;
 
         const chargesMap = {};
         let BasicFrightAmt = 0;
         let totalSGST = 0, totalCGST = 0, totalIGST = 0, totalGST = 0, grandTotal = 0;
 
-
         data.forEach(charge => {
             const type = (charge.ChargesType || 'Other').trim();
-
 
             if (!chargesMap[type]) {
                 chargesMap[type] = {
@@ -215,38 +212,36 @@ async function getBookingCharges_cc(bookingID) {
                 };
             }
 
+            const TotalAmount = parseFloat(charge.TotalAmount) || 0;
+            const SGSTAmt = parseFloat(charge.SGSTAmt) || 0;
+            const CGSTAmt = parseFloat(charge.CGSTAmt) || 0;
+            const IGSTAmt = parseFloat(charge.IGSTAmt) || 0;
+            const TotalGSTAmt = parseFloat(charge.TotalGSTAmt) || 0;
+            const GrandTotalAmt = parseFloat(charge.GrandTotalAmt) || 0;
 
-            chargesMap[type].TotalAmount += parseFloat(charge.TotalAmount) || 0;
-            chargesMap[type].SGSTAmt += parseFloat(charge.SGSTAmt) || 0;
-            chargesMap[type].CGSTAmt += parseFloat(charge.CGSTAmt) || 0;
-            chargesMap[type].IGSTAmt += parseFloat(charge.IGSTAmt) || 0;
-            chargesMap[type].TotalGSTAmt += parseFloat(charge.TotalGSTAmt) || 0;
-            chargesMap[type].GrandTotalAmt += parseFloat(charge.GrandTotalAmt) || 0;
+            chargesMap[type].TotalAmount += TotalAmount;
+            chargesMap[type].SGSTAmt += SGSTAmt;
+            chargesMap[type].CGSTAmt += CGSTAmt;
+            chargesMap[type].IGSTAmt += IGSTAmt;
+            chargesMap[type].TotalGSTAmt += TotalGSTAmt;
+            chargesMap[type].GrandTotalAmt += GrandTotalAmt;
 
-
-            BasicFrightAmt += parseFloat(charge.TotalAmount) || 0;
-            totalSGST += parseFloat(charge.SGSTAmt) || 0;
-            totalCGST += parseFloat(charge.CGSTAmt) || 0;
-            totalIGST += parseFloat(charge.IGSTAmt) || 0;
-            totalGST += parseFloat(charge.TotalGSTAmt) || 0;
-            grandTotal += parseFloat(charge.GrandTotalAmt) || 0;
+            BasicFrightAmt += TotalAmount;
+            totalSGST += SGSTAmt;
+            totalCGST += CGSTAmt;
+            totalIGST += IGSTAmt;
+            totalGST += TotalGSTAmt;
+            grandTotal += GrandTotalAmt;
         });
-        updateTotalInvoiceCharges({
-            totalFreightAmt: BasicFrightAmt,
-            totalSGSTAmt: totalSGST,
-            totalCGSTAmt: totalCGST,
-            totalIGSTAmt: totalIGST,
-            totalGSTAmt: totalGST,
-            totalGrandAmt: grandTotal
-        });
+
         return { BasicFrightAmt, totalSGST, totalCGST, totalIGST, totalGST, grandTotal, chargesMap };
-
 
     } catch (err) {
         console.error('Error fetching booking charges:', err.message);
         return null;
     }
 }
+
 //
 async function unlockBooking_cc(userID) {
     if (!userID) {
@@ -296,7 +291,8 @@ async function createPendingShipmentTableHeaderAndFooter() {
         "IGST<br>Amount",
         "Total GST<br>Amount",
         "Grand Total<br>Amount",
-        "Action"
+        "Action",
+        "id"
     ];
 
 
@@ -369,32 +365,31 @@ async function createPendingShipmentTableHeaderAndFooter() {
 
 function updateTotals_cc() {
     const rows = document.querySelectorAll('#pendingShipmentTable tbody tr');
-    const totals = {
-        totalFreight: 0,
-        totalSGST: 0,
-        totalCGST: 0,
-        totalIGST: 0,
-        totalGST: 0,
-        totalGrand: 0
-    };
+
+    let totalFreight = 0;
+    let totalSGST = 0;
+    let totalCGST = 0;
+    let totalIGST = 0;
+    let totalGST = 0;
+    let totalGrand = 0;
 
     rows.forEach(r => {
-        totals.totalFreight += parseFloat(r.cells[15]?.textContent) || 0;
-        totals.totalSGST += parseFloat(r.cells[16]?.textContent) || 0;
-        totals.totalCGST += parseFloat(r.cells[17]?.textContent) || 0;
-        totals.totalIGST += parseFloat(r.cells[18]?.textContent) || 0;
-        totals.totalGST += parseFloat(r.cells[19]?.textContent) || 0;
-        totals.totalGrand += parseFloat(r.cells[20]?.textContent) || 0;
+        totalFreight += parseFloat(r.cells[15]?.textContent) || 0;
+        totalSGST += parseFloat(r.cells[16]?.textContent) || 0;
+        totalCGST += parseFloat(r.cells[17]?.textContent) || 0;
+        totalIGST += parseFloat(r.cells[18]?.textContent) || 0;
+        totalGST += parseFloat(r.cells[19]?.textContent) || 0;
+        totalGrand += parseFloat(r.cells[20]?.textContent) || 0;
     });
 
-    // Render totals to UI
-    document.getElementById('totalFreight_sc').textContent = totals.totalFreight.toFixed(2);
-    document.getElementById('totalSGST_sc').textContent = totals.totalSGST.toFixed(2);
-    document.getElementById('totalCGST_sc').textContent = totals.totalCGST.toFixed(2);
-    document.getElementById('totalIGST_sc').textContent = totals.totalIGST.toFixed(2);
-    document.getElementById('totalGST_sc').textContent = totals.totalGST.toFixed(2);
-    document.getElementById('totalGrand_sc').textContent = totals.totalGrand.toFixed(2);
+    document.getElementById('totalFreight_sc').textContent = totalFreight.toFixed(2);
+    document.getElementById('totalSGST_sc').textContent = totalSGST.toFixed(2);
+    document.getElementById('totalCGST_sc').textContent = totalCGST.toFixed(2);
+    document.getElementById('totalIGST_sc').textContent = totalIGST.toFixed(2);
+    document.getElementById('totalGST_sc').textContent = totalGST.toFixed(2);
+    document.getElementById('totalGrand_sc').textContent = totalGrand.toFixed(2);
 }
+
 
 async function updateInvoiceNumbers_cc(invNo) {
     const tableBody = document.getElementById('pendingShipmentTable').querySelector('tbody');
@@ -707,26 +702,29 @@ async function removeRow_cc(button) {
 }
 
 async function recalcTotals_cc() {
-    const rows = document.querySelectorAll('#totalsRow tbody tr');
-    const totals = {
-        totalFreight: 0,
-        totalSGST: 0,
-        totalCGST: 0,
-        totalIGST: 0,
-        totalGST: 0,
-        totalGrand: 0
-    };
+    const rows = document.querySelectorAll('#pendingShipmentTable tbody tr');
+
+    let totalFreight = 0;
+    let totalSGST = 0;
+    let totalCGST = 0;
+    let totalIGST = 0;
+    let totalGST = 0;
+    let totalGrand = 0;
 
     rows.forEach(r => {
-        totals.totalFreight += parseFloat(r.cells[15]?.textContent) || 0;
-        totals.totalSGST += parseFloat(r.cells[16]?.textContent) || 0;
-        totals.totalCGST += parseFloat(r.cells[17]?.textContent) || 0;
-        totals.totalIGST += parseFloat(r.cells[18]?.textContent) || 0;
-        totals.totalGST += parseFloat(r.cells[19]?.textContent) || 0;
-        totals.totalGrand += parseFloat(r.cells[20]?.textContent) || 0;
+        totalFreight += parseFloat(r.cells[15]?.textContent) || 0;
+        totalSGST += parseFloat(r.cells[16]?.textContent) || 0;
+        totalCGST += parseFloat(r.cells[17]?.textContent) || 0;
+        totalIGST += parseFloat(r.cells[18]?.textContent) || 0;
+        totalGST += parseFloat(r.cells[19]?.textContent) || 0;
+        totalGrand += parseFloat(r.cells[20]?.textContent) || 0;
     });
 
-
-    updateTotals_cc(totals);
+    document.getElementById('totalFreight_sc').textContent = totalFreight.toFixed(2);
+    document.getElementById('totalSGST_sc').textContent = totalSGST.toFixed(2);
+    document.getElementById('totalCGST_sc').textContent = totalCGST.toFixed(2);
+    document.getElementById('totalIGST_sc').textContent = totalIGST.toFixed(2);
+    document.getElementById('totalGST_sc').textContent = totalGST.toFixed(2);
+    document.getElementById('totalGrand_sc').textContent = totalGrand.toFixed(2);
 }
 
