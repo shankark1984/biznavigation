@@ -252,3 +252,4 @@ let customerGSTRate = null;
 
 const reSetPass = '12345'; // Default password for new users
 const sessionToken = crypto.randomUUID();
+let infomationData = null;

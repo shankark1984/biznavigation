@@ -1,3 +1,4 @@
+let mergedChargesMap = {};
 async function CustomsClearanceInvoiceDetails() {
     const partyCode = document.getElementById('partyCode').value.trim();
     const invoiceDateElement = document.getElementById('invoiceDate');
@@ -567,9 +568,8 @@ async function loadInvoiceLineItems_cc(invoiceNo) {
 
 async function addSingleShipmentToInvoice_cc(shipmentNo, invoiceNo) {
     showSpinner();
-    console.log('Adding single shipment to Customs Clearance Invoice:', shipmentNo, 'Invoice No:', invoiceNo);
+
     const partyCode = document.getElementById('partyCode').value.trim();
-    console.log('Party Code:', partyCode, 'Company ID:', CompanyID, 'User Login ID:', UserLoginID);
 
     try {
         // Step 1: Fetch shipment details
@@ -579,8 +579,6 @@ async function addSingleShipmentToInvoice_cc(shipmentNo, invoiceNo) {
             .eq('company_id', CompanyID)
             .eq('JobID', shipmentNo)
             .single();
-
-        console.log('Fetched shipment data:', data, 'Error:', error);
 
         if (error || !data) {
             alert(`Shipment ${shipmentNo} not found.`);
@@ -653,7 +651,7 @@ async function addSingleShipmentToInvoice_cc(shipmentNo, invoiceNo) {
 
         // ✅ Step 7: Merge charges into global map and re-render charges table
         mergeChargesIntoMap(charges);
-        renderChargesTable(mergedChargesMap);
+        renderChargesTable(window.mergedChargesMap);
 
         // ✅ Update totals if needed
         updateTotals_cc();
@@ -670,22 +668,36 @@ async function addSingleShipmentToInvoice_cc(shipmentNo, invoiceNo) {
 
 // Utility to merge charges
 function mergeChargesIntoMap(newCharges) {
-    if (!window.mergedChargesMap) window.mergedChargesMap = {};
 
-    for (const [type, amounts] of Object.entries(newCharges)) {
-        if (!mergedChargesMap[type]) {
-            mergedChargesMap[type] = { ...amounts };
-        } else {
-            mergedChargesMap[type].TotalAmount += amounts.TotalAmount;
-            mergedChargesMap[type].SGSTAmt += amounts.SGSTAmt;
-            mergedChargesMap[type].CGSTAmt += amounts.CGSTAmt;
-            mergedChargesMap[type].IGSTAmt += amounts.IGSTAmt;
-            mergedChargesMap[type].TotalGSTAmt += amounts.TotalGSTAmt;
-            mergedChargesMap[type].GrandTotalAmt += amounts.GrandTotalAmt;
+    if (!window.mergedChargesMap) {
+        window.mergedChargesMap = {};
+    }
+
+    const chargeMap = newCharges.chargesMap;   // ✅ FIX HERE
+
+    for (const [type, amounts] of Object.entries(chargeMap)) {
+
+        const normalizedType = toProperCase(type.trim().toLowerCase());
+
+        if (!window.mergedChargesMap[normalizedType]) {
+            window.mergedChargesMap[normalizedType] = {
+                TotalAmount: 0,
+                SGSTAmt: 0,
+                CGSTAmt: 0,
+                IGSTAmt: 0,
+                TotalGSTAmt: 0,
+                GrandTotalAmt: 0
+            };
         }
+
+        window.mergedChargesMap[normalizedType].TotalAmount += amounts.TotalAmount || 0;
+        window.mergedChargesMap[normalizedType].SGSTAmt += amounts.SGSTAmt || 0;
+        window.mergedChargesMap[normalizedType].CGSTAmt += amounts.CGSTAmt || 0;
+        window.mergedChargesMap[normalizedType].IGSTAmt += amounts.IGSTAmt || 0;
+        window.mergedChargesMap[normalizedType].TotalGSTAmt += amounts.TotalGSTAmt || 0;
+        window.mergedChargesMap[normalizedType].GrandTotalAmt += amounts.GrandTotalAmt || 0;
     }
 }
-
 
 async function removeRow_cc(button) {
     const row = button.closest('tr');

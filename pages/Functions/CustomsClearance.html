@@ -118,15 +118,17 @@
                             <label for="modeType" class="form-label">Mode Type</label>
                             <select id="modeType" class="form-select" required>
                                 <option value="">Choose...</option>
-                                <option>Dox</option>
-                                <option>Non-Dox</option>
-                                <option>FCL</option>
-                                <option>LCL</option>
+                                <option value="Dox">Dox</option>
+                                <option value="Non-Dox">Non-Dox</option>
+                                <option value="FCL">FCL</option>
+                                <option value="LCL">LCL</option>
+                                <option value="LTL">LTL</option>
+                                <option value="FTL">FTL</option>
                             </select>
                         </div>
                         <div class="col-md-2 col-sm-6">
                             <label for="blAwbNumber" class="form-label">BL / AWB No.</label>
-                            <input list="blAwbNumberSuggestions" id="blAwbNumber" class="form-control"
+                            <input list="blAwbNumberSuggestions" id="blAwbNumber" class="form-control text-uppercase"
                                 autocomplete="off" />
                             <datalist id="blAwbNumberSuggestions"></datalist>
                         </div>
@@ -136,8 +138,8 @@
                         </div>
                         <div class="col-md-2 col-sm-6">
                             <label for="beNumber" class="form-label">BE No.</label>
-                            <input list="beNumberSuggestions" id="beNumber" class="form-control" placeholder="Choose..."
-                                autocomplete="off" />
+                            <input list="beNumberSuggestions" id="beNumber" class="form-control text-uppercase"
+                                placeholder="Choose..." autocomplete="off" />
                             <datalist id="beNumberSuggestions"></datalist>
                         </div>
                         <div class="col-md-2 col-sm-6">
@@ -214,7 +216,7 @@
                                     aria-selected="false">Freight</button>
                             </li>
                             <li class="nav-item" role="presentation">
-                                <button class="nav-link" id="container-details-tab" data-bs-toggle="tab"
+                                <button class="nav-link d-none" id="container-details-tab" data-bs-toggle="tab"
                                     data-bs-target="#container-details" type="button" role="tab"
                                     aria-controls="container-details" aria-selected="false">Container Details</button>
                             </li>
@@ -307,24 +309,29 @@
                             </div>
 
                             <!-- Container Details Tab -->
-                            <div class="tab-pane fade" id="container-details" role="tabpanel"
+                            <div class="tab-pane fade d-none" id="container-details" role="tabpanel"
                                 aria-labelledby="container-details-tab">
                                 <div class="row g-2 align-items-end text-center">
                                     <div class="col-md-4 col-sm-6">
-                                        <label for="containerType" class="form-label small text-start">Container
-                                            Type</label>
-                                        <select id="containerType" class="form-select form-select-sm"></select>
+                                        <label id="containerTypeLabel" for="containerType"
+                                            class="form-label small text-start">Container Type</label>
+                                        <input list="containerTypeList" id="containerType"
+                                            class="form-control form-control-sm">
+                                        <datalist id="containerTypeList"></datalist>
                                     </div>
                                     <div class="col-md-4 col-sm-6">
-                                        <label for="containerNumber" class="form-label small text-start">Container
+                                        <label for="containerNumber" id="containerNumberLabel"
+                                            class="form-label small text-start">Container
                                             Number</label>
                                         <input type="text" class="form-control form-control-sm" id="containerNumber"
-                                            placeholder="Enter Container Number" maxlength="11" />
+                                            maxlength="11" />
                                     </div>
                                     <div class="col-md-1 col-sm-2 pt-sm-1">
                                         <label class="invisible">Add</label>
                                         <button type="button" class="btn btn-sm btn-primary w-100 mt-1"
-                                            id="addContainer">Add</button>
+                                            id="addContainer" aria-label="Add container">
+                                            Add
+                                        </button>
                                     </div>
                                     <div class="col-12 text-start">
                                         <small id="containerFeedback" class="text-danger d-none"></small>
@@ -435,8 +442,7 @@
     <script src="../../assets/js/utils/utils.js" defer></script>
     <script src="../../assets/js/CustomsClearance/CustomsClearance.js" defer></script>
     <script src="../../assets/js/CustomsClearance/CustomsClearanceCharges.js" defer></script>
-
-    <script src="../../assets/js/InternationalBooking/ContainerDetails.js" defer></script>
+    <script src="../../assets/js/CustomsClearance/Equipment.js" defer></script>
     <script src="../../assets/js/InternationalBooking/TariffCalculation.js" defer></script>
     <script src="../../assets/js/InternationalBooking/BookingStatus.js" defer></script>
 

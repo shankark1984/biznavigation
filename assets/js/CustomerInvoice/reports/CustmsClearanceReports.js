@@ -121,112 +121,24 @@ async function generate_CustmsClearance_InvoicePDF(header, lines = []) {
         header?.InvoiceNo
     );
 
-    y = tableResult.finalY;
-
-    y = doc.lastAutoTable?.finalY || y;
-
-
-
-
-    /* ==============================
-   TERMS + BANK DETAILS (2 COLUMN)
-============================== */
-
-    const rowH = 5;
-    const col1 = PAGE.w * 0.5;   // Terms
-    const col2 = PAGE.w * 0.5;   // Bank Details
-
-    const x1 = PAGE.x;
-    const x2 = x1 + col1;
-
-    const rows = 5;
-    const tableH = rowH * rows;
-
-    if (y + tableH > PAGE.h - 20) {
-        doc.addPage();
-        y = 10;
-    }
-
-    /* Draw Outer Border */
-    safeRect(doc, PAGE.x, y, PAGE.w, tableH);
-
-    /* Draw Vertical Divider */
-    doc.line(x2, y, x2, y + tableH);
-
-    /* Draw Horizontal Lines */
-    for (let i = 1; i < rows; i++) {
-        doc.line(PAGE.x, y + rowH * i, PAGE.x + PAGE.w, y + rowH * i);
+    if (tableResult && tableResult.finalY) {
+        y = tableResult.finalY;
+    } else if (doc.lastAutoTable) {
+        y = doc.lastAutoTable.finalY;
     }
 
     /* ==============================
-       HEADERS
+       TERMS AND BANK DETAILS
     ============================== */
+    y = await drawTermsAndBankDetails(doc, y, company, header, PAGE, FONT, safeRect, getInvoiceBankDetails);
 
-    doc.setFont("helvetica", "bold").setFontSize(FONT.body);
-
-    doc.text("TERMS", x1 + col1 / 2, y + 3.5, { align: "center" });
-    doc.text("BANK DETAILS", x2 + col2 / 2, y + 3.5, { align: "center" });
-
-    /* ==============================
-       TERMS CONTENT
-    ============================== */
-
-    doc.setFont("helvetica", "normal").setFontSize(FONT.tiny);
-
-    const terms = [
-        `1. Please draw cheque in favour of ${company.name}`,
-        "2. Payments should be made within 7 days from the date of billing.",
-        "3. Complaints must be forwarded within 8 days from receipt.",
-        "4. Bangalore will be the jurisdiction for any disputes."
-    ];
-
-    terms.forEach((t, i) => {
-        doc.text(t, x1 + 1, y + rowH * (i + 2) - 1);
-    });
-
-    /* ==============================
-       BANK DETAILS CONTENT
-    ============================== */
-
-    const bankInfo = await getInvoiceBankDetails(header?.InvoiceNo);
-    const bankDetails = [
-        `Account Name : ${company.name}`,
-        `Account No   : ${bankInfo?.AccountNo || '0000000000'}`,
-        `Bank Name    : ${bankInfo?.BankName || '-'} | Branch Name : ${bankInfo?.BranchName || '-'}`,
-        `IFSC Code    : ${bankInfo?.IFSCCode || '-'} | SWIFT Code : ${bankInfo?.SWIFTCode || '-'}`
-    ];
-
-
-    bankDetails.forEach((b, i) => {
-        doc.text(b, x2 + 1, y + rowH * (i + 2) - 1);
-    });
-
-    // Move Y position to bottom of table
-    y = y + tableH + 3;
-
-    // Page break check
-    if (y > PAGE.h - 10) {
-        doc.addPage();
-        y = 15;
-    }
-
-    // Footer Note
-    doc.setFont("helvetica", "bolditalic");
-    doc.setFontSize(FONT.tiny);
-
-    doc.text(
-        "This is a computer generated invoice. No signature required.",
-        PAGE.x + PAGE.w / 2,
-        y,
-        { align: "center" }
-    );
 
     const addFooter = (doc, pageNumber, totalPages) => {
 
         const footerY = PAGE.h - 5;
 
         doc.setFont("helvetica", "bold");
-        doc.setFontSize(6.5);
+        doc.setFontSize(7);
 
         // Color for AllEdge (example: Blue)
         doc.setTextColor(0, 0, 0);

@@ -1,5 +1,7 @@
 let cachedCompany = null;
 let cachedParty = null;
+let cachedEquipment = null;
+let invoiceRemarks = null;
 
 async function companyDetails() {
 
@@ -111,6 +113,21 @@ async function fetchAndRenderShipmentTable(doc, startY, PAGE, FONT, invoiceNo) {
     };
 
     /* ===============================
+    Invoice Details
+    =============================== */
+    const { data: invoiceDetails, error: invError } = await supabaseClient
+        .from("InvoiceDetails")
+        .select("*")
+        .eq("InvoiceNo", invoiceNo)
+        .maybeSingle();
+
+    if (invError) {
+        console.error("Invoice details load failed:", invError);
+    } else {
+        invoiceRemarks = "Information:\n" + "    " + (invoiceDetails?.Remarks || "");
+    }
+
+    /* ===============================
        FETCH SHIPMENTS
     =============================== */
 
@@ -123,15 +140,18 @@ async function fetchAndRenderShipmentTable(doc, startY, PAGE, FONT, invoiceNo) {
     if (error || !lines?.length) {
         return {
             finalY: startY,
-            totals: { totalFreight: 0, totalGstAmt: 0, totalGrandTotal: 0, totalWeight: 0 }
+            totals: { totalFreight: 0, totalGstAmt: 0, totalGrandTotal: 0, totalWeight: 0 },
         };
     }
+
 
     /* ===============================
        FETCH ALL CHARGES (ONE QUERY)
     =============================== */
 
     const shipmentIds = lines.map(x => x.id);
+
+    console.log("Fetching charges for shipments:", shipmentIds);
 
     const { data: allCharges } = await supabaseClient
         .from("CustomsClearanceCharges")
@@ -144,6 +164,42 @@ async function fetchAndRenderShipmentTable(doc, startY, PAGE, FONT, invoiceNo) {
         if (!chargesMap[c.ID_CC]) chargesMap[c.ID_CC] = [];
         chargesMap[c.ID_CC].push(c);
     });
+
+    /* ===============================
+    FETCH ALL Equipment (ONE QUERY)
+ ================================ */
+    const invoice_id = document.getElementById("tempFormID").value;
+    console.log("Fetching equipment details for shipments:", shipmentIds);
+    const { data: allEquipment, error: equipmenterror } = await supabaseClient
+        .from("CustomsClearanceEquipment")
+        .select("*")
+        .in("ID_CC", shipmentIds);
+
+    if (equipmenterror) {
+        console.error("Equipment fetch error:", equipmenterror);
+    }
+
+    console.log("Fetched equipment data:", allEquipment);
+
+    /* ===============================
+       BUILD REMARKS TEXT
+    ================================ */
+    let equipmentText = "Remarks:\n";
+
+    if (Array.isArray(allEquipment) && allEquipment.length > 0) {
+
+        equipmentText += allEquipment
+            .map(e =>
+                `• Eq No: ${e?.EquipmentNumber || "-"} | ` +
+                `Type: ${e?.EquipmentType || "-"} | `
+            )
+            .join("\n");
+
+        console.log("Constructed equipment text:", equipmentText);
+
+    } else {
+        equipmentText += "No Equipment Details";
+    }
 
     /* ===============================
        GRAND TOTAL VARIABLES
@@ -198,7 +254,8 @@ async function fetchAndRenderShipmentTable(doc, startY, PAGE, FONT, invoiceNo) {
                 fontSize: FONT.small,
                 cellPadding: 1,
                 lineWidth: 0.2,
-                lineColor: [0, 0, 0]
+                lineColor: [0, 0, 0],
+                valign: "middle"
             },
             headStyles: {
                 halign: "center",
@@ -271,10 +328,11 @@ async function fetchAndRenderShipmentTable(doc, startY, PAGE, FONT, invoiceNo) {
             columnStyles: chargesColumnStyles,
 
             styles: {
-                fontSize: FONT.tiny,
+                fontSize: FONT.small,
                 cellPadding: 1,
                 lineWidth: 0.2,
-                lineColor: [0, 0, 0]
+                lineColor: [0, 0, 0],
+                valign: "middle"
             },
             headStyles: {
                 halign: "center",
@@ -294,7 +352,7 @@ async function fetchAndRenderShipmentTable(doc, startY, PAGE, FONT, invoiceNo) {
                 }
             },
             foot: [[
-                { content: "Shipment Total", colSpan: 3, styles: { halign: "right", fontStyle: "bold" } },
+                { content: "SHIPMENT TOTAL", colSpan: 3, styles: { halign: "right", fontStyle: "bold" } },
                 { content: chTaxable.toFixed(2), styles: { halign: "right", fontStyle: "bold" } },
                 { content: chSGST.toFixed(2), styles: { halign: "right", fontStyle: "bold" } },
                 { content: chCGST.toFixed(2), styles: { halign: "right", fontStyle: "bold" } },
@@ -363,24 +421,120 @@ async function fetchAndRenderShipmentTable(doc, startY, PAGE, FONT, invoiceNo) {
             [
                 {
                     content: "Amount in Words: " + numberToWordsIndian(totalGrandTotal),
-                    colSpan: 9,
+                    colSpan: 5,
                     styles: { halign: "left" }
                 }
             ]
         ]
 
     });
+    currentY = doc.lastAutoTable.finalY;
+    doc.autoTable({
+        startY: currentY,
+        margin: { left: PAGE.x, right: PAGE.x },
+        body: [
+            [
+                {
+                    content: equipmentText,
+                    colSpan: 9,   // Must match your total columns
+                    styles: { halign: "left" }
+                },
+                {
+                    content: invoiceRemarks,
+                    colSpan: 5,
+                    styles: { halign: "left" }
+                }
+            ]
+        ],
+        styles: {
+            fontSize: FONT.small,
+            cellPadding: 3,
+            lineWidth: 0.2,
+            lineColor: [0, 0, 0]
+        }
+    });
+
+
 
     currentY = doc.lastAutoTable.finalY;
 
+    //    
+}
 
-    return {
-        finalY: currentY,
-        totals: {
-            totalFreight,
-            totalGstAmt,
-            totalGrandTotal,
-            totalWeight
-        }
-    };
+async function drawTermsAndBankDetails(doc, y, company, header, PAGE, FONT, safeRect, getInvoiceBankDetails) {
+
+    const rowH = 5;
+    const col1 = PAGE.w * 0.5;
+    const col2 = PAGE.w * 0.5;
+
+    const x1 = PAGE.x;
+    const x2 = x1 + col1;
+
+    const rows = 5;
+    const tableH = rowH * rows;
+
+    // Page break
+    if (y + tableH > PAGE.h - 20) {
+        doc.addPage();
+        y = 10;
+    }
+
+    /* Outer border */
+    safeRect(doc, PAGE.x, y, PAGE.w, tableH);
+
+    /* Vertical divider */
+    doc.line(x2, y, x2, y + tableH);
+
+    /* Horizontal lines */
+    for (let i = 1; i < rows; i++) {
+        doc.line(PAGE.x, y + rowH * i, PAGE.x + PAGE.w, y + rowH * i);
+    }
+
+    /* Headers */
+    doc.setFont("helvetica", "bold").setFontSize(FONT.body);
+    doc.text("TERMS", x1 + col1 / 2, y + 3.5, { align: "center" });
+    doc.text("BANK DETAILS", x2 + col2 / 2, y + 3.5, { align: "center" });
+
+    /* Terms content */
+    doc.setFont("helvetica", "normal").setFontSize(FONT.small);
+
+    const terms = [
+        `1. Please draw cheque in favour of ${company.name}`,
+        "2. Payments should be made within 7 days from the date of billing.",
+        "3. Complaints must be forwarded within 8 days from receipt.",
+        "4. Bangalore will be the jurisdiction for any disputes."
+    ];
+
+    terms.forEach((t, i) => {
+        doc.text(t, x1 + 1, y + rowH * (i + 2) - 1);
+    });
+
+    /* Bank details */
+    const bankInfo = await getInvoiceBankDetails(header?.InvoiceNo);
+
+    const bankDetails = [
+        `Account Name : ${company.name}`,
+        `Account No   : ${bankInfo?.AccountNo || '0000000000'}`,
+        `Bank Name    : ${bankInfo?.BankName || '-'} | Branch Name: ${bankInfo?.BranchName || '-'} `,
+        `IFSC Code: ${bankInfo?.IFSCCode || '-'} | MICR Code: ${bankInfo?.MICRCode || '-'} `
+    ];
+
+    bankDetails.forEach((b, i) => {
+        doc.text(b, x2 + 1, y + rowH * (i + 2) - 1);
+    });
+
+    /* Move Y */
+    y = y + tableH + 3;
+
+    // Footer note
+    doc.setFont("helvetica", "bolditalic");
+    doc.setFontSize(FONT.small);
+    doc.text(
+        "This is a computer generated invoice. No signature required.",
+        PAGE.x + PAGE.w / 2,
+        y,
+        { align: "center" }
+    );
+
+    return y + 5; // return updated Y
 }

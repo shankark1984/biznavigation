@@ -31,9 +31,9 @@ function getFormData() {
         MovementType: document.getElementById('movementType').value.trim(),
         TransitType: document.getElementById('transitType').value.trim(),
         ModeType: document.getElementById('modeType').value.trim(),
-        BLAWBNo: document.getElementById('blAwbNumber').value.trim(),
+        BLAWBNo: document.getElementById('blAwbNumber').value.trim().toUpperCase(),
         BLAWBDate: document.getElementById('blAwbDate').value.trim(),
-        BENo: document.getElementById('beNumber').value.trim(),
+        BENo: document.getElementById('beNumber').value.trim().toUpperCase(),
         BEDate: document.getElementById('beDate').value.trim(),
         Consignee: document.getElementById('consigneeName').value.trim(),
         Address: document.getElementById('deliveryAddress').value.trim(),
@@ -179,6 +179,7 @@ async function saveFormData() {
 
         // Save charges (for both insert/update, if needed)
         await saveChargesTableToSupabase(parentId, jobID);
+        await saveEquipmentDetails(); // Save equipment details linked to this job
 
     } catch (error) {
         console.error('Error saving data:', error);
@@ -313,6 +314,7 @@ const beNumberInput = document.getElementById('beNumber');
 function populateForm(data) {
     if (!data) return;
 
+    document.getElementById('tempFormID').value = data.id;
     document.getElementById('jobNo').value = data.JobID || '';
     document.getElementById('jobDate').value = data.JobDate || '';
     document.getElementById('partyCode').value = data.PartyCode || '';
@@ -335,11 +337,13 @@ function populateForm(data) {
     document.getElementById('commodity').value = data.Commodity || '';
     document.getElementById('information').value = data.AnyInformation || '';
 
+
     // Also update the data-mode and enable form for updating, if applicable
+    toggleContainerTab(data.ModeType);
     saveButton.setAttribute('data-mode', 'update');
     saveButton.disabled = true;
     saveButton.innerHTML = '<i class="bi bi-save"></i> Update';
-    
+
     if (data.InvoiceNo === null || data.InvoiceNo === undefined || data.InvoiceNo.trim() === "") {
         modifyButton.disabled = false;
     } else {
@@ -374,8 +378,12 @@ async function loadRecordByField(fieldName, value) {
 
 // Event listeners - trigger on `change` or `input` as you prefer
 jobNoInput.addEventListener('change', async e => {
+
     await loadRecordByField('JobID', e.target.value.trim());
+
+    const tempFormID = document.getElementById('tempFormID').value.trim();
     await loadChargesByJobID(e.target.value.trim());
+    await fetchEquipmentDetails(tempFormID);
 });
 
 blAwbNumberInput.addEventListener('change', async e => {

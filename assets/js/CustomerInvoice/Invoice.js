@@ -159,6 +159,10 @@ document.getElementById('saveButton').addEventListener('click', async () => {
         document.getElementById('invoiceNo').value = invoiceNo;
     }
 
+    const getValue = (id) => {
+        const el = document.getElementById(id);
+        return el ? parseFloat(el.textContent) || 0 : 0;
+    };
     invoiceData = {
         InvoiceNo: invoiceNo,
         InvoiceDate: invoiceDate,
@@ -169,15 +173,17 @@ document.getElementById('saveButton').addEventListener('click', async () => {
         company_id: CompanyID,
 
         BasicAmount: parseFloat(totalFreight.textContent) || 0,
-        OtherAmount:
-            (parseFloat(totalFSCAmt.textContent) || 0) +
-            (parseFloat(totalOtherAmt.textContent) || 0),
 
-        SGSTAmount: parseFloat(totalSGST.textContent) || 0,
-        CGSTAmount: parseFloat(totalCGST.textContent) || 0,
-        IGSTAmount: parseFloat(totalIGST.textContent) || 0,
-        TotalGSTAmount: parseFloat(totalGST.textContent) || 0,
-        GrandTotalAmount: parseFloat(totalGrand.textContent) || 0,
+        OtherAmount:
+            getValue("totalFSCAmt") +
+            getValue("totalOtherAmt"),
+
+        SGSTAmount: parseFloat(totalSGSTAmt.textContent) || 0,
+        CGSTAmount: parseFloat(totalCGSTAmt.textContent) || 0,
+        IGSTAmount: parseFloat(totalIGSTAmt.textContent) || 0,
+        TotalGSTAmount: parseFloat(totalGSTAmt.textContent) || 0,
+        GrandTotalAmount: parseFloat(totalGrandAmt.textContent) || 0,
+        Remarks: document.getElementById('invoiceInformation').value.trim(),
     };
 
     // spinner.classList.remove('d-none');
@@ -250,6 +256,12 @@ async function newInvoice() {
         await unlockBooking_ib(UserLoginID);
         await unlockBooking_cc(UserLoginID);
         await d_unlockBooking_db(UserLoginID); // Domestic();
+        document.getElementById('addShipmentNo').disabled = true; // Disable add shipment button until movement type is selected
+        document.getElementById('fetchPendingInvoices').disabled = true; // Disable party code field until movement type is selected
+        document.getElementById('movementType').value = ''; // Reset movement type
+        document.getElementById('pendingShipmentTable').tBodies[0].innerHTML = ''; // Clear pending shipments table
+        document.getElementById('invoiceInformation').value = ''; // Clear invoice information/remark
+
     } catch (e) {
         console.error('Unlock failed:', e);
     }
@@ -460,6 +472,7 @@ document.getElementById('invoiceNo').addEventListener('change', async (e) => {
         document.getElementById('bankIDs').value = getBankNameByCode(invoiceDetails.BankID) || '';
         document.getElementById('inputBankName').value = invoiceDetails.id || '';
         document.getElementById('invoiceInformation').value = invoiceDetails.Remarks || '';
+        document.getElementById('tempFormID').value = invoiceDetails.id || '';
 
         // ✅ Fetch and update Party Name
         const partyData = await getPartyDetailsByCode(invoiceDetails.PartyCode);
@@ -516,7 +529,10 @@ document.getElementById('addShipmentNo').addEventListener('click', async () => {
     }
 
     // Show spinner and disable button
-    saveSpinner.classList.remove('d-none');
+    if (saveSpinner) {
+        saveSpinner.classList.remove('d-none');
+    }
+
 
     // Check the value and run the relevant function
     if (movementType === 'Forwarding' || movementType === 'Import' || movementType === 'Export') {
