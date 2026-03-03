@@ -1347,3 +1347,43 @@ function initDatalistValidation() {
         });
     });
 }
+
+async function paymentDetails(invoiceNumber) {
+    try {
+        const { data, error } = await supabaseClient
+            .from("PaymentLineItems")
+            .select("*")
+            .eq("InvoiceNo", invoiceNumber);
+
+        if (error) throw error;
+
+        let totalPayment = 0;
+        let totalOtherDeduction = 0;
+        let totalTDS = 0;
+
+        data.forEach(row => {
+            totalPayment += Number(row.PaymentAmount) || 0;
+            totalOtherDeduction += Number(row.OtherDeductionAmount) || 0;
+            totalTDS += Number(row.TDSDeductionAmount) || 0;
+        });
+
+        return {
+            rows: data,
+            totalPayment,
+            totalOtherDeduction,
+            totalTDS,
+            totalReceived:
+                totalPayment + totalOtherDeduction + totalTDS
+        };
+
+    } catch (err) {
+        console.error("Payment details load failed:", err);
+        return {
+            rows: [],
+            totalPayment: 0,
+            totalOtherDeduction: 0,
+            totalTDS: 0,
+            totalReceived: 0
+        };
+    }
+}

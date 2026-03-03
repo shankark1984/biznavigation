@@ -463,6 +463,7 @@ document.getElementById('invoiceNo').addEventListener('change', async (e) => {
 
     const invoiceDetails = await getInvoiceDetails(invoiceNo);
 
+
     if (invoiceDetails) {
         // Populate your form fields here
         document.getElementById('partyCode').value = invoiceDetails.PartyCode || '';
@@ -482,12 +483,19 @@ document.getElementById('invoiceNo').addEventListener('change', async (e) => {
             alert('Party not found.');
         }
 
+        const paymentInfo = await paymentDetails(invoiceNo);
+        console.log('Payment Invoice No:', paymentInfo);
+
+        if (paymentInfo.rows.length > 0) {
+            document.getElementById('modifyButton').disabled = true; // Disable modify button
+        } else {
+            document.getElementById('modifyButton').disabled = false; // Enable modify button
+        }
         // Load international_booking records linked to this invoice
         disableForm(); // Disable form after loading invoice details
 
         saveButton.disabled = true; // Disable save button
-        document.getElementById('modifyButton').disabled = false; // Enable modify button
-        document.getElementById('deleteButton').disabled = true; // Enable delete button
+        document.getElementById('deleteButton').disabled = true; // Disable delete button
         document.getElementById('reportButton').disabled = false; // Enable report button
         document.getElementById('fetchPendingInvoices').disabled = true; // Disable party code field
 
@@ -592,10 +600,11 @@ document.getElementById('reportButton').addEventListener('click', async () => {
         alert('Please enter/select an Invoice Number.');
         return;
     }
+    reportType = document.getElementById('reportType').value;
     const invoiceDetails = await getInvoiceDetails(invoiceNo);
     if (!invoiceDetails) return;
     if (FORWARDING_TYPES.includes(invoiceDetails.InvoiceType)) {
-        await generateInvoicePDF(invoiceDetails); // Generate PDF for Forwarding/Import/Export
+        await generate_International_InvoicePDF(invoiceDetails); // Generate PDF for Forwarding/Import/Export
     } else if (invoiceDetails.InvoiceType === 'Customs Clearance') {
         await generate_CustmsClearance_InvoicePDF(invoiceDetails); // Generate PDF for Customs Clearance
     } else if (invoiceDetails.InvoiceType === 'Domestic') {

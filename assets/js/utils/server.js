@@ -26,21 +26,19 @@ class SupabaseService {
     static async testConnection(maxRetries = 2) {
         for (let attempt = 1; attempt <= maxRetries; attempt++) {
             try {
-                const { error } = await this.client
+                const { data, error } = await this.client
                     .from(SUPABASE_CONFIG.tables.COMPANY_PROFILE)
-                    .select('*')
-                    .limit(1)
-                    .single();
+                    .select('id')
+                    .limit(1);
 
                 if (error) throw error;
+
                 console.log("Supabase connection successful");
                 return true;
             } catch (error) {
                 console.error(`Connection attempt ${attempt} failed:`, error.message);
-                if (attempt === maxRetries) {
-                    return false;
-                }
-                await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+                if (attempt === maxRetries) return false;
+                await new Promise(r => setTimeout(r, 1000 * attempt));
             }
         }
     }
@@ -253,3 +251,4 @@ let customerGSTRate = null;
 const reSetPass = '12345'; // Default password for new users
 const sessionToken = crypto.randomUUID();
 let infomationData = null;
+let reportType = null;

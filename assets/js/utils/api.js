@@ -88,7 +88,121 @@ async function partyDetails(partyID) {
     }
 }
 
-async function fetchAndRenderShipmentTable(doc, startY, PAGE, FONT, invoiceNo) {
+async function drawTermsAndBankDetails_int(doc, y, company, header, PAGE, FONT, safeRect, getInvoiceBankDetails) {
+
+    const rowH = 5;
+    const col1 = PAGE.w * 0.5;
+    const col2 = PAGE.w * 0.5;
+
+    const x1 = PAGE.x;
+    const x2 = x1 + col1;
+
+    const rows = 5;
+    const tableH = rowH * rows;
+
+    // Page break
+    if (y + tableH > PAGE.h - 20) {
+        doc.addPage();
+        y = 10;
+    }
+
+    /* Outer border */
+    safeRect(doc, PAGE.x, y, PAGE.w, tableH);
+
+    /* Vertical divider */
+    doc.line(x2, y, x2, y + tableH);
+
+    /* Horizontal lines */
+    for (let i = 1; i < rows; i++) {
+        doc.line(PAGE.x, y + rowH * i, PAGE.x + PAGE.w, y + rowH * i);
+    }
+
+    /* Headers */
+    doc.setFont("helvetica", "bold").setFontSize(FONT.body);
+    doc.text("TERMS", x1 + col1 / 2, y + 3.5, { align: "center" });
+    doc.text("BANK DETAILS", x2 + col2 / 2, y + 3.5, { align: "center" });
+
+    /* Terms content */
+    doc.setFont("helvetica", "normal").setFontSize(FONT.small);
+
+    const terms = [
+        `1. Please draw cheque in favour of ${company.name}`,
+        "2. Payments should be made within 7 days from the date of billing.",
+        "3. Complaints must be forwarded within 8 days from receipt.",
+        "4. Bangalore will be the jurisdiction for any disputes."
+    ];
+
+    terms.forEach((t, i) => {
+        doc.text(t, x1 + 1, y + rowH * (i + 2) - 1);
+    });
+
+    /* Bank details */
+    const bankInfo = await getInvoiceBankDetails(header?.InvoiceNo);
+
+    const bankDetails = [
+        `Account Name : ${company.name}`,
+        `Account No   : ${bankInfo?.AccountNo || '0000000000'}`,
+        `Bank Name    : ${bankInfo?.BankName || '-'} | Branch Name: ${bankInfo?.BranchName || '-'} `,
+        `IFSC Code: ${bankInfo?.IFSCCode || '-'} | MICR Code: ${bankInfo?.MICRCode || '-'} `
+    ];
+
+    bankDetails.forEach((b, i) => {
+        doc.text(b, x2 + 1, y + rowH * (i + 2) - 1);
+    });
+
+    /* Move Y */
+    y = y + tableH + 3;
+
+    // Footer note
+    doc.setFont("helvetica", "bolditalic");
+    doc.setFontSize(FONT.small);
+    doc.text(
+        "This is a computer generated invoice. No signature required.",
+        PAGE.x + PAGE.w / 2,
+        y,
+        { align: "center" }
+    );
+
+    return y + 5; // return updated Y
+}
+
+// ============================================
+// Reusable Footer for Any PDF
+// ============================================
+function applyPdfFooter(doc, PAGE) {
+
+    const totalPages = doc.getNumberOfPages();
+
+    for (let i = 1; i <= totalPages; i++) {
+
+        doc.setPage(i);
+
+        const footerY = PAGE.h - 5;
+
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(7);
+
+        // Left side
+        doc.setTextColor(0, 0, 0);
+        doc.text("Powered by", PAGE.x, footerY);
+
+        doc.setTextColor(3, 171, 255);
+        doc.text("AllEdge", PAGE.x + 14, footerY);
+
+        // Right side
+        doc.setTextColor(0, 0, 0);
+        doc.text(
+            `Page ${i} of ${totalPages}`,
+            PAGE.x + PAGE.w,
+            footerY,
+            { align: "right" }
+        );
+    }
+}
+
+
+
+async function fetchAndRenderShipmentTable1(doc, startY, PAGE, FONT, invoiceNo) {
     const shipmentColumnStyles = {
         0: { cellWidth: 8, halign: "center" }, // Sl No
         1: { cellWidth: 25 }, // Job ID
@@ -421,7 +535,7 @@ async function fetchAndRenderShipmentTable(doc, startY, PAGE, FONT, invoiceNo) {
             [
                 {
                     content: "Amount in Words: " + numberToWordsIndian(totalGrandTotal),
-                    colSpan: 5,
+                    colSpan: 9,
                     styles: { halign: "left" }
                 }
             ]
@@ -436,7 +550,7 @@ async function fetchAndRenderShipmentTable(doc, startY, PAGE, FONT, invoiceNo) {
             [
                 {
                     content: equipmentText,
-                    colSpan: 9,   // Must match your total columns
+                    colSpan: 4,   // Must match your total columns
                     styles: { halign: "left" }
                 },
                 {
@@ -448,7 +562,7 @@ async function fetchAndRenderShipmentTable(doc, startY, PAGE, FONT, invoiceNo) {
         ],
         styles: {
             fontSize: FONT.small,
-            cellPadding: 3,
+            cellPadding: 1,
             lineWidth: 0.2,
             lineColor: [0, 0, 0]
         }
@@ -461,80 +575,3 @@ async function fetchAndRenderShipmentTable(doc, startY, PAGE, FONT, invoiceNo) {
     //    
 }
 
-async function drawTermsAndBankDetails(doc, y, company, header, PAGE, FONT, safeRect, getInvoiceBankDetails) {
-
-    const rowH = 5;
-    const col1 = PAGE.w * 0.5;
-    const col2 = PAGE.w * 0.5;
-
-    const x1 = PAGE.x;
-    const x2 = x1 + col1;
-
-    const rows = 5;
-    const tableH = rowH * rows;
-
-    // Page break
-    if (y + tableH > PAGE.h - 20) {
-        doc.addPage();
-        y = 10;
-    }
-
-    /* Outer border */
-    safeRect(doc, PAGE.x, y, PAGE.w, tableH);
-
-    /* Vertical divider */
-    doc.line(x2, y, x2, y + tableH);
-
-    /* Horizontal lines */
-    for (let i = 1; i < rows; i++) {
-        doc.line(PAGE.x, y + rowH * i, PAGE.x + PAGE.w, y + rowH * i);
-    }
-
-    /* Headers */
-    doc.setFont("helvetica", "bold").setFontSize(FONT.body);
-    doc.text("TERMS", x1 + col1 / 2, y + 3.5, { align: "center" });
-    doc.text("BANK DETAILS", x2 + col2 / 2, y + 3.5, { align: "center" });
-
-    /* Terms content */
-    doc.setFont("helvetica", "normal").setFontSize(FONT.small);
-
-    const terms = [
-        `1. Please draw cheque in favour of ${company.name}`,
-        "2. Payments should be made within 7 days from the date of billing.",
-        "3. Complaints must be forwarded within 8 days from receipt.",
-        "4. Bangalore will be the jurisdiction for any disputes."
-    ];
-
-    terms.forEach((t, i) => {
-        doc.text(t, x1 + 1, y + rowH * (i + 2) - 1);
-    });
-
-    /* Bank details */
-    const bankInfo = await getInvoiceBankDetails(header?.InvoiceNo);
-
-    const bankDetails = [
-        `Account Name : ${company.name}`,
-        `Account No   : ${bankInfo?.AccountNo || '0000000000'}`,
-        `Bank Name    : ${bankInfo?.BankName || '-'} | Branch Name: ${bankInfo?.BranchName || '-'} `,
-        `IFSC Code: ${bankInfo?.IFSCCode || '-'} | MICR Code: ${bankInfo?.MICRCode || '-'} `
-    ];
-
-    bankDetails.forEach((b, i) => {
-        doc.text(b, x2 + 1, y + rowH * (i + 2) - 1);
-    });
-
-    /* Move Y */
-    y = y + tableH + 3;
-
-    // Footer note
-    doc.setFont("helvetica", "bolditalic");
-    doc.setFontSize(FONT.small);
-    doc.text(
-        "This is a computer generated invoice. No signature required.",
-        PAGE.x + PAGE.w / 2,
-        y,
-        { align: "center" }
-    );
-
-    return y + 5; // return updated Y
-}

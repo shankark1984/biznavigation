@@ -1,4 +1,4 @@
-async function generateInvoicePDF(header, lines = []) {
+async function generate_International_InvoicePDF(header, lines = []) {
 
     // Import jsPDF library
     const { jsPDF } = window.jspdf;
@@ -14,22 +14,7 @@ async function generateInvoicePDF(header, lines = []) {
     /* ==============================
        COMPANY DETAILS
     ============================== */
-    const companyData = await getCompanyProfile(CompanyID); // Fetch company info from API
-    const company = {
-        name: companyData?.company_name || "",
-        address: [
-            companyData?.address,
-            companyData?.city && `${companyData.city} - ${companyData.pin_code}`,
-            companyData?.state,
-            companyData?.country
-        ].filter(Boolean).join(", "), // Concatenate address components
-        phone: companyData?.phone_no || "-",
-        email: companyData?.e_mail || "-",
-        gst: companyData?.gst_number || "-",
-        state: companyData?.state,
-        logo: companyData?.logo_path
-    };
-
+    const company = await companyDetails();
     /* ==============================
        HEADER SECTION
     ============================== */
@@ -82,18 +67,8 @@ async function generateInvoicePDF(header, lines = []) {
     /* ==============================
        PARTY DETAILS
     ============================== */
-    const partyData = await getPartyProfile(header.PartyCode); // Fetch customer info
-    const party = {
-        name: partyData?.PartyName || "-",
-        address: [
-            partyData?.Address,
-            partyData?.City && `${partyData.City} - ${partyData.PinCode}`,
-            partyData?.State,
-            partyData?.Country
-        ].filter(Boolean).join(", "),
-        gst: partyData?.GSTNumber || "-",
-        state: partyData?.State
-    };
+
+    const party = await partyDetails(header.PartyCode); // Fetch customer info
 
     // Define column widths for party and invoice details
     const left70 = PAGE.w * 0.7;
@@ -134,255 +109,849 @@ async function generateInvoicePDF(header, lines = []) {
     y += infoH; // Move cursor below party details
 
     /* ==============================
-       SHIPMENT TABLE
+       SHIPMENT TABLE & CHARGES
     ============================== */
-    let totalFreight = 0, totalFSC = 0, totalOther = 0;
+    console.log("Invoice Printing Type ", reportType);
+    if (reportType === "Print Annexure") {
+        const tableResult = await fetchAndRenderShipmentTable_Annexure(doc, y, PAGE, FONT, header?.InvoiceNo);
+        if (tableResult && tableResult.finalY) {
+            y = tableResult.finalY;
+        } else if (doc.lastAutoTable) {
+            y = doc.lastAutoTable.finalY;
+        }
+    } else if (reportType === "Main") {
+        const tableResult = await fetchAndRenderShipmentTable_Main(doc, y, PAGE, FONT, header?.InvoiceNo);
+        if (tableResult && tableResult.finalY) {
+            y = tableResult.finalY;
+        } else if (doc.lastAutoTable) {
+            y = doc.lastAutoTable.finalY;
+        }
+    } else if (reportType === "Latter Head") {
+        const tableResult = await fetchAndRenderShipmentTable_LatterHead(doc, y, PAGE, FONT, header?.InvoiceNo);
+        if (tableResult && tableResult.finalY) {
+            y = tableResult.finalY;
+        } else if (doc.lastAutoTable) {
+            y = doc.lastAutoTable.finalY;
+        }
+    }
 
-    // Get table data from HTML table
-    const table = document.getElementById("pendingShipmentTable");
-    const tableData = Array.from(table.querySelectorAll("tbody tr")).map((tr, i) => {
-        const c = tr.querySelectorAll("td");
 
-        const freight = safeNumber(c[10]?.innerText);
-        const fsc = safeNumber(c[11]?.innerText);
-        const other = safeNumber(c[12]?.innerText);
 
-        totalFreight += freight;
-        totalFSC += fsc;
-        totalOther += other;
 
-        return [
-            i + 1,
-            formatDate(c[1]?.innerText || ""),
-            c[0]?.innerText || "",
-            c[3]?.innerText || "",
-            c[5]?.innerText || "",
-            c[6]?.innerText || "",
-            c[4]?.innerText || "",
-            c[9]?.innerText || "",
-            freight.toFixed(2),
-            fsc.toFixed(2),
-            other.toFixed(2),
-            (freight + fsc + other).toFixed(2)
-        ];
+    /* ==============================
+       TERMS AND BANK DETAILS
+    ============================== */
+    y = await drawTermsAndBankDetails_int(doc, y, company, header, PAGE, FONT, safeRect, getInvoiceBankDetails);
+
+    /* ==============================
+           PAGE FOOTER
+        ============================== */
+    applyPdfFooter(doc, PAGE);
+    // Save PDF
+    doc.save(`${party.name || "NA"}_${header?.InvoiceNo || "NA"}.pdf`);
+}
+
+async function fetchAndRenderShipmentTable_Annexure(doc, startY, PAGE, FONT, invoiceNo) {
+    const shipmentColumnStyles = {
+        0: { cellWidth: 8, halign: "center" }, // Sl No
+        1: { cellWidth: 25 }, // Docket / Job ID
+        2: { cellWidth: 20 }, // Date / Booked Date
+        3: { cellWidth: 20 }, // Movement Type
+        4: { cellWidth: 20 }, // Transit Type
+        5: { cellWidth: 15 }, // Mode 
+        6: { cellWidth: 25 }, // Origin
+        7: { cellWidth: 25 }, // Destination
+        8: { cellWidth: 16, halign: "right" }, // Qty
+        9: { cellWidth: 16, halign: "right" }, // Wt/CBM
+    };
+    const chargesColumnStyles = { //
+        0: { cellWidth: 8, halign: "center" }, //""
+        1: { cellWidth: 25 }, // Charge Name (colSpan 2)
+        2: { cellWidth: 20 }, // HSN Code
+        3: { cellWidth: 20, halign: "right" }, // Taxable Value
+        4: { cellWidth: 20, halign: "right" }, // GST %
+        5: { cellWidth: 15, halign: "right" }, // SGST
+        6: { cellWidth: 25, halign: "right" }, // CGST
+        7: { cellWidth: 25, halign: "right" }, // IGST
+        8: { cellWidth: 16, halign: "right" }, // Total GST
+        9: { cellWidth: 16, halign: "right" }, // Grand Total
+    };
+    /* ===============================
+    Invoice Details
+    =============================== */
+    console.log("Fetching invoice details for invoice:", invoiceNo);
+    const { data: invoiceDetails, error: invError } = await supabaseClient
+        .from("InvoiceDetails")
+        .select("*")
+        .eq("InvoiceNo", invoiceNo)
+        .maybeSingle();
+
+    if (invError) {
+        console.error("Invoice details load failed:", invError);
+    } else {
+        invoiceRemarks = "Information:\n" + "    " + (invoiceDetails?.Remarks || "");
+    }
+
+    /* ===============================
+       FETCH SHIPMENTS
+    =============================== */
+
+    const { data: lines, error } = await supabaseClient
+        .from("InternationalBookingView")
+        .select("*")
+        .eq("InvoiceNumber", invoiceNo)
+        .order("BookedDate", { ascending: true });
+
+    if (error || !lines?.length) {
+        return {
+            finalY: startY,
+            totals: { totalFreight: 0, totalGstAmt: 0, totalGrandTotal: 0, totalWeight: 0 },
+        };
+    }
+
+
+    /* ===============================
+       FETCH ALL CHARGES (ONE QUERY)
+    =============================== */
+
+    const shipmentIds = lines.map(x => x.id);
+
+    console.log("Fetching charges for shipments:", shipmentIds);
+
+    const { data: allCharges } = await supabaseClient
+        .from("InternationalBookingCharges")
+        .select("*")
+        .in("ID_IB", shipmentIds);
+
+    /* GROUP CHARGES BY SHIPMENT */
+    const chargesMap = {};
+    allCharges?.forEach(c => {
+        if (!chargesMap[c.ID_IB]) chargesMap[c.ID_IB] = [];
+        chargesMap[c.ID_IB].push(c);
     });
 
-    const shipmentGrandTotal = totalFreight + totalFSC + totalOther;
+    /* ===============================
+    FETCH ALL Equipment (ONE QUERY)
+ ================================ */
 
-    // Render table using jsPDF-AutoTable
+    console.log("Fetching equipment details for shipments:", shipmentIds);
+    const { data: allEquipment, error: equipmenterror } = await supabaseClient
+        .from("InternationalBookingEquipment")
+        .select("*")
+        .in("ID_IB", shipmentIds);
+
+    if (equipmenterror) {
+        console.error("Equipment fetch error:", equipmenterror);
+    }
+
+    console.log("Fetched equipment data:", allEquipment);
+
+    /* ===============================
+       BUILD REMARKS TEXT
+    ================================ */
+    let equipmentText = "Remarks:\n";
+
+    if (Array.isArray(allEquipment) && allEquipment.length > 0) {
+
+        equipmentText += allEquipment
+            .map(e =>
+                `• Eq No: ${e?.EquipmentNumber || "-"} | ` +
+                `Type: ${e?.EquipmentType || "-"} | `
+            )
+            .join("\n");
+
+        console.log("Constructed equipment text:", equipmentText);
+
+    } else {
+        equipmentText += "No Equipment Details";
+    }
+
+    /* ===============================
+    Payment Details
+    =============================== */
+    const totalsPayment = await paymentDetails(invoiceNo);
+
+    const totalPaymentReceived = totalsPayment.totalPayment + totalsPayment.totalOtherDeduction + totalsPayment.totalTDS;
+
+    /* ===============================
+       GRAND TOTAL VARIABLES
+    =============================== */
+
+    let totalFreight = 0;
+    let totalGstAmt = 0;
+    let totalGrandTotal = 0;
+    let totalWeight = 0;
+    let totalTaxable = 0;
+    let totalSGST = 0;
+    let totalCGST = 0;
+    let totalIGST = 0;
+
+    let currentY = startY;
+
+    /* ===============================
+       LOOP SHIPMENTS
+    =============================== */
+
+    for (let i = 0; i < lines.length; i++) {
+
+        const row = lines[i];
+
+        totalWeight += safeNumber(row.CargoWeight);
+        totalFreight += safeNumber(row.TotalAmount);
+        totalGstAmt += safeNumber(row.TotalGSTAmt);
+        totalGrandTotal += safeNumber(row.GrandTotalAmt);
+
+        /* ---------- SHIPMENT ROW ---------- */
+
+        doc.autoTable({
+            startY: currentY,
+            margin: { left: PAGE.x, right: PAGE.x },
+            head: i === 0 ? [[
+                "Sl", "Docket", "Date", "Movement", "Transit", "Mode", "Origin", "Dest", "Quantity",
+                "Wt/CBM"
+            ]] : undefined,
+            body: [[
+                i + 1,
+                row.DocketNo,
+                formatDate(row.BookedDate),
+                row.MovementType || "",
+                row.TransitType || "",
+                row.ModeType || "",
+                row.OriginName || "",
+                row.DestinationName || "",
+                row.Quantity ? row.Quantity.toFixed(2) : "0.00",
+                row.ChargableWeight + " " + row.UOMType || "0.00",
+            ]],
+            columnStyles: shipmentColumnStyles,
+            styles: {
+                fontSize: FONT.small,
+                cellPadding: 1,
+                lineWidth: 0.2,
+                lineColor: [0, 0, 0],
+                valign: "middle"
+            },
+            headStyles: {
+                halign: "center",
+                fontStyle: "bold",
+                lineWidth: 0.2,
+                lineColor: [0, 0, 0]
+            },
+            didParseCell: data => {
+                if (data.section === "body") {
+                    data.cell.styles.fontStyle = "bold";
+                    data.cell.styles.fillColor = [255, 255, 255]; // White background
+                    data.cell.styles.textColor = [0, 0, 0]; // Black text color
+                }
+            }
+        });
+
+        currentY = doc.lastAutoTable.finalY;
+
+        /* ---------- CHARGES ---------- */
+
+        const charges = chargesMap[row.id] || [];
+
+        if (!charges.length) continue;
+
+        let chTaxable = 0, chSGST = 0, chCGST = 0, chIGST = 0, chGST = 0, chGrand = 0;
+
+        const chargeBody = charges.map(c => {
+
+            const taxable = safeNumber(c.TotalAmount);
+            const sgst = safeNumber(c.SGSTAmt);
+            const cgst = safeNumber(c.CGSTAmt);
+            const igst = safeNumber(c.IGSTAmt);
+            const gst = safeNumber(c.TotalGSTAmt);
+            const grand = safeNumber(c.GrandTotalAmt);
+
+            chTaxable += taxable;
+            chSGST += sgst;
+            chCGST += cgst;
+            chIGST += igst;
+            chGST += gst;
+            chGrand += grand;
+
+            totalTaxable += taxable;
+            totalSGST += sgst;
+            totalCGST += cgst;
+            totalIGST += igst;
+
+            return [
+                { content: c.ChargesType || "", colSpan: 2 },
+                c.HSNCode || "",
+                c.TaxRate || "00%",
+                taxable.toFixed(2),
+                sgst.toFixed(2),
+                cgst.toFixed(2),
+                igst.toFixed(2),
+                gst.toFixed(2),
+                grand.toFixed(2)
+            ];
+        });
+
+        doc.autoTable({
+            startY: currentY,
+            margin: { left: PAGE.x, right: PAGE.x },
+            head: i === 0 ? [[
+                { content: "Charge Name", colSpan: 2 }, "HSN", "GST %",
+                "Taxable", "SGST", "CGST", "IGST",
+                "Total GST", "Grand Total"
+            ]] : undefined,
+            body: chargeBody,
+            columnStyles: chargesColumnStyles,
+
+            styles: {
+                fontSize: FONT.small,
+                cellPadding: 1,
+                lineWidth: 0.2,
+                lineColor: [0, 0, 0],
+                valign: "middle"
+            },
+            headStyles: {
+                halign: "center",
+                fontStyle: "bold",
+                lineWidth: 0.2,
+                lineColor: [0, 0, 0]
+            },
+            footStyles: {
+                lineWidth: 0.2,
+                lineColor: [0, 0, 0]
+            },
+            didParseCell: data => {
+                if (data.section === "body") {
+                    data.cell.styles.fontStyle = "bold";
+                    data.cell.styles.fillColor = [255, 255, 255];
+                    data.cell.styles.textColor = [0, 0, 0];
+                }
+            },
+            foot: [[
+                { content: "SHIPMENT TOTAL", colSpan: 4, styles: { halign: "right", fontStyle: "bold" } },
+                { content: chTaxable.toFixed(2), styles: { halign: "right", fontStyle: "bold" } },
+                { content: chSGST.toFixed(2), styles: { halign: "right", fontStyle: "bold" } },
+                { content: chCGST.toFixed(2), styles: { halign: "right", fontStyle: "bold" } },
+                { content: chIGST.toFixed(2), styles: { halign: "right", fontStyle: "bold" } },
+                { content: chGST.toFixed(2), styles: { halign: "right", fontStyle: "bold" } },
+                { content: chGrand.toFixed(2), styles: { halign: "right", fontStyle: "bold" } }
+            ]]
+        });
+
+        currentY = doc.lastAutoTable.finalY;
+    }
+
+    /* ===============================
+       FINAL GRAND TOTAL
+    =============================== */
+
     doc.autoTable({
-        startY: y,
+        startY: currentY,
         margin: { left: PAGE.x, right: PAGE.x },
-        head: [[
-            "Sl", "Date", "Docket", "Mode",
-            "Origin", "Dest", "Cmdty",
-            "Wt/CBM", "Freight", "FSC", "Other", "Total"
+        columnStyles: chargesColumnStyles,
+        body: [[
+            {
+                content: "FINAL TOTAL", colSpan: 3,
+                styles: { halign: "right", fontStyle: "bold", textColor: [0, 0, 0] }
+            },
+            {
+                content: totalTaxable.toFixed(2),
+                styles: { halign: "right", fontStyle: "bold", fillColor: [220, 220, 220], textColor: [0, 0, 0] }
+            },
+            {
+                content: totalSGST.toFixed(2),
+                styles: { halign: "right", fontStyle: "bold", fillColor: [220, 220, 220], textColor: [0, 0, 0] }
+            },
+            {
+                content: totalCGST.toFixed(2),
+                styles: { halign: "right", fontStyle: "bold", fillColor: [220, 220, 220], textColor: [0, 0, 0] }
+            },
+            {
+                content: totalIGST.toFixed(2),
+                styles: { halign: "right", fontStyle: "bold", fillColor: [220, 220, 220], textColor: [0, 0, 0] }
+            },
+            {
+                content: totalGstAmt.toFixed(2),
+                styles: { halign: "right", fontStyle: "bold", fillColor: [220, 220, 220], textColor: [0, 0, 0] }
+            },
+            {
+                content: totalGrandTotal.toFixed(2),
+                styles: { halign: "right", fontStyle: "bold", fillColor: [255, 255, 0], textColor: [0, 0, 0] }
+            }
         ]],
-        body: tableData,
+
         styles: {
-            fontSize: FONT.small, cellPadding: 1, lineWidth: 0.2, lineColor: [0, 0, 0]
+            fontSize: FONT.small,
+            cellPadding: 1,
+            lineWidth: 0.2,
+            lineColor: [0, 0, 0],
         },
-        headStyles: {
-            fillColor: [60, 60, 60], textColor: 255, fontStyle: "bold", lineWidth: 0.2,
-            lineColor: [0, 0, 0], halign: "center"
+        footStyles: {
+            fillColor: [255, 255, 255],
+            textColor: [0, 0, 255],
+            fontStyle: "bold",
+            lineWidth: 0.2,
+            lineColor: [0, 0, 0]
         },
         foot: [
             [
-                { content: "", colSpan: 7 },
-                { content: "TOTAL", styles: { halign: "right", fontStyle: "bold" } },
-                { content: totalFreight.toFixed(2), styles: { halign: "right", fontStyle: "bold" } },
-                { content: totalFSC.toFixed(2), styles: { halign: "right", fontStyle: "bold" } },
-                { content: totalOther.toFixed(2), styles: { halign: "right", fontStyle: "bold" } },
-                { content: shipmentGrandTotal.toFixed(2), styles: { halign: "right", fontStyle: "bold" } }
+                {
+                    content: "Amount in Words:",
+                    rowSpan: 2,
+                    styles: {
+                        halign: "left", cellWidth: 23, textColor: [0, 0, 0],
+                        fontStyle: "bold", fillColor: [220, 220, 220], fontSize: 6.5, valign: "middle",   // ✅ vertical center
+                    }
+                },
+                {
+                    content: numberToWordsIndian(totalGrandTotal),
+                    colSpan: 5, rowSpan: 2,
+                    styles: { halign: "left", valign: "middle" }
+                },
+                {
+                    content: "Advance Amount: ", // Replace with actual advance amount if available
+                    colSpan: 2,
+                    styles: { halign: "right", textColor: [0, 0, 0], fontStyle: "bold" }
+                },
+                {
+                    content: totalPaymentReceived.toFixed(2), // Replace with actual advance amount if available
+                    styles: { halign: "right", textColor: [0, 0, 0], fontStyle: "bold" }
+                }
+
+
+            ],
+            [
+                {
+                    content: "Balance Amount: ", // Replace with actual advance amount if available
+                    colSpan: 2,
+                    styles: { halign: "right", textColor: [0, 0, 0], fontStyle: "bold", fillColor: [255, 255, 0] }
+                },
+                {
+                    content: safeNumber(totalGrandTotal - totalPaymentReceived).toFixed(2), // Replace with actual advance amount if available
+                    styles: { halign: "right", textColor: [0, 0, 0], fontStyle: "bold", fillColor: [255, 255, 0] }
+                }
+            ]
+        ]
+
+    });
+    currentY = doc.lastAutoTable.finalY;
+    doc.autoTable({
+        startY: currentY,
+        margin: { left: PAGE.x, right: PAGE.x },
+        body: [
+            [
+                {
+                    content: equipmentText,
+                    colSpan: 4,   // Must match your total columns
+                    styles: { halign: "left" }
+                },
+                {
+                    content: invoiceRemarks,
+                    colSpan: 5,
+                    styles: { halign: "left" }
+                }
             ]
         ],
-        columnStyles: {
-            7: { halign: "right" },
-            8: { halign: "right" },
-            9: { halign: "right" },
-            10: { halign: "right" },
-            11: { halign: "right" }
-        },
-        didDrawCell: data => {
-            // Force black border for every cell
-            data.cell.styles.lineColor = [0, 0, 0];
-            data.cell.styles.lineWidth = 0.5;
-        },
-        didDrawPage: d => { y = d.cursor.y; } // Update Y position after table
-    });
-
-    y = doc.lastAutoTable.finalY;
-
-    /* ==============================
-       GST CALCULATION
-    ============================== */
-    const taxable = totalFreight + totalFSC + totalOther;
-    const isInterState = party.state !== company.state;
-
-    const cgst = isInterState ? 0 : taxable * 0.09;
-    const sgst = isInterState ? 0 : taxable * 0.09;
-    const igst = isInterState ? taxable * 0.18 : 0;
-
-    const grandTotal = taxable + cgst + sgst + igst;
-
-    /* ==============================
-       TERMS + BANK + TAX SUMMARY
-    ============================== */
-    const rowH = 4; // Row height
-    const col1 = PAGE.w * 0.6; // Terms & Conditions
-    const col2 = PAGE.w * 0.1; // Spacer / empty
-    const col3 = PAGE.w * 0.15; // Non-tax
-    const col4 = PAGE.w * 0.15; // Taxable
-
-    const x1 = PAGE.x;
-    const x2 = x1 + col1;
-    const x3 = x2 + col2;
-    const x4 = x3 + col3;
-
-    const rows = 10; // Number of rows for table
-    const tableH = rowH * rows;
-
-    if (y + tableH > PAGE.h - 15) { // Page break check
-        doc.addPage();
-        y = PAGE.x;
-    }
-
-    // Draw main table rectangle
-    safeRect(doc, PAGE.x, y, PAGE.w, tableH);
-    [x2, x3, x4].forEach(x => doc.line(x, y, x, y + tableH)); // Draw vertical lines
-    for (let i = 1; i < rows; i++) doc.line(PAGE.x, y + rowH * i, PAGE.x + PAGE.w, y + rowH * i); // Horizontal lines
-
-    // Add headers
-    doc.setFont("helvetica", "bold").setFontSize(FONT.body);
-    doc.text("Terms & Conditions", x1 + col1 / 2, y + 3, { align: "center" });
-    doc.text("Non-Tax", x3 + col3 / 2, y + 3, { align: "center" });
-    doc.text("Taxable", x4 + col4 / 2, y + 3, { align: "center" });
-
-    // Terms
-    doc.setFont("helvetica", "normal").setFontSize(FONT.tiny);
-    const terms = [
-        `1. Please draw cheque in favour of ${company.name}`,
-        "2. Payments Should be made within 7 Days from the Date of Billing",
-        "3. All Complaints in respect of this bill must be forwarded within 8 days from the date of receipt.",
-        "4. Bangalore will be the Jurisdiction for any disputes arising out by this bill."
-    ];
-    terms.forEach((t, i) => {
-        doc.text(t, x1 + 2, y + rowH * (i + 2) - 1);
-    });
-    const bankInfo = await getInvoiceBankDetails(header?.InvoiceNo);
-
-    // Bank details
-    const bankDetails = [
-        `Account Name: ${company.name}`,
-        `Account No: ${bankInfo?.AccountNo || '0000000000'}`,
-        `Bank: ${bankInfo?.BankName || '-'} | Branch: ${bankInfo?.BranchName || '-'}`,
-        `IFSC: ${bankInfo?.IFSCCode || '-'} | SWIFT: ${bankInfo?.MICRCode || 'N/A'}`
-    ];
-
-    doc.setFont("helvetica", "bold").setFontSize(FONT.body);
-    doc.text("Bank Details", x1 + col1 / 2, y + rowH * (terms.length + 1.8), { align: "center" });
-    doc.setFont("helvetica", "normal").setFontSize(FONT.tiny);
-    bankDetails.forEach((b, i) => {
-        doc.text(b, x1 + 2, y + rowH * (i + 7) - 1);
-    });
-
-    // Tax summary rows
-    const rowsData = [
-        ["Total Freight", totalFreight],
-        ["Fuel Charges", totalFSC],
-        ["Other Charges", totalOther],
-        ["Sub Total", taxable],
-        ["CGST @ 9%", cgst],
-        ["SGST @ 9%", sgst],
-        ["IGST @ 18%", igst],
-        ["Total GST", cgst + sgst + igst],
-        ["GRAND TOTAL", grandTotal]
-    ];
-    doc.setFontSize(FONT.small);
-
-    rowsData.forEach((r, i) => {
-        const ry = y + rowH * (i + 2) - 1;
-
-        const highlightRows = ["GRAND TOTAL", "Sub Total", "Total GST"];
-        const isHighlight = highlightRows.includes(r[0]);
-
-        const cellY = ry - 3;
-
-        if (isHighlight) {
-
-            doc.setFillColor(220, 230, 241);
-
-            // Fill each cell separately
-            doc.rect(x2, cellY, col2, rowH, "F");
-            doc.rect(x3, cellY, col3, rowH, "F");
-            doc.rect(x4, cellY, col4, rowH, "F");
-
-            // Bold border for each cell
-            doc.setDrawColor(0, 0, 0);
-            doc.setLineWidth(0.1);
-
-            doc.rect(x2, cellY, col2, rowH);
-            doc.rect(x3, cellY, col3, rowH);
-            doc.rect(x4, cellY, col4, rowH);
-
-            doc.setFont("helvetica", "bold");
-
-        } else {
-            doc.setLineWidth(0.2);
-            doc.setFont("helvetica", "normal");
+        styles: {
+            fontSize: FONT.small,
+            cellPadding: 1,
+            lineWidth: 0.2,
+            lineColor: [0, 0, 0]
         }
-
-        doc.text(r[0], x2 + col2 / 2, ry, { align: "center" });
-        doc.text("0.00", x3 + col3 - 2, ry, { align: "right" });
-        doc.text(r[1].toFixed(2), x4 + col4 - 2, ry, { align: "right" });
     });
 
-    /* ==============================
-       AMOUNT IN WORDS + FOOTER
-    ============================== */
-    y += tableH;
 
-    if (y + 16 > PAGE.h - 10) {
-        doc.addPage();
-        y = PAGE.x;
-    }
 
-    doc.setFont("helvetica", "bold").setFontSize(FONT.body);
-    const amountText = "Amount in Words: " + numberToWordsIndian(grandTotal);
-    const textLines = doc.splitTextToSize(amountText, PAGE.w - 6);
+    currentY = doc.lastAutoTable.finalY;
 
-    // Draw amount in words box
-    const boxH = textLines.length + 4; // Add small padding
-    doc.rect(PAGE.x, y, PAGE.w, boxH);
-    doc.text(textLines, PAGE.x + 3, y + 3);
-    y += boxH;
-
-    // Footer function
-    doc.setFont("helvetica", "bold").setFontSize(6.5);
-    const addFooter = (doc, pageNumber, totalPages) => {
-        const footerY = PAGE.h - 5;
-        doc.text("Powered by AllEdge", PAGE.x, footerY, { align: "left" });
-        doc.text(
-            "This is a computer generated invoice. No signature required.",
-            PAGE.x + PAGE.w / 2,
-            footerY,
-            { align: "center" }
-        );
-        doc.text(
-            `Page ${pageNumber} of ${totalPages}`,
-            PAGE.x + PAGE.w,
-            footerY,
-            { align: "right" }
-        );
+    return {
+        finalY: currentY,
+        totals: {
+            totalFreight,
+            totalGstAmt,
+            totalGrandTotal,
+            totalWeight,
+            totalTaxable,
+            totalSGST,
+            totalCGST,
+            totalIGST
+        }
     };
+}
 
-    // Add footer to all pages
-    const totalPages = doc.getNumberOfPages();
-    for (let i = 1; i <= totalPages; i++) {
-        doc.setPage(i);
-        addFooter(doc, i, totalPages);
+async function fetchAndRenderShipmentTable_Main(doc, startY, PAGE, FONT, invoiceNo) {
+    const shipmentColumnStyles = {
+        0: { cellWidth: 8, halign: "center" }, // Sl No
+        1: { cellWidth: 25 }, // Docket No
+        2: { cellWidth: 15 }, // Booking Date 
+        3: { cellWidth: 25 }, // Movement Type
+        4: { cellWidth: 20 }, // Origin
+        5: { cellWidth: 20 }, // Dest
+        6: { cellWidth: 15, halign: "right" }, // Wt/CBM
+        7: { cellWidth: 16, halign: "right" }, // Freight
+        8: { cellWidth: 16, halign: "right" }, // FSC
+        9: { cellWidth: 16, halign: "right" }, // Other
+        10: { cellWidth: 16, halign: "right" }, // Total Amt
+    };
+    const chargesColumnStyles = { //
+        0: { cellWidth: 8, halign: "center" }, //""
+        1: { cellWidth: 25 }, // Charge Name (colSpan 2)
+        2: { cellWidth: 20 }, // HSN Code
+        3: { cellWidth: 20, halign: "right" }, // Taxable Value
+        4: { cellWidth: 20, halign: "right" }, // GST %
+        5: { cellWidth: 15, halign: "right" }, // SGST
+        6: { cellWidth: 25, halign: "right" }, // CGST
+        7: { cellWidth: 25, halign: "right" }, // IGST
+        8: { cellWidth: 16, halign: "right" }, // Total GST
+        9: { cellWidth: 16, halign: "right" }, // Grand Total
+    };
+    /* ===============================
+    Invoice Details
+    =============================== */
+    console.log("Fetching invoice details for invoice:", invoiceNo);
+    const { data: invoiceDetails, error: invError } = await supabaseClient
+        .from("InvoiceDetails")
+        .select("*")
+        .eq("InvoiceNo", invoiceNo)
+        .maybeSingle();
+
+    if (invError) {
+        console.error("Invoice details load failed:", invError);
+    } else {
+        invoiceRemarks = "Information:\n" + "    " + (invoiceDetails?.Remarks || "");
     }
 
-    // Save PDF
-    doc.save(`Invoice_${header?.InvoiceNo || "NA"}.pdf`);
+    /* ===============================
+       FETCH SHIPMENTS
+    =============================== */
+
+    const { data: lines, error } = await supabaseClient
+        .from("InternationalBookingView")
+        .select("*")
+        .eq("InvoiceNumber", invoiceNo)
+        .order("BookedDate", { ascending: true });
+
+    if (error || !lines?.length) {
+        return {
+            finalY: startY,
+            totals: { totalFreight: 0, totalGstAmt: 0, totalGrandTotal: 0, totalWeight: 0 },
+        };
+    }
+
+
+    /* ===============================
+       FETCH ALL CHARGES (ONE QUERY)
+    =============================== */
+
+    const shipmentIds = lines.map(x => x.id);
+
+    console.log("Fetching charges for shipments:", shipmentIds);
+
+    const { data: allCharges } = await supabaseClient
+        .from("InternationalBookingCharges")
+        .select("*")
+        .in("ID_IB", shipmentIds);
+
+    /* GROUP CHARGES BY SHIPMENT */
+    const chargesMap = {};
+    allCharges?.forEach(c => {
+        if (!chargesMap[c.ID_IB]) chargesMap[c.ID_IB] = [];
+        chargesMap[c.ID_IB].push(c);
+    });
+
+    /* ===============================
+    FETCH ALL Equipment (ONE QUERY)
+ ================================ */
+
+    console.log("Fetching equipment details for shipments:", shipmentIds);
+    const { data: allEquipment, error: equipmenterror } = await supabaseClient
+        .from("InternationalBookingEquipment")
+        .select("*")
+        .in("ID_IB", shipmentIds);
+
+    if (equipmenterror) {
+        console.error("Equipment fetch error:", equipmenterror);
+    }
+
+    console.log("Fetched equipment data:", allEquipment);
+
+    /* ===============================
+       BUILD REMARKS TEXT
+    ================================ */
+    let equipmentText = "Remarks:\n";
+
+    if (Array.isArray(allEquipment) && allEquipment.length > 0) {
+
+        equipmentText += allEquipment
+            .map(e =>
+                `• Eq No: ${e?.EquipmentNumber || "-"} | ` +
+                `Type: ${e?.EquipmentType || "-"} | `
+            )
+            .join("\n");
+
+        console.log("Constructed equipment text:", equipmentText);
+
+    } else {
+        equipmentText += "No Equipment Details";
+    }
+
+    /* ===============================
+    Payment Details
+    =============================== */
+    const totalsPayment = await paymentDetails(invoiceNo);
+
+    const totalPaymentReceived = totalsPayment.totalPayment + totalsPayment.totalOtherDeduction + totalsPayment.totalTDS;
+
+    /* ===============================
+       GRAND TOTAL VARIABLES
+    =============================== */
+
+    let totalFreight = 0;
+    let totalGstAmt = 0;
+    let totalGrandTotal = 0;
+    let totalWeight = 0;
+    let totalTaxable = 0;
+    let totalSGST = 0;
+    let totalCGST = 0;
+    let totalIGST = 0;
+
+    let currentY = startY;
+
+    /* ===============================
+       LOOP SHIPMENTS
+    =============================== */
+
+    for (let i = 0; i < lines.length; i++) {
+
+        const row = lines[i];
+
+        totalWeight += safeNumber(row.CargoWeight);
+        totalFreight += safeNumber(row.TotalAmount);
+        totalGstAmt += safeNumber(row.TotalGSTAmt);
+        totalGrandTotal += safeNumber(row.GrandTotalAmt);
+
+        /* ---------- SHIPMENT ROW ---------- */
+
+        doc.autoTable({
+            startY: currentY,
+            margin: { left: PAGE.x, right: PAGE.x },
+            head: i === 0 ? [[
+                "Sl", "Docket", "Date", "Movement", "Origin", "Dest",
+                "Wt/CBM", "Freight", "FSC", "Other", "Total Amt"
+            ]] : undefined,
+            body: [[
+                i + 1,
+                row.DocketNo,
+                formatDate(row.BookedDate),
+                (row.MovementType || "") +
+                "\n" +
+                (row.TransitType || "") +
+                "\n" +
+                (row.ModeType || ""),
+                // row.TransitType || "",
+                // row.ModeType || "",
+                row.OriginName || "",
+                row.DestinationName || "",
+                row.ChargableWeight + " " + row.UOMType || "0.00",
+                row.FreightAmount,
+                row.FuelSurcharge,
+                row.OtherCharges,
+                row.TotalAmount
+            ]],
+            columnStyles: shipmentColumnStyles,
+            styles: {
+                fontSize: FONT.small,
+                cellPadding: 1,
+                lineWidth: 0.2,
+                lineColor: [0, 0, 0],
+                valign: "middle"
+            },
+            headStyles: {
+                halign: "center",
+                fontStyle: "bold",
+                lineWidth: 0.2,
+                lineColor: [0, 0, 0]
+            },
+            didParseCell: data => {
+                if (data.section === "body") {
+                    data.cell.styles.fontStyle = "bold";
+                    data.cell.styles.fillColor = [255, 255, 255]; // White background
+                    data.cell.styles.textColor = [0, 0, 0]; // Black text color
+                }
+            }
+        });
+
+        currentY = doc.lastAutoTable.finalY;
+    }
+
+    /* ===============================
+       FINAL GRAND TOTAL
+    =============================== */
+
+    doc.autoTable({
+        startY: currentY,
+        margin: { left: PAGE.x, right: PAGE.x },
+        columnStyles: chargesColumnStyles,
+        head: [[
+            {
+                content: "FINAL TOTAL", colSpan: 2, rowSpan: 2,
+                styles: {
+                    cellWidth: 25, halign: "right", fontStyle: "bold", textColor: [0, 0, 0], valign: "middle", fillColor: [220, 220, 220]
+                },
+            },
+            {
+                content: "Non-Taxable",
+                styles: { cellWidth: 20, halign: "center", fontStyle: "bold", fillColor: [220, 220, 220], textColor: [0, 0, 0] }
+            },
+            {
+                content: "Taxable",
+                styles: { cellWidth: 20, halign: "center", fontStyle: "bold", fillColor: [220, 220, 220], textColor: [0, 0, 0] }
+            },
+            {
+                content: "SGST",
+                styles: { cellWidth: 20, halign: "center", fontStyle: "bold", fillColor: [220, 220, 220], textColor: [0, 0, 0] }
+            },
+            {
+                content: "CGST",
+                styles: { cellWidth: 20, halign: "center", fontStyle: "bold", fillColor: [220, 220, 220], textColor: [0, 0, 0] }
+            },
+            {
+                content: "IGST",
+                styles: { cellWidth: 20, halign: "center", fontStyle: "bold", fillColor: [220, 220, 220], textColor: [0, 0, 0] }
+            },
+            {
+                content: "Total GST",
+                styles: { cellWidth: 20, halign: "center", fontStyle: "bold", fillColor: [220, 220, 220], textColor: [0, 0, 0] }
+            },
+            {
+                content: "Grand Total",
+                styles: { cellWidth: 20, halign: "center", fontStyle: "bold", fillColor: [220, 220, 220], textColor: [0, 0, 0] }
+            },
+        ]],
+        body: [[
+            "",
+            "",
+            {
+                content: totalTaxable.toFixed(2),
+                styles: { cellWidth: 20, halign: "right", fontStyle: "bold", fillColor: [220, 220, 220], textColor: [0, 0, 0] }
+            },
+
+            {
+                content: totalTaxable.toFixed(2),
+                styles: { cellWidth: 20, halign: "right", fontStyle: "bold", fillColor: [220, 220, 220], textColor: [0, 0, 0] }
+            },
+            {
+                content: totalSGST.toFixed(2),
+                styles: { cellWidth: 20, halign: "right", fontStyle: "bold", fillColor: [220, 220, 220], textColor: [0, 0, 0] }
+            },
+            {
+                content: totalCGST.toFixed(2),
+                styles: { cellWidth: 20, halign: "right", fontStyle: "bold", fillColor: [220, 220, 220], textColor: [0, 0, 0] }
+            },
+            {
+                content: totalIGST.toFixed(2),
+                styles: { cellWidth: 20, halign: "right", fontStyle: "bold", fillColor: [220, 220, 220], textColor: [0, 0, 0] }
+            },
+            {
+                content: totalGstAmt.toFixed(2),
+                styles: { cellWidth: 20, halign: "right", fontStyle: "bold", fillColor: [220, 220, 220], textColor: [0, 0, 0] }
+            },
+            {
+                content: totalGrandTotal.toFixed(2),
+                styles: { cellWidth: 20, halign: "right", fontStyle: "bold", fillColor: [255, 255, 0], textColor: [0, 0, 0] }
+            }
+        ]],
+
+        styles: {
+            fontSize: FONT.small,
+            cellPadding: 1,
+            lineWidth: 0.2,
+            lineColor: [0, 0, 0],
+        },
+        footStyles: {
+            fillColor: [255, 255, 255],
+            textColor: [0, 0, 255],
+            fontStyle: "bold",
+            lineWidth: 0.2,
+            lineColor: [0, 0, 0]
+        },
+        foot: [
+            [
+                {
+                    content: "Amount in Words:",
+                    rowSpan: 2,
+                    styles: {
+                        halign: "left", cellWidth: 23, textColor: [0, 0, 0],
+                        fontStyle: "bold", fillColor: [220, 220, 220], fontSize: 6.5, valign: "middle",   // ✅ vertical center
+                    }
+                },
+                {
+                    content: numberToWordsIndian(totalGrandTotal),
+                    colSpan: 5, rowSpan: 2,
+                    styles: { halign: "left", valign: "middle" }
+                },
+                {
+                    content: "Advance Amount: ", // Replace with actual advance amount if available
+                    colSpan: 2,
+                    styles: { halign: "right", textColor: [0, 0, 0], fontStyle: "bold" }
+                },
+                {
+                    content: totalPaymentReceived.toFixed(2), // Replace with actual advance amount if available
+                    styles: { halign: "right", textColor: [0, 0, 0], fontStyle: "bold" }
+                }
+
+
+            ],
+            [
+                {
+                    content: "Balance Amount: ", // Replace with actual advance amount if available
+                    colSpan: 2,
+                    styles: { halign: "right", textColor: [0, 0, 0], fontStyle: "bold", fillColor: [255, 255, 0] }
+                },
+                {
+                    content: safeNumber(totalGrandTotal - totalPaymentReceived).toFixed(2), // Replace with actual advance amount if available
+                    styles: { halign: "right", textColor: [0, 0, 0], fontStyle: "bold", fillColor: [255, 255, 0] }
+                }
+            ]
+        ]
+
+    });
+    currentY = doc.lastAutoTable.finalY;
+    doc.autoTable({
+        startY: currentY,
+        margin: { left: PAGE.x, right: PAGE.x },
+        body: [
+            [
+                {
+                    content: equipmentText,
+                    colSpan: 4,   // Must match your total columns
+                    styles: { halign: "left" }
+                },
+                {
+                    content: invoiceRemarks,
+                    colSpan: 5,
+                    styles: { halign: "left" }
+                }
+            ]
+        ],
+        styles: {
+            fontSize: FONT.small,
+            cellPadding: 1,
+            lineWidth: 0.2,
+            lineColor: [0, 0, 0]
+        }
+    });
+
+    currentY = doc.lastAutoTable.finalY;
+
+    return {
+        finalY: currentY,
+        totals: {
+            totalFreight,
+            totalGstAmt,
+            totalGrandTotal,
+            totalWeight,
+            totalTaxable,
+            totalSGST,
+            totalCGST,
+            totalIGST
+        }
+    };
 }
