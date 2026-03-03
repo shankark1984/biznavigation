@@ -136,7 +136,7 @@ async function saveContainerDetails() {
 
     try {
         const { data, error } = await supabaseClient
-            .from('EquipmentDetails')
+            .from('InternationalBookingEquipment')
             .insert(containerDetails);
 
         if (error) {
@@ -155,7 +155,7 @@ async function saveContainerDetails() {
 async function fetchContainerDetails(bookingID) {
     try {
         const { data, error } = await supabaseClient
-            .from('EquipmentDetails')
+            .from('InternationalBookingEquipment')
             .select('*')
             .eq('ID_IB', bookingID);
 
