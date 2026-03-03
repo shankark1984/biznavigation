@@ -356,50 +356,60 @@ function populateForm(data) {
 
 // Function to fetch record by a field and value
 async function loadRecordByField(fieldName, value) {
-    if (!value) return;
+    const trimmedValue = value?.trim();
+    if (!trimmedValue) return null;
+
     try {
         const { data, error } = await supabaseClient
             .from('CustomsClearance_Details')
             .select('*')
-            .eq(fieldName, value)
-            .limit(1)
-            .maybeSingle();
+            .eq(fieldName, trimmedValue)
+            .single(); // since limit(1) + maybeSingle not needed
 
         if (error) {
-            console.error('Error fetching form data:', error);
-            return;
+            // If no record found, don't treat as critical error
+            if (error.code !== 'PGRST116') {
+                console.error('Error fetching form data:', error);
+            }
+            return null;
         }
 
-        populateForm(data);
+        if (data) {
+            populateForm(data);
+        }
+
+        return data || null;
+
     } catch (err) {
         console.error('Unexpected error loading form data:', err);
+        return null;
     }
 }
 
 // Event listeners - trigger on `change` or `input` as you prefer
 jobNoInput.addEventListener('change', async e => {
-
-    await loadRecordByField('JobID', e.target.value.trim());
-
-    const tempFormID = document.getElementById('tempFormID').value.trim();
-    await loadChargesByJobID(e.target.value.trim());
-    await fetchEquipmentDetails(tempFormID);
+    let record = await loadRecordByField('JobID', e.target.value.trim());
+    if (record?.JobID) {
+        await loadChargesByJobID(record.JobID);
+        await fetchEquipmentDetails(record.id);
+    }
 });
 
 blAwbNumberInput.addEventListener('change', async e => {
-    let record = await loadRecordByField('BLAWBNo', e.target.value.trim());
+    let record = await loadRecordByField('BLAWBNo', e.target.value);
     if (record?.JobID) {
         await loadChargesByJobID(record.JobID);
+        await fetchEquipmentDetails(record.id);
     }
 });
 
 beNumberInput.addEventListener('change', async e => {
-    let record = await loadRecordByField('BENo', e.target.value.trim());
+    let record = await loadRecordByField('BENo', e.target.value);
     if (record?.JobID) {
         await loadChargesByJobID(record.JobID);
+        await fetchEquipmentDetails(record.id);
     }
 });
-
 
 newButton.addEventListener('click', () => {
     jobNoInput.value = ''; // Clear job number input
