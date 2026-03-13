@@ -100,7 +100,7 @@ class SessionService {
             UserLoginID: user_login_id,
             UserType: user_type,
             CompanyID: company_id,
-            WorkingBranch: working_branch || 'default'
+            WorkingBranch: working_branch || 'default',
         };
 
         this._SESSION_KEYS.forEach(key => {

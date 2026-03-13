@@ -14,6 +14,7 @@ async function initializeForm() {
             loadBlAwbNumberSuggestions(CompanyID),
             loadBeNumberSuggestions(CompanyID),
         ]);
+        loadTaxData();
 
     } catch (error) {
         console.error('Failed to load suggestions:', error);

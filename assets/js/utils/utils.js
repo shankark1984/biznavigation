@@ -177,6 +177,7 @@ async function loadSuggestions(
     attachPartyCodeFiller('customerName', 'customerNameSuggestions', 'partyCode');
     attachPartyCodeFiller('consignorName', 'consignorNameSuggestions', 'consignorCode');
     attachPartyCodeFiller('serviceProviderName', 'serviceProviderSuggestions', 'serviceProviderCode');
+    attachPartyCodeFiller('vendorName', 'vendorSuggestions', 'vendorCode');
 }
 
 
@@ -730,7 +731,6 @@ function fitMultilineText(el, maxFontSize = 18, minFontSize = 8) {
     }
 }
 
-
 document.addEventListener('DOMContentLoaded', () => {
     loadDefaultBank();
     loadInvoiceNoSuggestions();
@@ -1160,7 +1160,6 @@ async function loadDatalist(datalistId, valueType) {
     });
 }
 
-
 function showSpinner() {
     const spinner = document.getElementById('loadingSpinner');
     if (spinner) spinner.classList.remove('d-none');
@@ -1386,4 +1385,87 @@ async function paymentDetails(invoiceNumber) {
             totalReceived: 0
         };
     }
+}
+
+// Validate container number based on ISO 6346 standard
+function validateContainerNumber(containerNumber) {
+    // Ensure input is uppercase
+    containerNumber = containerNumber.toUpperCase().trim();
+
+    // Basic format check
+    const regex = /^[A-Z]{3}[UJZ]\d{6}\d$/;
+    if (!regex.test(containerNumber)) {
+        return { valid: false, error: "Invalid Container Number" };
+    }
+
+    const charMap = {
+        A: 10, B: 12, C: 13, D: 14, E: 15, F: 16, G: 17, H: 18,
+        I: 19, J: 20, K: 21, L: 23, M: 24, N: 25, O: 26, P: 27,
+        Q: 28, R: 29, S: 30, T: 31, U: 32, V: 34, W: 35, X: 36,
+        Y: 37, Z: 38
+    };
+
+    const base = 2;
+    let sum = 0;
+
+    for (let i = 0; i < 10; i++) {
+        const char = containerNumber[i];
+        let value;
+
+        if (i < 4) {
+            value = charMap[char];
+            if (!value) return { valid: false, error: `Invalid character '${char}' in prefix` };
+        } else {
+            value = parseInt(char, 10);
+        }
+
+        sum += value * (1 << i);   // faster (2^i)
+    }
+
+    const expectedCheckDigit = sum % 11 % 10;
+    const actualCheckDigit = parseInt(containerNumber[10], 10);
+
+    return {
+        valid: expectedCheckDigit === actualCheckDigit,
+        containerNumber,
+        parts: {
+            ownerPrefix: containerNumber.slice(0, 3),
+            category: containerNumber[3],
+            serial: containerNumber.slice(4, 10),
+            checkDigit: actualCheckDigit
+        },
+        calculatedCheckDigit: expectedCheckDigit
+    };
+}
+
+async function getRoutesDatalist() {
+    try {
+        const { data, error } = await supabaseClient
+            .from('route_master')
+            .select('*')
+            .eq('company_id', CompanyID)
+            .order('route_description', { ascending: true });
+
+        if (error) throw error;
+
+        return data || [];
+    } catch (err) {
+        console.error("Routes datalist load failed:", err);
+        return [];
+    }
+}
+
+async function loadRouteSuggestions() {
+
+    const routes = await getRoutesDatalist();
+
+    const datalist = document.getElementById("routeSuggestions");
+    datalist.innerHTML = "";
+
+    routes.forEach(route => {
+        const option = document.createElement("option");
+        option.value = route.route_description;
+        option.dataset.routeId = route.id; // optional if you need route id later
+        datalist.appendChild(option);
+    });
 }

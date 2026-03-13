@@ -17,6 +17,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     setupEventListeners();
     loadDatalist('tabPackingTypeSuggestions', 'PackingType'); // Static data
     initDatalistValidation();
+    loadTaxData();
 });
 
 document.getElementById("docketNo")

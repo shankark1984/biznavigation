@@ -32,7 +32,8 @@ async function generateNewLRNumber() {
         .select('lr_number')
         .like('lr_number', `${compshortCode}%`)
         .order('lr_number', { ascending: false }) // Sort in descending order
-        .limit(1); // Only get the top record;
+        .limit(1)
+        .single(); // Only get the top record;
 
     if (error) {
         console.error('Error fetching LR numbers:', error);
@@ -40,13 +41,12 @@ async function generateNewLRNumber() {
     }
 
     let highestCount = 0;
-    existingCodes.forEach(row => {
-        const numericPart = row.lr_number.slice(compshortCode.length);
-        const count = parseInt(numericPart, 10);
-        if (!isNaN(count) && count > highestCount) {
-            highestCount = count;
-        }
-    });
+    if (existingCodes && existingCodes.length > 0) {
+        const numericPart =
+            existingCodes[0].lr_number.slice(compshortCode.length);
+
+        highestCount = parseInt(numericPart, 10) || 0;
+    };
 
     const newCount = highestCount + 1;
     const lrNumber = `${compshortCode}${String(newCount).padStart(7, '0')}`;
@@ -61,6 +61,8 @@ document.getElementById('saveButton').addEventListener('click', async function (
     document.getElementById('saveButton').disabled = true;
     document.getElementById('addButton').disabled = true;
     document.getElementById('VendoraddButton').disabled = true;
+    const saveBtnText =
+        document.getElementById('saveButton').textContent.trim().toLowerCase();
     if (!areRequiredFieldsFilled()) {
         document.getElementById('saveButton').disabled = false;
         return;
@@ -93,7 +95,7 @@ document.getElementById('saveButton').addEventListener('click', async function (
         requested_date: document.getElementById('requesteddate').value,
         vehicle_type: document.getElementById('vehicleType').value,
         reference_number: document.getElementById('referencenumber').value,
-        invoice_value: parseFloat(document.getElementById('invoiceValue')) || 0,
+        invoice_value: parseFloat(document.getElementById('invoicevalue').value) || 0,
         vendor_code: document.getElementById('vendorCode').value,
         vendor_name: document.getElementById('vendorName').value,
         vehicle_number: document.getElementById('vehiclenumber').value,
@@ -370,7 +372,8 @@ async function checkDuplicate(lrNumber, chargesType, accountType) {
         .from('booking_charges')
         .select('*')
         .eq('lr_number', lrNumber)
-        .eq('charges_type', chargesType && 'account_type', accountType);
+        .eq('charges_type', chargesType)
+        .eq('account_type', accountType);
 
     if (error) {
         console.error('Error checking duplicate:', error);

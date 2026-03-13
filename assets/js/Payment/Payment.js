@@ -1,3 +1,5 @@
+let suspensePaymentSelected = false;
+
 // ------------------------------------------
 // FORM ELEMENTS
 // ------------------------------------------
@@ -43,6 +45,17 @@ document.addEventListener("DOMContentLoaded", async () => {
     enableForm();
     await loadSuggestions("partySuggestions", "PartyDetails", CompanyID);
     resetForm();
+
+    const suspenseModalEl = document.getElementById("suspenseModal");
+
+    suspenseModalEl.addEventListener("hidden.bs.modal", function () {
+        // 🔥 Move focus safely outside modal
+        document.getElementById("paymentID")?.focus();
+
+        if (!suspensePaymentSelected) {
+            enableNewEntry();  // user closed without selecting
+        }
+    });
 });
 
 // ------------------------------------------
@@ -124,10 +137,12 @@ paymentFormElements.invoiceNumberInput.addEventListener("change", function () {
         invoiceAmount.value = safeNumber(inv.GrandTotalAmount).toFixed(2);
         invoiceBalanceInput.value = safeNumber(inv.BalanceAmount).toFixed(2);
         accountedAmountInput.focus();
+        addInvoiceDetailsButton.disabled = false;
     } else {
         invoiceDate.value = "";
         invoiceAmount.value = "";
         invoiceBalanceInput.value = "";
+        addInvoiceDetailsButton.disabled = true;
     }
 });
 
@@ -729,6 +744,11 @@ function updateSuspenseUI() {
 
 
 async function checkSuspensePayments(partyCode) {
+    if (!partyCode) return;
+
+    // 🔥 ALWAYS load invoices first
+    await getPendingInvoiceDetails(partyCode);
+
     const { data, error } = await supabaseClient
         .from("PaymentDetails")
         .select(`
@@ -755,13 +775,14 @@ async function checkSuspensePayments(partyCode) {
     } else {
         closeSuspenseModal();
         enableNewEntry();
-        getPendingInvoiceDetails(partyCode); // ✅ allowed
     }
 }
 
 function showSuspenseModal(rows) {
     const tbody = document.getElementById("suspenseTableBody");
     tbody.innerHTML = "";
+
+    suspensePaymentSelected = false;
 
     rows.forEach(r => {
         const tr = document.createElement("tr");
@@ -796,6 +817,8 @@ function showSuspenseModal(rows) {
 }
 
 function selectSuspensePayment(paymentID) {
+    suspensePaymentSelected = true;
+
     closeSuspenseModal();
 
     paymentFormElements.paymentID.value = paymentID;
@@ -811,6 +834,9 @@ function selectSuspensePayment(paymentID) {
 function disableNewEntry() {
     saveButton.disabled = true;
     addInvoiceDetailsButton.disabled = true;
+
+    // paymentFormElements.invoiceNumberInput.disabled = true;
+    // accountedAmountInput.disabled = true;
 }
 
 function enableNewEntry() {
@@ -821,7 +847,15 @@ function enableNewEntry() {
 function closeSuspenseModal() {
     const modalEl = document.getElementById("suspenseModal");
     const modal = bootstrap.Modal.getInstance(modalEl);
-    if (modal) modal.hide();
+
+    if (modal) {
+        modal.hide();
+
+        // 🔥 After hidden, move focus to PaymentID
+        modalEl.addEventListener("hidden.bs.modal", () => {
+            paymentFormElements.paymentID.focus();
+        }, { once: true });
+    }
 }
 
 //report / PDF generation

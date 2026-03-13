@@ -1,155 +1,89 @@
-// Fetch tax data from Supabase
+// Load tax data from Supabase
 async function loadTaxData() {
     try {
-        // console.log("Fetching tax description data from Supabase..."); // For debugging
+        const { data, error } = await supabaseClient
+            .from('tax_details')
+            .select('tax_code, tax_description');
 
-        // Query the 'tax_details' table in Supabase
-        let { data, error } = await supabaseClient
-            .from('tax_details') // Replace with your actual table name
-            .select('tax_code, tax_description'); // Fix the typo here
+        if (error) throw error;
+        if (!data?.length) return console.warn("No tax data found");
 
-        if (error) {
-            throw error;
-        }
+        // Populate all dropdowns
+        populateTaxDropdown("#partyDefaultTax", data);
+        populateTaxDropdown("#vendorDefaultTax", data);
+        populateTaxDropdown("#defaultTax", data);
 
-        if (!data || data.length === 0) {
-            console.error("No data found in the table.");
-            return;
-        }
-
-        // Array to store tax data
-        let tax_data = [];
-
-        // Loop through each row and store the TaxCode and TaxDescription
-        data.forEach(row => {
-            const taxCode = row.tax_code;  // TaxCode column
-            const taxDescription = row.tax_description;  // TaxDescription column (fixed)
-
-            // Push data to tax_data array
-            tax_data.push({
-                taxCode: taxCode,
-                taxDescription: taxDescription
-            });
-        });
-
-        // Call populateDropdown to fill the select element
-        populateDropdown(tax_data);
-        vendorpopulateDropdown(tax_data);
     } catch (error) {
-        console.error("Error fetching data from Supabase:", error.message);
-        // alert("Failed to load tax data. Please try again later.");
+        console.error("Error loading tax data:", error.message);
     }
 }
 
-// Populate the <select> dropdown with tax data
-function populateDropdown(tax_data) {
-    const taxSelect = $("#partyDefaultTax"); // Target the <select> element
-    taxSelect.empty();  // Clear existing options
+// Reusable dropdown population function
+function populateTaxDropdown(selector, data) {
+    const dropdown = $(selector);
+    dropdown.empty();
 
-    // Add a placeholder option
-    taxSelect.append('<option value="" disabled selected>Select Default Tax</option>');
+    dropdown.append('<option value="" disabled selected>Select Default Tax</option>');
 
-    // Loop through tax_data and create <option> elements
-    tax_data.forEach(tax => {
-        const option = `<option value="${tax.taxDescription}">${tax.taxDescription}</option>`;
-        taxSelect.append(option);
+    data.forEach(tax => {
+        dropdown.append(
+            `<option value="${tax.tax_description}">
+                ${tax.tax_description}
+            </option>`
+        );
     });
 }
 
-// Populate the <select> dropdown with tax data
-function vendorpopulateDropdown(tax_data) {
-    const taxSelect = $("#vendorDefaultTax"); // Target the <select> element
-    taxSelect.empty();  // Clear existing options
-
-    // Add a placeholder option
-    taxSelect.append('<option value="" disabled selected>Select Default Tax</option>');
-
-    // Loop through tax_data and create <option> elements
-    tax_data.forEach(tax => {
-        const option = `<option value="${tax.taxDescription}">${tax.taxDescription}</option>`;
-        taxSelect.append(option);
-    });
-}
-// Load the tax data once the page is ready
-document.addEventListener('DOMContentLoaded', function () {
-    loadTaxData();
-});
-
-// Populate the <select> dropdown with tax data
-function vendorpopulateDropdown(tax_data) {
-    const taxSelect = $("#defaultTax"); // Target the <select> element
-    taxSelect.empty();  // Clear existing options
-
-    // Add a placeholder option
-    taxSelect.append('<option value="" disabled selected>Select Default Tax</option>');
-
-    // Loop through tax_data and create <option> elements
-    tax_data.forEach(tax => {
-        const option = `<option value="${tax.taxDescription}">${tax.taxDescription}</option>`;
-        taxSelect.append(option);
-    });
-}
-
+// Fetch tax details (rate + id)
 async function fetchTaxDetails(taxType) {
-    console.log("Fetching tax details for:", taxType); // For debugging
+    if (!taxType) return null;
+
     try {
         const { data, error } = await supabaseClient
             .from('tax_details')
             .select('id, tax_rate')
             .eq('tax_description', taxType)
-            .maybeSingle(); // because we expect only 1 match
+            .maybeSingle();
 
-        if (error) {
-            console.error('Error fetching tax details:', error.message);
-            return null;
-        }
+        if (error) throw error;
 
-        if (data) {
-            console.log('Fetched Tax Details:', data);
-            return {
-                taxId: data.id,
-                taxRate: data.tax_rate
-            };
-        } else {
-            console.warn('No tax details found for:', taxType);
-            return null;
-        }
+        return data
+            ? { taxId: data.id, taxRate: data.tax_rate }
+            : null;
+
     } catch (err) {
-        console.error('Unexpected Error:', err);
+        console.error("Error fetching tax details:", err.message);
         return null;
     }
 }
 
-
-
-// Function to handle the change event of the tax dropdown 
-const taxInput = document.getElementById('partyDefaultTax');
-const partyCodeIn = document.getElementById('partyCode'); // e.g. <select> or <input>
-
+// Load party default tax
 async function onChargeTypeOrPartyChange() {
-    const partyCode = partyCodeIn.value.trim();
+
+    const partyCode = document.getElementById("partyCode").value.trim();
+    const taxInput = document.getElementById("partyDefaultTax");
+
     if (!partyCode) {
-        taxInput.value = '';
+        taxInput.value = "";
         return;
     }
 
     try {
-        // Fetch the party's default_tax
         const { data, error } = await supabaseClient
             .from('PartyDetails')
             .select('DefaultTax')
             .eq('PartyCode', partyCode)
-            .single();
+            .maybeSingle();
 
-        if (error) {
-            console.error('Error loading default tax:', error.message);
-            taxInput.value = '';
-        } else {
-            // Populate the default tax dropdown/text input
-            taxInput.value = data.default_tax ?? '';
-        }
+        if (error) throw error;
+
+        taxInput.value = data?.DefaultTax || "";
+
     } catch (err) {
-        console.error('Unexpected error:', err);
-        taxInput.value = '';
+        console.error("Error loading party tax:", err.message);
+        taxInput.value = "";
     }
 }
+
+// Run on page load
+// document.addEventListener("DOMContentLoaded", loadTaxData);

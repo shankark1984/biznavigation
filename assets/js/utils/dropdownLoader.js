@@ -7,7 +7,8 @@ async function loadDropdownOptions(filterValue, dropdownId) {
             .from('dropdown_list')
             .select('description, hsn_code')     // Include hsn_code here
             .in('company_id', ['All', CompanyID])
-            .ilike('type_of_value', `%${filterValue}%`);
+            .ilike('type_of_value', `%${filterValue}%`)
+            .order('description', { ascending: true });
 
         if (error) {
             console.error(`Error fetching data from dropdown_list:`, error);
