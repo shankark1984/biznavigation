@@ -444,13 +444,14 @@
                         <!-- FTL/FCL Tariff Tab -->
                         <div class="tab-pane fade" id="ftlFclTariff" role="tabpanel" aria-labelledby="ftlFclTariff-tab">
                             <div class="row g-3">
-                                <div class="col-md-2">
+
+                                <div class="col-12 col-md-2">
                                     <label for="ftlEffectiveDate" class="form-label">Effective Date</label>
                                     <input type="date" class="form-control" id="ftlEffectiveDate"
                                         name="ftlEffectiveDate" required>
                                 </div>
 
-                                <div class="col-md-2">
+                                <div class="col-12 col-md-2">
                                     <label for="ftlMovementType" class="form-label">Movement Type</label>
                                     <select class="form-select" id="ftlMovementType" name="ftlMovementType" required>
                                         <option value="">Choose...</option>
@@ -460,7 +461,18 @@
                                     </select>
                                 </div>
 
-                                <div class="col-md-2">
+                                <div class="col-12 col-md-2">
+                                    <label for="ftlTransitType" class="form-label">Transit Type</label>
+                                    <select class="form-select" id="ftlTransitType" name="ftlTransitType" required>
+                                        <option value="">Choose...</option>
+                                        <option value="By Air">By Air</option>
+                                        <option value="By Sea">By Sea</option>
+                                        <option value="By Road">By Road</option>
+                                        <option value="By Rail">By Rail</option>
+                                    </select>
+                                </div>
+
+                                <div class="col-12 col-md-2">
                                     <label for="ftlModeType" class="form-label">Mode Type</label>
                                     <select class="form-select" id="ftlModeType" name="ftlModeType" required>
                                         <option value="">Choose...</option>
@@ -468,24 +480,92 @@
                                         <option value="FTL">FTL</option>
                                     </select>
                                 </div>
-                                <div class="col-md-2">
+
+                                <div class="col-12 col-md-2">
                                     <label for="ftlVehicleType" class="form-label">Vehicle Type</label>
-                                    <select class="form-select" id="ftlVehicleType" name="ftlVehicleType" required>
+                                    <select class="form-select" id="ftlVehicleType" name="ftlVehicleType">
                                         <option value="">Choose...</option>
                                         <option value="Container">Container</option>
                                         <option value="Open">Open</option>
                                     </select>
                                 </div>
-                                <div class="col-md-2">
+
+                                <div class="col-12 col-md-2">
                                     <label for="ftlRouteDetails" class="form-label">Route Details</label>
-                                    <input list="ftlRouteSuggestions" type="text" class="form-control"
-                                        id="ftlRouteDetails" name="ftlRouteDetails" required>
-                                    <datalist id="ftlRouteSuggestions"></datalist>
+                                    <input list="routeSuggestions" type="text" class="form-control" id="ftlRouteDetails"
+                                        name="ftlRouteDetails" autocomplete="off" required>
+                                    <datalist id="routeSuggestions"></datalist>
                                 </div>
-                                <div class="col-md-2">
+
+                                <div class="col-12 col-md-2">
+                                    <label for="ftlUomType" class="form-label">UOM</label>
+                                    <select class="form-select" id="ftlUomType" name="ftlUomType" required>
+                                        <option value="">Choose...</option>
+                                        <option value="Per Vehicle">Per Vehicle</option>
+                                        <option value="Per Ton">Per Ton</option>
+                                    </select>
+                                </div>
+
+                                <div class="col-12 col-md-2">
+                                    <label for="ftlCargoWeight" class="form-label">Cargo Weight</label>
+                                    <input type="number" class="form-control text-end" id="ftlCargoWeight"
+                                        name="ftlCargoWeight" min="0" step="0.01" value="0.00" required>
+                                </div>
+
+                                <div class="col-12 col-md-2">
                                     <label for="ftlRate" class="form-label">Rate</label>
-                                    <input type="number" class="form-control" id="ftlRate" name="ftlRate" required>
+                                    <input type="number" class="form-control text-end" id="ftlRate" name="ftlRate"
+                                        min="0" step="0.01" value="0.00" required>
                                 </div>
+
+                                <div class="col-12 col-md-2">
+                                    <label for="ftlTariffType" class="form-label">Type</label>
+                                    <select class="form-select" id="ftlTariffType" name="ftlTariffType" required>
+                                        <option value="" disabled selected>Select type</option>
+                                        <option value="Buy">Buy</option>
+                                        <option value="Sell">Sell</option>
+                                    </select>
+                                </div>
+                                <div class="col-12 col-md-2">
+                                    <label for="ftlCurrencyCode" class="form-label">Currency</label>
+                                    <input type="text" id="ftlCurrencyCode" name="ftlCurrencyCode"
+                                        list="currencyListDatalist" autocomplete="off"
+                                        class="form-control text-capitalize" required>
+                                    <datalist id="currencyListDatalist"></datalist>
+                                </div>
+                                <div class="col-12 col-md-2 d-flex align-items-end">
+                                    <button type="button" class="btn btn-primary w-100" id="addFtlFCLButton">
+                                        <i class="bi bi-plus-circle"></i> Add Tariff
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="table-responsive mt-3">
+                                <table
+                                    class="table table-sm table-bordered table-hover table-striped text-center align-middle">
+                                    <thead class="table-dark">
+                                        <tr>
+                                            <th>S.No</th>
+                                            <th>Effective Date</th>
+                                            <th>Movement Type</th>
+                                            <th>Transit Type</th>
+                                            <th>Mode Type</th>
+                                            <th>Vehicle Type</th>
+                                            <th>Route Details</th>
+                                            <th>UOM</th>
+                                            <th>Cargo Weight</th>
+                                            <th>Rate</th>
+                                            <th>Type</th>
+                                            <th>Currency</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tariffTableBody">
+                                        <tr>
+                                            <td colspan="13" class="text-center text-muted">No tariff rates added
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
 

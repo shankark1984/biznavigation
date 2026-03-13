@@ -7,6 +7,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     await loadDatalist('fixedChargesModeTypeList', 'ModeType');
     await loadDatalist('fixedChargesShippingTypeList', 'ShippingType');
     await loadDatalist('fixedChargesTypelist', 'ChargesType');
+    await loadDropdownOptions('VehicleType', 'ftlVehicleType');
+    await loadRouteSuggestions();
 
 });
 
