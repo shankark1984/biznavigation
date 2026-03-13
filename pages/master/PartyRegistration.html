@@ -187,6 +187,13 @@
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="ftlFclTariff-tab" data-bs-toggle="tab"
+                                data-bs-target="#ftlFclTariff" type="button" role="tab" aria-controls="ftlFclTariff"
+                                aria-selected="false">
+                                FTL/FCL Tariff
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
                             <button class="nav-link" id="fixedCharges-tab" data-bs-toggle="tab"
                                 data-bs-target="#fixedCharges" type="button" role="tab" aria-controls="fixedCharges"
                                 aria-selected="false">
@@ -434,17 +441,66 @@
                                 </table>
                             </div>
                         </div>
+                        <!-- FTL/FCL Tariff Tab -->
+                        <div class="tab-pane fade" id="ftlFclTariff" role="tabpanel" aria-labelledby="ftlFclTariff-tab">
+                            <div class="row g-3">
+                                <div class="col-md-2">
+                                    <label for="ftlEffectiveDate" class="form-label">Effective Date</label>
+                                    <input type="date" class="form-control" id="ftlEffectiveDate"
+                                        name="ftlEffectiveDate" required>
+                                </div>
+
+                                <div class="col-md-2">
+                                    <label for="ftlMovementType" class="form-label">Movement Type</label>
+                                    <select class="form-select" id="ftlMovementType" name="ftlMovementType" required>
+                                        <option value="">Choose...</option>
+                                        <option value="Domestic">Domestic</option>
+                                        <option value="Export">Export</option>
+                                        <option value="Import">Import</option>
+                                    </select>
+                                </div>
+
+                                <div class="col-md-2">
+                                    <label for="ftlModeType" class="form-label">Mode Type</label>
+                                    <select class="form-select" id="ftlModeType" name="ftlModeType" required>
+                                        <option value="">Choose...</option>
+                                        <option value="FCL">FCL</option>
+                                        <option value="FTL">FTL</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <label for="ftlVehicleType" class="form-label">Vehicle Type</label>
+                                    <select class="form-select" id="ftlVehicleType" name="ftlVehicleType" required>
+                                        <option value="">Choose...</option>
+                                        <option value="Container">Container</option>
+                                        <option value="Open">Open</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-2">
+                                    <label for="ftlRouteDetails" class="form-label">Route Details</label>
+                                    <input list="ftlRouteSuggestions" type="text" class="form-control"
+                                        id="ftlRouteDetails" name="ftlRouteDetails" required>
+                                    <datalist id="ftlRouteSuggestions"></datalist>
+                                </div>
+                                <div class="col-md-2">
+                                    <label for="ftlRate" class="form-label">Rate</label>
+                                    <input type="number" class="form-control" id="ftlRate" name="ftlRate" required>
+                                </div>
+                            </div>
+                        </div>
 
                         <!-- Fixed Charges -->
                         <div class="tab-pane fade" id="fixedCharges" role="tabpanel" aria-labelledby="fixedCharges-tab">
                             <div class="row g-3">
                                 <div class="col-md-2">
-                                    <label for="fixedChargesEffectiveDate" class="form-label">Effective Date</label>
+                                    <label for="fixedChargesEffectiveDate" class="form-label">Effective
+                                        Date</label>
                                     <input type="date" class="form-control" id="fixedChargesEffectiveDate" required>
                                 </div>
 
                                 <div class="col-md-2">
-                                    <label for="fixedChargesMovementType" class="form-label">Movement Type</label>
+                                    <label for="fixedChargesMovementType" class="form-label">Movement
+                                        Type</label>
                                     <select class="form-control" id="fixedChargesMovementType" required>
                                         <option value="">Choose...</option>
                                         <option value="Customs Clearance">Customs Clearance</option>
@@ -472,7 +528,8 @@
                                 </div>
 
                                 <div class="col-md-2">
-                                    <label for="fixedChargesShippingType" class="form-label">Shipping Type</label>
+                                    <label for="fixedChargesShippingType" class="form-label">Shipping
+                                        Type</label>
                                     <input list="fixedChargesShippingTypeList" class="form-control"
                                         id="fixedChargesShippingType" name="fixedChargesShippingType" required
                                         autocomplete="off">
@@ -536,7 +593,9 @@
                                     </thead>
                                     <tbody id="fixedChargesTableBody">
                                         <tr>
-                                            <td colspan="14" class="text-center text-muted">No fixed charges added</td>
+                                            <td colspan="14" class="text-center text-muted">No fixed charges
+                                                added
+                                            </td>
                                         </tr>
                                     </tbody>
                                 </table>
