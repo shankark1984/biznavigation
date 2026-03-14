@@ -164,7 +164,7 @@ async function saveFixedChargesToDB() {
     const deletedRows = fixedChargesData.filter(r => r._state === "deleted");
 
     if (newRows.length === 0 && deletedRows.length === 0) {
-        alert("No changes to save");
+        // alert("No changes to save");
         return;
     }
 

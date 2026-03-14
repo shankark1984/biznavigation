@@ -45,7 +45,10 @@ modifyButton.addEventListener('click', () => {
     saveButton.disabled = false;
     modifyButton.disabled = true;
     document.getElementById("addbillingAddress").disabled = false;
-    toggleButtons(".edit-row, .delete-row, .editTariff", true);
+    toggleButtons(".edit-row, .delete-row, .editTariff, .deleteRow", true);
+    document.getElementById("addTariffButton").disabled = false;
+    document.getElementById("addFtlFCLButton").disabled = false;
+    document.getElementById("addFixedChargesButton").disabled = false;
 });
 
 // New button handler
@@ -59,7 +62,11 @@ newButton.addEventListener('click', () => {
 
     clearForm();
     enableForm();
-    toggleButtons(".edit-row, .delete-row, .editTariff", true);
+    toggleButtons(".edit-row, .delete-row, .editTariff, .deleteRow", true);
+    document.getElementById("addbillingAddress").disabled = false;
+    document.getElementById("addTariffButton").disabled = false;
+    document.getElementById("addFtlFCLButton").disabled = false;
+    document.getElementById("addFixedChargesButton").disabled = false;
 });
 
 async function generateNewPartyCode(partyName) {
@@ -86,6 +93,9 @@ document.getElementById('partyNameReg').addEventListener('change', async () => {
     disableForm();
 
     document.getElementById("addbillingAddress").disabled = true;
+    document.getElementById("addTariffButton").disabled = true;
+    document.getElementById("addFtlFCLButton").disabled = true;
+    document.getElementById("addFixedChargesButton").disabled = true;
     saveButton.disabled = true;
     modifyButton.disabled = false;
     newButton.disabled = false;
@@ -97,6 +107,9 @@ document.getElementById('partyNameReg').addEventListener('change', async () => {
     });
     await fetchTariffs(partyCode);
     await loadFixedChargesFromDB();
+    await loadFCLFTLTariffs(partyCode);
+
+    toggleButtons(".edit-row, .delete-row, .editTariff, .deleteRow", false);
 
 });
 
@@ -254,13 +267,20 @@ saveButton.addEventListener('click', async (e) => {
 
     await saveFixedChargesToDB();
 
+    await saveFCLFTLTariffs(); // ✅ Save FTL/FCL tariffs after party is saved
+
     showToast(`Party ${isInsert ? 'saved' : 'updated'} successfully!`);
 
     disableForm();
     saveButton.innerHTML = '<i class="bi bi-save"></i> Update';
     modifyButton.disabled = false;
     newButton.disabled = false;
-    toggleButtons(".edit-row, .delete-row, .editTariff", false);
+    toggleButtons(".edit-row, .delete-row, .editTariff, .deleteRow", false);
+    document.getElementById("addbillingAddress").disabled = true;
+    document.getElementById("addTariffButton").disabled = true;
+    document.getElementById("addFtlFCLButton").disabled = true;
+    document.getElementById("addFixedChargesButton").disabled = true;
+
 });
 
 

@@ -47,13 +47,11 @@ async function loadBillingAddresses({ billingTableBody, partyCodeSelect }) {
                     <button type="button"
                         class="btn btn-sm btn-outline-primary me-1 edit-row"
                         data-id="${row.id}">
-                        <i class="bi bi-pencil-square"></i> Edit
-                    </button>
+                        <i class="bi bi-pencil-square"></i></button>
                     <button type="button"
                             class="btn btn-sm btn-outline-danger delete-row"
                             data-id="${row.id}">
-                            <i class="bi bi-trash"></i> Delete
-                    </button>
+                            <i class="bi bi-trash"></i></button>
                 </td>`;
 
             billingTableBody.appendChild(tr);

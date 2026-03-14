@@ -485,12 +485,15 @@
                                     <label for="ftlVehicleType" class="form-label">Vehicle Type</label>
                                     <select class="form-select" id="ftlVehicleType" name="ftlVehicleType">
                                         <option value="">Choose...</option>
-                                        <option value="Container">Container</option>
-                                        <option value="Open">Open</option>
                                     </select>
                                 </div>
-
                                 <div class="col-12 col-md-2">
+                                    <label for="ftlCargoWeight" class="form-label">Cargo Weight</label>
+                                    <input type="number" class="form-control text-end" id="ftlCargoWeight"
+                                        name="ftlCargoWeight" min="0" step="0.01" value="0.00" required>
+                                </div>
+
+                                <div class="col-12 col-md-4">
                                     <label for="ftlRouteDetails" class="form-label">Route Details</label>
                                     <input list="routeSuggestions" type="text" class="form-control" id="ftlRouteDetails"
                                         name="ftlRouteDetails" autocomplete="off" required>
@@ -500,16 +503,10 @@
                                 <div class="col-12 col-md-2">
                                     <label for="ftlUomType" class="form-label">UOM</label>
                                     <select class="form-select" id="ftlUomType" name="ftlUomType" required>
-                                        <option value="">Choose...</option>
+                                        <!-- <option value="">Choose...</option> -->
                                         <option value="Per Vehicle">Per Vehicle</option>
                                         <option value="Per Ton">Per Ton</option>
                                     </select>
-                                </div>
-
-                                <div class="col-12 col-md-2">
-                                    <label for="ftlCargoWeight" class="form-label">Cargo Weight</label>
-                                    <input type="number" class="form-control text-end" id="ftlCargoWeight"
-                                        name="ftlCargoWeight" min="0" step="0.01" value="0.00" required>
                                 </div>
 
                                 <div class="col-12 col-md-2">
@@ -518,19 +515,19 @@
                                         min="0" step="0.01" value="0.00" required>
                                 </div>
 
-                                <div class="col-12 col-md-2">
+                                <div class="col-12 col-md-1">
                                     <label for="ftlTariffType" class="form-label">Type</label>
                                     <select class="form-select" id="ftlTariffType" name="ftlTariffType" required>
-                                        <option value="" disabled selected>Select type</option>
-                                        <option value="Buy">Buy</option>
                                         <option value="Sell">Sell</option>
+                                        <option value="Buy">Buy</option>
+
                                     </select>
                                 </div>
-                                <div class="col-12 col-md-2">
+                                <div class="col-12 col-md-1">
                                     <label for="ftlCurrencyCode" class="form-label">Currency</label>
                                     <input type="text" id="ftlCurrencyCode" name="ftlCurrencyCode"
                                         list="currencyListDatalist" autocomplete="off"
-                                        class="form-control text-capitalize" required>
+                                        class="form-control text-capitalize" required value="INR">
                                     <datalist id="currencyListDatalist"></datalist>
                                 </div>
                                 <div class="col-12 col-md-2 d-flex align-items-end">
@@ -540,7 +537,7 @@
                                 </div>
                             </div>
                             <div class="table-responsive mt-3">
-                                <table
+                                <table id="ftlFCLTable"
                                     class="table table-sm table-bordered table-hover table-striped text-center align-middle">
                                     <thead class="table-dark">
                                         <tr>
@@ -559,7 +556,7 @@
                                             <th>Actions</th>
                                         </tr>
                                     </thead>
-                                    <tbody id="tariffTableBody">
+                                    <tbody id="ftlFCLTariffTableBody">
                                         <tr>
                                             <td colspan="13" class="text-center text-muted">No tariff rates added
                                             </td>
@@ -720,11 +717,12 @@
     <script src="../../assets/js/utils/GlobalShortcut.js" defer></script>
     <script src="../../assets/js/utils/pincode-helper.js" defer></script>
     <script src="../../assets/js/utils/taxDescription.js" defer></script>
-    <script src="../../assets/js/PartyRegistration/PartyBillingAddress.js" defer></script>
-    <script src="../../assets/js/PartyRegistration/Tariff.js" defer></script>
+    <script src="../../assets/js/utils/dropdownLoader.js" defer></script>
 
     <script src="../../assets/js/PartyRegistration/PartyRegistration.js" defer></script>
-    <script src="../../assets/js/utils/dropdownLoader.js" defer></script>
+    <script src="../../assets/js/PartyRegistration/PartyBillingAddress.js" defer></script>
+    <script src="../../assets/js/PartyRegistration/Tariff.js" defer></script>
+    <script src="../../assets/js/PartyRegistration/FTL_Tariff.js" defer></script>
     <script src="../../assets/js/PartyRegistration/FixedCharges.js" defer></script>
     <script src="../../assets/js/utils/logout.js" defer></script>
 
