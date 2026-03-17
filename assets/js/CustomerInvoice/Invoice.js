@@ -117,7 +117,7 @@ document.getElementById('fetchPendingInvoices').addEventListener('click', async 
             await CustomsClearanceInvoiceDetails();
         } else if (type === 'Domestic') {
             await d_getPendingInvoiceDetails();
-        } else if (type === 'FTL or FCL') {
+        } else if (type === 'Full Truck Load') {
             await FTL_FCL_getPendingInvoiceDetails();
         } else {
             alert('Select valid Movement Type');
@@ -210,7 +210,7 @@ document.getElementById('saveButton').addEventListener('click', async () => {
             await updateInvoiceNumbers_cc(invoiceNo);
         } else if (invoiceType === 'Domestic') {
             await d_updateInvoiceNumbers(invoiceNo);
-        } else if (invoiceType === 'FTL or FCL') {
+        } else if (invoiceType === 'Full Truck Load') {
             await ftl_updateInvoiceNumbers(invoiceNo);
         }
 
@@ -508,9 +508,9 @@ document.getElementById('invoiceNo').addEventListener('change', async (e) => {
         } else if (invoiceDetails.InvoiceType === 'Domestic') {
             await d_createPendingShipmentTableHeaderAndFooter_ib();
             await d_loadInvoiceBookings(invoiceNo); // Load Domestic bookings if applicable
-        } else if (invoiceDetails.InvoiceType === 'FTL or FCL') {
+        } else if (invoiceDetails.InvoiceType === 'Full Truck Load') {
             await ftl_loadInvoiceBookings();
-           
+
         } else {
             console.warn('Unknown movement type:', invoiceDetails.InvoiceType);
         }

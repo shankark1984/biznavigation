@@ -71,7 +71,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     { label: "International Booking", href: "/pages/Functions/InternationalBooking.html" },
     { label: "Domestic", href: "/pages/Functions/DomesticBooking.html" },
     { label: "Customs Clearance", href: "/pages/Functions/CustomsClearance.html" },
-    { label: "FTL or FCL", href: "/pages/Functions/fulltruckload.html" },
+    { label: "Full Truck Load", href: "/pages/Functions/fulltruckload.html" },
     'divider',
     { label: "Upload Data", href: "#" }
   ])}
@@ -90,7 +90,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     { label: "International Report", href: "/pages/Reports/reportInternationalShipmentDetails.html" },
     { label: "Domestic Report", href: "/pages/Reports/reportDomesticDetails.html" },
     { label: "Customs Clearance Report", href: "/pages/Reports/reportCustomsClearance.html" },
-    { label: "FTL or FCL Report", href: "/pages/Reports/reportFulltruckDetails.html" },
+    { label: "Full Truck Load Report", href: "/pages/Reports/reportFulltruckDetails.html" },
     'divider',
     { label: "Customer Invoice Report", href: "/pages/Reports/reportCustomerInvoiceDetails.html" },
     { label: "Vendor Billing Report", href: "#" },
