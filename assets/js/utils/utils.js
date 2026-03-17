@@ -315,13 +315,7 @@ async function convertCurrency({ amount, from = 'INR', to = 'INR' }) {
     }
 }
 
-function formatDate(dateStr) {
-    const date = new Date(dateStr);
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are zero-indexed
-    const year = date.getFullYear();
-    return `${day}-${month}-${year}`;
-}
+
 // ✅ Set a message for an empty table body
 // This function will replace the content of a table body with a message when there are no rows
 function setEmptyTableMessage(tableBodyId, message) {

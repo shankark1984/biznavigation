@@ -417,9 +417,16 @@ async function d_loadInvoiceBookings(invoiceNo) {
 }
 
 async function d_addSingleShipmentToInvoice(shipmentNo, invoiceNo) {
+
+    if (!shipmentNo || !invoiceNo) {
+        alert("Enter shipment number and invoice number");
+        return;
+    }
+
     showSpinner();
 
     try {
+
         // Fetch shipment details
         const { data, error } = await supabaseClient
             .from('DomesticBookingDetails')
@@ -428,20 +435,31 @@ async function d_addSingleShipmentToInvoice(shipmentNo, invoiceNo) {
             .eq('DocketNo', shipmentNo)
             .is('InvoiceNumber', null)
             .eq('IsLocked', false)
-            .single();
+            .limit(1)
+            .maybeSingle();
 
-        if (error || !data) {
-            alert('Shipment not found or already locked.');
+        if (error) throw error;
+
+        if (!data) {
+            alert('Shipment not found or already invoiced.');
+            return;
+        }
+
+        // Prevent duplicate in table
+        const existingRow = document.querySelector(`#pendingShipmentTable tbody tr[data-ship-id="${data.id}"]`);
+        if (existingRow) {
+            alert("Shipment already added to invoice.");
             return;
         }
 
         const charges = await getBookingCharges(data.id);
-        if (!charges || charges.grandTotal <= 0) {
+
+        if (!charges || (parseFloat(charges.grandTotal) || 0) <= 0) {
             alert('No valid charges for this shipment.');
             return;
         }
 
-        // Lock the shipment and assign invoice number
+        // Lock shipment and assign invoice
         const { error: updateError } = await supabaseClient
             .from('DomesticBookingDetails')
             .update({
@@ -455,10 +473,21 @@ async function d_addSingleShipmentToInvoice(shipmentNo, invoiceNo) {
 
         if (updateError) throw updateError;
 
-        // Add to table
-        const tableBody = document.getElementById('pendingShipmentTable').querySelector('tbody');
+        const tableBody = document.querySelector('#pendingShipmentTable tbody');
+
+        const freight = parseFloat(charges.BasicFrightAmt) || 0;
+        const fsc = parseFloat(charges.FSCAmt) || 0;
+        const other = parseFloat(charges.OtherAmt) || 0;
+        const sgst = parseFloat(charges.totalSGST) || 0;
+        const cgst = parseFloat(charges.totalCGST) || 0;
+        const igst = parseFloat(charges.totalIGST) || 0;
+        const gst = parseFloat(charges.totalGST) || 0;
+        const grand = parseFloat(charges.grandTotal) || 0;
+
+        // Add row
         const row = document.createElement('tr');
         row.setAttribute('data-ship-id', data.id);
+
         row.innerHTML = `
             <td>${data.DocketNo || ''}</td>
             <td>${data.BookingDate || ''}</td>
@@ -466,46 +495,56 @@ async function d_addSingleShipmentToInvoice(shipmentNo, invoiceNo) {
             <td>${data.ModeType || ''}</td>
             <td>${data.OriginCity || ''}</td>
             <td>${data.DestinationCity || ''}</td>
-            <td>${data.Quantity || ''} </td>
-            <td>${data.ActualWeight || ''}${data.UOMType || ''}</td>
-            <td>${data.ChargeableWeight || ''}${data.UOMType || ''}</td>
-            <td>${charges.BasicFrightAmt.toFixed(2)}</td>
-            <td>${charges.FSCAmt.toFixed(2)}</td>
-            <td>${charges.OtherAmt.toFixed(2)}</td>
-            <td>${charges.totalSGST.toFixed(2)}</td>
-            <td>${charges.totalCGST.toFixed(2)}</td>
-            <td>${charges.totalIGST.toFixed(2)}</td>
-            <td>${charges.totalGST.toFixed(2)}</td>
-            <td>${charges.grandTotal.toFixed(2)}</td>
-            <td><button class="btn btn-danger btn-sm delete-btn" onclick="d_removeRow(this)">
-            <i class="bi bi-trash"></i></button></td>
+            <td>${data.Quantity || ''}</td>
+            <td>${data.ActualWeight || ''} ${data.UOMType || ''}</td>
+            <td>${data.ChargeableWeight || ''} ${data.UOMType || ''}</td>
+            <td>${freight.toFixed(2)}</td>
+            <td>${fsc.toFixed(2)}</td>
+            <td>${other.toFixed(2)}</td>
+            <td>${sgst.toFixed(2)}</td>
+            <td>${cgst.toFixed(2)}</td>
+            <td>${igst.toFixed(2)}</td>
+            <td>${gst.toFixed(2)}</td>
+            <td>${grand.toFixed(2)}</td>
+            <td>
+                <button class="btn btn-danger btn-sm delete-btn" onclick="d_removeRow(this)">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </td>
         `;
+
         tableBody.appendChild(row);
 
-        // ✅ Update totals from footer before adding new values
+        // Read footer totals safely
+        const getVal = (id) => parseFloat(document.getElementById(id)?.textContent) || 0;
+
         const totals = {
-            totalFreight: parseFloat(document.getElementById('totalFreight').textContent) + charges.BasicFrightAmt,
-            totalFSCAmt: parseFloat(document.getElementById('totalFSCAmt').textContent) + charges.FSCAmt,
-            totalOtherAmt: parseFloat(document.getElementById('totalOtherAmt').textContent) + charges.OtherAmt,
-            totalSGST: parseFloat(document.getElementById('totalSGST').textContent) + charges.totalSGST,
-            totalCGST: parseFloat(document.getElementById('totalCGST').textContent) + charges.totalCGST,
-            totalIGST: parseFloat(document.getElementById('totalIGST').textContent) + charges.totalIGST,
-            totalGST: parseFloat(document.getElementById('totalGST').textContent) + charges.totalGST,
-            totalGrand: parseFloat(document.getElementById('totalGrand').textContent) + charges.grandTotal
+            totalFreight: getVal('totalFreight') + freight,
+            totalFSCAmt: getVal('totalFSCAmt') + fsc,
+            totalOtherAmt: getVal('totalOtherAmt') + other,
+            totalSGST: getVal('totalSGST') + sgst,
+            totalCGST: getVal('totalCGST') + cgst,
+            totalIGST: getVal('totalIGST') + igst,
+            totalGST: getVal('totalGST') + gst,
+            totalGrand: getVal('totalGrand') + grand
         };
 
-        // ✅ Now pass totals to updateTotals_db
         d_updateTotals_db(totals);
 
-        // Optionally refresh merged charges table
+        // Update merged charge table
         renderChargesTable({ [data.DocketNo]: charges.chargesMap });
 
         alert('Shipment added successfully!');
 
-    } catch (err) {
+    }
+    catch (err) {
+
         console.error('Error adding shipment:', err.message);
         alert('Error adding shipment: ' + err.message);
-    } finally {
+
+    }
+    finally {
+
         hideSpinner();
     }
 }

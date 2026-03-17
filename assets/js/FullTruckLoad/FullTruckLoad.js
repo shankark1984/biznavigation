@@ -87,10 +87,10 @@ async function loadMovementDetails(query = '') {
         .order('lr_number', { ascending: false }); // Order by party_name A to Z (ascending)
 
     if (data) {
-        console.log(data); // Check this to ensure all data is retrieved
+        // console.log(data); // Check this to ensure all data is retrieved
     }
     if (error) {
-        console.error('Error fetching movement details:', error);
+        // console.error('Error fetching movement details:', error);
         return;
     }
 
@@ -298,6 +298,7 @@ document.getElementById('modifyButton').addEventListener('click', function () {
     document.querySelectorAll('.deleteRow').forEach(btn => {
         btn.disabled = false;
     });
+    document.getElementById("lrNumber").disabled = true; // Prevent changing LR Number during modification
 });
 
 // Generate LR Number using Supabase RPC
@@ -350,7 +351,7 @@ document.getElementById("saveButton").addEventListener("click", async function (
     const saveBtn = document.getElementById("saveButton");
     const addBtn = document.getElementById("addFreightRow");
     const vendorAddBtn = document.getElementById("addVendorFreightRow");
-    const lrNumberInput = document.getElementById("lrNumber");
+    let lrNumber = document.getElementById("lrNumber").value.trim();
 
     saveBtn.disabled = true;
     addBtn.disabled = true;
@@ -361,14 +362,10 @@ document.getElementById("saveButton").addEventListener("click", async function (
         return;
     }
 
-    const isSaveAction = saveBtn.textContent.trim().toLowerCase() === "save";
-    let lrNumber;
-    if (!lrNumberInput) {
-        lrNumber = isSaveAction
-            ? await generateLRNumber()
-            : document.getElementById("lrNumber").value;
-    } else {
-        lrNumber = lrNumberInput.value;
+    const isSaveAction = saveBtn.innerText.trim().toLowerCase() === "save";
+
+    if (!lrNumber) {
+        lrNumber = await generateLRNumber();
     }
 
     const val = id => document.getElementById(id)?.value || "";
@@ -444,8 +441,6 @@ document.getElementById("saveButton").addEventListener("click", async function (
 
         await saveCharges(lrNumber, "chargesDetailsTable", "Sale"); // Save customer charges
         await saveCharges(lrNumber, "vendorChargesDetailsTable", "Buy"); // Save vendor charges
-
-        console.log("Updated record:", data);
 
         disableForm();
 
@@ -536,7 +531,7 @@ async function fetchSupabaseData(lrNumber, accountType) {
     return data || [];
 }
 
-document.getElementById("addFreightRow").addEventListener("click", function () {
+document.getElementById("addFreightRow").addEventListener("click", async function () {
 
     addFreightRow(
         "chargesDetailsTable",
@@ -544,10 +539,10 @@ document.getElementById("addFreightRow").addEventListener("click", function () {
         "customerFreightAmt",
         "partyDefaultTax"
     );
-
+    await getFixedCharges("Sell"); // fetch and apply fixed charges
 });
 
-document.getElementById("addVendorFreightRow").addEventListener("click", function () {
+document.getElementById("addVendorFreightRow").addEventListener("click", async function () {
 
     addFreightRow(
         "vendorChargesDetailsTable",
@@ -555,7 +550,7 @@ document.getElementById("addVendorFreightRow").addEventListener("click", functio
         "vendorFreightAmt",
         "vendorDefaultTax"
     );
-
+    await getFixedCharges("Buy"); // fetch and apply fixed charges
 });
 
 function addFreightRow(tableId, chargesInput, amountInput, taxInput) {
@@ -755,3 +750,218 @@ async function saveCharges(lrNumber, tableId, accountType) {
 
 }
 
+async function getTariffRate(partyCode, tariffType) {
+
+    const movementType = document.getElementById("movementType").value;
+    const modeType = document.getElementById("modeType").value;
+    const vehicleType = document.getElementById("vehicleType").value;
+    const routeDetails = document.getElementById("routeDetails").value.toLowerCase().trim();
+    const chargeWt = parseFloat(document.getElementById("chargeWt").value) || 0;
+    const bookingDate = document.getElementById("lrDate").value;
+
+    if (!partyCode || !movementType || !modeType || !vehicleType || !routeDetails) {
+        return null;
+    }
+
+    const { data, error } = await supabaseClient
+        .from("FTL_FCL_Tariff")
+        .select("Rate")
+        .eq("PartyCode", partyCode)
+        .eq("MovementType", movementType)
+        .eq("ModeType", modeType)
+        .eq("VehicleType", vehicleType)
+        .eq("RouteDetails", routeDetails)
+        .eq("TariffType", tariffType)
+        .lte("CargoWeight", chargeWt)
+        .lte("EffectiveDate", bookingDate)
+        .order("EffectiveDate", { ascending: false })
+        .order("CargoWeight", { ascending: false })
+        .limit(1);
+
+    if (error) {
+        console.error(error);
+        return null;
+    }
+
+    return data?.length ? data[0].Rate : null;
+}
+async function applyCustomerTariff() {
+
+    const partyCode = document.getElementById("partyCode").value;
+
+    const rate = await getTariffRate(partyCode, "Sell");
+
+    if (!rate) {
+        // console.log("Customer tariff not found");
+        document.getElementById("chargesType").value = "";
+        document.getElementById("customerFreightAmt").value = "0.00";
+        return;
+    }
+
+    document.getElementById("chargesType").value = "Freight Amount";
+    document.getElementById("customerFreightAmt").value = rate;
+}
+/**
+ * Applies the vendor tariff rate to the vendor freight amount input field.
+ * If no tariff rate is found, the vendor charges type and amount fields are cleared.
+ * @returns {Promise<void>} Resolves when the operation is complete.
+ */
+async function applyVendorTariff() {
+
+    const vendorCode = document.getElementById("vendorCode").value;
+
+    const rate = await getTariffRate(vendorCode, "Buy");
+
+    if (!rate) {
+        document.getElementById("vendorChargesType").value = "";
+        document.getElementById("vendorFreightAmt").value = "0.00";
+        return;
+    }
+
+    document.getElementById("vendorChargesType").value = "Freight Amount";
+    document.getElementById("vendorFreightAmt").value = rate;
+}
+const tariffTriggers = [
+    "lrDate",
+    "partyCode",
+    "modeType",
+    "movementType",
+    "routeDetails",
+    "vehicleType",
+    "chargeWt",
+    "vendorCode"
+];
+
+tariffTriggers.forEach(id => {
+
+    document.getElementById(id).addEventListener("change", async function () {
+
+        await applyCustomerTariff();
+        await applyVendorTariff();
+
+    });
+
+});
+
+function clearAutoCharges() {
+
+    const tbody = document.querySelector("#chargesDetailsTable tbody");
+
+    tbody.querySelectorAll("tr").forEach(row => {
+        if (row.dataset.auto === "true") {
+            row.remove();
+        }
+    });
+}
+
+async function getFixedCharges(accountType = "Sell") {
+
+    const partyCode = accountType === "Sell"
+        ? document.getElementById("partyCode").value
+        : document.getElementById("vendorCode").value;
+
+    const movementType = document.getElementById("movementType").value;
+    const transitType = "All";
+    const modeType = document.getElementById("modeType").value;
+    const shippingType = "All";
+    const bookingDate = document.getElementById("lrDate").value;
+
+    const freightAmt = accountType === "Sell"
+        ? parseFloat(document.getElementById("customerFreightAmt").value) || 0
+        : parseFloat(document.getElementById("vendorFreightAmt").value) || 0;
+
+    if (!partyCode) return;
+
+    const { data, error } = await supabaseClient
+        .from("FixedCharges")
+        .select("*")
+        .eq("PartyCode", partyCode)
+        .eq("FixedChargesType", accountType)   // 🔥 differentiate Sell / Buy
+        .lte("EffectiveDate", bookingDate)
+        .order("EffectiveDate", { ascending: false });
+
+    if (error) {
+        console.error(error);
+        return;
+    }
+
+    if (!data || data.length === 0) return;
+
+    const applicableCharges = [];
+
+    data.forEach(row => {
+
+        const movementMatch =
+            row.MovementType === movementType || row.MovementType === "All";
+
+        const transitMatch =
+            row.TransitType === transitType || row.TransitType === "All";
+
+        const modeMatch =
+            row.ModeType === modeType || row.ModeType === "All";
+
+        const shippingMatch =
+            row.ShippingType === shippingType || row.ShippingType === "All";
+
+        if (movementMatch && transitMatch && modeMatch && shippingMatch) {
+
+            let charge = 0;
+
+            if (row.Percentage > 0) {
+                charge = (freightAmt * row.Percentage) / 100;
+            }
+
+            if (row.Amount > charge) {
+                charge = row.Amount;
+            }
+
+            applicableCharges.push({
+                type: row.ChargesType,
+                amount: charge
+            });
+
+        }
+
+    });
+
+    applyFixedCharges(applicableCharges, accountType);
+}
+
+function applyFixedCharges(charges, accountType) {
+
+    const tableId = accountType === "Sell"
+        ? "chargesDetailsTable"
+        : "vendorChargesDetailsTable";
+
+    const chargesInput = accountType === "Sell"
+        ? "chargesType"
+        : "vendorChargesType";
+
+    const amountInput = accountType === "Sell"
+        ? "customerFreightAmt"
+        : "vendorFreightAmt";
+
+    const taxInput = accountType === "Sell"
+        ? "partyDefaultTax"
+        : "vendorDefaultTax";
+
+    clearAutoCharges(tableId);
+
+    charges.forEach(ch => {
+
+        document.getElementById(chargesInput).value = ch.type;
+        document.getElementById(amountInput).value = ch.amount.toFixed(2);
+
+        addFreightRow(
+            tableId,
+            chargesInput,
+            amountInput,
+            taxInput
+        );
+
+        const rows = document.querySelectorAll(`#${tableId} tbody tr`);
+        rows[rows.length - 1].dataset.auto = "true";
+
+    });
+
+}

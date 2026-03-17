@@ -37,14 +37,7 @@ document.getElementById('fixedChargesMovementType').addEventListener('change', a
 document.getElementById("addFixedChargesButton").addEventListener("click", () => {
 
     const effectiveDate = document.getElementById("fixedChargesEffectiveDate").value;
-    const movementType = document.getElementById("fixedChargesMovementType").value || "All";
-    const transitType = document.getElementById("fixedChargesTransitType").value || "All";
-    const modeType = document.getElementById("fixedChargesModeType").value || "All";
-    const shippingType = document.getElementById("fixedChargesShippingType").value || "All";
     const chargesType = document.getElementById("fixedChargesType").value;
-    const percentage = document.getElementById("fixedChargesPercentage").value || 0;
-    const amount = document.getElementById("fixedChargesAmount").value || 0;
-    const fixedFor = document.getElementById("fixedChargesFor").value || "All";
 
     if (!effectiveDate || !chargesType) {
         alert("Please fill required fields");
@@ -53,59 +46,87 @@ document.getElementById("addFixedChargesButton").addEventListener("click", () =>
 
     fixedChargesData.push({
         effectiveDate,
-        movementType,
-        transitType,
-        modeType,
-        shippingType,
+        movementType: document.getElementById("fixedChargesMovementType").value || "All",
+        transitType: document.getElementById("fixedChargesTransitType").value || "All",
+        modeType: document.getElementById("fixedChargesModeType").value || "All",
+        shippingType: document.getElementById("fixedChargesShippingType").value || "All",
         chargesType,
-        percentage,
-        amount,
-        fixedFor,
-        _state: "new"   // 🔥 important
+        percentage: parseFloat(document.getElementById("fixedChargesPercentage").value) || 0,
+        amount: parseFloat(document.getElementById("fixedChargesAmount").value) || 0,
+        fixedFor: document.getElementById("fixedChargesFor").value || "All",
+        _state: "new"
     });
 
     renderFixedChargesTable();
-    clearFixedChargesInputs();
 });
 
 function renderFixedChargesTable() {
+
     const tbody = document.getElementById("fixedChargesTableBody");
     tbody.innerHTML = "";
 
-    if (fixedChargesData.length === 0) {
+    const visibleRows = fixedChargesData.filter(r => r._state !== "deleted");
+
+    if (visibleRows.length === 0) {
         tbody.innerHTML = `
-            <tr>
-                <td colspan="11" class="text-center text-muted">
-                    No fixed charges added
-                </td>
-            </tr>`;
+        <tr>
+            <td colspan="11" class="text-center text-muted">
+                No fixed charges added
+            </td>
+        </tr>`;
         return;
     }
 
-    fixedChargesData.forEach((item, index) => {
-        tbody.innerHTML += `
-            <tr>
-                <td>${index + 1}</td>
-                <td>${formatDate(item.effectiveDate)}</td>
-                <td>${item.movementType}</td>
-                <td>${item.transitType}</td>
-                <td>${item.modeType}</td>
-                <td>${item.shippingType}</td>
-                <td>${item.chargesType}</td>
-               <td>${item.percentage !== null && item.percentage !== undefined ? item.percentage + " %" : "-"}</td>
-                <td>${item.amount || "-"}</td>
-                <td>${item.fixedFor}</td>
-                <td>
-                    <button class="btn btn-sm btn-danger"
-                        onclick="removeFixedCharge(${index})">
-                        Delete
-                    </button>
-                </td>
-            </tr>
+    const fragment = document.createDocumentFragment();
+
+    visibleRows.forEach((item, index) => {
+
+        const tr = document.createElement("tr");
+        tr.dataset.index = index;
+
+        tr.innerHTML = `
+            <td>${index + 1}</td>
+            <td>${formatDate(item.effectiveDate)}</td>
+            <td>${item.movementType}</td>
+            <td>${item.transitType}</td>
+            <td>${item.modeType}</td>
+            <td>${item.shippingType}</td>
+            <td>${item.chargesType}</td>
+            <td>${item.percentage ? item.percentage + " %" : "-"}</td>
+            <td>${item.amount || "-"}</td>
+            <td>${item.fixedFor}</td>
+            <td>
+                <button class="btn btn-sm btn-outline-danger delete-fixedbutton">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </td>
         `;
+
+        fragment.appendChild(tr);
     });
+
+    tbody.appendChild(fragment);
 }
 
+// DELETE ROW 
+document.addEventListener("click", function (e) {
+
+    const btn = e.target.closest(".delete-fixedbutton");
+    if (!btn) return;
+
+    const row = btn.closest("tr");
+    const index = row.dataset.index;
+
+    const item = fixedChargesData[index];
+
+    if (item._state === "new") {
+        fixedChargesData.splice(index, 1);
+    } else {
+        item._state = "deleted";
+    }
+
+    renderFixedChargesTable();
+});
 function removeFixedCharge(index) {
     const item = fixedChargesData[index];
 
@@ -156,19 +177,13 @@ async function saveFixedChargesToDB() {
 
     const partyCode = document.getElementById("partyCodes").value;
     if (!partyCode) {
-        alert("Select Party Code");
+        alert("Select Party");
         return;
     }
 
     const newRows = fixedChargesData.filter(r => r._state === "new");
     const deletedRows = fixedChargesData.filter(r => r._state === "deleted");
 
-    if (newRows.length === 0 && deletedRows.length === 0) {
-        // alert("No changes to save");
-        return;
-    }
-
-    // DELETE
     if (deletedRows.length) {
         await supabaseClient
             .from("FixedCharges")
@@ -176,29 +191,30 @@ async function saveFixedChargesToDB() {
             .in("id", deletedRows.map(r => r.id));
     }
 
-    // INSERT
     if (newRows.length) {
+
+        const insertData = newRows.map(r => ({
+            PartyCode: partyCode,
+            EffectiveDate: r.effectiveDate,
+            MovementType: r.movementType,
+            TransitType: r.transitType,
+            ModeType: r.modeType,
+            ShippingType: r.shippingType,
+            ChargesType: r.chargesType,
+            Percentage: r.percentage,
+            Amount: r.amount,
+            FixedChargesType: r.fixedFor,
+            company_id: CompanyID,
+            created_by: UserLoginID,
+            created_at: localtimeStamp
+        }));
+
         await supabaseClient
             .from("FixedCharges")
-            .insert(
-                newRows.map(r => ({
-                    PartyCode: partyCode,
-                    EffectiveDate: r.effectiveDate,
-                    MovementType: r.movementType,
-                    TransitType: r.transitType,
-                    ModeType: r.modeType,
-                    ShippingType: r.shippingType,
-                    ChargesType: r.chargesType,
-                    Percentage: r.percentage,
-                    Amount: r.amount,
-                    FixedChargesType: r.fixedFor,
-                    company_id: CompanyID,
-                    created_by: UserLoginID,
-                    created_at: localtimeStamp
-                }))
-            );
+            .insert(insertData);
     }
 
     alert("Fixed charges saved successfully ✅");
+
     loadFixedChargesFromDB();
 }

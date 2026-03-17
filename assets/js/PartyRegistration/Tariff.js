@@ -69,7 +69,7 @@ async function fetchTariffs(partyCode) {
         const row = document.createElement('tr');
         row.innerHTML = `
             <td>${index + 1}</td>  <!-- Serial number -->
-            <td>${tariff.EffectiveDate}</td>
+            <td>${formatDate(tariff.EffectiveDate)}</td>
             <td>${tariff.MovementType}</td>
             <td>${tariff.TransitType}</td>
             <td>${tariff.ModeType}</td>
@@ -304,7 +304,7 @@ async function fetchFilteredTariffs(partyCode) {
         const row = document.createElement('tr');
         row.innerHTML = `
       <td>${index + 1}</td> <!-- Serial number -->
-      <td>${tariff.EffectiveDate}</td>
+      <td>${formatDate(tariff.EffectiveDate)}</td>
       <td>${tariff.MovementType}</td>
       <td>${tariff.TransitType}</td>
       <td>${tariff.ModeType}</td>

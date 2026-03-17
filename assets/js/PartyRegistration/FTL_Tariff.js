@@ -93,7 +93,7 @@ document.getElementById("addFtlFCLButton").addEventListener("click", function ()
         <td>${tariffType}</td>
         <td>${currency}</td>
         <td>
-            <button class="btn btn-sm btn-danger deleteRow">
+            <button class="btn btn-sm btn-outline-danger deleteRow">
                 <i class="bi bi-trash"></i>
             </button>
         </td>
@@ -191,19 +191,6 @@ async function saveFCLFTLTariffs() {
 
         }
 
-        console.log("Row status:", status, "Data:", {
-            EffectiveDate: cells[1].textContent.trim(),
-            MovementType: cells[2].textContent.trim(),
-            TransitType: cells[3].textContent.trim(),
-            ModeType: cells[4].textContent.trim(),
-            VehicleType: cells[5].textContent.trim(),
-            RouteDetails: cells[6].textContent.trim(),
-            UOM: cells[7].textContent.trim(),
-            CargoWeight: parseFloat(cells[8].textContent) || 0,
-            Rate: parseFloat(cells[9].textContent) || 0,
-            TariffType: cells[10].textContent.trim(),
-            CurrencyCode: cells[11].textContent.trim(),
-        });
 
         if (status === "delete" && row.dataset.id) {
             deleteIds.push(row.dataset.id);
@@ -300,7 +287,7 @@ function addFCLFTLTariffRow(data) {
 
     row.innerHTML = `
         <td>${rowCount}</td>
-        <td>${data.EffectiveDate}</td>
+        <td>${formatDate(data.EffectiveDate)}</td>
         <td>${data.MovementType}</td>
         <td>${data.TransitType}</td>
         <td>${data.ModeType}</td>

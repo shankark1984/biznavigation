@@ -45,7 +45,7 @@ modifyButton.addEventListener('click', () => {
     saveButton.disabled = false;
     modifyButton.disabled = true;
     document.getElementById("addbillingAddress").disabled = false;
-    toggleButtons(".edit-row, .delete-row, .editTariff, .deleteRow", true);
+    toggleButtons(".edit-row, .delete-row, .editTariff, .deleteRow,.delete-fixedbutton", true);
     document.getElementById("addTariffButton").disabled = false;
     document.getElementById("addFtlFCLButton").disabled = false;
     document.getElementById("addFixedChargesButton").disabled = false;
@@ -59,10 +59,12 @@ newButton.addEventListener('click', () => {
 
     document.querySelector('#billingAddressTable tbody').innerHTML = '';
     document.querySelector('#tariffTable tbody').innerHTML = '';
+    document.querySelector('#ftlFCLTable tbody').innerHTML = '';
+    document.querySelector('#fixedChargesTable tbody').innerHTML = '';
 
     clearForm();
     enableForm();
-    toggleButtons(".edit-row, .delete-row, .editTariff, .deleteRow", true);
+    toggleButtons(".edit-row, .delete-row, .editTariff, .deleteRow, .delete-fixedbutton", true);
     document.getElementById("addbillingAddress").disabled = false;
     document.getElementById("addTariffButton").disabled = false;
     document.getElementById("addFtlFCLButton").disabled = false;
@@ -109,7 +111,7 @@ document.getElementById('partyNameReg').addEventListener('change', async () => {
     await loadFixedChargesFromDB();
     await loadFCLFTLTariffs(partyCode);
 
-    toggleButtons(".edit-row, .delete-row, .editTariff, .deleteRow", false);
+    toggleButtons(".edit-row, .delete-row, .editTariff, .deleteRow, .delete-fixedbutton", false);
 
 });
 
@@ -275,7 +277,7 @@ saveButton.addEventListener('click', async (e) => {
     saveButton.innerHTML = '<i class="bi bi-save"></i> Update';
     modifyButton.disabled = false;
     newButton.disabled = false;
-    toggleButtons(".edit-row, .delete-row, .editTariff, .deleteRow", false);
+    toggleButtons(".edit-row, .delete-row, .editTariff, .deleteRow,.delete-fixedbutton", false);
     document.getElementById("addbillingAddress").disabled = true;
     document.getElementById("addTariffButton").disabled = true;
     document.getElementById("addFtlFCLButton").disabled = true;
