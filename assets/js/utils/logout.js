@@ -89,7 +89,7 @@ window.addEventListener('storage', function (event) {
 
 /* ------------------ Initialize ------------------ */
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
 
     // activity listeners
     ['mousemove', 'keydown', 'mousedown', 'touchstart', 'scroll']
@@ -101,4 +101,5 @@ document.addEventListener("DOMContentLoaded", () => {
 
     startIdleMonitor();        // idle logout checker
     startSessionValidation();  // session token checker
+    await autoUnlockMultipleTables(); // Unlock any records that might be locked from previous sessions
 });

@@ -48,10 +48,6 @@ async function FTL_FCL_getPendingInvoiceDetails() {
             .or('IsLocked.eq.false,IsLocked.is.null')
             .order('PickupDate', { ascending: true });
 
-        console.log('Fetching pending invoices for:', CompanyID, partyCode, movementType);
-
-        console.log('Supabase response:', { data, error });
-
         if (error) throw error;
 
         if (!data || data.length === 0) {
@@ -69,9 +65,8 @@ async function FTL_FCL_getPendingInvoiceDetails() {
 
         FTL_FCL_createPendingShipmentTableHeaderAndFooter(); // Create header and footer if not already done
 
-        console.log('Processing each pending invoice to fetch charges and lock records...', data);
         for (const invoice of data) {
-            console.log('Processing invoice:', invoice.id, invoice.LRNumber);
+
             const charges = await FTL_FCL_getBookingCharges(invoice.LRNumber);
             if (!charges || charges.grandTotal <= 0) continue;
 
@@ -80,7 +75,7 @@ async function FTL_FCL_getPendingInvoiceDetails() {
                 .update({
                     IsLocked: true,
                     LockedBy: UserLoginID,
-                    LockedAt: localtimeStamp
+                    LockedAt: new Date().toISOString()
                 })
                 .eq('id', invoice.id);
             if (lockError) throw lockError;
@@ -307,4 +302,69 @@ async function FTL_FCL_createPendingShipmentTableHeaderAndFooter() {
 
     tfoot.appendChild(footRow);
     table.appendChild(tfoot);
+}
+
+async function ftl_unlockBooking(userID) {
+    if (!userID) {
+        console.warn("No user ID provided. Cannot unlock booking.");
+        return;
+    }
+
+    try {
+        const { error } = await supabaseClient
+            .from("FullLoadBookingDetails")
+            .update({ IsLocked: false, LockedBy: null, LockedAt: null }) // Also clear lock metadata
+            .eq("LockedBy", userID);
+
+        if (error) {
+            console.error("Failed to unlock booking:", error.message);
+        } else {
+            // console.log(`Booking(s) unlocked successfully for user ID: ${userID}`);
+        }
+    } catch (err) {
+        console.error("Unexpected error during unlock:", err);
+    }
+}
+
+function d_removeRow(button) {
+    const row = button.closest('tr');
+    if (!row) return;
+
+    // Get the shipment ID
+    const shipId = row.getAttribute('data-ship-id');
+    console.log('Removing row for Shipment ID:', shipId);
+    if (shipId) {
+        // Optional: Remove from lockedBookingIds if you maintain this array
+        const index = lockedBookingIds.indexOf(parseInt(shipId));
+        if (index !== -1) {
+            lockedBookingIds.splice(index, 1);
+        }
+        // Optional: Unlock the record in the database
+        unlockShipmentRecord_ftl(shipId);
+    }
+
+    // Get the amounts from the row
+    const qty = parseFloat(row.cells[9].textContent) || 0;
+    const freightAmt = parseFloat(row.cells[10].textContent) || 0;
+    const fscAmt = parseFloat(row.cells[11].textContent) || 0;
+    const otherAmt = parseFloat(row.cells[12].textContent) || 0;
+    const sgstAmt = parseFloat(row.cells[13].textContent) || 0;
+    const cgstAmt = parseFloat(row.cells[14].textContent) || 0;
+    const igstAmt = parseFloat(row.cells[15].textContent) || 0;
+    const gstAmt = parseFloat(row.cells[16].textContent) || 0;
+    const grandAmt = parseFloat(row.cells[17].textContent) || 0;
+
+    // Subtract from totals
+    document.getElementById('totalQuantity').textContent = (parseFloat(document.getElementById('totalQuantity').textContent) - qty).toFixed(2);
+    document.getElementById('totalFreight').textContent = (parseFloat(document.getElementById('totalFreight').textContent) - freightAmt).toFixed(2);
+    document.getElementById('totalFSCAmt').textContent = (parseFloat(document.getElementById('totalFSCAmt').textContent) - fscAmt).toFixed(2);
+    document.getElementById('totalOtherAmt').textContent = (parseFloat(document.getElementById('totalOtherAmt').textContent) - otherAmt).toFixed(2);
+    document.getElementById('totalSGST').textContent = (parseFloat(document.getElementById('totalSGST').textContent) - sgstAmt).toFixed(2);
+    document.getElementById('totalCGST').textContent = (parseFloat(document.getElementById('totalCGST').textContent) - cgstAmt).toFixed(2);
+    document.getElementById('totalIGST').textContent = (parseFloat(document.getElementById('totalIGST').textContent) - igstAmt).toFixed(2);
+    document.getElementById('totalGST').textContent = (parseFloat(document.getElementById('totalGST').textContent) - gstAmt).toFixed(2);
+    document.getElementById('totalGrand').textContent = (parseFloat(document.getElementById('totalGrand').textContent) - grandAmt).toFixed(2);
+
+    // Remove row from table
+    row.remove();
 }

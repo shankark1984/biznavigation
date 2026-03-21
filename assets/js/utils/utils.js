@@ -570,13 +570,34 @@ async function unlockShipmentRecord_cc(shipId) {
     }
 }
 
+async function unlockShipmentRecord_ftl(shipId) {
+    try {
+        const { error } = await supabaseClient
+            .from('FullLoadBookingDetails')
+            .update({
+                IsLocked: false,
+                LockedBy: null,
+                LockedAt: null
+            })
+            .eq('id', shipId);
 
-async function autoUnlockRecords() {
+        if (error) {
+            // console.error('Error unlocking shipment:', error.message);
+        } else {
+            console.log(`Shipment ${shipId} unlocked successfully.`);
+        }
+    } catch (err) {
+        console.error('Error unlocking shipment:', err.message);
+    }
+}
+
+
+async function autoUnlockRecords(tableName = 'international_booking') {
     if (lockedBookingIds.length === 0) return;
 
     try {
         const { error } = await supabaseClient
-            .from('international_booking')
+            .from(tableName)
             .update({
                 IsLocked: false,
                 LockedBy: null,
@@ -599,6 +620,7 @@ async function autoUnlockRecords() {
         console.error('Error auto-unlocking records:', err.message);
     }
 }
+
 let autoUnlockTimer = null;
 
 function startAutoUnlockTimer() {

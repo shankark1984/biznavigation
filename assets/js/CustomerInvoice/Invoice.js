@@ -237,12 +237,16 @@ document.getElementById('inputBankName').addEventListener('input', function () {
 /* =========================================================
    SAFE UNLOCK ON EXIT
 ========================================================= */
-window.addEventListener('beforeunload', () => {
+window.addEventListener('beforeunload', async () => {
     try {
-        autoUnlockRecords();
-        unlockBooking_ib(UserLoginID);
-        unlockBooking_cc(UserLoginID);
-    } catch { }
+        await autoUnlockRecords("FullLoadBookingDetails");
+        await autoUnlockRecords("international_booking");
+        await unlockBooking_ib(UserLoginID);
+        await unlockBooking_cc(UserLoginID);
+        console.log('Unlocking records for user:', UserLoginID);
+    } catch (e) {
+        console.error('Unlock failed:', e);
+    }
 });
 
 document.getElementById('newButton').addEventListener('click', newInvoice);
@@ -250,10 +254,12 @@ document.getElementById('newButton').addEventListener('click', newInvoice);
 async function newInvoice() {
     // 1️⃣ Unlock previous records (STRICT)
     try {
-        await autoUnlockRecords();
+        await autoUnlockRecords("FullLoadBookingDetails");
+        await autoUnlockRecords("international_booking");
         await unlockBooking_ib(UserLoginID);
         await unlockBooking_cc(UserLoginID);
         await d_unlockBooking_db(UserLoginID); // Domestic();
+        await ftl_unlockBooking(UserLoginID); // FTL/FCL();
         document.getElementById('addShipmentNo').disabled = true; // Disable add shipment button until movement type is selected
         document.getElementById('fetchPendingInvoices').disabled = true; // Disable party code field until movement type is selected
         document.getElementById('movementType').value = ''; // Reset movement type

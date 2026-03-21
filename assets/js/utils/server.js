@@ -219,6 +219,46 @@ function redirectToLogin() {
     window.location.replace('/index.html');
 }
 
+async function autoUnlockMultipleTables() {
+    const tables = [
+        'international_booking',
+        'FullLoadBookingDetails',
+        'DomesticBookingDetails',
+        'CustomsClearance_Details'
+    ];
+
+    const fiveMinutesAgo = new Date(Date.now() - 6 * 60 * 1000)
+        .toISOString()
+        .slice(0, 19)
+        .replace('T', ' ');
+
+    console.log("Unlock records before:", fiveMinutesAgo);
+
+    try {
+        for (const tableName of tables) {
+            const { error } = await supabaseClient
+                .from(tableName)
+                .update({
+                    IsLocked: false,
+                    LockedBy: null,
+                    LockedAt: null
+                })
+                .eq('IsLocked', true)
+                .not('LockedAt', 'is', null)
+                .lt('LockedAt', fiveMinutesAgo);
+
+            if (error) {
+                console.error(`Error in ${tableName}:`, error.message);
+            } else {
+                console.log(`Unlocked records in ${tableName}`);
+            }
+        }
+    } catch (err) {
+        console.error('Auto-unlock failed:', err.message);
+    }
+}
+
+
 const now = new Date();
 const localtimeStamp = now.toLocaleString(); // Local date and time
 let rowIDEdit = null;
