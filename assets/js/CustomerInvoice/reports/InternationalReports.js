@@ -269,7 +269,7 @@ async function fetchAndRenderShipmentTable_Annexure(doc, startY, PAGE, FONT, inv
     /* ===============================
     Payment Details
     =============================== */
-    const totalsPayment = await paymentDetails(invoiceNo);
+    const totalsPayment = await advancedPaymentDetails(invoiceNo, invoiceDetails?.InvoiceDate);
 
     const totalPaymentReceived = totalsPayment.totalPayment + totalsPayment.totalOtherDeduction + totalsPayment.totalTDS;
 
@@ -579,7 +579,7 @@ async function fetchAndRenderShipmentTable_Annexure(doc, startY, PAGE, FONT, inv
 async function fetchAndRenderShipmentTable_Main(doc, startY, PAGE, FONT, invoiceNo) {
     const shipmentColumnStyles = {
         0: { cellWidth: 8, halign: "center" }, // Sl No
-        1: { cellWidth: 25 }, // Docket No
+        1: { cellWidth: 23 }, // Docket No
         2: { cellWidth: 15 }, // Booking Date 
         3: { cellWidth: 25 }, // Movement Type
         4: { cellWidth: 20 }, // Origin
@@ -695,7 +695,7 @@ async function fetchAndRenderShipmentTable_Main(doc, startY, PAGE, FONT, invoice
     /* ===============================
     Payment Details
     =============================== */
-    const totalsPayment = await paymentDetails(invoiceNo);
+    const totalsPayment = await advancedPaymentDetails(invoiceNo, invoiceDetails?.InvoiceDate);
 
     const totalPaymentReceived = totalsPayment.totalPayment + totalsPayment.totalOtherDeduction + totalsPayment.totalTDS;
 

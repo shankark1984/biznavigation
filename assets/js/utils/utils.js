@@ -1403,6 +1403,69 @@ async function paymentDetails(invoiceNumber) {
     }
 }
 
+async function advancedPaymentDetails(invoiceNumber, invoiceDate) {
+    console.log('Fetching payment details for invoice:', invoiceNumber, 'with date filter:', invoiceDate);
+
+    try {
+        const { data, error } = await supabaseClient
+            .from("PaymentDetails") // ✅ MAIN TABLE
+            .select(`
+                PaymentID,
+                ReceiptOn,
+                PaymentLineItems!inner (
+                    InvoiceNo,
+                    PaymentAmount,
+                    OtherDeductionAmount,
+                    TDSDeductionAmount
+                )
+            `)
+            .lte("ReceiptOn", invoiceDate) // ✅ filter on parent
+            .eq("PaymentLineItems.InvoiceNo", invoiceNumber); // ✅ filter on child
+
+        if (error) throw error;
+
+        let totalPayment = 0;
+        let totalOtherDeduction = 0;
+        let totalTDS = 0;
+        let rows = [];
+
+        data.forEach(payment => {
+            const items = payment.PaymentLineItems || [];
+
+            items.forEach(row => {
+                totalPayment += Number(row.PaymentAmount) || 0;
+                totalOtherDeduction += Number(row.OtherDeductionAmount) || 0;
+                totalTDS += Number(row.TDSDeductionAmount) || 0;
+
+                // Optional: flatten rows
+                rows.push({
+                    ...row,
+                    ReceiptOn: payment.ReceiptOn
+                });
+            });
+        });
+
+        return {
+            rows,
+            totalPayment,
+            totalOtherDeduction,
+            totalTDS,
+            totalReceived:
+                totalPayment + totalOtherDeduction + totalTDS
+        };
+
+    } catch (err) {
+        console.error("Payment details load failed:", err);
+        return {
+            rows: [],
+            totalPayment: 0,
+            totalOtherDeduction: 0,
+            totalTDS: 0,
+            totalReceived: 0
+        };
+    }
+}
+
 // Validate container number based on ISO 6346 standard
 function validateContainerNumber(containerNumber) {
     // Ensure input is uppercase
