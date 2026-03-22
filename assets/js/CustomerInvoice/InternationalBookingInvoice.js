@@ -240,6 +240,8 @@ function updateTotals_ib(totals) {
         if (el) el.textContent = value.toFixed(2);
     };
 
+    setValue('totalQuantity', totals.totalQuantity || 0);
+    setValue('totalChargeableWeight', totals.totalChargeableWeight || 0);
     setValue('totalFreight', totals.totalFreight);
     setValue('totalFSCAmt', totals.totalFSCAmt);
     setValue('totalOtherAmt', totals.totalOtherAmt);

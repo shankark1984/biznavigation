@@ -232,7 +232,7 @@ async function autoUnlockMultipleTables() {
         .slice(0, 19)
         .replace('T', ' ');
 
-    console.log("Unlock records before:", fiveMinutesAgo);
+    // console.log("Unlock records before:", fiveMinutesAgo);
 
     try {
         for (const tableName of tables) {
@@ -250,7 +250,7 @@ async function autoUnlockMultipleTables() {
             if (error) {
                 console.error(`Error in ${tableName}:`, error.message);
             } else {
-                console.log(`Unlocked records in ${tableName}`);
+                // console.log(`Unlocked records in ${tableName}`);
             }
         }
     } catch (err) {
@@ -261,6 +261,7 @@ async function autoUnlockMultipleTables() {
 
 const now = new Date();
 const localtimeStamp = now.toLocaleString(); // Local date and time
+const ISODateTimeNow = new Date().toISOString();
 let rowIDEdit = null;
 let bankRowIDEdit = null;
 let branchCode = null;

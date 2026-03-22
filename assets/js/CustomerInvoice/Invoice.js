@@ -53,6 +53,17 @@ document.getElementById('partyName').addEventListener('change', async function (
     }
 });
 
+document.getElementById('partyName').addEventListener('input', function () {
+    const partyValue = this.value.trim();
+    const btn = document.getElementById('addShipmentNo');
+
+    if (partyValue) {
+        btn.disabled = false;  // ✅ enable
+    } else {
+        btn.disabled = true;   // ❌ disable
+    }
+});
+
 function fillInvoiceAddress(addr) {
     document.getElementById('invoiceAddress').value = formatAddress(addr);
 }
@@ -254,6 +265,8 @@ document.getElementById('newButton').addEventListener('click', newInvoice);
 async function newInvoice() {
     // 1️⃣ Unlock previous records (STRICT)
     try {
+        const singleShipmentbtn = document.getElementById('addShipmentNo');
+
         await autoUnlockRecords("FullLoadBookingDetails");
         await autoUnlockRecords("international_booking");
         await unlockBooking_ib(UserLoginID);
@@ -265,6 +278,7 @@ async function newInvoice() {
         document.getElementById('movementType').value = ''; // Reset movement type
         document.getElementById('pendingShipmentTable').tBodies[0].innerHTML = ''; // Clear pending shipments table
         document.getElementById('invoiceInformation').value = ''; // Clear invoice information/remark
+        singleShipmentbtn.disabled = false;
 
     } catch (e) {
         console.error('Unlock failed:', e);
@@ -449,6 +463,7 @@ async function getInvoiceDetails(invoiceNo) {
             return null;
         }
 
+
         // console.log('Fetched Invoice Details:', data);
         return data;
 
@@ -515,11 +530,16 @@ document.getElementById('invoiceNo').addEventListener('change', async (e) => {
             await d_createPendingShipmentTableHeaderAndFooter_ib();
             await d_loadInvoiceBookings(invoiceNo); // Load Domestic bookings if applicable
         } else if (invoiceDetails.InvoiceType === 'Full Truck Load') {
-            await ftl_loadInvoiceBookings();
+            await FTL_FCL_createPendingShipmentTableHeaderAndFooter();
+            await ftl_loadInvoiceBookings(invoiceNo);
 
         } else {
             console.warn('Unknown movement type:', invoiceDetails.InvoiceType);
         }
+
+        document.querySelectorAll('.delete-btn').forEach(btn => {
+            btn.disabled = true; // Disable delete buttons when loading existing invoice
+        });
     }
 });
 
@@ -555,6 +575,13 @@ document.getElementById('addShipmentNo').addEventListener('click', async () => {
         console.log('Adding Shipment No to Customs Clearance Invoice');
         await addSingleShipmentToInvoice_cc(shipmentNo, invoiceNo);
     }
+    else if (movementType === 'Domestic') {
+        console.log('Adding Shipment No to Domestic Invoice');
+        await d_addSingleShipmentToInvoice(shipmentNo, invoiceNo);
+    } else if (movementType === 'Full Truck Load') {
+        console.log('Adding Shipment No to FTL/FCL Invoice');
+        await ftl_addSingleShipmentToInvoice(shipmentNo, invoiceNo);
+    }
     else {
         console.warn('Unknown movement type:', type);
     }
@@ -578,7 +605,7 @@ document.getElementById('modifyButton').addEventListener('click', () => {
     document.querySelectorAll('.delete-btn').forEach(button => {
         button.disabled = false;
     });
-
+    document.getElementById('addShipmentNo').disabled = false; // Enable add shipment button
 });
 
 document.getElementById('deleteButton').addEventListener('click', () => {
@@ -613,7 +640,8 @@ document.getElementById('reportButton').addEventListener('click', async () => {
         await generate_CustmsClearance_InvoicePDF(invoiceDetails); // Generate PDF for Customs Clearance
     } else if (invoiceDetails.InvoiceType === 'Domestic') {
         await generate_DomesticReports_InvoicePDF(invoiceDetails); // Generate PDF for Domestic
-    } else if (invoiceDetails.InvoiceType === 'FTL or FCL') {
+    } else if (invoiceDetails.InvoiceType === 'Full Truck Load') {
+        await generate_FTLReports_InvoicePDF(invoiceDetails);
         // invoiceDetails.lineItems = await getInvoiceLineItems_export(invoiceNo);
         console.log('FTL or FCL --- Coming Soon');
     } else {
