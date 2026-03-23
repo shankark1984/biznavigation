@@ -1,4 +1,4 @@
-async function generate_FullTank_InvoicePDF(header, lines = []) {
+async function generate_DomesticReports_InvoicePDF(header, lines = []) {
 
     // Import jsPDF library
     const { jsPDF } = window.jspdf;
@@ -128,7 +128,9 @@ async function generate_FullTank_InvoicePDF(header, lines = []) {
     doc.setFont("helvetica", "bold").text(partyNameLines, PAGE.x + 3, y + 4);
     doc.setFont("helvetica", "normal")
         .text(partyAddrLines, PAGE.x + 3, y + 4 + partyNameLines.length * 4);
-    doc.text(rightLines, PAGE.x + left70 + 6, y + 4);
+    doc.text(rightLines, PAGE.x + left70 + 3, y + 4);
+    doc.text(`GST No : ${party.gst}`, PAGE.x + 3, y + row1H + 4);
+    doc.text(`P.O. No : ${header?.PONumber || "-"}`, PAGE.x + left40 + 3, y + row1H + 4);
 
     y += infoH; // Move cursor below party details
 
@@ -138,31 +140,31 @@ async function generate_FullTank_InvoicePDF(header, lines = []) {
     let totalFreight = 0, totalFSC = 0, totalOther = 0;
 
     // Get table data from HTML table
-    const table = document.getElementById("pendingShipmentTable");
-    const tableData = Array.from(table.querySelectorAll("tbody tr")).map((tr, i) => {
-        const c = tr.querySelectorAll("td");
+    const shipmentRows = await getDomesticShipmentData(header?.InvoiceNo);
 
-        const freight = safeNumber(c[9]?.innerText);
-        const fsc = safeNumber(c[10]?.innerText);
-        const other = safeNumber(c[11]?.innerText);
+    const tableData = shipmentRows.map((row, i) => {
+
+        const freight = safeNumber(row.FreightAmount || 0);
+        const fsc = safeNumber(row.FuelSurcharge || 0);
+        const other = safeNumber(row.OtherCharges || 0);
 
         totalFreight += freight;
         totalFSC += fsc;
         totalOther += other;
 
         return [
-            i + 1, // Sl No
-            formatDate(c[1]?.innerText) || "", // Date
-            c[0]?.innerText || "", // Docket
-            c[2]?.innerText || "", // Transit
-            c[3]?.innerText || "",// Mode
-            c[4]?.innerText || "", // Origin
-            c[5]?.innerText || "", // Destination
-            c[7]?.innerText || "", // Wt/CBM
-            freight.toFixed(2), // Freight
-            fsc.toFixed(2), // FSC
-            other.toFixed(2), // Other
-            (freight + fsc + other).toFixed(2) // Total
+            i + 1,
+            formatDate(row.BookingDate) || "",
+            row.DocketNo || "",
+            row.TransitType || "",
+            row.ModeType || "",
+            row.OriginCity || "",
+            row.DestinationCity || "",
+            row.ChargeableWeight || "",
+            freight.toFixed(2),
+            fsc.toFixed(2),
+            other.toFixed(2),
+            (freight + fsc + other).toFixed(2)
         ];
     });
 
@@ -387,4 +389,21 @@ async function generate_FullTank_InvoicePDF(header, lines = []) {
 
     // Save PDF
     doc.save(`Invoice_${header?.InvoiceNo || "NA"}.pdf`);
+}
+
+
+async function getDomesticShipmentData(invoiceNo) {
+    try {
+        const { data, error } = await supabaseClient
+            .from("DomesticBookingView")
+            .select("*")
+            .eq("InvoiceNumber", invoiceNo); // filter by invoice
+
+        if (error) throw error;
+
+        return data || [];
+    } catch (err) {
+        console.error("Error fetching shipment data:", err);
+        return [];
+    }
 }
