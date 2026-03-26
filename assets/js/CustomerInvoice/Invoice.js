@@ -641,7 +641,7 @@ document.getElementById('reportButton').addEventListener('click', async () => {
     } else if (invoiceDetails.InvoiceType === 'Domestic') {
         await generate_DomesticReports_InvoicePDF(invoiceDetails); // Generate PDF for Domestic
     } else if (invoiceDetails.InvoiceType === 'Full Truck Load') {
-        await generate_FTLReports_InvoicePDF(invoiceDetails);
+        await generate_FullTruckReports_InvoicePDF(invoiceDetails);
         // invoiceDetails.lineItems = await getInvoiceLineItems_export(invoiceNo);
         console.log('FTL or FCL --- Coming Soon');
     } else {

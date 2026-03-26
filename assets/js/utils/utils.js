@@ -1548,3 +1548,19 @@ async function loadRouteSuggestions() {
         datalist.appendChild(option);
     });
 }
+
+function safeAmount(val) {
+    return (parseFloat(val) || 0);
+}
+
+function round2(v) {
+    return Math.round((v + Number.EPSILON) * 100) / 100;
+}
+
+function checkPageBreak(doc, y, height, PAGE) {
+    if (y + height > PAGE.h - 10) {
+        doc.addPage();
+        return PAGE.x;
+    }
+    return y;
+}

@@ -7,20 +7,28 @@ async function generate_DomesticReports_InvoicePDF(header, lines = []) {
 
     let y = 10;
 
-    const company = await fetchCompanyDetails(header);
+    const [company, party, shipmentData, bank] = await Promise.all([
+        fetchCompanyDetails(header),
+        fetchPartyDetails(header),
+        getDomesticShipmentData(header?.InvoiceNo),
+        getInvoiceBankDetails(header?.InvoiceNo)
+    ]);
+
+
     y = await drawHeader(doc, PAGE, FONT, company, y);
 
     y = drawTitle(doc, PAGE, FONT, y);
 
-    const party = await fetchPartyDetails(header);
+
     y = drawPartySection(doc, PAGE, FONT, header, party, company, y);
+    //Shipment section
+    const shipmentResult = await drawShipmentTable(doc, PAGE, FONT, shipmentData, y);
 
-    const shipmentResult = await drawShipmentTable(doc, PAGE, FONT, header, y);
     y = shipmentResult.y;
+    //TermsAndTaxSection
+    const totals = shipmentResult;
 
-    const totals = calculateGST(shipmentResult, party, company);
-
-    y = await drawTermsAndTaxSection(doc, PAGE, FONT, company, header, totals, y);
+    y = await drawTermsAndTaxSection(doc, PAGE, FONT, company, header, totals, y, bank);
 
     y = drawAmountInWords(doc, PAGE, FONT, totals.grandTotal, y);
 
@@ -28,7 +36,6 @@ async function generate_DomesticReports_InvoicePDF(header, lines = []) {
 
     doc.save(`Invoice_${header?.InvoiceNo || "NA"}.pdf`);
 }
-
 // Utility function to fetch company details
 async function fetchCompanyDetails(header) {
     const data = await getCompanyProfile(header?.CompanyID || CompanyID);
@@ -89,8 +96,7 @@ async function drawHeader(doc, PAGE, FONT, company, y) {
 
     return y + headerH;
 }
-
-// Title section
+// Utility function to draw title
 function drawTitle(doc, PAGE, FONT, y) {
     doc.rect(PAGE.x, y, PAGE.w, 6);
 
@@ -99,7 +105,6 @@ function drawTitle(doc, PAGE, FONT, y) {
 
     return y + 6;
 }
-
 // Utility function to fetch party details
 async function fetchPartyDetails(header) {
     const data = await getPartyProfile(header.PartyCode);
@@ -156,7 +161,9 @@ function drawPartySection(doc, PAGE, FONT, header, party, company, y) {
     doc.text(partyAddrLines, PAGE.x + 3, y + 4 + partyNameLines.length * 4);
 
     // Right side
-    doc.text(rightLines, PAGE.x + left70 + 3, y + 4);
+    doc.text(rightLines, PAGE.x + left70 + 3, y + 4, {
+        maxWidth: PAGE.w - left70 - 6
+    });
 
     // Bottom row
     doc.text(`GST No : ${party.gst}`, PAGE.x + 3, y + row1H + 4);
@@ -164,17 +171,57 @@ function drawPartySection(doc, PAGE, FONT, header, party, company, y) {
 
     return y + infoH;
 }
+// Utility function to fetch shipment details
+async function drawShipmentTable(doc, PAGE, FONT, rows = [], y) {
 
-
-async function drawShipmentTable(doc, PAGE, FONT, header, y) {
     let totalFreight = 0, totalFSC = 0, totalOther = 0;
+    let totalTaxable = 0, totalNonTax = 0, totalGST = 0, grandTotal = 0;
+    let totalTaxFreight = 0, totalTaxFsc = 0, totalTaxOther = 0;
+    let totalNonTaxFreight = 0, totalNonTaxFsc = 0, totalNonTaxOther = 0;
+    let totalCGST = 0, totalSGST = 0, totalIGST = 0;
 
-    const rows = await getDomesticShipmentData(header?.InvoiceNo);
+    if (!rows.length) {
+        console.warn("No shipment data found");
+    }
 
     const body = rows.map((row, i) => {
-        const freight = safeNumber(row.FreightAmount);
-        const fsc = safeNumber(row.FuelSurcharge);
-        const other = safeNumber(row.OtherCharges);
+
+        let freight = 0, fsc = 0, other = 0;
+        let taxFreight = 0, taxFsc = 0, taxOther = 0;
+        let nonTaxFreight = 0, nonTaxFsc = 0, nonTaxOther = 0;
+
+        (row.DomesticBookingCharges || []).forEach(c => {
+
+            const amount = safeNumber(c.TotalAmount);
+            const gst = safeNumber(c.TotalGSTAmt);
+            const isTaxable = gst > 0;
+
+            if (isTaxable) {
+                totalCGST += safeNumber(c.CGSTAmt);
+                totalSGST += safeNumber(c.SGSTAmt);
+                totalIGST += safeNumber(c.IGSTAmt);
+            }
+
+            if (c.ChargesType === "Freight Amount") {
+                freight += amount;
+                isTaxable ? taxFreight += amount : nonTaxFreight += amount;
+            } else if (c.ChargesType === "Fuel Surcharge") {
+                fsc += amount;
+                isTaxable ? taxFsc += amount : nonTaxFsc += amount;
+            } else {
+                other += amount;
+                isTaxable ? taxOther += amount : nonTaxOther += amount;
+            }
+        });
+
+        // totals
+        totalTaxFreight += taxFreight;
+        totalTaxFsc += taxFsc;
+        totalTaxOther += taxOther;
+
+        totalNonTaxFreight += nonTaxFreight;
+        totalNonTaxFsc += nonTaxFsc;
+        totalNonTaxOther += nonTaxOther;
 
         totalFreight += freight;
         totalFSC += fsc;
@@ -196,56 +243,99 @@ async function drawShipmentTable(doc, PAGE, FONT, header, y) {
         ];
     });
 
+    // totals
+    totalTaxable = totalTaxFreight + totalTaxFsc + totalTaxOther;
+    totalNonTax = totalNonTaxFreight + totalNonTaxFsc + totalNonTaxOther;
+
+    totalGST = round2(totalCGST + totalSGST + totalIGST);
+    grandTotal = round2(totalTaxable + totalNonTax + totalGST);
+
     doc.autoTable({
         startY: y,
-        head: [["Sl", "Date", "Docket", "Transit", "Mode", "Origin", "Dest",
-            "Wt/CBM", "Freight", "FSC", "Other", "Total"]],
-        body
+        margin: { left: PAGE.x, right: PAGE.x },
+        tableWidth: PAGE.w,
+
+        head: [[
+            "Sl", "Date", "Docket", "Transit", "Mode",
+            "Origin", "Dest", "Wt/CBM",
+            "Freight", "FSC", "Other", "Total"
+        ]],
+
+        body,
+
+        styles: {
+            fontSize: FONT.tiny,
+            cellPadding: 1,
+            lineWidth: 0.1,
+            textColor: 0,
+            minCellHeight: 4,
+            lineWidth: 0.2,              // 🔥 border thickness
+            lineColor: [0, 0, 0],
+        },
+
+        headStyles: {
+            fillColor: [60, 60, 60],
+            textColor: 255,
+            fontStyle: "bold",
+            halign: "center",
+            cellPadding: 1.5,
+            lineWidth: 0.2,              // 🔥 header border
+            lineColor: [0, 0, 0]
+        },
+
+        columnStyles: {
+            0: { cellWidth: 8, halign: "center" },
+            1: { cellWidth: 17 },
+            2: { cellWidth: 22 },
+            3: { cellWidth: 15 },
+            4: { cellWidth: 12 },
+            5: { cellWidth: 22 },
+            6: { cellWidth: 22 },
+            7: { cellWidth: 14, halign: "right" },
+            8: { cellWidth: 16, halign: "right" },
+            9: { cellWidth: 14, halign: "right" },
+            10: { cellWidth: 14, halign: "right" },
+            11: { cellWidth: 14, halign: "right" }
+        },
+        didDrawCell: (data) => {
+            if (data.section === "body") {
+                data.cell.styles.lineColor = [0, 0, 0]; // 🔥 enforce borders
+                data.cell.styles.lineWidth = 0.2;
+            }
+        }
     });
 
     return {
         y: doc.lastAutoTable.finalY,
         totalFreight,
         totalFSC,
-        totalOther
+        totalOther,
+        totalTaxable,
+        totalNonTax,
+        totalTaxFreight,
+        totalTaxFsc,
+        totalTaxOther,
+        totalNonTaxFreight,
+        totalNonTaxFsc,
+        totalNonTaxOther,
+        totalCGST,
+        totalSGST,
+        totalIGST,
+        totalGST,
+        grandTotal
     };
 }
+// ================= TERMS AND TAX SECTION =================
+async function drawTermsAndTaxSection(doc, PAGE, FONT, company, header, totals, y, bank) {
 
-function calculateGST(totals, party, company) {
-    const taxable = totals.totalFreight + totals.totalFSC + totals.totalOther;
-
-    const isInterState =
-        (party.state || "").toLowerCase() !==
-        (company.state || "").toLowerCase();
-
-    const cgst = isInterState ? 0 : taxable * 0.09;
-    const sgst = isInterState ? 0 : taxable * 0.09;
-    const igst = isInterState ? taxable * 0.18 : 0;
-
-    return {
-        totalFreight: totals.totalFreight,
-        totalFSC: totals.totalFSC,
-        totalOther: totals.totalOther,
-        taxable,
-        cgst,
-        sgst,
-        igst,
-        grandTotal: taxable + cgst + sgst + igst
-    };
-}
-
-async function drawTermsAndTaxSection(doc, PAGE, FONT, company, header, totals, y) {
-
-    const bank = await getInvoiceBankDetails(header?.InvoiceNo);
-
-    const rowH = 5;
-    const rows = 11;
+    const rowH = 4;        // 🔥 fixed row height (increase for spacing)
+    const rows = 10;       // total rows
     const tableH = rowH * rows;
 
-    const col1 = PAGE.w * 0.6;  // Terms
-    const col2 = PAGE.w * 0.15; // Label
-    const col3 = PAGE.w * 0.125; // Non-Tax
-    const col4 = PAGE.w * 0.125; // Taxable
+    const col4 = 28;  // Taxable (match Total column)
+    const col3 = 30;  // Non-Tax (match Freight column)
+    const col2 = 24;  // Label (slightly wider for text)
+    const col1 = PAGE.w - (col2 + col3 + col4); // remaining space
 
     const x1 = PAGE.x;
     const x2 = x1 + col1;
@@ -253,45 +343,75 @@ async function drawTermsAndTaxSection(doc, PAGE, FONT, company, header, totals, 
     const x4 = x3 + col3;
 
     // Page break
-    if (y + tableH > PAGE.h - 15) {
-        doc.addPage();
-        y = PAGE.x;
-    }
+    y = checkPageBreak(doc, y, tableH, PAGE);
 
-    // Outer box
+    // Outer border (bold)
+    doc.setDrawColor(0, 0, 0);     // black
+    doc.setLineWidth(0.1);         // 🔥 thicker outer border
     doc.rect(PAGE.x, y, PAGE.w, tableH);
 
+    // Inner lines (light + thin)
+    doc.setDrawColor(120, 120, 120); // 🔥 soft gray (better than black)
+    doc.setLineWidth(0.2);
+
     // Vertical lines
-    [x2, x3, x4].forEach(x => doc.line(x, y, x, y + tableH));
+    [x2, x3, x4].forEach(x => {
+        doc.line(x, y, x, y + tableH);
+    });
 
     // Horizontal lines
     for (let i = 1; i < rows; i++) {
         doc.line(PAGE.x, y + i * rowH, PAGE.x + PAGE.w, y + i * rowH);
     }
 
-    // Headers
+    // ================= HEADER =================
     doc.setFont("helvetica", "bold").setFontSize(FONT.body);
-    doc.text("Terms & Conditions", x1 + col1 / 2, y + 4, { align: "center" });
-    doc.text("Non-Tax", x3 + col3 / 2, y + 4, { align: "center" });
-    doc.text("Taxable", x4 + col4 / 2, y + 4, { align: "center" });
 
-    // Terms
+    const headerY = y + rowH / 2;
+
+    doc.text("Terms & Conditions", x1 + col1 / 2, headerY, {
+        align: "center",
+        baseline: "middle"
+    });
+
+    doc.text("Non-Tax", x3 + col3 / 2, headerY, {
+        align: "center",
+        baseline: "middle"
+    });
+
+    doc.text("Taxable", x4 + col4 / 2, headerY, {
+        align: "center",
+        baseline: "middle"
+    });
+
+    // ================= TERMS =================
     doc.setFont("helvetica", "normal").setFontSize(FONT.tiny);
 
     const terms = [
         `1. Please draw cheque in favour of ${company.name}`,
         "2. Payments Should be made within 7 Days from the Date of Billing",
-        "3. All Complaints must be forwarded within 8 days",
-        "4. Bangalore will be Jurisdiction"
+        "3. All Complaints must be forwarded within 8 days of receipt",
+        "4. Bangalore Jurisdiction"
     ];
 
     terms.forEach((t, i) => {
-        doc.text(t, x1 + 2, y + rowH * (i + 2) - 1);
+
+        const rowTopY = y + rowH * (i + 1);
+        const textY = rowTopY + rowH / 2;
+
+        const text = doc.splitTextToSize(t, col1 - 4);
+
+        doc.text(text, x1 + 2, textY, {
+            align: "left",
+            baseline: "middle"
+        });
     });
 
-    // Bank details
+    // ================= BANK =================
     doc.setFont("helvetica", "bold").setFontSize(FONT.body);
-    doc.text("Bank Details", x1 + col1 / 2, y + rowH * 6, { align: "center" });
+    doc.text("Bank Details", x1 + col1 / 2, y + rowH * 6 - 2, {
+        align: "center", baseline: "middle"
+    });
 
     doc.setFont("helvetica", "normal").setFontSize(FONT.tiny);
 
@@ -303,77 +423,221 @@ async function drawTermsAndTaxSection(doc, PAGE, FONT, company, header, totals, 
     ];
 
     bankDetails.forEach((b, i) => {
-        doc.text(b, x1 + 2, y + rowH * (7 + i) - 1);
-    });
 
-    // Tax rows
+        const rowTopY = y + rowH * (6 + i);
+        const textY = rowTopY + rowH / 2;
+
+        const text = doc.splitTextToSize(b, col1 - 4);
+
+        doc.text(text, x1 + 2, textY, {
+            align: "left",
+            baseline: "middle"
+        });
+    });
+    console.log("Calculated totals for tax table:", totals);
+    // ================= TAX TABLE =================
     const data = [
-        ["Total Freight", totals.totalFreight],
-        ["Fuel Charges", totals.totalFSC],
-        ["Other Charges", totals.totalOther],
-        ["Sub Total", totals.taxable],
-        ["CGST @ 9%", totals.cgst],
-        ["SGST @ 9%", totals.sgst],
-        ["IGST @ 18%", totals.igst],
-        ["Total GST", totals.cgst + totals.sgst + totals.igst],
-        ["GRAND TOTAL", totals.grandTotal]
+        ["Total Freight", totals.totalNonTaxFreight, totals.totalTaxFreight],
+        ["Fuel Charges", totals.totalNonTaxFsc, totals.totalTaxFsc],
+        ["Other Charges", totals.totalNonTaxOther, totals.totalTaxOther],
+        ["Sub Total", totals.totalNonTax, totals.totalTaxable],
+        ["CGST", "", totals.totalCGST],
+        ["SGST", "", totals.totalSGST],
+        ["IGST", "", totals.totalIGST],
+        ["Total GST", 0, totals.totalGST],
+        ["GRAND TOTAL", 0, totals.grandTotal]
     ];
 
     doc.setFontSize(FONT.small);
 
     data.forEach((row, i) => {
-        const ry = y + rowH * (i + 2) - 1;
+
+        const rowTopY = y + rowH * (i + 1);
+        const textY = rowTopY + rowH / 2;
+
+        const label = row[0];
+        const nonTax = row[1];
+        const taxable = row[2];
+
+        const isMerged =
+            label === "Total GST" ||
+            label === "GRAND TOTAL";
+
+        const isMergedTax =
+            label === "CGST" ||
+            label === "SGST" ||
+            label === "IGST";
 
         const isHighlight =
-            row[0] === "Sub Total" ||
-            row[0] === "Total GST" ||
-            row[0] === "GRAND TOTAL";
+            label === "Sub Total" ||
+            isMerged;
 
+        // ================= MERGED TAX ROWS =================
+        if (isMergedTax) {
+
+            doc.setDrawColor(0, 0, 0);
+            doc.setLineWidth(0.2);
+            doc.setFillColor(255, 255, 255);
+
+            // Label column
+            doc.rect(x2, rowTopY, col2, rowH, "FD");
+
+            // 🔥 Merge Non-Tax + Taxable
+            doc.rect(x3, rowTopY, col3 + col4, rowH, "FD");
+
+            // Label
+            doc.setFont("helvetica", "normal");
+            doc.text(label, x2 + 2, textY, {
+                baseline: "middle"
+            });
+
+            // 🔥 ONLY ONE VALUE
+            doc.text(
+                safeAmount(taxable).toFixed(2),
+                x3 + col3 + col4 - 2,
+                textY,
+                { align: "right", baseline: "middle" }
+            );
+
+            return; // 🚀 IMPORTANT: stop here
+        }
+
+        // ================= HIGHLIGHT ROWS =================
         if (isHighlight) {
+
             doc.setFillColor(220, 230, 241);
-            doc.rect(x2, ry - 3, col2, rowH, "F");
-            doc.rect(x3, ry - 3, col3, rowH, "F");
-            doc.rect(x4, ry - 3, col4, rowH, "F");
+
+            // Fill
+            doc.rect(x2, rowTopY, col2, rowH, "F");
+
+            if (isMerged) {
+                doc.rect(x3, rowTopY, col3 + col4, rowH, "F");
+            } else {
+                doc.rect(x3, rowTopY, col3, rowH, "F");
+                doc.rect(x4, rowTopY, col4, rowH, "F");
+            }
+
+            // Border
+            doc.setDrawColor(0, 0, 0);
+            doc.setLineWidth(0.2);
+
+            doc.rect(x2, rowTopY, col2, rowH);
+
+            if (isMerged) {
+                doc.rect(x3, rowTopY, col3 + col4, rowH);
+            } else {
+                doc.rect(x3, rowTopY, col3, rowH);
+                doc.rect(x4, rowTopY, col4, rowH);
+            }
 
             doc.setFont("helvetica", "bold");
+
         } else {
+
             doc.setFont("helvetica", "normal");
         }
 
-        doc.text(row[0], x2 + col2 / 2, ry, { align: "center" });
-        doc.text("0.00", x3 + col3 - 2, ry, { align: "right" });
-        doc.text(row[1].toFixed(2), x4 + col4 - 2, ry, { align: "right" });
+        // ================= TEXT =================
+
+        // Label
+        doc.text(label, x2 + 2, textY, {
+            baseline: "middle"
+        });
+
+        if (isMerged) {
+
+            // 🔥 ONE VALUE (merged)
+            doc.text(
+                safeAmount(taxable).toFixed(2),
+                x3 + col3 + col4 - 2,
+                textY,
+                { align: "right", baseline: "middle" }
+            );
+
+        } else {
+
+            // Non-Tax
+            doc.text(
+                safeAmount(nonTax).toFixed(2),
+                x3 + col3 - 2,
+                textY,
+                { align: "right", baseline: "middle" }
+            );
+
+            // Taxable
+            doc.text(
+                safeAmount(taxable).toFixed(2),
+                x4 + col4 - 2,
+                textY,
+                { align: "right", baseline: "middle" }
+            );
+        }
+
     });
 
     return y + tableH;
 }
-
+// ================= AMOUNT IN WORDS =================
 function drawAmountInWords(doc, PAGE, FONT, grandTotal, y) {
+
+    const paddingX = 3;
+    const paddingY = 2;
+
     const text = "Amount in Words: " + numberToWordsIndian(grandTotal);
 
-    doc.rect(PAGE.x, y, PAGE.w, 10);
-    doc.text(text, PAGE.x + 2, y + 5);
+    // 🔥 Split text based on width
+    const maxWidth = PAGE.w - (paddingX * 2);
+    const lines = doc.splitTextToSize(text, maxWidth);
 
-    return y + 10;
+    // 🔥 Calculate dynamic height
+    const lineHeight = 2;
+    const boxH = (lines.length * lineHeight) + (paddingY * 2);
+
+    // Draw box
+    doc.rect(PAGE.x, y, PAGE.w, boxH);
+
+    // Draw text (top padding)
+    doc.text(lines, PAGE.x + paddingX, y + paddingY + 2);
+
+    return y + boxH;
 }
-
+// ================= ADD FOOTER TO ALL PAGES =================
 function addFooterToAllPages(doc, PAGE) {
     const totalPages = doc.getNumberOfPages();
 
     for (let i = 1; i <= totalPages; i++) {
         doc.setPage(i);
 
-        doc.text("Powered by AllEdge", PAGE.x, PAGE.h - 5);
+        doc.text("Powered by AllEdge to BizNavigation", PAGE.x, PAGE.h - 5);
         doc.text(`Page ${i} of ${totalPages}`, PAGE.x + PAGE.w - 20, PAGE.h - 5);
     }
 }
-
-
+// ================= GET DOMESTIC SHIPMENT DATA =================
 async function getDomesticShipmentData(invoiceNo) {
     try {
         const { data, error } = await supabaseClient
-            .from("DomesticBookingDetails")   // 👈 your table name
-            .select("*")
+            .from("DomesticBookingDetails")
+            .select(`
+                id,
+                DocketNo,
+                BookingDate,
+                OriginCity,
+                DestinationCity,
+                TransitType,
+                ModeType,
+                ChargeableWeight,
+                UOMType,
+                DomesticBookingCharges (
+                    ChargesType,
+                    TotalAmount,
+                    TaxRate,
+                    SGSTAmt,
+                    CGSTAmt,
+                    IGSTAmt,
+                    TotalGSTAmt,
+                    GrandTotalAmt
+                )
+            `)
             .eq("InvoiceNumber", invoiceNo);
 
         if (error) {
@@ -382,6 +646,7 @@ async function getDomesticShipmentData(invoiceNo) {
         }
 
         return data || [];
+
     } catch (err) {
         console.error("Unexpected error:", err);
         return [];
