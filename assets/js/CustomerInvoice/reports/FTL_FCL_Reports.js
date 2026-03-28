@@ -183,20 +183,24 @@ async function drawShipmentTable(doc, PAGE, FONT, rows = [], y) {
 
     const body = rows.map((row, i) => {
 
-        let freightAmount = 0, otherAmount = 0;
+        let freightAmount = 0, otherAmount = 0, perQtyAmt = 0, Qty = 0;
 
 
         (row.FullLoadBookingCharges || []).forEach(c => {
 
-            const amount = safeNumber(c.amount);
+            const amount = safeNumber(c.TotalAmount);
+            const perQtyAmount = safeNumber(c.PerQtyAmt);
 
-            totalCGST += safeNumber(c.cgst_amount);
-            totalSGST += safeNumber(c.sgst_amount);
-            totalIGST += safeNumber(c.igst_amount);
+            totalCGST += safeNumber(c.CGSTAmt);
+            totalSGST += safeNumber(c.SGSTAmt);
+            totalIGST += safeNumber(c.IGSTAmt);
+            Qty = c.Quantity
 
 
-            if (c.charges_type === "Freight Amount" || c.charges_type === "Transportation Charges") {
+            if (c.ChargesType === "Freight Amount" || c.ChargesType === "Transportation Charges") {
                 freightAmount += amount;
+                perQtyAmt += perQtyAmount;
+
             } else {
                 otherAmount += amount;
             }
@@ -223,8 +227,8 @@ async function drawShipmentTable(doc, PAGE, FONT, rows = [], y) {
             row.lr_number || "",
             formatDate(row.pickup_date) || "",
             description,
-            row.charge_weight || "",
-            freightAmount.toFixed(2),
+            Qty || "0",
+            perQtyAmt.toFixed(2),
             otherAmount.toFixed(2),
             (freightAmount + otherAmount).toFixed(2)
         ];
@@ -269,8 +273,8 @@ async function drawShipmentTable(doc, PAGE, FONT, rows = [], y) {
             0: { cellWidth: 8, halign: "center" },
             1: { cellWidth: 17 },
             2: { cellWidth: 22 },
-            3: { cellWidth: 60 },  // 🔥 BIG for description
-            4: { cellWidth: 12 },
+            3: { cellWidth: 73 },  // 🔥 BIG for description
+            4: { cellWidth: 12, halign: "right" },
             5: { cellWidth: 22, halign: "right" },
             6: { cellWidth: 22, halign: "right" },
             7: { cellWidth: 14, halign: "right" },
@@ -343,10 +347,6 @@ async function drawTermsAndTaxSection(doc, PAGE, FONT, company, header, totals, 
         baseline: "middle"
     });
 
-    doc.text("Non-Tax", x3 + col3 / 2, headerY, {
-        align: "center",
-        baseline: "middle"
-    });
 
     // ================= TERMS =================
     doc.setFont("helvetica", "normal").setFontSize(FONT.tiny);
@@ -513,28 +513,32 @@ async function getDomesticShipmentData(invoiceNo) {
         const { data, error } = await supabaseClient
             .from("FullLoadBookingDetails")
             .select(`
-                id,
-                lr_number,
-                pickup_date,
-                routedetails,
-                origin_city,
-                destination_city,
-                vehicle_type,
-                vehicle_number,
-                container_number,
-                FullLoadBookingCharges (
-                    charges_type,
-                    amount,
-                    gst_type,
-                    sgst_amount,
-                    cgst_amount,
-                    igst_amount,
-                    total_gst_amount,
-                    grand_total_billing,
-                    account_type
-                )
-            `)
-            .eq("invoice_number", invoiceNo);
+    id,
+    lr_number,
+    pickup_date,
+    routedetails,
+    origin_city,
+    destination_city,
+    vehicle_type,
+    vehicle_number,
+    container_number,
+
+    FullLoadBookingCharges!FullLoadBookingCharges_ID_FT_fkey (
+        ChargesType,
+        Quantity,
+        PerQtyAmt,
+        TotalAmount,
+        TaxRate,
+        SGSTAmt,
+        CGSTAmt,
+        IGSTAmt,
+        TotalGSTAmt,
+        GrandTotalAmt,
+        AccountType
+    )
+  `)
+            .eq("invoice_number", invoiceNo)
+            .eq("FullLoadBookingCharges.AccountType", "Sale"); // 🔥 FIX
 
         if (error) {
             console.error("Error fetching shipment data:", error);

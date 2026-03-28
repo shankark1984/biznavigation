@@ -20,7 +20,7 @@ function initChargesObject() {
 }
 
 function processCharge(obj, charge) {
-    const type = (charge.charges_type || 'Other').trim();
+    const type = (charge.ChargesType || 'Other').trim();
     const typeLower = type.toLowerCase();
 
     if (!obj.chargesMap[type]) {
@@ -36,22 +36,21 @@ function processCharge(obj, charge) {
 
     const entry = obj.chargesMap[type];
 
-    entry.TotalAmount += +charge.amount || 0;
-    entry.SGSTAmt += +charge.sgst_amount || 0;
-    entry.CGSTAmt += +charge.cgst_amount || 0;
-    entry.IGSTAmt += +charge.igst_amount || 0;
-    entry.TotalGSTAmt += +charge.total_gst_amount || 0;
-    entry.GrandTotalAmt += +charge.grand_total_billing || 0;
+    entry.TotalAmount += +charge.TotalAmount || 0;
+    entry.SGSTAmt += +charge.SGSTAmt || 0;
+    entry.CGSTAmt += +charge.CGSTAmt || 0;
+    entry.IGSTAmt += +charge.IGSTAmt || 0;
+    entry.TotalGSTAmt += +charge.TotalGSTAmt || 0;
+    entry.GrandTotalAmt += +charge.GrandTotalAmt || 0;
 
-    if (typeLower === 'freight amount') obj.BasicFrightAmt += +charge.amount || 0;
-    else if (typeLower === 'fuel surcharge') obj.FSCAmt += +charge.amount || 0;
-    else obj.OtherAmt += +charge.amount || 0;
+    if (typeLower === 'freight amount') obj.BasicFrightAmt += +charge.TotalAmount || 0;
+    else obj.OtherAmt += +charge.TotalAmount || 0;
 
-    obj.totalSGST += +charge.sgst_amount || 0;
-    obj.totalCGST += +charge.cgst_amount || 0;
-    obj.totalIGST += +charge.igst_amount || 0;
-    obj.totalGST += +charge.total_gst_amount || 0;
-    obj.grandTotal += +charge.grand_total_billing || 0;
+    obj.totalSGST += +charge.SGSTAmt || 0;
+    obj.totalCGST += +charge.CGSTAmt || 0;
+    obj.totalIGST += +charge.IGSTAmt || 0;
+    obj.totalGST += +charge.TotalGSTAmt || 0;
+    obj.grandTotal += +charge.GrandTotalAmt || 0;
 }
 
 function createRow(invoice, charges) {
@@ -158,8 +157,8 @@ async function FTL_FCL_getPendingInvoiceDetails() {
         const { data: chargesData, error: chargeError } = await supabaseClient
             .from('FullLoadBookingCharges')
             .select('*')
-            .in('lr_number', lrNumbers)
-            .eq('account_type', 'Sale');
+            .in('LRNumber', lrNumbers)
+            .eq('AccountType', 'Sale');
 
 
         if (chargeError) throw chargeError;
@@ -167,7 +166,7 @@ async function FTL_FCL_getPendingInvoiceDetails() {
         const chargesByLR = {};
 
         for (const charge of chargesData || []) {
-            const lr = charge.lr_number;
+            const lr = charge.LRNumber;
 
             if (!chargesByLR[lr]) {
                 chargesByLR[lr] = initChargesObject();
@@ -389,6 +388,7 @@ async function ftl_loadInvoiceBookings(invoiceNo) {
         }
 
         const lrNumbers = data.map(d => d.LRNumber);
+        console.log("LR Number " + lrNumbers);
 
         // ========================
         // STEP 2: BULK FETCH CHARGES
@@ -396,8 +396,8 @@ async function ftl_loadInvoiceBookings(invoiceNo) {
         const { data: chargesData, error: chargeError } = await supabaseClient
             .from('FullLoadBookingCharges')
             .select('*')
-            .in('lr_number', lrNumbers)
-            .eq('account_type', 'Sale');
+            .in('LRNumber', lrNumbers)
+            .eq('AccountType', 'Sale');
 
         if (chargeError) throw chargeError;
 
@@ -407,7 +407,7 @@ async function ftl_loadInvoiceBookings(invoiceNo) {
         const chargesByLR = {};
 
         for (const charge of chargesData || []) {
-            const lr = charge.lr_number;
+            const lr = charge.LRNumber;
 
             if (!chargesByLR[lr]) {
                 chargesByLR[lr] = initChargesObject();
@@ -758,8 +758,8 @@ async function ftl_addSingleShipmentToInvoice(shipmentNo, invoiceNo) {
         const { data: chargesData, error: chargeError } = await supabaseClient
             .from('FullLoadBookingCharges')
             .select('*')
-            .eq('lr_number', shipmentNo)
-            .eq('account_type', 'Sale');
+            .eq('LRNumber', shipmentNo)
+            .eq('AccountType', 'Sale');
 
         if (chargeError) throw chargeError;
 

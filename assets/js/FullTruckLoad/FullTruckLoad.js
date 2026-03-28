@@ -465,8 +465,8 @@ async function loadBillingCharges(lrNumber, accountType, tableId) {
     const { data, error } = await supabaseClient
         .from("FullLoadBookingCharges")
         .select("*")
-        .eq("lr_number", lrNumber)
-        .eq("account_type", accountType);
+        .eq("LRNumber", lrNumber)
+        .eq("AccountType", accountType);
 
     if (error) {
         console.error(error);
@@ -487,14 +487,14 @@ async function loadBillingCharges(lrNumber, accountType, tableId) {
         tr.dataset.id = row.id;
 
         tr.innerHTML = `
-            <td class="align-middle">${row.charges_type}</td>
-            <td class="align-middle">${row.gst_type}</td>
-            <td class="text-end align-middle">${parseFloat(row.amount).toFixed(2)}</td>
-            <td class="text-end align-middle">${parseFloat(row.cgst_amount).toFixed(2)}</td>
-            <td class="text-end align-middle">${parseFloat(row.sgst_amount).toFixed(2)}</td>
-            <td class="text-end align-middle">${parseFloat(row.igst_amount).toFixed(2)}</td>
-            <td class="text-end align-middle">${parseFloat(row.total_gst_amount).toFixed(2)}</td>
-            <td class="text-end align-middle">${parseFloat(row.grand_total_billing).toFixed(2)}</td>
+            <td class="align-middle">${row.ChargesType}</td>
+            <td class="align-middle">${row.TaxRate}</td>
+            <td class="text-end align-middle">${parseFloat(row.TotalAmount).toFixed(2)}</td>
+            <td class="text-end align-middle">${parseFloat(row.CGSTAmt).toFixed(2)}</td>
+            <td class="text-end align-middle">${parseFloat(row.SGSTAmt).toFixed(2)}</td>
+            <td class="text-end align-middle">${parseFloat(row.IGSTAmt).toFixed(2)}</td>
+            <td class="text-end align-middle">${parseFloat(row.TotalGSTAmt).toFixed(2)}</td>
+            <td class="text-end align-middle">${parseFloat(row.GrandTotalAmt).toFixed(2)}</td>
             <td>
                 <button type="button" class="btn btn-sm btn-danger deleteRow" disabled>Delete</button>
             </td>
@@ -520,8 +520,8 @@ async function fetchSupabaseData(lrNumber, accountType) {
     const { data, error } = await supabaseClient
         .from('FullLoadBookingCharges')
         .select('*')
-        .eq('account_type', accountType)
-        .eq('lr_number', lrNumber);
+        .eq('AccountType', accountType)
+        .eq('LRNumber', lrNumber);
 
     if (error) {
         console.error("Fetch error:", error);
@@ -706,21 +706,19 @@ async function saveCharges(lrNumber, tableId, accountType) {
         if (status === "new") {
 
             insertData.push({
-                lr_number: lrNumber,
-                charges_type: cells[0].textContent.trim(),
-                gst_type: cells[1].textContent.trim(),
-                amount: parseFloat(cells[2].textContent) || 0,
-                cgst_amount: parseFloat(cells[3].textContent) || 0,
-                sgst_amount: parseFloat(cells[4].textContent) || 0,
-                igst_amount: parseFloat(cells[5].textContent) || 0,
-                total_gst_amount: parseFloat(cells[6].textContent) || 0,
-                grand_total_billing: parseFloat(cells[7].textContent) || 0,
-                account_type: accountType,
-                company_id: CompanyID,
+                LRNumber: lrNumber,
+                ChargesType: cells[0].textContent.trim(),
+                TaxRate: cells[1].textContent.trim(),
+                TotalAmount: parseFloat(cells[2].textContent) || 0,
+                CGSTAmt: parseFloat(cells[3].textContent) || 0,
+                SGSTAmt: parseFloat(cells[4].textContent) || 0,
+                IGSTAmt: parseFloat(cells[5].textContent) || 0,
+                TotalGSTAmt: parseFloat(cells[6].textContent) || 0,
+                GrandTotalAmt: parseFloat(cells[7].textContent) || 0,
+                AccountType: accountType,
                 created_by: UserLoginID,
-                created_at: new Date().toISOString()
+                created_at: LocaltimeStamp
             });
-
         }
 
         if (status === "deleted" && row.dataset.id) {

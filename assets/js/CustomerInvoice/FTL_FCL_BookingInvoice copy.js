@@ -207,8 +207,8 @@ async function FTL_FCL_getBookingCharges(bookingID) {
         const { data, error } = await supabaseClient
             .from('FullLoadBookingCharges')
             .select('*')
-            .eq('lr_number', bookingID)
-            .eq('account_type', 'Sale');
+            .eq('LRNumber', bookingID)
+            .eq('AccountType', 'Sale');
 
         if (error) throw error;
         if (!data || data.length === 0) return null;
