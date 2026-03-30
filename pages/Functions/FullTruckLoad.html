@@ -267,7 +267,7 @@
                                                 <thead>
                                                     <tr>
                                                         <th>Charges Type</th>
-                                                        <th>GST Type</th>
+                                                        <th>GST %</th>
                                                         <th>Amount</th>
                                                         <th>CGST Amount</th>
                                                         <th>SGST Amount</th>
@@ -275,6 +275,8 @@
                                                         <th>Total GST Amount</th>
                                                         <th>Grand Total Billing</th>
                                                         <th>Action</th>
+                                                        <th class="d-none">HSN</th>
+                                                        <th class="d-none">TaxID</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
@@ -322,7 +324,7 @@
                                                 <thead>
                                                     <tr>
                                                         <th>Charges Type</th>
-                                                        <th>GST Type</th>
+                                                        <th>GST %</th>
                                                         <th>Amount</th>
                                                         <th>CGST Amount</th>
                                                         <th>SGST Amount</th>
@@ -330,6 +332,8 @@
                                                         <th>Total GST Amount</th>
                                                         <th>Grand Total Billing</th>
                                                         <th>Action</th>
+                                                        <th class="d-none">HSN</th>
+                                                        <th class="d-none">TaxID</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
@@ -384,6 +388,18 @@
                         </div>
                     </div>
                 </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="position-fixed top-0 end-0 p-3" style="z-index: 9999">
+        <div id="errorToast" class="toast align-items-center text-white bg-danger border-0" role="alert">
+            <div class="d-flex">
+                <div class="toast-body" id="errorToastMessage">
+                    Error message here...
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
             </div>
         </div>
     </div>

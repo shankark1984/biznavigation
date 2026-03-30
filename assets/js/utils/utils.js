@@ -1564,3 +1564,20 @@ function checkPageBreak(doc, y, height, PAGE) {
     }
     return y;
 }
+
+// Helper function to parse tax percentages
+function parseTaxPercentages(taxString) {
+    const taxes = { cgst: 0, sgst: 0, igst: 0 };
+    const patterns = {
+        cgst: /CGST\s*(\d+(\.\d+)?)%/,
+        sgst: /SGST\s*(\d+(\.\d+)?)%/,
+        igst: /IGST\s*(\d+(\.\d+)?)%/
+    };
+
+    for (const [tax, pattern] of Object.entries(patterns)) {
+        const match = taxString.match(pattern);
+        if (match) taxes[tax] = parseFloat(match[1]);
+    }
+
+    return taxes;
+}

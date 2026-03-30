@@ -1,19 +1,26 @@
+let totalPaymentReceived = 0;
 async function generate_FullTruckReports_InvoicePDF(header, lines = []) {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF("p", "mm", "a4");
 
-    const PAGE = { x: 10, w: 190, h: 297 };
+    const PAGE = { x: 15, w: 190, h: 297 };
     const FONT = { header: 14, title: 10, body: 8, small: 7, tiny: 6 };
 
     let y = 10;
 
-    const [company, party, shipmentData, bank] = await Promise.all([
+    const [company, party, shipmentData, bank, totalsPayment] = await Promise.all([
         fetchCompanyDetails(header),
         fetchPartyDetails(header),
         getDomesticShipmentData(header?.InvoiceNo),
-        getInvoiceBankDetails(header?.InvoiceNo)
+        getInvoiceBankDetails(header?.InvoiceNo),
+        advancedPaymentDetails(header?.InvoiceNo, header?.InvoiceDate)
     ]);
 
+    totalPaymentReceived = round2(
+        safeNumber(totalsPayment?.totalPayment) +
+        safeNumber(totalsPayment?.totalOtherDeduction) +
+        safeNumber(totalsPayment?.totalTDS)
+    );
 
     y = await drawHeader(doc, PAGE, FONT, company, y);
 
@@ -28,7 +35,7 @@ async function generate_FullTruckReports_InvoicePDF(header, lines = []) {
     //TermsAndTaxSection
     const totals = shipmentResult;
 
-    y = await drawTermsAndTaxSection(doc, PAGE, FONT, company, header, totals, y, bank);
+    y = await drawTermsAndTaxSection(doc, PAGE, FONT, company, header, totals, y, bank, totalPaymentReceived);
 
     y = drawAmountInWords(doc, PAGE, FONT, totals.grandTotal, y);
 
@@ -52,7 +59,10 @@ async function fetchCompanyDetails(header) {
         email: data?.e_mail || "-",
         gst: data?.gst_number || "-",
         state: data?.state,
-        logo: data?.logo_path
+        logo: data?.logo_path,
+        uANo: data?.Udyog_aadhaar_no || "-",
+        panNo: data?.pan_number || "-"
+
     };
 }
 // Utility function to load image as base64
@@ -67,7 +77,7 @@ async function drawHeader(doc, PAGE, FONT, company, y) {
 
     if (logoImg) {
         const maxW = logoW - 6;
-        const maxH = headerH - 4;
+        const maxH = headerH - 1;
         const ratio = logoImg.width / logoImg.height;
 
         let w = maxW, h = w / ratio;
@@ -91,7 +101,7 @@ async function drawHeader(doc, PAGE, FONT, company, y) {
         textX + textW / 2, centerY + 1, { align: "center" });
 
     doc.setFontSize(FONT.small);
-    doc.text(`Ph: ${company.phone} | ${company.email} | GST: ${company.gst}`,
+    doc.text(`Ph: ${company.phone} | ${company.email} | GST: ${company.gst} | PAN: ${company?.panNo} | UA No: ${company?.uANo} `,
         textX + textW / 2, centerY + 7, { align: "center" });
 
     return y + headerH;
@@ -125,51 +135,86 @@ async function fetchPartyDetails(header) {
 function drawPartySection(doc, PAGE, FONT, header, party, company, y) {
     const left70 = PAGE.w * 0.7;
     const left40 = PAGE.w * 0.4;
+    const lineHeight = 3.5;
+    const startX = PAGE.x + 3;
 
-    // Split text
-    const partyNameLines = doc.splitTextToSize(`M/s ${party.name}`, left70 - 6);
-    const partyAddrLines = doc.splitTextToSize(party.address, left70 - 6);
+    // 🔹 Safe helper
+    const safe = (v, d = "-") => (v ? v : d);
 
-    const rightLines = doc.splitTextToSize([
-        `Invoice No : ${header?.InvoiceNo || "-"}`,
-        `Invoice Date : ${formatDate(header?.InvoiceDate) || "-"}`,
-        `SAC Code : ${header?.SACCode || "-"}`
-    ].join("\n"), PAGE.w - left70 - 6);
+    // ================= LEFT SIDE =================
+    const partyNameLines = doc.splitTextToSize(`M / s ${safe(party.name, "")
+        } `, left70 - 6);
+    const partyAddrLines = doc.splitTextToSize(safe(party.address, ""), left70 - 6);
 
-    // Dynamic height
-    const row1H = Math.max(
-        partyNameLines.length + partyAddrLines.length,
-        rightLines.length
-    ) * 4 + 4;
+    // ================= RIGHT SIDE =================
+    const rightData = [
+        { label: "Invoice No :", value: safe(header?.InvoiceNo) },
+        { label: "Invoice Date :", value: formatDate(header?.InvoiceDate) || "-" },
+        { label: "SAC Code :", value: safe(header?.SACCode) }
+    ];
 
-    const row2H = 6;
-    const infoH = row1H + row2H;
+    // 🔹 Calculate label width once
+    doc.setFont("helvetica", "bold").setFontSize(FONT.title);
+    const labelWidth = Math.max(...rightData.map(r => doc.getTextWidth(r.label)));
 
-    // Draw box
+    // ================= HEIGHT =================
+    const leftLines = partyNameLines.length + partyAddrLines.length + 1; // +1 for GST
+    const rightLines = rightData.length;
+
+    const row1Lines = Math.max(leftLines, rightLines);
+    const row1H = row1Lines * lineHeight + 4;
+
+    const infoH = row1H; // 🔥 removed unused bottom row
+
+    // ================= BOX =================
     doc.rect(PAGE.x, y, PAGE.w, infoH);
-
-    // Vertical + horizontal lines
     doc.line(PAGE.x + left70, y, PAGE.x + left70, y + row1H);
-    doc.line(PAGE.x + left40, y + row1H, PAGE.x + left40, y + infoH);
-    doc.line(PAGE.x, y + row1H, PAGE.x + PAGE.w, y + row1H);
 
-    // Left side
-    doc.setFont("helvetica", "bold");
-    doc.text(partyNameLines, PAGE.x + 3, y + 4);
+    // ================= DRAW LEFT =================
+    let currentY = y + 4;
 
-    doc.setFont("helvetica", "normal");
-    doc.text(partyAddrLines, PAGE.x + 3, y + 4 + partyNameLines.length * 4);
+    // Party Name
+    doc.setFont("helvetica", "bold").setFontSize(FONT.body);
+    doc.text(partyNameLines, startX, currentY);
+    currentY += partyNameLines.length * lineHeight;
 
-    // Right side
-    doc.text(rightLines, PAGE.x + left70 + 3, y + 4, {
-        maxWidth: PAGE.w - left70 - 6
+    // Address
+    doc.setFont("helvetica", "normal").setFontSize(FONT.small);
+    doc.text(partyAddrLines, startX, currentY);
+    currentY += partyAddrLines.length * lineHeight;
+
+    // GST
+    drawLabelValue(doc, "GST No :", safe(party.gst), startX, currentY);
+
+    // ================= DRAW RIGHT =================
+    let rightY = y + 4;
+    const rightX = PAGE.x + left70 + 3;
+
+    rightData.forEach(item => {
+        drawLabelValueAligned(doc, item.label, item.value, rightX, rightY, labelWidth);
+        rightY += lineHeight;
     });
 
-    // Bottom row
-    doc.text(`GST No : ${party.gst}`, PAGE.x + 3, y + row1H + 4);
-    doc.text(`P.O. No : ${header?.PONumber || "-"}`, PAGE.x + left40 + 3, y + row1H + 4);
-
     return y + infoH;
+}
+
+// 🔥 Reusable: normal label + value
+function drawLabelValue(doc, label, value, x, y) {
+    doc.setFont("helvetica", "bold");
+    doc.text(label, x, y);
+
+    doc.setFont("helvetica", "normal");
+    doc.text(value, x + doc.getTextWidth(label) + 2, y);
+}
+
+// 🔥 Reusable: aligned labels (right column)
+function drawLabelValueAligned(doc, label, value, x, y, labelWidth) {
+    doc.setFont("helvetica", "bold");
+    doc.text(label, x, y);
+
+    doc.setFont("helvetica", "normal");
+    doc.text(value, x + labelWidth + 2, y);
+
 }
 // Utility function to fetch shipment details
 async function drawShipmentTable(doc, PAGE, FONT, rows = [], y) {
@@ -177,71 +222,106 @@ async function drawShipmentTable(doc, PAGE, FONT, rows = [], y) {
     let totalFreight = 0, totalOther = 0;
     let totalCGST = 0, totalSGST = 0, totalIGST = 0, totalGST = 0;
 
+    const rowHeight = 5;
+    const headerHeight = 6;
+
+    // 🔥 Reserve space for footer sections
+
+    const LAYOUT = {
+        footerReserve: 83, // Terms & Tax (60) + Amount in Words (23)
+        rowHeight: 5
+    };
+
+    const emptyRow = ["", "", "", "", "", "", "", ""];
+
     if (!rows.length) {
         console.warn("No shipment data found");
     }
 
-    const body = rows.map((row, i) => {
+    // ================= BUILD BODY =================
+    let body = rows.map((row, i) => {
 
         let freightAmount = 0, otherAmount = 0, perQtyAmt = 0, Qty = 0;
 
-
         (row.FullLoadBookingCharges || []).forEach(c => {
-
             const amount = safeNumber(c.TotalAmount);
             const perQtyAmount = safeNumber(c.PerQtyAmt);
 
             totalCGST += safeNumber(c.CGSTAmt);
             totalSGST += safeNumber(c.SGSTAmt);
             totalIGST += safeNumber(c.IGSTAmt);
-            Qty = c.Quantity
 
+            Qty = c.Quantity ?? Qty;
 
-            if (c.ChargesType === "Freight Amount" || c.ChargesType === "Transportation Charges") {
+            if (["Freight Amount", "Transportation Charges"].includes(c.ChargesType)) {
                 freightAmount += amount;
                 perQtyAmt += perQtyAmount;
-
             } else {
                 otherAmount += amount;
             }
         });
 
-        // totals
         totalFreight += freightAmount;
         totalOther += otherAmount;
 
-        // 🔥 ADD THIS HERE
-        const description = [
-            `Move: ${row.movement_type || "-"}`,
-            `Ref: ${row.reference_number || "-"}`,
-            `Vehicle: ${row.vehicle_type || ""} / ${row.vehicle_number || ""}`,
-            `Container: ${row.container_number || "-"}`,
-            `Route: ${row.origin_city || ""} → ${row.destination_city || ""}`,
-            `Mode: ${row.mode_type || "-"}`,
-            `Delivery: ${formatDate(row.completion_date) || "-"}`
-        ].join("\n");
+        const safe = (val, fallback = "-") =>
+            val && val.toString().trim() ? val : fallback;
 
+        const routeDetails =
+            safe(row.routedetails, null) ||
+            `${safe(row.origin_city, "")} → ${safe(row.destination_city, "")} `;
+
+        const deliveryDate = row.completion_date
+            ? formatDate(row.completion_date)
+            : null;
+
+        const descriptionArr = [
+            `Movement Type: ${safe(row.movement_type)} / ${safe(row.mode_type)}`,
+            `Ref           : ${safe(row.reference_number)}`,
+            `Vehicle       : ${safe(row.vehicle_type, "")} / ${safe(row.vehicle_number, "")}`,
+            `Container     : ${safe(row.container_number)}`,
+            `Route         : ${routeDetails}`,
+            ...(deliveryDate ? [`Delivery      : ${deliveryDate}`] : [])
+        ];
+
+        const description = descriptionArr.join("\n");
 
         return [
             i + 1,
             row.lr_number || "",
             formatDate(row.pickup_date) || "",
             description,
-            Qty || "0",
-            perQtyAmt.toFixed(2),
-            otherAmount.toFixed(2),
+            Qty ?? "0",
+            safeNumber(perQtyAmt).toFixed(2),
+            safeNumber(otherAmount).toFixed(2),
             (freightAmount + otherAmount).toFixed(2)
         ];
     });
 
+    // ================= TOTALS =================
     totalGST = round2(totalCGST + totalSGST + totalIGST);
     const grandTotal = round2(totalFreight + totalOther + totalGST);
 
+    // ================= PAGE CALCULATION =================
+    const usablePageHeight = PAGE.h - y - LAYOUT.footerReserve;
+    const maxRowsPerPage = Math.floor((usablePageHeight - headerHeight) / rowHeight);
+
+    // 🔥 ONLY add empty rows if SINGLE PAGE
+    const isSinglePage = body.length <= maxRowsPerPage;
+
+    if (isSinglePage) {
+        const rowsToAdd = maxRowsPerPage - body.length;
+
+        for (let i = 0; i < rowsToAdd; i++) {
+            body.push(emptyRow);
+        }
+    }
+
+    // ================= TABLE =================
     doc.autoTable({
         startY: y,
         margin: { left: PAGE.x, right: PAGE.x },
         tableWidth: PAGE.w,
-
         head: [[
             "Sl", "Docket no", "Date", "Descriptions", "Qty",
             "Rate Per Unit", "Other Charges", "Amount (INR)"
@@ -250,12 +330,12 @@ async function drawShipmentTable(doc, PAGE, FONT, rows = [], y) {
         body,
 
         styles: {
-            fontSize: FONT.tiny,
+            fontSize: FONT.small,
             cellPadding: 1.5,
             overflow: "linebreak",
             textColor: 0,
-            minCellHeight: 5,
-            lineWidth: 0.2,              // 🔥 border thickness
+            minCellHeight: rowHeight,
+            lineWidth: 0.2,
             lineColor: [0, 0, 0],
         },
 
@@ -265,24 +345,24 @@ async function drawShipmentTable(doc, PAGE, FONT, rows = [], y) {
             fontStyle: "bold",
             halign: "center",
             cellPadding: 1.5,
-            lineWidth: 0.2,              // 🔥 header border
+            lineWidth: 0.2,
             lineColor: [0, 0, 0]
         },
 
         columnStyles: {
-            0: { cellWidth: 8, halign: "center" },
-            1: { cellWidth: 17 },
-            2: { cellWidth: 22 },
-            3: { cellWidth: 73 },  // 🔥 BIG for description
-            4: { cellWidth: 12, halign: "right" },
-            5: { cellWidth: 22, halign: "right" },
-            6: { cellWidth: 22, halign: "right" },
-            7: { cellWidth: 14, halign: "right" },
-
+            0: { cellWidth: 8, halign: "center", valign: "middle" },
+            1: { cellWidth: 20, valign: "middle" },
+            2: { cellWidth: 20, valign: "middle" },
+            3: { cellWidth: 67, valign: "middle" },
+            4: { cellWidth: 15, halign: "right", valign: "middle" },
+            5: { cellWidth: 20, halign: "right", valign: "middle" },
+            6: { cellWidth: 20, halign: "right", valign: "middle" },
+            7: { cellWidth: 20, halign: "right", valign: "middle" },
         },
+
         didDrawCell: (data) => {
             if (data.section === "body") {
-                data.cell.styles.lineColor = [0, 0, 0]; // 🔥 enforce borders
+                data.cell.styles.lineColor = [0, 0, 0];
                 data.cell.styles.lineWidth = 0.2;
             }
         }
@@ -296,77 +376,64 @@ async function drawShipmentTable(doc, PAGE, FONT, rows = [], y) {
         totalSGST,
         totalIGST,
         totalGST,
-        grandTotal
+        grandTotal,
     };
 }
 // ================= TERMS AND TAX SECTION =================
-async function drawTermsAndTaxSection(doc, PAGE, FONT, company, header, totals, y, bank) {
+async function drawTermsAndTaxSection(doc, PAGE, FONT, company, header, totals, y, bank, totalPaymentReceived) {
 
-    const rowH = 4;        // 🔥 fixed row height (increase for spacing)
-    const rows = 10;       // total rows
+    const rowH = 4;
+    const rows = 8;
     const tableH = rowH * rows;
 
-    const col3 = 30;  // Non-Tax (match Freight column)
-    const col2 = 24;  // Label (slightly wider for text)
-    const col1 = PAGE.w - (col2 + col3); // remaining space
+    const col3 = 20;
+    const col2 = 40;
+    const col1 = PAGE.w - (col2 + col3);
 
     const x1 = PAGE.x;
     const x2 = x1 + col1;
     const x3 = x2 + col2;
-    const x4 = x3 + col3;
 
-    // Page break
     y = checkPageBreak(doc, y, tableH, PAGE);
 
-    // Outer border (bold)
-    doc.setDrawColor(0, 0, 0);     // black
-    doc.setLineWidth(0.2);         // 🔥 thicker outer border
+    // ================= BORDER =================
+    doc.setDrawColor(0, 0, 0);
+    doc.setLineWidth(0.2);
     doc.rect(PAGE.x, y, PAGE.w, tableH);
 
-    // Inner lines (light + thin)
-    doc.setDrawColor(120, 120, 120); // 🔥 soft gray (better than black)
+    doc.setDrawColor(120, 120, 120);
     doc.setLineWidth(0.2);
 
-    // Vertical lines
-    [x2, x3, x4].forEach(x => {
-        doc.line(x, y, x, y + tableH);
-    });
+    [x2, x3].forEach(x => doc.line(x, y, x, y + tableH));
 
-    // Horizontal lines
     for (let i = 1; i < rows; i++) {
         doc.line(PAGE.x, y + i * rowH, PAGE.x + PAGE.w, y + i * rowH);
     }
 
     // ================= HEADER =================
     doc.setFont("helvetica", "bold").setFontSize(FONT.body);
-
-    const headerY = y + rowH / 2;
-
-    doc.text("Terms & Conditions", x1 + col1 / 2, headerY, {
+    doc.text("Terms & Conditions", x1 + col1 / 2, y + rowH / 2, {
         align: "center",
         baseline: "middle"
     });
-
 
     // ================= TERMS =================
     doc.setFont("helvetica", "normal").setFontSize(FONT.tiny);
 
     const terms = [
-        `1. Please draw cheque in favour of ${company.name}`,
+        `1. Please draw cheque in favour of ${company.name} `,
         "2. Payments Should be made within 7 Days from the Date of Billing",
         "3. All Complaints must be forwarded within 8 days of receipt",
         "4. Only the courts of Bangalore will have exclusive jurisdiction over this contract.",
     ];
 
     terms.forEach((t, i) => {
-
         const rowTopY = y + rowH * (i + 1);
         const textY = rowTopY + rowH / 2;
 
         const text = doc.splitTextToSize(t, col1 - 4);
 
         doc.text(text, x1 + 2, textY, {
-            align: "left",
             baseline: "middle"
         });
     });
@@ -380,94 +447,98 @@ async function drawTermsAndTaxSection(doc, PAGE, FONT, company, header, totals, 
     doc.setFont("helvetica", "normal").setFontSize(FONT.tiny);
 
     const bankDetails = [
-        `Account Name: ${company.name}`,
-        `Account No: ${bank?.AccountNo || "-"}`,
-        `Bank: ${bank?.BankName || "-"} | Branch: ${bank?.BranchName || "-"}`,
-        `IFSC: ${bank?.IFSCCode || "-"}`
+        [
+            { label: "Account Name:", value: company.name },
+            { label: " | Account No:", value: bank?.AccountNo || "-" }
+        ],
+        [
+            { label: "Bank:", value: bank?.BankName || "-" },
+            { label: " | Branch:", value: bank?.BranchName || "-" },
+            { label: " | IFSC:", value: bank?.IFSCCode || "-" },
+            { label: " | MICR:", value: bank?.MICRCode || "-" }
+        ]
     ];
 
-    bankDetails.forEach((b, i) => {
-
+    bankDetails.forEach((row, i) => {
         const rowTopY = y + rowH * (6 + i);
         const textY = rowTopY + rowH / 2;
 
-        const text = doc.splitTextToSize(b, col1 - 4);
+        let xOffset = x1 + 2;
 
-        doc.text(text, x1 + 2, textY, {
-            align: "left",
-            baseline: "middle"
+        row.forEach(item => {
+            doc.setFont("helvetica", "bold");
+            doc.text(item.label, xOffset, textY, { baseline: "middle" });
+
+            xOffset += doc.getTextWidth(item.label) + 2;
+
+            doc.setFont("helvetica", "normal");
+            doc.text(item.value, xOffset, textY, { baseline: "middle" });
+
+            xOffset += doc.getTextWidth(item.value) + 2;
         });
     });
-    console.log("Calculated totals for tax table:", totals);
+
+    const advance = safeNumber(totalPaymentReceived);
     // ================= TAX TABLE =================
     const data = [
-        ["Freight Charges", totals.totalFreight],
-        ["Other Charges", totals.totalOther],
-        ["Sub Total", totals.totalFreight + totals.totalOther],
+        ["Total Amount :", totals.totalFreight],
         ["CGST", totals.totalCGST],
         ["SGST", totals.totalSGST],
         ["IGST", totals.totalIGST],
         ["Total GST", totals.totalGST],
-        ["GRAND TOTAL", totals.grandTotal]
+        ["GRAND TOTAL", totals.grandTotal],
+        ["Advance Amount :", advance.toFixed(2) || 0],
+        ["Balance Amount :", round2(totals.grandTotal - advance).toFixed(2) || 0]
     ];
 
     doc.setFontSize(FONT.small);
 
     data.forEach((row, i) => {
 
-        const rowTopY = y + rowH * (i + 1);
+        const rowTopY = y + rowH * i;
         const textY = rowTopY + rowH / 2;
 
         const label = row[0];
-        const freight = row[1];
+        const value = row[1];
 
+        // 🔥 Color logic
+        let fillColor = null;
 
-        const isHighlight =
-            label === "Sub Total" ||
-            label === "Total GST" ||
-            label === "GRAND TOTAL";
+        if (label === "Total GST" || label === "GRAND TOTAL") {
+            fillColor = [220, 230, 241]; // light blue
+        } else if (label === "Advance Amount :" || label === "Balance Amount :") {
+            fillColor = [198, 224, 180]; // light green (professional)
+        }
 
+        // ================= HIGHLIGHT =================
+        if (fillColor) {
 
-        // ================= HIGHLIGHT ROWS =================
-        if (isHighlight) {
+            doc.setFillColor(...fillColor);
+            doc.rect(x2, rowTopY, col2, rowH, "FD");
+            doc.rect(x3, rowTopY, col3, rowH, "FD");
 
-            doc.setFillColor(220, 230, 241);
-
-            // Fill
-            doc.rect(x2, rowTopY, col2, rowH, "F");
-            doc.rect(x3, rowTopY, col3, rowH, "F");
-
-            // Border
             doc.setDrawColor(0, 0, 0);
-            doc.setLineWidth(0.2);
-
             doc.rect(x2, rowTopY, col2, rowH);
             doc.rect(x3, rowTopY, col3, rowH);
 
             doc.setFont("helvetica", "bold");
 
         } else {
-
             doc.setFont("helvetica", "normal");
         }
-
-        // ================= TEXT =================
 
         // Label
         doc.text(label, x2 + 2, textY, {
             baseline: "middle"
         });
 
-
-
-        // Non-Tax
+        // Value (right aligned)
         doc.text(
-            safeAmount(freight).toFixed(2),
+            safeAmount(value).toFixed(2),
             x3 + col3 - 2,
             textY,
             { align: "right", baseline: "middle" }
         );
-
     });
 
     return y + tableH;
@@ -503,8 +574,22 @@ function addFooterToAllPages(doc, PAGE) {
     for (let i = 1; i <= totalPages; i++) {
         doc.setPage(i);
 
-        doc.text("Powered by AllEdge to BizNavigation", PAGE.x, PAGE.h - 8);
-        doc.text(`Page ${i} of ${totalPages}`, PAGE.x + PAGE.w - 20, PAGE.h - 8);
+        // 🔥 Set bold + color
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(7); // optional
+        doc.setTextColor(0, 102, 204); // 🔵 Blue color (RGB)
+
+        // Left text
+        doc.text("AllEdge Technology for BizNavigation", PAGE.x, PAGE.h - 8);
+
+        // Right text (page number)
+        doc.text(`Page ${i} of ${totalPages}`, PAGE.x + PAGE.w - 10, PAGE.h - 8, {
+            align: "right"
+        });
+
+        // 🔁 Reset to default (important for rest of PDF)
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(0, 0, 0);
     }
 }
 // ================= GET DOMESTIC SHIPMENT DATA =================
@@ -513,7 +598,7 @@ async function getDomesticShipmentData(invoiceNo) {
         const { data, error } = await supabaseClient
             .from("FullLoadBookingDetails")
             .select(`
-    id,
+id,
     lr_number,
     pickup_date,
     routedetails,
@@ -522,8 +607,11 @@ async function getDomesticShipmentData(invoiceNo) {
     vehicle_type,
     vehicle_number,
     container_number,
-
-    FullLoadBookingCharges!FullLoadBookingCharges_ID_FT_fkey (
+    movement_type,
+    reference_number,
+    mode_type,
+    completion_date,
+    FullLoadBookingCharges!FullLoadBookingCharges_ID_FT_fkey(
         ChargesType,
         Quantity,
         PerQtyAmt,
@@ -536,7 +624,7 @@ async function getDomesticShipmentData(invoiceNo) {
         GrandTotalAmt,
         AccountType
     )
-  `)
+        `)
             .eq("invoice_number", invoiceNo)
             .eq("FullLoadBookingCharges.AccountType", "Sale"); // 🔥 FIX
 

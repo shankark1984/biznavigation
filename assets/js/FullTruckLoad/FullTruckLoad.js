@@ -156,10 +156,15 @@ $("#lrNumber").on("change", async function () {
             .from("FullLoadBookingDetails")
             .select("*")
             .eq("lr_number", lrNumber)
-            .single();
+            .maybeSingle();
 
         if (error) {
             console.error("Error fetching LR:", error);
+            return;
+        }
+
+        if (!data) {
+            showToast("No data found for LR:", lrNumber);
             return;
         }
 
@@ -413,19 +418,21 @@ document.getElementById("saveButton").addEventListener("click", async function (
 
         if (isSaveAction) {
 
-            // INSERT
+            // 🔥 INSERT
             formData.created_by = UserLoginID;
-            formData.created_at = new Date().toISOString();
+            formData.created_at = localtimeStamp;
 
             query = supabaseClient
                 .from("FullLoadBookingDetails")
-                .insert([formData]);
+                .insert([formData])
+                .select()
+                .single(); // ✅ important
 
         } else {
 
-            // UPDATE
+            // 🔥 UPDATE
             formData.updated_by = UserLoginID;
-            formData.updated_at = new Date().toISOString();
+            formData.updated_at = localtimeStamp;
 
             query = supabaseClient
                 .from("FullLoadBookingDetails")
@@ -439,8 +446,12 @@ document.getElementById("saveButton").addEventListener("click", async function (
 
         if (error) throw error;
 
-        await saveCharges(lrNumber, "chargesDetailsTable", "Sale"); // Save customer charges
-        await saveCharges(lrNumber, "vendorChargesDetailsTable", "Buy"); // Save vendor charges
+        // ✅ GET ID
+        const bookingId = data.id;
+
+        // 🔥 Save Charges using ID
+        await saveCharges(bookingId, "chargesDetailsTable", "Sale");
+        await saveCharges(bookingId, "vendorChargesDetailsTable", "Buy");
 
         disableForm();
 
@@ -488,7 +499,7 @@ async function loadBillingCharges(lrNumber, accountType, tableId) {
 
         tr.innerHTML = `
             <td class="align-middle">${row.ChargesType}</td>
-            <td class="align-middle">${row.TaxRate}</td>
+            <td class="align-middle">${row.TaxRate}%</td>
             <td class="text-end align-middle">${parseFloat(row.TotalAmount).toFixed(2)}</td>
             <td class="text-end align-middle">${parseFloat(row.CGSTAmt).toFixed(2)}</td>
             <td class="text-end align-middle">${parseFloat(row.SGSTAmt).toFixed(2)}</td>
@@ -498,6 +509,8 @@ async function loadBillingCharges(lrNumber, accountType, tableId) {
             <td>
                 <button type="button" class="btn btn-sm btn-danger deleteRow" disabled>Delete</button>
             </td>
+            <td class="align-middle d-none">${row.HSNCode || ""}</td>
+            <td class="align-middle d-none">${row.TaxID || ""}</td>
         `;
 
         tableBody.appendChild(tr);
@@ -553,11 +566,19 @@ document.getElementById("addVendorFreightRow").addEventListener("click", async f
     await getFixedCharges("Buy"); // fetch and apply fixed charges
 });
 
-function addFreightRow(tableId, chargesInput, amountInput, taxInput) {
+async function addFreightRow(tableId, chargesInput, amountInput, taxInput) {
 
     const chargesType = document.getElementById(chargesInput).value.trim();
     const amount = parseFloat(document.getElementById(amountInput).value) || 0;
-    const taxText = document.getElementById(taxInput).value || "";
+    let taxText = document.getElementById(taxInput).value || "";
+    const HSNCode = await getDropdownDataValue(chargesType, "ChargesType");
+    document.getElementById("addVendorFreightRow").disabled = true;
+    document.getElementById("addFreightRow").disabled = true;
+
+    if (!taxText) {
+        taxText = "CGST 0% SGST 0% IGST 0%";
+
+    }
 
     if (!chargesType || amount <= 0) {
         alert("Enter Charges Type and Amount");
@@ -588,6 +609,7 @@ function addFreightRow(tableId, chargesInput, amountInput, taxInput) {
     const igstRate = parseFloat((taxText.match(/IGST\s*(\d+(\.\d+)?)%/) || [])[1]) || 0;
 
     let gstType = "";
+    let taxDetails = await fetchTaxDetails(taxText);
 
     if (igstRate > 0) {
         gstType = `IGST ${igstRate}%`;
@@ -610,7 +632,7 @@ function addFreightRow(tableId, chargesInput, amountInput, taxInput) {
 
     tr.innerHTML = `
         <td>${chargesType}</td>
-        <td>${gstType}</td>
+        <td>${taxDetails.taxRate}%</td>
         <td class="text-end">${amount.toFixed(2)}</td>
         <td class="text-end">${cgst.toFixed(2)}</td>
         <td class="text-end">${sgst.toFixed(2)}</td>
@@ -620,6 +642,8 @@ function addFreightRow(tableId, chargesInput, amountInput, taxInput) {
         <td>
             <button type="button" class="btn btn-sm btn-danger deleteRow">Delete</button>
         </td>
+        <td class="d-none">${HSNCode ? HSNCode.hsn_code : "0"}</td>
+        <td class="d-none">${taxDetails.taxId}</td>
     `;
 
     tableBody.appendChild(tr);
@@ -642,6 +666,8 @@ function addFreightRow(tableId, chargesInput, amountInput, taxInput) {
     document.getElementById(chargesInput).value = "";
     document.getElementById(amountInput).value = "";
     document.getElementById(taxInput).selectedIndex = 0;
+    document.getElementById("addVendorFreightRow").disabled = false;
+    document.getElementById("addFreightRow").disabled = false;
 }
 
 function updateChargesTotals(tableId) {
@@ -688,7 +714,7 @@ function updateChargesTotals(tableId) {
     `;
 }
 
-async function saveCharges(lrNumber, tableId, accountType) {
+async function saveCharges(bookingId, tableId, accountType) {
 
     const rows = document
         .getElementById(tableId)
@@ -697,45 +723,65 @@ async function saveCharges(lrNumber, tableId, accountType) {
     const insertData = [];
     const deleteIds = [];
 
+    // 🔥 Safe number converter
+    const getNumber = (val) => {
+        if (!val || val.toString().trim() === "" || val === "No GST") return 0;
+        return parseFloat(val) || 0;
+    };
+
     rows.forEach(row => {
 
         const status = row.dataset.status;
-
         const cells = row.querySelectorAll("td");
 
+        // ================= INSERT =================
         if (status === "new") {
 
             insertData.push({
-                LRNumber: lrNumber,
+                ID_FT: bookingId,   // ✅ IMPORTANT (FK)
+                LRNumber: document.getElementById("lrNumber").value.trim(),
                 ChargesType: cells[0].textContent.trim(),
-                TaxRate: cells[1].textContent.trim(),
-                TotalAmount: parseFloat(cells[2].textContent) || 0,
-                CGSTAmt: parseFloat(cells[3].textContent) || 0,
-                SGSTAmt: parseFloat(cells[4].textContent) || 0,
-                IGSTAmt: parseFloat(cells[5].textContent) || 0,
-                TotalGSTAmt: parseFloat(cells[6].textContent) || 0,
-                GrandTotalAmt: parseFloat(cells[7].textContent) || 0,
+                TaxRate: getNumber(cells[1].textContent),
+                Quantity: 1, // Quantity is not captured at charge level in current UI, set to 0 or modify as needed
+                PerQtyAmt: getNumber(cells[2].textContent), // Assuming TotalAmount is the charge amount for now
+                TotalAmount: getNumber(cells[2].textContent),
+                CGSTAmt: getNumber(cells[3].textContent),
+                SGSTAmt: getNumber(cells[4].textContent),
+                IGSTAmt: getNumber(cells[5].textContent),
+                TotalGSTAmt: getNumber(cells[6].textContent),
+                GrandTotalAmt: getNumber(cells[7].textContent),
+                HSNCode: cells[9].textContent || "", // HSN Code is in the 10th column (index 9)
+                TaxID: cells[10].textContent || "", // Tax ID is in the 11th column (index 10)
                 AccountType: accountType,
                 created_by: UserLoginID,
-                created_at: LocaltimeStamp
+                created_at: localtimeStamp
             });
         }
 
+        // ================= DELETE =================
         if (status === "deleted" && row.dataset.id) {
             deleteIds.push(row.dataset.id);
         }
 
     });
 
+    // console.log("Insert Data:", insertData);
+
+    // ================= INSERT =================
     if (insertData.length > 0) {
 
         const { error } = await supabaseClient
             .from("FullLoadBookingCharges")
             .insert(insertData);
 
-        if (error) console.error("Insert error:", error);
+        if (error) {
+            console.error("Insert error:", error);
+        } else {
+            // console.log("Charges inserted");
+        }
     }
 
+    // ================= DELETE =================
     if (deleteIds.length > 0) {
 
         const { error } = await supabaseClient
@@ -743,9 +789,12 @@ async function saveCharges(lrNumber, tableId, accountType) {
             .delete()
             .in("id", deleteIds);
 
-        if (error) console.error("Delete error:", error);
+        if (error) {
+            console.error("Delete error:", error);
+        } else {
+            console.log("Charges deleted");
+        }
     }
-
 }
 
 async function getTariffRate(partyCode, tariffType) {

@@ -33,7 +33,6 @@ async function loadDropdownOptions(filterValue, dropdownId) {
     }
 }
 
-
 // Load Movement Types Example
 document.addEventListener('DOMContentLoaded', () => {
     loadDropdownOptions('MovementType', 'movementType');
@@ -93,7 +92,6 @@ async function loadDropdownData(query, typeOfValue, datalistId) {
     }
 }
 
-
 function validateInput(inputId, datalistId = null) {
     const input = document.getElementById(inputId);
     const errorElementId = `${inputId}-error`;
@@ -131,7 +129,6 @@ function validateInput(inputId, datalistId = null) {
     }
 }
 
-
 // Attaches blur validation
 function attachValidation(inputId, datalistId = null) {
     const input = document.getElementById(inputId);
@@ -139,7 +136,6 @@ function attachValidation(inputId, datalistId = null) {
         input.addEventListener('blur', () => validateInput(inputId, datalistId));
     }
 }
-
 
 // Event listener for dynamic <input> / <select> loading
 function addInputEventListener(inputId, typeOfValue) {
@@ -170,8 +166,6 @@ function addInputEventListener(inputId, typeOfValue) {
     // Hook up any custom validation you already have
     attachValidation(inputId, isSelect ? null : datalistId);
 }
-
-
 
 // Initialize all listeners and validation
 function initialize() {
@@ -360,3 +354,23 @@ function updateAddressSuggestions(addresses, datalist) {
 }
 // Example usage
 // PartyAddressDetails('some query', 'PartyPickupAddress', 'partyAddressSuggestions');
+
+async function getDropdownDataValue(inputListId, listType) {
+    try {
+        const { data, error } = await supabaseClient
+            .from('dropdown_list')
+            .select('*')
+            .eq('description', inputListId)
+            .eq('type_of_value', listType)
+            .maybeSingle();
+        if (error) {
+            console.error('Error loading HSN code:', error.message);
+            return null;
+        }
+        console.log(`Fetched dropdown data for "${inputListId}" (${listType}):`, data);
+        return data; // ✅ RETURN DATA
+    } catch (err) {
+        console.error('Unexpected error:', err);
+        return null;
+    }
+}   
