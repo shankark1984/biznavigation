@@ -7,20 +7,19 @@
     <meta name="description"
         content="AllEdge Soft & Logic provides smart logistics software for transportation, warehousing and freight forwarding companies.">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#0d6efd">
 
-    <!-- Favicon -->
+    <!-- Favicon & PWA -->
     <link rel="icon" href="assets/img/applogo-192x192.png" type="image/png">
-    <link rel="shortcut icon" href="assets/img/applogo-192x192.png" type="image/png">
     <link rel="apple-touch-icon" sizes="180x180" href="assets/img/applogo-192x192.png">
+    <link rel="manifest" href="manifest.json">
 
-    <!-- Bootstrap CSS -->
+    <!-- Bootstrap & Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
 
-    <!-- AOS (Animate On Scroll) -->
+    <!-- AOS & Swiper -->
     <link href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css" rel="stylesheet">
-
-    <!-- Swiper CSS (carousel) -->
     <link href="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.css" rel="stylesheet">
 
     <!-- Custom CSS -->
@@ -30,13 +29,10 @@
             scroll-behavior: smooth;
         }
 
-        /* Hero */
         .hero {
             background: linear-gradient(135deg, #0d6efd, #032f6b);
-            color: white;
+            color: #fff;
             padding: 100px 0 150px;
-            position: relative;
-            overflow: hidden;
             text-align: center;
         }
 
@@ -45,7 +41,7 @@
         }
 
         .hero .btn-lg {
-            transition: all 0.3s;
+            transition: transform 0.3s;
         }
 
         .hero .btn-lg:hover {
@@ -58,7 +54,6 @@
             font-weight: bold;
         }
 
-        /* Cards */
         .feature-icon {
             font-size: 2.2rem;
             transition: transform 0.3s;
@@ -71,21 +66,13 @@
         .card:hover {
             transform: translateY(-5px);
             box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-            transition: all 0.3s;
         }
 
-        /* Pricing Section */
         .price {
             font-size: 2rem;
             font-weight: bold;
         }
 
-        .price-toggle button.active {
-            background-color: #0d6efd;
-            color: white;
-        }
-
-        /* Industries Carousel */
         .swiper {
             padding: 40px 0;
         }
@@ -100,15 +87,13 @@
             height: 80px;
         }
 
-        /* CTA Section */
         .cta-section {
             background: linear-gradient(90deg, #0d6efd, #ffc107);
-            color: white;
+            color: #fff;
             padding: 80px 0;
             text-align: center;
         }
 
-        /* Back to top */
         #backToTop {
             position: fixed;
             bottom: 25px;
@@ -124,7 +109,7 @@
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm fixed-top">
         <div class="container">
-            <a class="navbar-brand fw-bold d-flex align-items-center" href="#">
+            <a class="navbar-brand d-flex align-items-center fw-bold" href="#">
                 <img src="assets/img/applogo-192x192.png" alt="BizNavigation Logo" height="36" class="me-2">
                 BizNavigation
             </a>
@@ -151,8 +136,7 @@
             <span class="badge badge-logistics mb-3">Logistics ERP Platform</span>
             <h1 class="display-5 fw-bold mt-3">Smart Software for Logistics & Transportation Companies</h1>
             <p class="lead mt-3">Manage transportation, warehousing, freight forwarding, billing, and operations from
-                one
-                powerful platform.</p>
+                one platform.</p>
             <div class="mt-4">
                 <a href="book_free_demo.html" class="btn btn-warning btn-lg me-2">Book Free Demo</a>
                 <a href="login.html" class="btn btn-outline-light btn-lg">Login</a>
@@ -160,37 +144,35 @@
         </div>
     </section>
 
-    <!-- Solutions -->
+    <!-- Solutions Section -->
     <section id="solutions" class="py-5 bg-light">
-        <div class="container">
-            <div class="text-center mb-5" data-aos="fade-up">
-                <h2>Our Logistics Solutions</h2>
-                <p class="text-muted">Built for growing logistics businesses</p>
-            </div>
+        <div class="container text-center">
+            <h2 data-aos="fade-up">Our Logistics Solutions</h2>
+            <p class="text-muted mb-5" data-aos="fade-up">Built for growing logistics businesses</p>
             <div class="row g-4">
                 <div class="col-md-3" data-aos="fade-up" data-aos-delay="50">
-                    <div class="card h-100 shadow-sm text-center p-3">
+                    <div class="card shadow-sm p-3 h-100 text-center">
                         <div class="feature-icon mb-3">🚚</div>
                         <h6>Transportation Management</h6>
                         <p class="text-muted small">Trip planning, vehicle tracking, driver management, POD.</p>
                     </div>
                 </div>
                 <div class="col-md-3" data-aos="fade-up" data-aos-delay="100">
-                    <div class="card h-100 shadow-sm text-center p-3">
+                    <div class="card shadow-sm p-3 h-100 text-center">
                         <div class="feature-icon mb-3">🏬</div>
                         <h6>Warehouse Management</h6>
                         <p class="text-muted small">Stock control, inward & outward, bin tracking.</p>
                     </div>
                 </div>
                 <div class="col-md-3" data-aos="fade-up" data-aos-delay="150">
-                    <div class="card h-100 shadow-sm text-center p-3">
+                    <div class="card shadow-sm p-3 h-100 text-center">
                         <div class="feature-icon mb-3">📦</div>
                         <h6>Freight Forwarding</h6>
                         <p class="text-muted small">Booking, shipment tracking, documents & compliance.</p>
                     </div>
                 </div>
                 <div class="col-md-3" data-aos="fade-up" data-aos-delay="200">
-                    <div class="card h-100 shadow-sm text-center p-3">
+                    <div class="card shadow-sm p-3 h-100 text-center">
                         <div class="feature-icon mb-3">💰</div>
                         <h6>Billing & Accounts</h6>
                         <p class="text-muted small">Automated invoices, GST, vendor & customer accounts.</p>
@@ -200,17 +182,15 @@
         </div>
     </section>
 
-    <!-- Features -->
+    <!-- Features Section -->
     <section id="features" class="py-5">
-        <div class="container">
-            <div class="text-center mb-5" data-aos="fade-up">
-                <h2>Why BizNavigation?</h2>
-                <p class="text-muted">Designed specifically for Indian logistics businesses</p>
-            </div>
+        <div class="container text-center">
+            <h2 data-aos="fade-up">Why BizNavigation?</h2>
+            <p class="text-muted mb-5" data-aos="fade-up">Designed specifically for Indian logistics businesses</p>
             <div class="row g-4">
                 <div class="col-md-4" data-aos="fade-up" data-aos-delay="50">
-                    <div class="card h-100 shadow-sm p-3">
-                        <div class="card-body">
+                    <div class="card shadow-sm p-3 h-100">
+                        <div class="card-body text-start">
                             ✅ GST-ready billing & compliance<br>
                             ✅ Multi-branch & multi-vehicle support<br>
                             ✅ Role-based user access<br>
@@ -219,8 +199,8 @@
                     </div>
                 </div>
                 <div class="col-md-4" data-aos="fade-up" data-aos-delay="100">
-                    <div class="card h-100 shadow-sm p-3">
-                        <div class="card-body">
+                    <div class="card shadow-sm p-3 h-100">
+                        <div class="card-body text-start">
                             ✅ Real-time shipment visibility<br>
                             ✅ Driver & vendor management<br>
                             ✅ Custom reports & dashboards<br>
@@ -229,8 +209,8 @@
                     </div>
                 </div>
                 <div class="col-md-4" data-aos="fade-up" data-aos-delay="150">
-                    <div class="card h-100 shadow-sm p-3">
-                        <div class="card-body">
+                    <div class="card shadow-sm p-3 h-100">
+                        <div class="card-body text-start">
                             ✅ Easy onboarding for SMEs<br>
                             ✅ Scalable as your business grows<br>
                             ✅ Local support & training<br>
@@ -244,11 +224,9 @@
 
     <!-- Pricing Section -->
     <section id="pricing" class="py-5 bg-light">
-        <div class="container">
-            <div class="text-center mb-5" data-aos="fade-up">
-                <h2>Pricing Plans</h2>
-                <p class="text-muted">Choose a plan that fits your logistics business</p>
-            </div>
+        <div class="container text-center">
+            <h2 data-aos="fade-up">Pricing Plans</h2>
+            <p class="text-muted mb-4" data-aos="fade-up">Choose a plan that fits your logistics business</p>
 
             <div class="d-flex justify-content-center mb-4" data-aos="fade-up" data-aos-delay="50">
                 <button class="btn btn-outline-primary me-2 active" id="monthlyBtn">Monthly</button>
@@ -256,14 +234,13 @@
             </div>
 
             <div class="row g-4">
-                <!-- Basic -->
+                <!-- Plans -->
                 <div class="col-md-4" data-aos="fade-up" data-aos-delay="100">
-                    <div class="card h-100 shadow-sm p-4 text-center">
+                    <div class="card shadow-sm p-4 h-100 text-center">
                         <h5 class="fw-bold">Basic</h5>
                         <p class="text-muted">For small businesses</p>
-                        <!-- <h2 class="price" data-monthly="499" data-yearly="4990">₹499</h2> -->
                         <h2 class="price" data-monthly="Coming Soon" data-yearly="Coming Soon">Coming Soon</h2>
-                        <ul class="list-unstyled mt-3 mb-4 text-muted">
+                        <ul class="list-unstyled text-muted mt-3 mb-4">
                             <li>2 Users</li>
                             <li>Vehicle Management</li>
                             <li>Basic Reports</li>
@@ -272,16 +249,14 @@
                         <a href="book_free_demo.html" class="btn btn-primary">Start Free Trial</a>
                     </div>
                 </div>
-                <!-- Standard -->
                 <div class="col-md-4" data-aos="fade-up" data-aos-delay="150">
-                    <div class="card h-100 shadow-lg border-primary p-4 text-center position-relative">
+                    <div class="card shadow-lg border-primary p-4 h-100 text-center position-relative">
                         <span class="badge bg-primary position-absolute top-0 start-50 translate-middle">Most
                             Popular</span>
                         <h5 class="fw-bold mt-3">Standard</h5>
                         <p class="text-muted">For growing businesses</p>
-                        <!-- <h2 class="price" data-monthly="999" data-yearly="9990">₹999</h2> -->
                         <h2 class="price" data-monthly="Coming Soon" data-yearly="Coming Soon">Coming Soon</h2>
-                        <ul class="list-unstyled mt-3 mb-4 text-muted">
+                        <ul class="list-unstyled text-muted mt-3 mb-4">
                             <li>5 Users</li>
                             <li>Warehouse + Freight</li>
                             <li>Custom Reports</li>
@@ -290,14 +265,12 @@
                         <a href="book_free_demo.html" class="btn btn-primary">Start Free Trial</a>
                     </div>
                 </div>
-                <!-- Enterprise -->
                 <div class="col-md-4" data-aos="fade-up" data-aos-delay="200">
-                    <div class="card h-100 shadow-sm p-4 text-center">
+                    <div class="card shadow-sm p-4 h-100 text-center">
                         <h5 class="fw-bold">Enterprise</h5>
                         <p class="text-muted">For large logistics companies</p>
-                        <!-- <h2 class="price" data-monthly="1999" data-yearly="19990">₹1999</h2> -->
                         <h2 class="price" data-monthly="Coming Soon" data-yearly="Coming Soon">Coming Soon</h2>
-                        <ul class="list-unstyled mt-3 mb-4 text-muted">
+                        <ul class="list-unstyled text-muted mt-3 mb-4">
                             <li>20 Users</li>
                             <li>Advanced Analytics</li>
                             <li>Dedicated Account Manager</li>
@@ -312,10 +285,8 @@
 
     <!-- Industries Carousel -->
     <section id="industries" class="py-5 bg-light">
-        <div class="container">
-            <div class="text-center mb-5" data-aos="fade-up">
-                <h2>Industries We Serve</h2>
-            </div>
+        <div class="container text-center">
+            <h2 data-aos="fade-up">Industries We Serve</h2>
             <div class="swiper mySwiper" data-aos="fade-up">
                 <div class="swiper-wrapper">
                     <div class="swiper-slide">🚛 Transporters</div>
@@ -329,9 +300,9 @@
         </div>
     </section>
 
-    <!-- CTA Section -->
+    <!-- CTA -->
     <section class="cta-section" data-aos="fade-up">
-        <div class="container">
+        <div class="container text-center">
             <h2>Digitize Your Logistics Operations Today</h2>
             <p class="mt-2">Start with AllEdge Soft & Logic and take your logistics business to the next level.</p>
             <a href="book_free_demo.html" class="btn btn-light btn-lg mt-3 me-2">Book Free Demo</a>
@@ -345,59 +316,52 @@
     <!-- Footer -->
     <footer class="py-3 text-center bg-white">
         <div class="container">
-            <small class="text-muted">
-                © 2026 AllEdge Soft & Logic OPC Pvt Ltd. All rights reserved.
-            </small>
+            <small class="text-muted">© 2026 AllEdge Soft & Logic OPC Pvt Ltd. All rights reserved.</small>
         </div>
     </footer>
 
     <!-- Scripts -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/swiper@10/swiper-bundle.min.js" defer></script>
 
     <script>
-        // AOS init
-        AOS.init({ duration: 800, once: true });
+        document.addEventListener("DOMContentLoaded", () => {
+            AOS.init({ duration: 800, once: true });
 
-        // Swiper Carousel
-        var swiper = new Swiper(".mySwiper", {
-            slidesPerView: 3,
-            spaceBetween: 20,
-            loop: true,
-            autoplay: { delay: 3000 },
-            breakpoints: {
-                320: { slidesPerView: 1 },
-                576: { slidesPerView: 2 },
-                768: { slidesPerView: 3 },
-                992: { slidesPerView: 4 },
-            },
-        });
+            new Swiper(".mySwiper", {
+                slidesPerView: 3,
+                spaceBetween: 20,
+                loop: true,
+                autoplay: { delay: 3000 },
+                breakpoints: { 320: { slidesPerView: 1 }, 576: { slidesPerView: 2 }, 768: { slidesPerView: 3 }, 992: { slidesPerView: 4 } }
+            });
 
-        // Back to top
-        const btn = document.getElementById("backToTop");
-        window.addEventListener('scroll', () => {
-            btn.style.display = window.scrollY > 300 ? 'block' : 'none';
-        });
-        btn.addEventListener('click', () => {
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        });
+            const backBtn = document.getElementById("backToTop");
+            window.addEventListener("scroll", () => backBtn.style.display = window.scrollY > 300 ? "block" : "none");
+            backBtn.addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
 
-        // Pricing toggle
-        const monthlyBtn = document.getElementById("monthlyBtn");
-        const yearlyBtn = document.getElementById("yearlyBtn");
-        const prices = document.querySelectorAll(".price");
+            const monthlyBtn = document.getElementById("monthlyBtn");
+            const yearlyBtn = document.getElementById("yearlyBtn");
+            const prices = document.querySelectorAll(".price");
 
-        monthlyBtn.addEventListener("click", () => {
-            monthlyBtn.classList.add("active");
-            yearlyBtn.classList.remove("active");
-            prices.forEach(p => p.innerText = "₹" + p.dataset.monthly);
-        });
+            monthlyBtn.addEventListener("click", () => {
+                monthlyBtn.classList.add("active");
+                yearlyBtn.classList.remove("active");
+                prices.forEach(p => p.innerText = "₹" + p.dataset.monthly);
+            });
 
-        yearlyBtn.addEventListener("click", () => {
-            yearlyBtn.classList.add("active");
-            monthlyBtn.classList.remove("active");
-            prices.forEach(p => p.innerText = "₹" + p.dataset.yearly);
+            yearlyBtn.addEventListener("click", () => {
+                yearlyBtn.classList.add("active");
+                monthlyBtn.classList.remove("active");
+                prices.forEach(p => p.innerText = "₹" + p.dataset.yearly);
+            });
+
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('/service-worker.js')
+                    .then(reg => console.log('Service Worker registered:', reg.scope))
+                    .catch(err => console.error('SW registration failed:', err));
+            }
         });
     </script>
 </body>
