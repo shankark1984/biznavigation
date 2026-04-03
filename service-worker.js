@@ -1,4 +1,4 @@
-const CACHE_NAME = 'biznavigation-cache-v3';
+const CACHE_NAME = 'biznavigation-cache-v3.0.0';
 const PRECACHE_URLS = [
     '/', // root
     '/index.html',
