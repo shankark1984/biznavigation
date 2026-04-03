@@ -357,13 +357,61 @@
                 prices.forEach(p => p.innerText = "₹" + p.dataset.yearly);
             });
 
+            const showBanner = (message, buttonText, buttonAction) => {
+                let banner = document.getElementById('installBanner');
+                banner.querySelector('.banner-text').innerText = message;
+                const btn = banner.querySelector('#installBtn');
+                btn.innerText = buttonText;
+                btn.onclick = buttonAction;
+                banner.classList.remove('d-none');
+            };
+
             if ('serviceWorker' in navigator) {
-                navigator.serviceWorker.register('/service-worker.js')
-                    .then(reg => console.log('Service Worker registered:', reg.scope))
-                    .catch(err => console.error('SW registration failed:', err));
+                navigator.serviceWorker.register('/service-worker.js').then(reg => {
+                    navigator.serviceWorker.addEventListener('message', event => {
+                        if (event.data.type === 'UPDATE_AVAILABLE') {
+                            showBanner(
+                                "New version available!",
+                                "Update",
+                                () => {
+                                    if (navigator.serviceWorker.controller) {
+                                        navigator.serviceWorker.controller.postMessage({ action: 'skipWaiting' });
+                                    }
+                                    location.reload();
+                                }
+                            );
+                        }
+                    });
+                });
             }
+
+            let deferredPrompt;
+            window.addEventListener('beforeinstallprompt', (e) => {
+                e.preventDefault();
+                deferredPrompt = e;
+                showBanner(
+                    "Install BizNavigation on your device!",
+                    "Install",
+                    async () => {
+                        if (deferredPrompt) {
+                            deferredPrompt.prompt();
+                            deferredPrompt.userChoice.then(choiceResult => {
+                                console.log('PWA install outcome:', choiceResult.outcome);
+                                deferredPrompt = null;
+                            });
+                        }
+                    }
+                );
+            });
         });
     </script>
+    <!-- PWA Install Prompt -->
+    <div id="installBanner"
+        class="alert alert-success alert-dismissible fade show position-fixed bottom-0 start-50 translate-middle-x mb-3 d-none">
+        <span class="banner-text"></span>
+        <button id="installBtn" class="btn btn-sm btn-primary ms-2"></button>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
 </body>
 
 </html>
