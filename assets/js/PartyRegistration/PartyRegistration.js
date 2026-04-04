@@ -11,10 +11,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     await loadDropdownOptions('VehicleType', 'ftlVehicleType');
     await loadRouteSuggestions();
 
-    loadGSTDropdown("defaultTax", {
-        placeholder: "Select Default Tax",
-        showRate: true
-    });
+    loadTaxData();
 });
 
 // Global variables
@@ -150,18 +147,7 @@ async function fetchSelectedPartyDetails(partyCode) {
         };
 
         Object.entries(fieldMap).forEach(([id, column]) => {
-            if (id === "defaultTax") {
-                const taxDesc = data[column];
-
-                if (taxDesc && taxCache.length) {
-                    const tax = taxCache.find(t => t.tax_description === taxDesc);
-                    fields.defaultTax.value = tax ? tax.id : "";
-                } else {
-                    fields.defaultTax.value = "";
-                }
-            } else {
-                if (fields[id]) fields[id].value = data[column] ?? '';
-            }
+            if (fields[id]) fields[id].value = data[column] ?? '';
         });
 
         saveButton.innerHTML = '<i class="bi bi-save"></i> Update';
@@ -196,7 +182,7 @@ saveButton.addEventListener('click', async (e) => {
     const partyStatus = fields.partyCurrentStatus.value;
 
     const isInsert = saveButton.textContent.trim() === 'Save';
-
+    console.log("GST Type", fields.defaultTax.value);
     const formData = {
         PartyCode: partyCode,
         PartyType: partyType,
@@ -323,20 +309,4 @@ document.getElementById('modeType').addEventListener('change', async function ()
 
 document.getElementById('partyNameReg').addEventListener('input', async () => {
     await loadSuggestions('partySuggestions', 'PartyDetails', CompanyID);
-});
-
-document.querySelectorAll('[data-bs-toggle="tab"]').forEach(tab => {
-    tab.addEventListener('shown.bs.tab', async (event) => {
-        const target = event.target.getAttribute("data-bs-target");
-
-        if (target === "#tariff" && !window.tariffLoaded) {
-            await loadTariffData();
-            window.tariffLoaded = true;
-        }
-
-        if (target === "#fixedCharges" && !window.fixedLoaded) {
-            await loadFixedCharges();
-            window.fixedLoaded = true;
-        }
-    });
 });
