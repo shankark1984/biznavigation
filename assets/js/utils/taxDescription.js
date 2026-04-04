@@ -89,9 +89,7 @@ async function loadGSTDropdown(selectId, {
     showRate = false,
     selectedValue = null
 } = {}) {
-    console.log("Function called for:", selectId);
     try {
-        console.log("Loading GST dropdown:", selectId);
         const { data, error } = await supabaseClient
             .from("tax_details")
             .select("id, tax_code, tax_description, tax_rate")

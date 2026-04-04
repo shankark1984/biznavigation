@@ -1,6 +1,5 @@
 // On DOM load
 document.addEventListener("DOMContentLoaded", async () => {
-    // loadTaxData();
 
     createLoader();
     if (perWrite) saveButton.disabled = false;
@@ -12,11 +11,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     await loadDropdownOptions('VehicleType', 'ftlVehicleType');
     await loadRouteSuggestions();
 
-    loadGSTDropdown("partyDefaultTax1", {
+    loadGSTDropdown("defaultTax", {
         placeholder: "Select Default Tax",
         showRate: true
     });
-    message("GST dropdown initialized on page load");
 });
 
 // Global variables
