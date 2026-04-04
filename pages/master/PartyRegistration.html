@@ -164,8 +164,8 @@
 
                         <!-- Default Tax -->
                         <div class="col-md-4">
-                            <label for="partyDefaultTax" class="form-label">Default Tax</label>
-                            <select id="partyDefaultTax" class="form-select">
+                            <label for="partyDefaultTax1" class="form-label">Default Tax</label>
+                            <select id="partyDefaultTax1" class="form-select">
                                 <option value="" disabled selected>Select Default Tax</option>
                             </select>
                         </div>
@@ -527,9 +527,9 @@
                                 <div class="col-12 col-md-1">
                                     <label for="ftlCurrencyCode" class="form-label">Currency</label>
                                     <input type="text" id="ftlCurrencyCode" name="ftlCurrencyCode"
-                                        list="currencyListDatalist" autocomplete="off"
+                                        list="ftlCurrencyListDatalist" autocomplete="off"
                                         class="form-control text-capitalize" required value="INR">
-                                    <datalist id="currencyListDatalist"></datalist>
+                                    <datalist id="ftlCurrencyListDatalist"></datalist>
                                 </div>
                                 <div class="col-12 col-md-2 d-flex align-items-end">
                                     <button type="button" class="btn btn-primary w-100" id="addFtlFCLButton">
@@ -705,8 +705,11 @@
     </div>
 
     <!-- JavaScript Files -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Core -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" defer></script>
+
+    <!-- Optional (only if needed) -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js" defer></script>
     <script src="https://unpkg.com/@supabase/supabase-js"></script>
 
     <!-- Application Scripts -->

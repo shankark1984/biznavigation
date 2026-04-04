@@ -12,6 +12,7 @@ async function loadTaxData() {
         taxCache = data || [];
 
         populateTaxDropdown("#partyDefaultTax", taxCache);
+        populateTaxDropdown("#partyDefaultTax1", taxCache);
         populateTaxDropdown("#vendorDefaultTax", taxCache);
         populateTaxDropdown("#defaultTax", taxCache);
 
@@ -79,4 +80,56 @@ async function onChargeTypeOrPartyChange() {
 }
 
 // Run on page load
-document.addEventListener("DOMContentLoaded", loadTaxData);
+// document.addEventListener("DOMContentLoaded", loadTaxData);
+
+
+
+async function loadGSTDropdown(selectId, {
+    placeholder = "Select Default Tax",
+    showRate = false,
+    selectedValue = null
+} = {}) {
+    console.log("Function called for:", selectId);
+    try {
+        console.log("Loading GST dropdown:", selectId);
+        const { data, error } = await supabaseClient
+            .from("tax_details")
+            .select("id, tax_code, tax_description, tax_rate")
+            .order("tax_rate", { ascending: true });
+
+        if (error) {
+            console.error("GST Load Error:", error.message);
+            return;
+        }
+
+        const select = document.getElementById(selectId);
+        if (!select) {
+            console.warn(`Element '${selectId}' not found`);
+            return;
+        }
+
+        // Reset dropdown
+        select.innerHTML = `<option value="" disabled selected>${placeholder}</option>`;
+
+        data.forEach(item => {
+            const option = document.createElement("option");
+            option.value = item.id;
+
+            // Display text
+            option.textContent = showRate
+                ? `${item.tax_description} (${item.tax_rate}%)`
+                : item.tax_description;
+
+            // Pre-select
+            if (selectedValue && item.id == selectedValue) {
+                option.selected = true;
+            }
+
+            select.appendChild(option);
+        });
+
+    } catch (err) {
+        console.error("Unexpected GST Error:", err);
+    }
+}
+

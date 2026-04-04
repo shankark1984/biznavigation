@@ -3,6 +3,7 @@ const awbNoInput = document.getElementById('awbNo');
 // On DOM load
 document.addEventListener("DOMContentLoaded", async () => {
     enableForm();
+    message("GST dropdown initialized on page load");
     await Promise.all([
         loadSuggestions('partySuggestions', 'PartyDetails', CompanyID, 'PartyCode', 'PartyName'),
         loadSuggestions('vendorSuggestions', 'PartyDetails', CompanyID, 'PartyCode', 'PartyName'),
@@ -27,6 +28,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     loadDatalist('tabPackingTypeSuggestions', 'PackingType'); // Static data
     initDatalistValidation();
     loadTaxData();
+
 });
 
 document.getElementById("awbNo")
@@ -489,3 +491,7 @@ async function checkAWBBilledStatus(docketNo) {
     // If invoice exists → billed
     return { isUnbilled: false, invoiceNo: data.InvoiceNumber };
 }
+
+
+
+

@@ -1,6 +1,7 @@
 // On DOM load
 document.addEventListener("DOMContentLoaded", async () => {
-    loadTaxData();
+    // loadTaxData();
+
     createLoader();
     if (perWrite) saveButton.disabled = false;
     enableForm();
@@ -11,7 +12,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     await loadDropdownOptions('VehicleType', 'ftlVehicleType');
     await loadRouteSuggestions();
 
-
+    loadGSTDropdown("partyDefaultTax1", {
+        placeholder: "Select Default Tax",
+        showRate: true
+    });
+    message("GST dropdown initialized on page load");
 });
 
 // Global variables
@@ -320,4 +325,20 @@ document.getElementById('modeType').addEventListener('change', async function ()
 
 document.getElementById('partyNameReg').addEventListener('input', async () => {
     await loadSuggestions('partySuggestions', 'PartyDetails', CompanyID);
+});
+
+document.querySelectorAll('[data-bs-toggle="tab"]').forEach(tab => {
+    tab.addEventListener('shown.bs.tab', async (event) => {
+        const target = event.target.getAttribute("data-bs-target");
+
+        if (target === "#tariff" && !window.tariffLoaded) {
+            await loadTariffData();
+            window.tariffLoaded = true;
+        }
+
+        if (target === "#fixedCharges" && !window.fixedLoaded) {
+            await loadFixedCharges();
+            window.fixedLoaded = true;
+        }
+    });
 });
