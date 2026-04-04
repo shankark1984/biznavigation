@@ -1,17 +1,19 @@
 // Load tax data from Supabase
+let taxCache = [];
+
 async function loadTaxData() {
     try {
         const { data, error } = await supabaseClient
             .from('tax_details')
-            .select('tax_code, tax_description');
+            .select('id, tax_code, tax_description, tax_rate');
 
         if (error) throw error;
-        if (!data?.length) return console.warn("No tax data found");
 
-        // Populate all dropdowns
-        populateTaxDropdown("#partyDefaultTax", data);
-        populateTaxDropdown("#vendorDefaultTax", data);
-        populateTaxDropdown("#defaultTax", data);
+        taxCache = data || [];
+
+        populateTaxDropdown("#partyDefaultTax", taxCache);
+        populateTaxDropdown("#vendorDefaultTax", taxCache);
+        populateTaxDropdown("#defaultTax", taxCache);
 
     } catch (error) {
         console.error("Error loading tax data:", error.message);
@@ -20,41 +22,32 @@ async function loadTaxData() {
 
 // Reusable dropdown population function
 function populateTaxDropdown(selector, data) {
-    const dropdown = $(selector);
-    dropdown.empty();
+    const dropdown = document.querySelector(selector);
 
-    dropdown.append('<option value="" disabled selected>Select Default Tax</option>');
+    console.log("Dropdown:", dropdown);
+    console.log("Data:", data);
+
+    if (!dropdown) return;
+
+    dropdown.innerHTML = `<option value="">Select Default Tax</option>`;
 
     data.forEach(tax => {
-        dropdown.append(
-            `<option value="${tax.tax_description}">
-                ${tax.tax_description}
-            </option>`
-        );
+        const option = document.createElement("option");
+        option.value = tax.id;
+        option.textContent = tax.tax_description;
+        dropdown.appendChild(option);
     });
 }
 
 // Fetch tax details (rate + id)
-async function fetchTaxDetails(taxType) {
+function fetchTaxDetails(taxType) {
     if (!taxType) return null;
 
-    try {
-        const { data, error } = await supabaseClient
-            .from('tax_details')
-            .select('id, tax_rate')
-            .eq('tax_description', taxType)
-            .maybeSingle();
+    const tax = taxCache.find(t => t.tax_description === taxType);
 
-        if (error) throw error;
-
-        return data
-            ? { taxId: data.id, taxRate: data.tax_rate }
-            : null;
-
-    } catch (err) {
-        console.error("Error fetching tax details:", err.message);
-        return null;
-    }
+    return tax
+        ? { taxId: tax.id, taxRate: tax.tax_rate }
+        : null;
 }
 
 // Load party default tax
@@ -86,4 +79,4 @@ async function onChargeTypeOrPartyChange() {
 }
 
 // Run on page load
-// document.addEventListener("DOMContentLoaded", loadTaxData);
+document.addEventListener("DOMContentLoaded", loadTaxData);

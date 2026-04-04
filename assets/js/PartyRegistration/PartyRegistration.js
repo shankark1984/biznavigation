@@ -1,5 +1,6 @@
 // On DOM load
 document.addEventListener("DOMContentLoaded", async () => {
+    loadTaxData();
     createLoader();
     if (perWrite) saveButton.disabled = false;
     enableForm();
@@ -9,6 +10,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     await loadDatalist('fixedChargesTypelist', 'ChargesType');
     await loadDropdownOptions('VehicleType', 'ftlVehicleType');
     await loadRouteSuggestions();
+
 
 });
 
@@ -145,7 +147,18 @@ async function fetchSelectedPartyDetails(partyCode) {
         };
 
         Object.entries(fieldMap).forEach(([id, column]) => {
-            if (fields[id]) fields[id].value = data[column] ?? '';
+            if (id === "defaultTax") {
+                const taxDesc = data[column];
+
+                if (taxDesc && taxCache.length) {
+                    const tax = taxCache.find(t => t.tax_description === taxDesc);
+                    fields.defaultTax.value = tax ? tax.id : "";
+                } else {
+                    fields.defaultTax.value = "";
+                }
+            } else {
+                if (fields[id]) fields[id].value = data[column] ?? '';
+            }
         });
 
         saveButton.innerHTML = '<i class="bi bi-save"></i> Update';
