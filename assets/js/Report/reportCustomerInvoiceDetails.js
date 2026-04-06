@@ -109,7 +109,8 @@ function buildQuery(filters = {}) {
     let query = supabaseClient
         .from('InvoicePaymentView')
         .select('*', { count: 'exact' })
-        .eq('company_id', CompanyID);
+        .eq('company_id', CompanyID)
+        .order('InvoiceNo', { ascending: false });
 
     if (filters.invoiceNo) query = query.ilike('InvoiceNo', `%${filters.invoiceNo}%`);
     if (filters.customerName) query = query.ilike('PartyName', filters.customerName);
@@ -355,7 +356,8 @@ async function fetchAllFilteredData(filters = {}) {
         let query = supabaseClient
             .from('InvoicePaymentView')
             .select('*')
-            .eq('company_id', CompanyID);
+            .eq('company_id', CompanyID)
+            .order('InvoiceNo', { ascending: true });
 
         if (filters.invoiceNo) query = query.ilike('InvoiceNo', `%${filters.invoiceNo}%`);
         if (filters.customerName) query = query.ilike('PartyName', filters.customerName);

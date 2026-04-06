@@ -1,39 +1,43 @@
-// settings.js  ⚡️
-/* ------------------------------------------------
-   Assumes: supabaseClient, companyID, userLoginID,
-            localtimeStamp are globally available
---------------------------------------------------*/
+// settings.js ⚡️
+// ------------------------------------------------
+// Assumes: supabaseClient, CompanyID, UserLoginID,
+//          UserType, localtimeStamp are globally available
+// ------------------------------------------------
 
 document.addEventListener('DOMContentLoaded', initSettings);
 
-async function initSettings() {
-    try {
+// 🔁 cache to avoid multiple DB calls
+let cachedSettings = [];
 
-        const settings = await loadSettings();
-        applySettings(settings);
+/* ---------------- INIT ---------------- */
+
+async function initSettings() {
+    const saveBtn = document.getElementById('saveSettingsBtn');
+    const inputs = document.querySelectorAll('#SettingParameters input[id]');
+    const canEdit = [1, 2].includes(Number(UserType));
+    console.log('UserType:', UserType, typeof UserType);
+
+    try {
+        cachedSettings = await loadSettings();
+        applySettings(cachedSettings);
     } catch (err) {
         handleError('Failed to load settings', err);
+        toast('❌ Failed to load settings');
     }
 
-    const saveBtn = document.getElementById('saveSettingsBtn');
-
-    const inputs = document.querySelectorAll('#SettingParameters input[id]');
-    const canEdit = [1, 2].includes(UserType);          // ← 🔑 permission check
-
-    if (!canEdit) {                                      // lock the UI
+    // 🔒 Lock UI if no permission
+    if (!canEdit) {
         inputs.forEach(i => (i.disabled = true));
         saveBtn.disabled = true;
-        return;                                          // nothing else to wire-up
+        return;
     }
 
-    // editable → wire the save handler
+    // 💾 Save handler
     saveBtn.addEventListener('click', () => saveSettings(saveBtn));
 }
 
-/**
- * Read all SettingParameters records for this company.
- * @returns {Promise<Array<{InputFieldID, FieldValue, InputFieldType, id?}>>}
- */
+/* ---------------- LOAD ---------------- */
+
 async function loadSettings() {
     const { data, error } = await supabaseClient
         .from('SettingParameters')
@@ -41,96 +45,129 @@ async function loadSettings() {
         .eq('company_id', CompanyID);
 
     if (error) throw error;
-    return data;
+    return data || [];
 }
 
-/**
- * Write only changed / new values back to the DB.
- * @param {HTMLButtonElement} saveBtn — button that triggered the save.
- */
+/* ---------------- SAVE ---------------- */
+
 async function saveSettings(saveBtn) {
     toggleSpinner(saveBtn, true);
 
     try {
-        const existingRows = await loadSettings(); // ← already small for one company
-        // O(1) lookup table on InputFieldID ➜ row
         const byId = Object.fromEntries(
-            existingRows.map(r => [r.InputFieldID, r])
+            cachedSettings.map(r => [r.InputFieldID, r])
         );
 
         const rowsToUpsert = Array
             .from(document.querySelectorAll('#SettingParameters input[id]'))
             .reduce((acc, input) => {
+
                 const id = input.id.trim();
-                const value = input.value.trim();
-                const type = (input.type === 'number') ? 'number' : 'text';
+                if (!id) return acc;
+
+                // 🧠 Handle different input types
+                let value;
+                let type = input.type;
+
+                if (type === 'checkbox') {
+                    value = input.checked ? 'true' : 'false';
+                    type = 'boolean';
+                } else {
+                    value = input.value.trim();
+                    type = (type === 'number') ? 'number' : 'text';
+                }
+
+                // 🚫 Skip empty values (optional — remove if needed)
+                if (value === '') return acc;
 
                 const prev = byId[id];
-                const changed = !prev || String(prev.FieldValue) !== value;
+
+                // 🔍 Normalize for accurate comparison
+                const normalize = v => (v ?? '').toString().trim();
+                const changed = !prev || normalize(prev.FieldValue) !== normalize(value);
 
                 if (changed) {
                     acc.push({
-                        /* id present only for update paths */
                         ...(prev && { id: prev.id }),
                         InputFieldID: id,
                         FieldValue: value,
                         InputFieldType: type,
                         company_id: CompanyID,
-                        /* audit columns */
+
                         ...(prev
                             ? { updated_at: localtimeStamp, updated_by: UserLoginID }
                             : { created_at: localtimeStamp, created_by: UserLoginID }
                         )
                     });
                 }
+
                 return acc;
             }, []);
 
         if (rowsToUpsert.length) {
             const { error: upsertError } = await supabaseClient
                 .from('SettingParameters')
-                .upsert(rowsToUpsert, { onConflict: ['InputFieldID', 'company_id'] });
+                .upsert(rowsToUpsert, {
+                    onConflict: ['InputFieldID', 'company_id']
+                });
 
             if (upsertError) throw upsertError;
+
+            // 🔁 Update cache locally (no extra DB call)
+            rowsToUpsert.forEach(r => {
+                const index = cachedSettings.findIndex(x => x.InputFieldID === r.InputFieldID);
+                if (index > -1) {
+                    cachedSettings[index] = { ...cachedSettings[index], ...r };
+                } else {
+                    cachedSettings.push(r);
+                }
+            });
+
             toast('✅ Settings saved');
         } else {
-            toast('ℹ️ Nothing was changed');
+            toast('ℹ️ Nothing changed');
         }
+
     } catch (err) {
         handleError('Save failed', err);
-        toast('❌ Could not save settings');
+        toast(`❌ Save failed: ${err.message}`);
     } finally {
         toggleSpinner(saveBtn, false);
     }
 }
 
-/* ---------- helpers ---------- */
+/* ---------------- APPLY ---------------- */
 
-/** Sets form <input>s from DB data. */
 function applySettings(rows) {
     rows.forEach(({ InputFieldID, FieldValue, InputFieldType }) => {
         const el = document.getElementById(InputFieldID);
         if (!el) return;
 
-        el.value = (InputFieldType === 'number')
-            ? parseFloat(FieldValue)
-            : FieldValue;
+        if (InputFieldType === 'number') {
+            el.value = (FieldValue !== null && FieldValue !== '')
+                ? parseFloat(FieldValue)
+                : '';
+        } else if (InputFieldType === 'boolean') {
+            el.checked = FieldValue === 'true';
+        } else {
+            el.value = FieldValue ?? '';
+        }
     });
 }
 
-/** Simple console wrapper – extend with Sentry / LogRocket etc. */
+/* ---------------- HELPERS ---------------- */
+
 function handleError(label, err) {
     console.error(`${label}:`, err?.message ?? err);
 }
 
-/** Starts / stops a tiny in-button spinner and disables click. */
 function toggleSpinner(btn, busy = true) {
     btn.disabled = busy;
     btn.querySelector('.spinner')?.classList.toggle('d-none', !busy);
 }
 
-/** Replace with your preferred toast/snackbar component. */
 function toast(msg) {
-    console.info(msg);              // dev fallback
-    // e.g. window.Toastify?.({ text: msg, duration: 3000 }).showToast();
+    console.info(msg);
+    // Example:
+    // window.Toastify?.({ text: msg, duration: 3000 }).showToast();
 }

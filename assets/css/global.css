@@ -200,3 +200,8 @@ input:required {
 .bg-light-input {
     background-color: #e6f7ff;
 }
+
+.scroll-table {
+    max-height: 300px;
+    overflow-y: auto;
+}

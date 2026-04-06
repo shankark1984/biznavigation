@@ -173,6 +173,22 @@ document.getElementById('saveButton').addEventListener('click', async () => {
         const el = document.getElementById(id);
         return el ? parseFloat(el.textContent) || 0 : 0;
     };
+    const isCustoms = invoiceType === 'Customs Clearance';
+
+    const totals = {
+        freight: getTextValue('totalFreightAmt'),
+
+        fsc: isCustoms ? 0 : getTextValue('totalFSCAmt'),
+        other: isCustoms ? 0 : getTextValue('totalOtherAmt'),
+
+        sgst: getTextValue('totalSGSTAmt'),
+        cgst: getTextValue('totalCGSTAmt'),
+        igst: getTextValue('totalIGSTAmt'),
+        gst: getTextValue('totalGSTAmt'),
+        grand: getTextValue('totalGrandAmt')
+    };
+
+    console.log('Calculated Totals:', totals);
     invoiceData = {
         InvoiceNo: invoiceNo,
         InvoiceDate: invoiceDate,
@@ -182,17 +198,16 @@ document.getElementById('saveButton').addEventListener('click', async () => {
         BankID: bankID,
         company_id: CompanyID,
 
-        BasicAmount: parseFloat(totalFreight.textContent) || 0,
+        BasicAmount: totals.freight,
 
-        OtherAmount:
-            getValue("totalFSCAmt") +
-            getValue("totalOtherAmt"),
+        OtherAmount: totals.fsc + totals.other,
 
-        SGSTAmount: parseFloat(totalSGSTAmt.textContent) || 0,
-        CGSTAmount: parseFloat(totalCGSTAmt.textContent) || 0,
-        IGSTAmount: parseFloat(totalIGSTAmt.textContent) || 0,
-        TotalGSTAmount: parseFloat(totalGSTAmt.textContent) || 0,
-        GrandTotalAmount: parseFloat(totalGrandAmt.textContent) || 0,
+        SGSTAmount: totals.sgst,
+        CGSTAmount: totals.cgst,
+        IGSTAmount: totals.igst,
+        TotalGSTAmount: totals.gst,
+        GrandTotalAmount: totals.grand,
+
         Remarks: document.getElementById('invoiceInformation').value.trim(),
     };
 
@@ -692,3 +707,8 @@ function showAddressSelectionModal(addresses) {
 
     modal.show();
 }
+
+const getTextValue = (id) => {
+    const el = document.getElementById(id);
+    return el ? parseFloat(el.textContent) || 0 : 0;
+};

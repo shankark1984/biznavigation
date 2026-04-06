@@ -1,4 +1,4 @@
-const CACHE_NAME = 'biznavigation-cache-v3.3.1';
+const CACHE_NAME = 'biznavigation-cache-v3.3.20';
 const MAX_CACHE_ITEMS = 50;
 
 const PRECACHE_URLS = [
@@ -22,7 +22,6 @@ async function limitCacheSize(cacheName, maxItems) {
 
 /* ================= INSTALL ================= */
 self.addEventListener('install', event => {
-    console.log('[SW] Installing...');
 
     event.waitUntil(
         caches.open(CACHE_NAME).then(async cache => {
@@ -31,9 +30,9 @@ self.addEventListener('install', event => {
                     const res = await fetch(url);
                     if (!res.ok) throw new Error(res.status);
                     await cache.put(url, res);
-                    console.log('[SW] Cached:', url);
+                    // console.log('[SW] Cached:', url);
                 } catch (err) {
-                    console.error('[SW] Failed:', url);
+                    // console.error('[SW] Failed:', url);
                 }
             }
         })

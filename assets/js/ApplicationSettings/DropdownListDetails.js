@@ -3,38 +3,44 @@
  *************************************************/
 let dropdownListData = [];
 let filtersInitialized = false;
+let dropdownMenuListTabInitialized = false;
+
+const valueassignedto = document.getElementById('valueassignedto');
+const descriptionInput = document.getElementById('description');
+const conditionInput = document.getElementById('condition');
+const fixedvalueInput = document.getElementById('fixedvalue');
+const hsncodeInput = document.getElementById('hsncode');
+const tempFormID = document.getElementById('tempFormID');
 
 /*************************************************
  * INIT
  *************************************************/
-
-let dropdownMenuListTabInitialized = false;
-
 document.getElementById('dropdownListdetails-tab')
-    .addEventListener('shown.bs.tab', async () => {
+    ?.addEventListener('shown.bs.tab', initDropdownTab);
 
-        // Prevent reloading every time
-        if (dropdownMenuListTabInitialized) return;
-        dropdownMenuListTabInitialized = true;
+async function initDropdownTab() {
+    if (dropdownMenuListTabInitialized) return;
+    dropdownMenuListTabInitialized = true;
 
-        createLoader();
+    createLoader();
 
-        const addDropdownMenuListBtn = document.getElementById('addDropdownMenuList');
-        if (!addDropdownMenuListBtn) return;
+    const addBtn = document.getElementById('addDropdownMenuList');
+    if (!addBtn) return;
 
-        addDropdownMenuListBtn.removeEventListener('click', saveDropdownItem);
-        addDropdownMenuListBtn.addEventListener('click', saveDropdownItem);
+    // Prevent duplicate listeners
+    addBtn.onclick = saveDropdownItem;
 
-        const checkPermission = () => {
-            addDropdownMenuListBtn.disabled = !canModify();
-        };
+    const checkPermission = () => {
+        addBtn.disabled = !canModify();
+    };
 
-        checkPermission();
-        setTimeout(checkPermission, 150);
+    checkPermission();
+    setTimeout(checkPermission, 150);
 
-        await fetchDropdownList();
-        setupFilterListeners();
-    });
+    await fetchDropdownList();
+    setupFilterListeners();
+    attachTableEvents(); // ✅ delegated events
+}
 
 /*************************************************
  * FETCH DROPDOWN LIST
@@ -52,6 +58,8 @@ async function fetchDropdownList() {
         if (error) throw error;
 
         const tbody = document.querySelector('#dropdownListTable tbody');
+        if (!tbody) return;
+
         tbody.innerHTML = '';
 
         if (!data?.length) {
@@ -60,10 +68,11 @@ async function fetchDropdownList() {
             return;
         }
 
-        data.forEach((item, i) => {
+        const fragment = document.createDocumentFragment();
+
+        dropdownListData = data.map((item, i) => {
             const tr = document.createElement('tr');
 
-            // ✅ dataset (camelCase ONLY)
             tr.dataset.id = item.id;
             tr.dataset.typeOfValue = item.type_of_value;
             tr.dataset.description = item.description;
@@ -89,20 +98,21 @@ async function fetchDropdownList() {
                     ` : '<span class="text-muted small">Read Only</span>'}
                 </td>
             `;
-            tbody.appendChild(tr);
+
+            fragment.appendChild(tr);
+
+            return {
+                type_of_value: item.type_of_value,
+                description: item.description,
+                condition: item.condition,
+                value: item.value,
+                hsn_code: item.hsn_code
+            };
         });
 
-        // ✅ global cache (correct keys)
-        dropdownListData = data.map(d => ({
-            type_of_value: d.type_of_value,
-            description: d.description,
-            condition: d.condition,
-            value: d.value,
-            hsn_code: d.hsn_code
-        }));
+        tbody.appendChild(fragment);
 
         populateDropdownDatalists();
-        attachDropdownListTableEvents();
 
     } catch (err) {
         console.error(err);
@@ -113,30 +123,33 @@ async function fetchDropdownList() {
 }
 
 /*************************************************
- * ATTACH EDIT / DELETE EVENTS
+ * EVENT DELEGATION (FAST)
  *************************************************/
-function attachDropdownListTableEvents() {
-    document.querySelectorAll('.edit-btn-dropdownitem').forEach(btn => {
-        btn.onclick = e => {
-            const row = btn.closest('tr');
+function attachTableEvents() {
+    const tbody = document.querySelector('#dropdownListTable tbody');
+    if (!tbody) return;
+
+    tbody.addEventListener('click', async (e) => {
+        const row = e.target.closest('tr');
+        if (!row) return;
+
+        // EDIT
+        if (e.target.closest('.edit-btn-dropdownitem')) {
             editDropdownDetails(
                 row.dataset.id,
                 row.dataset.typeOfValue,
                 row.dataset.description,
                 row.dataset.condition,
                 row.dataset.value,
-                row.dataset.hsnCode,
-                e
+                row.dataset.hsnCode
             );
-        };
-    });
+        }
 
-    document.querySelectorAll('.delete-btn-dropdownitem').forEach(btn => {
-        btn.onclick = async e => {
-            const row = btn.closest('tr');
+        // DELETE
+        if (e.target.closest('.delete-btn-dropdownitem')) {
             if (!confirm(`Delete "${row.dataset.description}" ?`)) return;
-            await deleteDropdownItem(row.dataset.id, e);
-        };
+            await deleteDropdownItem(row.dataset.id);
+        }
     });
 }
 
@@ -150,11 +163,11 @@ async function saveDropdownItem() {
     const mode = btn.dataset.mode || 'insert';
     const id = Number(document.getElementById('tempFormID').value);
 
-    const type_of_value = document.getElementById('valueassignedto').value.trim();
-    const description = document.getElementById('description').value.trim();
-    const condition = document.getElementById('condition').value.trim();
-    const fixedvalue = document.getElementById('fixedvalue').value.trim();
-    const hsncode = document.getElementById('hsncode').value.trim();
+    const type_of_value = valueassignedto.value.trim();
+    const description = descriptionInput.value.trim();
+    const condition = conditionInput.value.trim();
+    const fixedvalue = fixedvalueInput.value.trim();
+    const hsncode = hsncodeInput.value.trim();
 
     if (!type_of_value || !description || !condition || !fixedvalue || !hsncode) {
         return showToast('All fields are required.');
@@ -162,9 +175,10 @@ async function saveDropdownItem() {
 
     try {
         if (mode === 'insert') {
+
             const exists = dropdownListData.some(d =>
-                d.description?.toLowerCase() === description.toLowerCase() &&
-                d.type_of_value?.toLowerCase() === type_of_value.toLowerCase()
+                d.description.toLowerCase() === description.toLowerCase() &&
+                d.type_of_value.toLowerCase() === type_of_value.toLowerCase()
             );
 
             if (exists) return showToast('Item already exists.');
@@ -183,9 +197,11 @@ async function saveDropdownItem() {
                 }]);
 
             if (error) throw error;
+
             showToast('Dropdown item added.');
 
         } else {
+
             const { error } = await supabaseClient
                 .from('dropdown_list')
                 .update({
@@ -198,6 +214,7 @@ async function saveDropdownItem() {
                 .eq('id', id);
 
             if (error) throw error;
+
             showToast('Dropdown item updated.');
         }
 
@@ -210,12 +227,10 @@ async function saveDropdownItem() {
     }
 }
 
-
 /*************************************************
  * DELETE
  *************************************************/
-async function deleteDropdownItem(id, event) {
-    if (event) event.preventDefault();
+async function deleteDropdownItem(id) {
     if (!canModify()) return;
 
     try {
@@ -238,16 +253,15 @@ async function deleteDropdownItem(id, event) {
 /*************************************************
  * EDIT
  *************************************************/
-function editDropdownDetails(id, valueAssignedTo, description, condition, fixedValue, hsnCode, event) {
-    if (event) event.preventDefault();
+function editDropdownDetails(id, valueAssignedTo, desc, cond, val, hsn) {
     if (!canModify()) return;
 
-    document.getElementById('tempFormID').value = id;
-    document.getElementById('valueassignedto').value = valueAssignedTo;
-    document.getElementById('description').value = description;
-    document.getElementById('condition').value = condition;
-    document.getElementById('fixedvalue').value = fixedValue;
-    document.getElementById('hsncode').value = hsnCode;
+    tempFormID.value = id;
+    valueassignedto.value = valueAssignedTo;
+    descriptionInput.value = desc;
+    conditionInput.value = cond;
+    fixedvalueInput.value = val;
+    hsncodeInput.value = hsn;
 
     const btn = document.getElementById('addDropdownMenuList');
     btn.innerText = 'Edit';
@@ -259,9 +273,9 @@ function editDropdownDetails(id, valueAssignedTo, description, condition, fixedV
  * RESET FORM
  *************************************************/
 function resetDropdownForm() {
-    document.getElementById('tempFormID').value = '';
-    ['valueassignedto', 'description', 'condition', 'fixedvalue', 'hsncode']
-        .forEach(id => document.getElementById(id).value = '');
+    tempFormID.value = '';
+    [valueassignedto, descriptionInput, conditionInput, fixedvalueInput, hsncodeInput]
+        .forEach(el => el.value = '');
 
     const btn = document.getElementById('addDropdownMenuList');
     btn.innerText = 'Add';
@@ -289,51 +303,47 @@ function populateDropdownDatalists() {
         if (d.description) descriptionSet.add(d.description);
     });
 
-    assignedSet.forEach(v => {
-        const o = document.createElement('option');
-        o.value = v;
-        assignedList.appendChild(o);
-    });
-
-    descriptionSet.forEach(v => {
-        const o = document.createElement('option');
-        o.value = v;
-        descriptionList.appendChild(o);
-    });
+    assignedList.innerHTML = [...assignedSet].map(v => `<option value="${v}">`).join('');
+    descriptionList.innerHTML = [...descriptionSet].map(v => `<option value="${v}">`).join('');
 }
 
 /*************************************************
- * FILTERS (INIT ONCE)
+ * FILTERS
  *************************************************/
 function setupFilterListeners() {
     if (filtersInitialized) return;
     filtersInitialized = true;
 
     const inputs = [
-        'valueassignedto',
-        'description',
-        'condition',
-        'fixedvalue',
-        'hsncode'
-    ].map(id => document.getElementById(id));
+        valueassignedto,
+        descriptionInput,
+        conditionInput,
+        fixedvalueInput,
+        hsncodeInput
+    ];
 
     inputs.forEach(input => {
-        if (!input) return;
-        input.addEventListener('input', applyDropdownFilters);
+        ['input', 'change', 'keyup'].forEach(evt => {
+            input.addEventListener(evt, applyDropdownFilters);
+        });
     });
 }
 
 function applyDropdownFilters() {
     const filters = {
-        assigned: document.getElementById('valueassignedto').value.toLowerCase(),
-        desc: document.getElementById('description').value.toLowerCase(),
-        cond: document.getElementById('condition').value.toLowerCase(),
-        value: document.getElementById('fixedvalue').value.toLowerCase(),
-        hsn: document.getElementById('hsncode').value.toLowerCase()
+        assigned: valueassignedto.value.trim().toLowerCase(),
+        desc: descriptionInput.value.trim().toLowerCase(),
+        cond: conditionInput.value.trim().toLowerCase(),
+        value: fixedvalueInput.value.trim().toLowerCase(),
+        hsn: hsncodeInput.value.trim().toLowerCase()
     };
 
-    document.querySelectorAll('#dropdownListTable tbody tr').forEach(row => {
+    const rows = document.querySelectorAll('#dropdownListTable tbody tr');
+    let visibleCount = 0;
+
+    rows.forEach(row => {
         const cells = row.cells;
+
         const visible =
             (!filters.assigned || cells[1].textContent.toLowerCase().includes(filters.assigned)) &&
             (!filters.desc || cells[2].textContent.toLowerCase().includes(filters.desc)) &&
@@ -342,5 +352,19 @@ function applyDropdownFilters() {
             (!filters.hsn || cells[5].textContent.toLowerCase().includes(filters.hsn));
 
         row.style.display = visible ? '' : 'none';
+        if (visible) visibleCount++;
     });
+
+    // Optional: No data message
+    const tbody = document.querySelector('#dropdownListTable tbody');
+    if (visibleCount === 0 && rows.length > 0) {
+        if (!document.getElementById('noDataRow')) {
+            const tr = document.createElement('tr');
+            tr.id = 'noDataRow';
+            tr.innerHTML = `<td colspan="7" class="text-muted">No matching records</td>`;
+            tbody.appendChild(tr);
+        }
+    } else {
+        document.getElementById('noDataRow')?.remove();
+    }
 }
