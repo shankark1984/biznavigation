@@ -366,43 +366,43 @@
                 banner.classList.remove('d-none');
             };
 
-            if ('serviceWorker' in navigator) {
-                navigator.serviceWorker.register('/service-worker.js').then(reg => {
-                    navigator.serviceWorker.addEventListener('message', event => {
-                        if (event.data.type === 'UPDATE_AVAILABLE') {
-                            showBanner(
-                                "New version available!",
-                                "Update",
-                                () => {
-                                    if (navigator.serviceWorker.controller) {
-                                        navigator.serviceWorker.controller.postMessage({ action: 'skipWaiting' });
-                                    }
-                                    location.reload();
-                                }
-                            );
-                        }
-                    });
-                });
-            }
+            // if ('serviceWorker' in navigator) {
+            //     navigator.serviceWorker.register('/service-worker.js').then(reg => {
+            //         navigator.serviceWorker.addEventListener('message', event => {
+            //             if (event.data.type === 'UPDATE_AVAILABLE') {
+            //                 showBanner(
+            //                     "New version available!",
+            //                     "Update",
+            //                     () => {
+            //                         if (navigator.serviceWorker.controller) {
+            //                             navigator.serviceWorker.controller.postMessage({ action: 'skipWaiting' });
+            //                         }
+            //                         location.reload();
+            //                     }
+            //                 );
+            //             }
+            //         });
+            //     });
+            // }
 
-            let deferredPrompt;
-            window.addEventListener('beforeinstallprompt', (e) => {
-                e.preventDefault();
-                deferredPrompt = e;
-                showBanner(
-                    "Install BizNavigation on your device!",
-                    "Install",
-                    async () => {
-                        if (deferredPrompt) {
-                            deferredPrompt.prompt();
-                            deferredPrompt.userChoice.then(choiceResult => {
-                                console.log('PWA install outcome:', choiceResult.outcome);
-                                deferredPrompt = null;
-                            });
-                        }
-                    }
-                );
-            });
+            // let deferredPrompt;
+            // window.addEventListener('beforeinstallprompt', (e) => {
+            //     e.preventDefault();
+            //     deferredPrompt = e;
+            //     showBanner(
+            //         "Install BizNavigation on your device!",
+            //         "Install",
+            //         async () => {
+            //             if (deferredPrompt) {
+            //                 deferredPrompt.prompt();
+            //                 deferredPrompt.userChoice.then(choiceResult => {
+            //                     console.log('PWA install outcome:', choiceResult.outcome);
+            //                     deferredPrompt = null;
+            //                 });
+            //             }
+            //         }
+            //     );
+            // });
         });
     </script>
     <!-- PWA Install Prompt -->
