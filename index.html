@@ -327,82 +327,108 @@
 
     <script>
         document.addEventListener("DOMContentLoaded", () => {
-            AOS.init({ duration: 800, once: true });
 
-            new Swiper(".mySwiper", {
-                slidesPerView: 3,
-                spaceBetween: 20,
-                loop: true,
-                autoplay: { delay: 3000 },
-                breakpoints: { 320: { slidesPerView: 1 }, 576: { slidesPerView: 2 }, 768: { slidesPerView: 3 }, 992: { slidesPerView: 4 } }
-            });
+            // ✅ AOS
+            if (typeof AOS !== "undefined") {
+                AOS.init({ duration: 800, once: true });
+            }
 
+            // ✅ Swiper
+            if (typeof Swiper !== "undefined") {
+                new Swiper(".mySwiper", {
+                    slidesPerView: 3,
+                    spaceBetween: 20,
+                    loop: true,
+                    autoplay: { delay: 3000 },
+                    breakpoints: {
+                        320: { slidesPerView: 1 },
+                        576: { slidesPerView: 2 },
+                        768: { slidesPerView: 3 },
+                        992: { slidesPerView: 4 }
+                    }
+                });
+            }
+
+            // ✅ Back to top
             const backBtn = document.getElementById("backToTop");
-            window.addEventListener("scroll", () => backBtn.style.display = window.scrollY > 300 ? "block" : "none");
-            backBtn.addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
+            if (backBtn) {
+                window.addEventListener("scroll", () => {
+                    backBtn.style.display = window.scrollY > 300 ? "block" : "none";
+                });
+                backBtn.addEventListener("click", () => {
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                });
+            }
 
+            // ✅ Pricing toggle
             const monthlyBtn = document.getElementById("monthlyBtn");
             const yearlyBtn = document.getElementById("yearlyBtn");
             const prices = document.querySelectorAll(".price");
 
-            monthlyBtn.addEventListener("click", () => {
-                monthlyBtn.classList.add("active");
-                yearlyBtn.classList.remove("active");
-                prices.forEach(p => p.innerText = "₹" + p.dataset.monthly);
-            });
+            if (monthlyBtn && yearlyBtn) {
+                monthlyBtn.addEventListener("click", () => {
+                    monthlyBtn.classList.add("active");
+                    yearlyBtn.classList.remove("active");
+                    prices.forEach(p => {
+                        const val = p.dataset.monthly;
+                        p.innerText = isNaN(val) ? val : "₹" + val;
+                    });
+                });
 
-            yearlyBtn.addEventListener("click", () => {
-                yearlyBtn.classList.add("active");
-                monthlyBtn.classList.remove("active");
-                prices.forEach(p => p.innerText = "₹" + p.dataset.yearly);
-            });
+                yearlyBtn.addEventListener("click", () => {
+                    yearlyBtn.classList.add("active");
+                    monthlyBtn.classList.remove("active");
+                    prices.forEach(p => {
+                        const val = p.dataset.yearly;
+                        p.innerText = isNaN(val) ? val : "₹" + val;
+                    });
+                });
+            }
 
-            const showBanner = (message, buttonText, buttonAction) => {
-                let banner = document.getElementById('installBanner');
+            // ✅ Banner function
+            const showBanner = (message, buttonText, action) => {
+                const banner = document.getElementById('installBanner');
+                if (!banner) return;
+
                 banner.querySelector('.banner-text').innerText = message;
                 const btn = banner.querySelector('#installBtn');
                 btn.innerText = buttonText;
-                btn.onclick = buttonAction;
+                btn.onclick = action;
                 banner.classList.remove('d-none');
             };
 
-            // if ('serviceWorker' in navigator) {
-            //     navigator.serviceWorker.register('/service-worker.js').then(reg => {
-            //         navigator.serviceWorker.addEventListener('message', event => {
-            //             if (event.data.type === 'UPDATE_AVAILABLE') {
-            //                 showBanner(
-            //                     "New version available!",
-            //                     "Update",
-            //                     () => {
-            //                         if (navigator.serviceWorker.controller) {
-            //                             navigator.serviceWorker.controller.postMessage({ action: 'skipWaiting' });
-            //                         }
-            //                         location.reload();
-            //                     }
-            //                 );
-            //             }
-            //         });
-            //     });
-            // }
+            // ✅ Service Worker
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('/service-worker.js').then(() => {
 
-            // let deferredPrompt;
-            // window.addEventListener('beforeinstallprompt', (e) => {
-            //     e.preventDefault();
-            //     deferredPrompt = e;
-            //     showBanner(
-            //         "Install BizNavigation on your device!",
-            //         "Install",
-            //         async () => {
-            //             if (deferredPrompt) {
-            //                 deferredPrompt.prompt();
-            //                 deferredPrompt.userChoice.then(choiceResult => {
-            //                     console.log('PWA install outcome:', choiceResult.outcome);
-            //                     deferredPrompt = null;
-            //                 });
-            //             }
-            //         }
-            //     );
-            // });
+                    navigator.serviceWorker.addEventListener('message', event => {
+                        if (event.data.type === 'SW_UPDATED') {
+                            showBanner("App updated!", "Refresh", () => location.reload());
+                        }
+                    });
+
+                });
+            }
+
+            // ✅ PWA Install
+            let deferredPrompt;
+
+            window.addEventListener('beforeinstallprompt', (e) => {
+                e.preventDefault();
+                deferredPrompt = e;
+
+                if (!localStorage.getItem("pwa_prompt_shown")) {
+                    showBanner("Install BizNavigation!", "Install", async () => {
+                        if (deferredPrompt) {
+                            deferredPrompt.prompt();
+                            await deferredPrompt.userChoice;
+                            deferredPrompt = null;
+                        }
+                    });
+                    localStorage.setItem("pwa_prompt_shown", "true");
+                }
+            });
+
         });
     </script>
     <!-- PWA Install Prompt -->
