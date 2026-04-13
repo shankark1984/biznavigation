@@ -127,6 +127,9 @@ function attachTableEvents() {
 /*************************************************
  * SAVE (ADD / UPDATE)
  *************************************************/
+document.getElementById('addDropdownMenuList')
+    .addEventListener('click', saveDropdownItem);
+
 async function saveDropdownItem() {
     if (!canModify()) return alert('No permission.');
 
@@ -136,11 +139,14 @@ async function saveDropdownItem() {
 
     const type_of_value = valueassignedto.value.trim();
     const description = descriptionInput.value.trim();
-    const condition = conditionInput.value.trim();
-    const fixedvalue = fixedvalueInput.value.trim();
-    const hsncode = hsncodeInput.value.trim();
+    const condition = conditionInput.value.trim() || "No Condition";
+    const fixedvalueRaw = fixedvalueInput.value.trim();
+    const hsncodeRaw = hsncodeInput.value.trim();
+    const fixedvalue = fixedvalueRaw === '' ? null : fixedvalueRaw;
+    const hsncode = hsncodeRaw === '' ? null : hsncodeRaw;
 
-    if (!type_of_value || !description || !condition || !fixedvalue || !hsncode) {
+
+    if (!type_of_value || !description) {
         return showToast('All fields are required.');
     }
 
@@ -281,6 +287,53 @@ function populateDropdownDatalists() {
 /*************************************************
  * FILTERS
  *************************************************/
+/**
+ * Applies filters to the dropdown list table.
+ * The filters are based on the values of the input fields in the form.
+ * If a filter value is empty, it is ignored.
+ * The function loops through all the rows in the table and checks if
+ * the values of the cells in the row match the filter values. If they do,
+ * the row is displayed, otherwise it is hidden.
+ * If no rows match the filter values, a "No matching records" message is displayed.
+ */
+function applyDropdownFilters() {
+    const assigned = valueassignedto.value.trim().toLowerCase();
+    const desc = descriptionInput.value.trim().toLowerCase();
+    const cond = conditionInput.value.trim().toLowerCase();
+    const value = fixedvalueInput.value.trim().toLowerCase();
+    const hsn = hsncodeInput.value.trim().toLowerCase();
+
+    const rows = document.querySelectorAll('#dropdownListTable tbody tr');
+    let visibleCount = 0;
+
+    rows.forEach(row => {
+        const cells = row.cells;
+
+        const match =
+            (!assigned || cells[1].textContent.toLowerCase().includes(assigned)) &&
+            (!desc || cells[2].textContent.toLowerCase().includes(desc)) &&
+            (!cond || cells[3].textContent.toLowerCase().includes(cond)) &&
+            (!value || cells[4].textContent.toLowerCase().includes(value)) &&
+            (!hsn || cells[5].textContent.toLowerCase().includes(hsn));
+
+        row.style.display = match ? '' : 'none';
+
+        if (match) visibleCount++;
+    });
+
+    // remove old message
+    document.getElementById('noDataRow')?.remove();
+
+    // show no data message
+    if (visibleCount === 0 && rows.length > 0) {
+        const tbody = document.querySelector('#dropdownListTable tbody');
+        const tr = document.createElement('tr');
+        tr.id = 'noDataRow';
+        tr.innerHTML = `<td colspan="7" class="text-muted text-center">No matching records</td>`;
+        tbody.appendChild(tr);
+    }
+}
+
 function setupFilterListeners() {
     if (filtersInitialized) return;
     filtersInitialized = true;
@@ -294,79 +347,7 @@ function setupFilterListeners() {
     ];
 
     inputs.forEach(input => {
-        ['input', 'change', 'keyup'].forEach(evt => {
-            input.addEventListener(evt, applyDropdownFilters);
-        });
+        input.addEventListener('input', applyDropdownFilters);
+        input.addEventListener('change', applyDropdownFilters);
     });
 }
-
-function applyDropdownFilters() {
-    const filters = {
-        assigned: valueassignedto.value.trim().toLowerCase(),
-        desc: descriptionInput.value.trim().toLowerCase(),
-        cond: conditionInput.value.trim().toLowerCase(),
-        value: fixedvalueInput.value.trim().toLowerCase(),
-        hsn: hsncodeInput.value.trim().toLowerCase()
-    };
-
-    const rows = document.querySelectorAll('#dropdownListTable tbody tr');
-    let visibleCount = 0;
-
-    rows.forEach(row => {
-        const cells = row.cells;
-
-        const visible =
-            (!filters.assigned || cells[1].textContent.toLowerCase().includes(filters.assigned)) &&
-            (!filters.desc || cells[2].textContent.toLowerCase().includes(filters.desc)) &&
-            (!filters.cond || cells[3].textContent.toLowerCase().includes(filters.cond)) &&
-            (!filters.value || cells[4].textContent.toLowerCase().includes(filters.value)) &&
-            (!filters.hsn || cells[5].textContent.toLowerCase().includes(filters.hsn));
-
-        row.style.display = visible ? '' : 'none';
-        if (visible) visibleCount++;
-    });
-
-    // Optional: No data message
-    const tbody = document.querySelector('#dropdownListTable tbody');
-    if (visibleCount === 0 && rows.length > 0) {
-        if (!document.getElementById('noDataRow')) {
-            const tr = document.createElement('tr');
-            tr.id = 'noDataRow';
-            tr.innerHTML = `<td colspan="7" class="text-muted">No matching records</td>`;
-            tbody.appendChild(tr);
-        }
-    } else {
-        document.getElementById('noDataRow')?.remove();
-    }
-}
-
-
-// /*************************************************
-//  * INIT
-//  *************************************************/
-// document.getElementById('dropdownListdetails-tab')
-//     ?.addEventListener('shown.bs.tab', initDropdownTab);
-
-// async function initDropdownTab() {
-//     if (dropdownMenuListTabInitialized) return;
-//     dropdownMenuListTabInitialized = true;
-
-//     createLoader();
-
-//     const addBtn = document.getElementById('addDropdownMenuList');
-//     if (!addBtn) return;
-
-//     // Prevent duplicate listeners
-//     addBtn.onclick = saveDropdownItem;
-
-//     const checkPermission = () => {
-//         addBtn.disabled = !canModify();
-//     };
-
-//     checkPermission();
-//     setTimeout(checkPermission, 150);
-
-//     await fetchDropdownList();
-//     setupFilterListeners();
-//     attachTableEvents(); // ✅ delegated events
-// }

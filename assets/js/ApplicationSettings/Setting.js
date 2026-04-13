@@ -11,15 +11,17 @@ document.addEventListener("DOMContentLoaded", () => {
                     break;
 
                 case "#portDetails":
-                    await loadPortDetails();
+                    await fetchPorts();
                     break;
 
                 case "#missingPinCode":
-                    await loadMissingPincode();
+                    await fetchMissingPincodes();
                     break;
 
                 case "#dropdownListdetails":
-                    await loadDropdownListDetails();
+                    await fetchDropdownList();
+                    setupFilterListeners();
+                    attachTableEvents();
                     break;
 
                 case "#countryDetails":
