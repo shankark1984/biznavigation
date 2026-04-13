@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>BizNavigation</title>
+    <title>Company Registration</title>
     <!-- Bootstrap CSS & Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
@@ -12,6 +12,9 @@
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <!-- Sidebar CSS -->
+    <link rel="stylesheet" href="../../assets/css/navbar.css" />
 
 
     <style>
@@ -29,11 +32,21 @@
 
         body {
             min-height: 100vh;
-            display: flex;
-            flex-direction: column;
         }
 
-        #root {
+        .company-search {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .company-search label {
+            white-space: nowrap;
+            min-width: 140px;
+            /* adjust if needed */
+        }
+
+        .company-search select {
             flex: 1;
         }
     </style>
@@ -41,409 +54,462 @@
 </head>
 
 <body class="bg-light">
-    <div class="container mt-4" id="root">
-        <div class="card shadow-lg rounded">
-            <div class="card-header bg-primary text-white mt-5">
-                <div class="d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">
-                        Company Registration –(<span id="compID"></span>)
-                    </h5>
-                    <img id="companylogo" class="company-logo" src="../../assets/img/logo/default.png"
-                        alt="Company Logo" height="32" loading="lazy">
-                </div>
 
-                <!-- Metadata Inputs -->
-                <input type="hidden" id="tempFormID">
-                <input type="hidden" id="companyCode">
-                <input type="hidden" id="vendorCode">
-            </div>
-            <div class="card-body">
-                <form autocomplete="off">
-                    <!-- Button Group -->
-                    <div class="d-flex flex-wrap gap-1 mb-2">
-                        <button type="button" class="btn btn-primary btn-sm" id="newButton" aria-label="New"><i
-                                class="bi bi-file-earmark-plus"></i> New</button>
-                        <button type="button" class="btn btn-warning btn-sm" id="modifyButton" aria-label="Modify"><i
-                                class="bi bi-pencil"></i> Modify</button>
-                        <button type="button" class="btn btn-danger btn-sm" id="deleteButton" aria-label="Delete"
-                            disabled><i class="bi bi-trash"></i> Delete</button>
-                        <button type="button" class="btn btn-info btn-sm" id="reportButton" aria-label="Report"
-                            disabled><i class="bi bi-file-earmark-text"></i> Report</button>
-                        <button type="button" class="btn btn-success btn-sm" id="saveButton" data-mode="insert"
-                            aria-label="Save"><i class="bi bi-save"></i> Save</button>
-                    </div>
-                    <div class="row g-1">
-                        <!-- Search Company Selection -->
-                        <div class="col-md-12 col-sm-6" id="companySelectWrapper" style="display:none;">
-                            <label class="form-label small">Company Name Search</label>
-                            <select class="form-select" id="selectCompany">
-                                <option value="">Select company</option>
-                            </select>
+    <!-- 🔥 APP LAYOUT -->
+    <div class="app-wrapper">
+
+        <!-- Sidebar -->
+        <div id="sidebar">
+            <!-- fallback -->
+            <div class="text-center text-white p-3">Loading...</div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+
+            <!-- 🔥 PAGE CONTENT -->
+            <div class="page-content">
+
+                <!-- YOUR EXISTING UI (UNCHANGED) -->
+                <div class="container-fluid mt-2">
+
+                    <div class="card shadow-lg rounded">
+                        <div class="card-header bg-primary text-white d-none">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0">
+                                    <!-- Company Registration –(<span id="compID1"></span>) -->
+                                </h5>
+                                <img id="companylogo" class="company-logo" src="../../assets/img/logo/default.png"
+                                    height="32">
+                            </div>
+
                         </div>
 
-                        <!-- Company Basic Info -->
-                        <div class="col-md-1 col-sm-6">
-                            <label for="shortCode" class="form-label small">Short Code</label>
-                            <input type="text" class="form-control text-upper" id="shortCode" required
-                                autocomplete="off">
-                        </div>
-                        <div class="col-md-5 col-sm-6">
-                            <label for="companyName" class="form-label small">Company Name</label>
-                            <input type="text" class="form-control text-cap" id="companyName" list="companyList"
-                                placeholder="Company Name">
-                            <datalist id="companyList"></datalist>
-                        </div>
+                        <div class="card-body">
 
-                        <div class="col-md-3 col-sm-6">
-                            <label for="cinNo" class="form-label small">CIN No</label>
-                            <input type="text" class="form-control text-upper" id="cinNo" required placeholder="CIN No">
-                        </div>
-                        <div class="col-md-3 col-sm-6">
-                            <label for="uaNo" class="form-label small">UA No</label>
-                            <input type="text" class="form-control text-upper" id="uaNo" required
-                                placeholder="Udyog Aadhaar No">
-                        </div>
-                        <div class="col-md-6 col-sm-6">
-                            <label for="address" class="form-label small">Address</label>
-                            <textarea class="form-control text-cap" id="address" required rows="1"
-                                placeholder="Enter address"></textarea>
-                        </div>
-                        <div class="col-md-1 col-sm-6">
-                            <label for="pinCode" class="form-label small">Pin Code</label>
-                            <input type="text" class="form-control" id="pinCode" required placeholder="Enter Pin Code">
-                        </div>
-                        <div class="col-md-2 col-sm-6">
-                            <label for="city" class="form-label small">City</label>
-                            <input type="text" class="form-control" id="city" required placeholder="City"
-                                style="text-transform: capitalize;">
-                        </div>
-                        <div class="col-md-2 col-sm-6">
-                            <label for="state" class="form-label small">State</label>
-                            <input type="text" class="form-control" id="state" required placeholder="State"
-                                style="text-transform: capitalize;">
-                        </div>
-                        <div class="col-md-1 col-sm-6">
-                            <label for="country" class="form-label small">Country</label>
-                            <input type="text" class="form-control" id="country" required placeholder="Country"
-                                style="text-transform: capitalize;">
-                        </div>
-                        <div class="col-md-2 col-sm-6">
-                            <label for="panNumber" class="form-label small">Pan Number</label>
-                            <input type="text" class="form-control text-upper" id="panNumber" required
-                                placeholder="Enter Pan Number">
-                            <div id="panFeedback" class="invalid-feedback d-none">Invalid or duplicate PAN Number</div>
-                        </div>
-                        <div class="col-md-2 col-sm-6">
-                            <label for="gstNumber" class="form-label small">GST Number</label>
-                            <input type="text" class="form-control text-upper" id="gstNumber" required
-                                placeholder="Enter GST Number">
-                            <div id="gstFeedback" class="invalid-feedback d-none">Invalid or duplicate GST Number</div>
-                        </div>
-                        <div class="col-md-2 col-sm-6">
-                            <label for="phoneNumber" class="form-label small">Phone Number</label>
-                            <input type="tel" class="form-control" id="phoneNumber" required
-                                placeholder="Enter Phone Number">
-                        </div>
-                        <div class="col-md-3 col-sm-6">
-                            <label for="email" class="form-label small">Email ID</label>
-                            <input type="email" class="form-control" id="email" required placeholder="Enter Email ID">
-                        </div>
-                        <div class="col-md-3 col-sm-6">
-                            <label for="website" class="form-label small">Website</label>
-                            <input type="url" class="form-control" id="website" placeholder="http://example.com">
-                        </div>
-                    </div>
+                            <form autocomplete="off">
+                                <!-- Button Group -->
+                                <div class="d-flex flex-wrap gap-1 mb-2">
+                                    <button type="button" class="btn btn-primary btn-sm" id="newButton"
+                                        aria-label="New"><i class="bi bi-file-earmark-plus"></i> New</button>
+                                    <button type="button" class="btn btn-warning btn-sm" id="modifyButton"
+                                        aria-label="Modify"><i class="bi bi-pencil"></i> Modify</button>
+                                    <button type="button" class="btn btn-danger btn-sm" id="deleteButton"
+                                        aria-label="Delete" disabled><i class="bi bi-trash"></i> Delete</button>
+                                    <button type="button" class="btn btn-info btn-sm" id="reportButton"
+                                        aria-label="Report" disabled><i class="bi bi-file-earmark-text"></i>
+                                        Report</button>
+                                    <button type="button" class="btn btn-success btn-sm" id="saveButton"
+                                        data-mode="insert" aria-label="Save"><i class="bi bi-save"></i> Save</button>
 
-                    <!-- Tabbed Form for Branch/Bank Details -->
-                    <ul class="nav nav-tabs mt-3" id="branchTabs" role="tablist">
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link active" id="branch-tab" data-bs-toggle="tab"
-                                data-bs-target="#branch" type="button" role="tab" aria-selected="true">Branch
-                                Details</button>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="bank-tab" data-bs-toggle="tab" data-bs-target="#bank"
-                                type="button" role="tab" aria-selected="false">Bank Details</button>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="adminUserSetting-tab" data-bs-toggle="tab"
-                                data-bs-target="#adminUserSetting" type="button" role="tab" aria-selected="false">New
-                                Admin User Setting</button>
-                        </li>
-                        <li class="nav-item">
-                            <button class="nav-link" id="subscription-tab" data-bs-toggle="tab"
-                                data-bs-target="#subscription" type="button">Subscription
-                            </button>
-                        </li>
-                    </ul>
-                    <div class="tab-content p-3 border border-top-0" id="branchTabsContent">
-                        <!-- Branch Details Tab -->
-                        <div class="tab-pane fade show active" id="branch" role="tabpanel" aria-labelledby="branch-tab">
-                            <div class="row g-1">
-                                <div class="col-md-1 col-sm-6">
-                                    <label for="branchCode" class="form-label small">Branch Code</label>
-                                    <input type="text" class="form-control text-upper" id="branchCode">
+                                    <input type="hidden" id="tempFormID">
+                                    <input type="hidden" id="companyCode">
+                                    <input type="hidden" id="vendorCode">
+                                    <!-- Search Company Selection -->
+                                    <div id="companySelectWrapper" style="display:none;" class="company-search">
+                                        <select class="form-select" id="selectCompany">
+                                            <option value="">Select company</option>
+                                        </select>
+                                    </div>
+                                    <span id="compID" class="d-none"></span>
                                 </div>
-                                <div class="col-md-5 col-sm-6">
-                                    <label for="branchAddress" class="form-label small">Address</label>
-                                    <textarea class="form-control" id="branchAddress" rows="1"
-                                        placeholder="Enter branch address"></textarea>
-                                </div>
-                                <div class="col-md-1 col-sm-6">
-                                    <label for="branchPinCode" class="form-label small">Pin Code</label>
-                                    <input type="text" class="form-control" id="branchPinCode">
-                                </div>
-                                <div class="col-md-2 col-sm-6">
-                                    <label for="branchCity" class="form-label small">City</label>
-                                    <input type="text" class="form-control" id="branchCity" placeholder="Enter City">
-                                </div>
-                                <div class="col-md-2 col-sm-6">
-                                    <label for="branchState" class="form-label small">State</label>
-                                    <input type="text" class="form-control" id="branchState" placeholder="Enter State">
-                                </div>
-                                <div class="col-md-1 col-sm-6">
-                                    <label for="branchCountry" class="form-label small">Country</label>
-                                    <input type="text" class="form-control" id="branchCountry">
-                                </div>
-                                <div class="col-md-2 col-sm-6">
-                                    <label for="branchPhoneNo" class="form-label small">Phone No</label>
-                                    <input type="tel" class="form-control" id="branchPhoneNo"
-                                        placeholder="Enter Phone No">
-                                </div>
-                                <div class="col-md-4 col-sm-6">
-                                    <label for="branchEmailID" class="form-label small">Email ID</label>
-                                    <input type="email" class="form-control" id="branchEmailID"
-                                        placeholder="Enter Email ID">
-                                </div>
-                                <div class="col-md-2 col-sm-6">
-                                    <label for="branchGSTNo" class="form-label small">GST No</label>
-                                    <input type="text" class="form-control" id="branchGSTNo" placeholder="Enter GST No">
-                                    <div id="branchGSTFeedback" class="invalid-feedback d-none">Invalid or duplicate GST
-                                        Number</div>
-                                </div>
-                                <div class="col-md-2 col-sm-6">
-                                    <label for="branchPANNo" class="form-label small">PAN No</label>
-                                    <input type="text" class="form-control" id="branchPANNo" placeholder="Enter PAN No">
-                                    <div id="branchPANFeedback" class="invalid-feedback d-none">Invalid or duplicate PAN
-                                        Number</div>
-                                </div>
-                                <div class="col-md-1 col-sm-6 d-flex align-items-end">
-                                    <div class="form-check mb-2">
-                                        <input type="checkbox" class="form-check-input" id="branchInvYN">
-                                        <label class="form-check-label small" for="branchInvYN">Inv YN?</label>
+                                <div class="row g-1">
+
+
+                                    <!-- Company Basic Info -->
+                                    <div class="col-md-1 col-sm-6">
+                                        <label for="shortCode" class="form-label small">Short Code</label>
+                                        <input type="text" class="form-control text-upper" id="shortCode" required
+                                            autocomplete="off">
+                                    </div>
+                                    <div class="col-md-5 col-sm-6">
+                                        <label for="companyName" class="form-label small">Company Name</label>
+                                        <input type="text" class="form-control text-cap" id="companyName"
+                                            list="companyList" placeholder="Company Name">
+                                        <datalist id="companyList"></datalist>
+                                    </div>
+
+                                    <div class="col-md-3 col-sm-6">
+                                        <label for="cinNo" class="form-label small">CIN No</label>
+                                        <input type="text" class="form-control text-upper" id="cinNo" required
+                                            placeholder="CIN No">
+                                    </div>
+                                    <div class="col-md-3 col-sm-6">
+                                        <label for="uaNo" class="form-label small">UA No</label>
+                                        <input type="text" class="form-control text-upper" id="uaNo" required
+                                            placeholder="Udyog Aadhaar No">
+                                    </div>
+                                    <div class="col-md-6 col-sm-6">
+                                        <label for="address" class="form-label small">Address</label>
+                                        <textarea class="form-control text-cap" id="address" required rows="1"
+                                            placeholder="Enter address"></textarea>
+                                    </div>
+                                    <div class="col-md-1 col-sm-6">
+                                        <label for="pinCode" class="form-label small">Pin Code</label>
+                                        <input type="text" class="form-control" id="pinCode" required
+                                            placeholder="Enter Pin Code">
+                                    </div>
+                                    <div class="col-md-2 col-sm-6">
+                                        <label for="city" class="form-label small">City</label>
+                                        <input type="text" class="form-control" id="city" required placeholder="City"
+                                            style="text-transform: capitalize;">
+                                    </div>
+                                    <div class="col-md-2 col-sm-6">
+                                        <label for="state" class="form-label small">State</label>
+                                        <input type="text" class="form-control" id="state" required placeholder="State"
+                                            style="text-transform: capitalize;">
+                                    </div>
+                                    <div class="col-md-1 col-sm-6">
+                                        <label for="country" class="form-label small">Country</label>
+                                        <input type="text" class="form-control" id="country" required
+                                            placeholder="Country" style="text-transform: capitalize;">
+                                    </div>
+                                    <div class="col-md-2 col-sm-6">
+                                        <label for="panNumber" class="form-label small">Pan Number</label>
+                                        <input type="text" class="form-control text-upper" id="panNumber" required
+                                            placeholder="Enter Pan Number">
+                                        <div id="panFeedback" class="invalid-feedback d-none">Invalid or duplicate PAN
+                                            Number</div>
+                                    </div>
+                                    <div class="col-md-2 col-sm-6">
+                                        <label for="gstNumber" class="form-label small">GST Number</label>
+                                        <input type="text" class="form-control text-upper" id="gstNumber" required
+                                            placeholder="Enter GST Number">
+                                        <div id="gstFeedback" class="invalid-feedback d-none">Invalid or duplicate GST
+                                            Number</div>
+                                    </div>
+                                    <div class="col-md-2 col-sm-6">
+                                        <label for="phoneNumber" class="form-label small">Phone Number</label>
+                                        <input type="tel" class="form-control" id="phoneNumber" required
+                                            placeholder="Enter Phone Number">
+                                    </div>
+                                    <div class="col-md-3 col-sm-6">
+                                        <label for="email" class="form-label small">Email ID</label>
+                                        <input type="email" class="form-control" id="email" required
+                                            placeholder="Enter Email ID">
+                                    </div>
+                                    <div class="col-md-3 col-sm-6">
+                                        <label for="website" class="form-label small">Website</label>
+                                        <input type="url" class="form-control" id="website"
+                                            placeholder="http://example.com">
                                     </div>
                                 </div>
-                                <div class="col-md-2 col-sm-6">
-                                    <label for="branchStatus" class="form-label small">Status</label>
-                                    <select class="form-select" id="branchStatus">
-                                        <option value="">Select Status</option>
-                                        <option value="Active">Active</option>
-                                        <option value="Inactive">Inactive</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-2 col-sm-6">
-                                    <label for="branchInactiveDate" class="form-label small">Inactive Date</label>
-                                    <input type="date" class="form-control" id="branchInactiveDate">
-                                </div>
-                                <div class="col-md-6 col-sm-6">
-                                    <label for="branchScope" class="form-label small">Branch Scope</label>
-                                    <textarea class="form-control" id="branchScope" rows="1"
-                                        placeholder="Enter branch scope"></textarea>
-                                </div>
-                                <div class="col-md-2 d-flex align-items-end">
-                                    <button type="button" class="btn btn-primary" id="branchAddDetails"
-                                        aria-label="Add Branch">Add Branch</button>
-                                </div>
-                            </div>
-                            <!-- Branch Details Table -->
-                            <div class="table-responsive mt-3">
-                                <table class="table table-bordered table-sm" aria-label="Branch Details">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th scope="col">Select</th>
-                                            <th scope="col">Branch Code</th>
-                                            <th scope="col">Address</th>
-                                            <th scope="col">City</th>
-                                            <th scope="col">State</th>
-                                            <th scope="col">Country</th>
-                                            <th scope="col">Phone No</th>
-                                            <th scope="col">Email ID</th>
-                                            <th scope="col">Status</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="branchTableBody">
-                                        <tr>
-                                            <td colspan="9" class="text-center">No branch created</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                        <!-- Bank Details Tab -->
-                        <div class="tab-pane fade" id="bank" role="tabpanel" aria-labelledby="bank-tab">
-                            <div class="row g-1">
-                                <div class="col-md-2 col-sm-6">
-                                    <label for="branchAccountNo" class="form-label small">Account No</label>
-                                    <input type="text" class="form-control" id="branchAccountNo"
-                                        placeholder="Enter Account No">
-                                </div>
-                                <div class="col-md-2 col-sm-6">
-                                    <label for="branchIFSCCode" class="form-label small">IFSC Code</label>
-                                    <input type="text" class="form-control" id="branchIFSCCode"
-                                        placeholder="Enter IFSC Code" required>
-                                </div>
-                                <div class="col-md-3 col-sm-6">
-                                    <label for="branchBankName" class="form-label small">Bank Name</label>
-                                    <input type="text" class="form-control" id="branchBankName"
-                                        placeholder="Enter bank name">
-                                </div>
-                                <div class="col-md-3 col-sm-6">
-                                    <label for="branchAcBankName" class="form-label small">Branch Name</label>
-                                    <input type="text" class="form-control" id="branchAcBankName"
-                                        placeholder="Enter Branch Name">
-                                </div>
-                                <div class="col-md-2 col-sm-6">
-                                    <label for="branchMICRCode" class="form-label small">MICR Code</label>
-                                    <input type="text" class="form-control" id="branchMICRCode"
-                                        placeholder="Enter MICR Code">
-                                </div>
-                                <div class="col-md-5 col-sm-6">
-                                    <label for="branchBankAddress" class="form-label small">Bank Address</label>
-                                    <input type="text" class="form-control" id="branchBankAddress"
-                                        placeholder="Enter Bank Address">
-                                </div>
-                                <div class="col-md-1 col-sm-6">
-                                    <label for="branchDefaultBank" class="form-label small">Default Bank</label>
-                                    <select class="form-select" id="branchDefaultBank">
-                                        <option value="">Select Default Bank</option>
-                                        <option value="Yes">Yes</option>
-                                        <option value="No">No</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-2 col-sm-6">
-                                    <label for="branchAccountStatus" class="form-label small">Status</label>
-                                    <select class="form-select" id="branchAccountStatus">
-                                        <option value="">Select Status</option>
-                                        <option value="Active">Active</option>
-                                        <option value="Inactive">Inactive</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-2 col-sm-6">
-                                    <label for="bankInactiveDate" class="form-label small">Inactive Date</label>
-                                    <input type="date" class="form-control" id="bankInactiveDate">
-                                </div>
-                                <div class="col-md-2 d-flex align-items-end">
-                                    <button type="button" class="btn btn-primary" id="bankAddDetails">Add
-                                        Bank</button>
-                                </div>
-                            </div>
-                            <!-- Branch Bank Details Table -->
-                            <div class="table-responsive mt-3">
-                                <table class="table table-striped" aria-label="Bank Details">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th scope="col">Select</th>
-                                            <th scope="col">Bank Name</th>
-                                            <th scope="col">Account No</th>
-                                            <th scope="col">IFSC Code</th>
-                                            <th scope="col">Branch Name</th>
-                                            <th scope="col">MICR Code</th>
-                                            <th scope="col">Default Bank</th>
-                                            <th scope="col">Status</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="branchBankTableBody">
-                                        <tr>
-                                            <td colspan="8" class="text-center">No branch created</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                        <!-- Admin User Setting Tab -->
-                        <div class="tab-pane fade" id="adminUserSetting" role="tabpanel"
-                            aria-labelledby="adminUserSetting-tab">
 
-                            <div class="row g-2">
-                                <div class="col-md-3 col-sm-6">
-                                    <label for="userName" class="form-label small">User Name</label>
-                                    <input type="text" class="form-control" id="userName" placeholder="Enter User Name">
+                                <!-- Tabbed Form for Branch/Bank Details -->
+                                <ul class="nav nav-tabs mt-3" id="branchTabs" role="tablist">
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link active" id="branch-tab" data-bs-toggle="tab"
+                                            data-bs-target="#branch" type="button" role="tab"
+                                            aria-selected="true">Branch
+                                            Details</button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link" id="bank-tab" data-bs-toggle="tab"
+                                            data-bs-target="#bank" type="button" role="tab" aria-selected="false">Bank
+                                            Details</button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link" id="adminUserSetting-tab" data-bs-toggle="tab"
+                                            data-bs-target="#adminUserSetting" type="button" role="tab"
+                                            aria-selected="false">New
+                                            Admin User Setting</button>
+                                    </li>
+                                    <li class="nav-item">
+                                        <button class="nav-link" id="subscription-tab" data-bs-toggle="tab"
+                                            data-bs-target="#subscription" type="button">Subscription
+                                        </button>
+                                    </li>
+                                </ul>
+                                <div class="tab-content p-3 border border-top-0" id="branchTabsContent">
+                                    <!-- Branch Details Tab -->
+                                    <div class="tab-pane fade show active" id="branch" role="tabpanel"
+                                        aria-labelledby="branch-tab">
+                                        <div class="row g-1">
+                                            <div class="col-md-1 col-sm-6">
+                                                <label for="branchCode" class="form-label small">Branch Code</label>
+                                                <input type="text" class="form-control text-upper" id="branchCode">
+                                            </div>
+                                            <div class="col-md-5 col-sm-6">
+                                                <label for="branchAddress" class="form-label small">Address</label>
+                                                <textarea class="form-control" id="branchAddress" rows="1"
+                                                    placeholder="Enter branch address"></textarea>
+                                            </div>
+                                            <div class="col-md-1 col-sm-6">
+                                                <label for="branchPinCode" class="form-label small">Pin Code</label>
+                                                <input type="text" class="form-control" id="branchPinCode">
+                                            </div>
+                                            <div class="col-md-2 col-sm-6">
+                                                <label for="branchCity" class="form-label small">City</label>
+                                                <input type="text" class="form-control" id="branchCity"
+                                                    placeholder="Enter City">
+                                            </div>
+                                            <div class="col-md-2 col-sm-6">
+                                                <label for="branchState" class="form-label small">State</label>
+                                                <input type="text" class="form-control" id="branchState"
+                                                    placeholder="Enter State">
+                                            </div>
+                                            <div class="col-md-1 col-sm-6">
+                                                <label for="branchCountry" class="form-label small">Country</label>
+                                                <input type="text" class="form-control" id="branchCountry">
+                                            </div>
+                                            <div class="col-md-2 col-sm-6">
+                                                <label for="branchPhoneNo" class="form-label small">Phone No</label>
+                                                <input type="tel" class="form-control" id="branchPhoneNo"
+                                                    placeholder="Enter Phone No">
+                                            </div>
+                                            <div class="col-md-4 col-sm-6">
+                                                <label for="branchEmailID" class="form-label small">Email ID</label>
+                                                <input type="email" class="form-control" id="branchEmailID"
+                                                    placeholder="Enter Email ID">
+                                            </div>
+                                            <div class="col-md-2 col-sm-6">
+                                                <label for="branchGSTNo" class="form-label small">GST No</label>
+                                                <input type="text" class="form-control" id="branchGSTNo"
+                                                    placeholder="Enter GST No">
+                                                <div id="branchGSTFeedback" class="invalid-feedback d-none">Invalid or
+                                                    duplicate GST
+                                                    Number</div>
+                                            </div>
+                                            <div class="col-md-2 col-sm-6">
+                                                <label for="branchPANNo" class="form-label small">PAN No</label>
+                                                <input type="text" class="form-control" id="branchPANNo"
+                                                    placeholder="Enter PAN No">
+                                                <div id="branchPANFeedback" class="invalid-feedback d-none">Invalid or
+                                                    duplicate PAN
+                                                    Number</div>
+                                            </div>
+                                            <div class="col-md-1 col-sm-6 d-flex align-items-end">
+                                                <div class="form-check mb-2">
+                                                    <input type="checkbox" class="form-check-input" id="branchInvYN">
+                                                    <label class="form-check-label small" for="branchInvYN">Inv
+                                                        YN?</label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-2 col-sm-6">
+                                                <label for="branchStatus" class="form-label small">Status</label>
+                                                <select class="form-select" id="branchStatus">
+                                                    <option value="">Select Status</option>
+                                                    <option value="Active">Active</option>
+                                                    <option value="Inactive">Inactive</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-2 col-sm-6">
+                                                <label for="branchInactiveDate" class="form-label small">Inactive
+                                                    Date</label>
+                                                <input type="date" class="form-control" id="branchInactiveDate">
+                                            </div>
+                                            <div class="col-md-6 col-sm-6">
+                                                <label for="branchScope" class="form-label small">Branch Scope</label>
+                                                <textarea class="form-control" id="branchScope" rows="1"
+                                                    placeholder="Enter branch scope"></textarea>
+                                            </div>
+                                            <div class="col-md-2 d-flex align-items-end">
+                                                <button type="button" class="btn btn-primary" id="branchAddDetails"
+                                                    aria-label="Add Branch">Add Branch</button>
+                                            </div>
+                                        </div>
+                                        <!-- Branch Details Table -->
+                                        <div class="table-responsive mt-3">
+                                            <table class="table table-bordered table-sm" aria-label="Branch Details">
+                                                <thead class="table-light">
+                                                    <tr>
+                                                        <th scope="col">Select</th>
+                                                        <th scope="col">Branch Code</th>
+                                                        <th scope="col">Address</th>
+                                                        <th scope="col">City</th>
+                                                        <th scope="col">State</th>
+                                                        <th scope="col">Country</th>
+                                                        <th scope="col">Phone No</th>
+                                                        <th scope="col">Email ID</th>
+                                                        <th scope="col">Status</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="branchTableBody">
+                                                    <tr>
+                                                        <td colspan="9" class="text-center">No branch created</td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                    <!-- Bank Details Tab -->
+                                    <div class="tab-pane fade" id="bank" role="tabpanel" aria-labelledby="bank-tab">
+                                        <div class="row g-1">
+                                            <div class="col-md-2 col-sm-6">
+                                                <label for="branchAccountNo" class="form-label small">Account No</label>
+                                                <input type="text" class="form-control" id="branchAccountNo"
+                                                    placeholder="Enter Account No">
+                                            </div>
+                                            <div class="col-md-2 col-sm-6">
+                                                <label for="branchIFSCCode" class="form-label small">IFSC Code</label>
+                                                <input type="text" class="form-control" id="branchIFSCCode"
+                                                    placeholder="Enter IFSC Code" required>
+                                            </div>
+                                            <div class="col-md-3 col-sm-6">
+                                                <label for="branchBankName" class="form-label small">Bank Name</label>
+                                                <input type="text" class="form-control" id="branchBankName"
+                                                    placeholder="Enter bank name">
+                                            </div>
+                                            <div class="col-md-3 col-sm-6">
+                                                <label for="branchAcBankName" class="form-label small">Branch
+                                                    Name</label>
+                                                <input type="text" class="form-control" id="branchAcBankName"
+                                                    placeholder="Enter Branch Name">
+                                            </div>
+                                            <div class="col-md-2 col-sm-6">
+                                                <label for="branchMICRCode" class="form-label small">MICR Code</label>
+                                                <input type="text" class="form-control" id="branchMICRCode"
+                                                    placeholder="Enter MICR Code">
+                                            </div>
+                                            <div class="col-md-5 col-sm-6">
+                                                <label for="branchBankAddress" class="form-label small">Bank
+                                                    Address</label>
+                                                <input type="text" class="form-control" id="branchBankAddress"
+                                                    placeholder="Enter Bank Address">
+                                            </div>
+                                            <div class="col-md-1 col-sm-6">
+                                                <label for="branchDefaultBank" class="form-label small">Default
+                                                    Bank</label>
+                                                <select class="form-select" id="branchDefaultBank">
+                                                    <option value="">Select Default Bank</option>
+                                                    <option value="Yes">Yes</option>
+                                                    <option value="No">No</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-2 col-sm-6">
+                                                <label for="branchAccountStatus" class="form-label small">Status</label>
+                                                <select class="form-select" id="branchAccountStatus">
+                                                    <option value="">Select Status</option>
+                                                    <option value="Active">Active</option>
+                                                    <option value="Inactive">Inactive</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-2 col-sm-6">
+                                                <label for="bankInactiveDate" class="form-label small">Inactive
+                                                    Date</label>
+                                                <input type="date" class="form-control" id="bankInactiveDate">
+                                            </div>
+                                            <div class="col-md-2 d-flex align-items-end">
+                                                <button type="button" class="btn btn-primary" id="bankAddDetails">Add
+                                                    Bank</button>
+                                            </div>
+                                        </div>
+                                        <!-- Branch Bank Details Table -->
+                                        <div class="table-responsive mt-3">
+                                            <table class="table table-striped" aria-label="Bank Details">
+                                                <thead class="table-light">
+                                                    <tr>
+                                                        <th scope="col">Select</th>
+                                                        <th scope="col">Bank Name</th>
+                                                        <th scope="col">Account No</th>
+                                                        <th scope="col">IFSC Code</th>
+                                                        <th scope="col">Branch Name</th>
+                                                        <th scope="col">MICR Code</th>
+                                                        <th scope="col">Default Bank</th>
+                                                        <th scope="col">Status</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="branchBankTableBody">
+                                                    <tr>
+                                                        <td colspan="8" class="text-center">No branch created</td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                    <!-- Admin User Setting Tab -->
+                                    <div class="tab-pane fade" id="adminUserSetting" role="tabpanel"
+                                        aria-labelledby="adminUserSetting-tab">
+
+                                        <div class="row g-2">
+                                            <div class="col-md-3 col-sm-6">
+                                                <label for="userName" class="form-label small">User Name</label>
+                                                <input type="text" class="form-control" id="userName"
+                                                    placeholder="Enter User Name">
+                                            </div>
+
+                                            <div class="col-md-3 col-sm-6">
+                                                <label for="userLogID" class="form-label small">User ID</label>
+                                                <input type="text" class="form-control" id="userLogID"
+                                                    placeholder="Enter User ID">
+                                            </div>
+
+                                            <div class="col-md-2 d-flex align-items-end">
+                                                <button type="button" class="btn btn-primary" id="resetPasswordBtn">
+                                                    Reset Password
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- Subscription Tab -->
+                                    <div class="tab-pane fade" id="subscription" role="tabpanel">
+
+                                        <div class="row g-2">
+
+                                            <div class="col-md-3">
+                                                <label class="form-label small">Plan</label>
+                                                <select id="planId" class="form-select"></select>
+                                            </div>
+
+                                            <div class="col-md-2">
+                                                <label class="form-label small">Start Date</label>
+                                                <input type="date" id="subStartDate" class="form-control">
+                                            </div>
+
+                                            <div class="col-md-2">
+                                                <label class="form-label small">End Date</label>
+                                                <input type="date" id="subEndDate" class="form-control" readonly>
+                                            </div>
+
+                                            <div class="col-md-2">
+                                                <label class="form-label small">Amount</label>
+                                                <input type="number" id="amountPaid" class="form-control">
+                                            </div>
+
+                                            <div class="col-md-2">
+                                                <label class="form-label small">Payment Status</label>
+                                                <select id="paymentStatus" class="form-select">
+                                                    <option value="Paid">Paid</option>
+                                                    <option value="Pending">Pending</option>
+                                                </select>
+                                            </div>
+
+                                            <div class="col-md-1 d-flex align-items-end">
+                                                <button type="button" class="btn btn-success" id="saveSubscription">
+                                                    Save
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <!-- Subscription History -->
+                                        <div class="table-responsive mt-3">
+                                            <table class="table table-bordered table-sm">
+                                                <thead class="table-light">
+                                                    <tr>
+                                                        <th>Plan</th>
+                                                        <th>Start</th>
+                                                        <th>End</th>
+                                                        <th>Amount</th>
+                                                        <th>Status</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="subscriptionTable"></tbody>
+                                            </table>
+                                        </div>
+
+                                    </div>
                                 </div>
-
-                                <div class="col-md-3 col-sm-6">
-                                    <label for="userLogID" class="form-label small">User ID</label>
-                                    <input type="text" class="form-control" id="userLogID" placeholder="Enter User ID">
-                                </div>
-
-                                <div class="col-md-2 d-flex align-items-end">
-                                    <button type="button" class="btn btn-primary" id="resetPasswordBtn">
-                                        Reset Password
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                        <!-- Subscription Tab -->
-                        <div class="tab-pane fade" id="subscription" role="tabpanel">
-
-                            <div class="row g-2">
-
-                                <div class="col-md-3">
-                                    <label class="form-label small">Plan</label>
-                                    <select id="planId" class="form-select"></select>
-                                </div>
-
-                                <div class="col-md-2">
-                                    <label class="form-label small">Start Date</label>
-                                    <input type="date" id="subStartDate" class="form-control">
-                                </div>
-
-                                <div class="col-md-2">
-                                    <label class="form-label small">End Date</label>
-                                    <input type="date" id="subEndDate" class="form-control" readonly>
-                                </div>
-
-                                <div class="col-md-2">
-                                    <label class="form-label small">Amount</label>
-                                    <input type="number" id="amountPaid" class="form-control">
-                                </div>
-
-                                <div class="col-md-2">
-                                    <label class="form-label small">Payment Status</label>
-                                    <select id="paymentStatus" class="form-select">
-                                        <option value="Paid">Paid</option>
-                                        <option value="Pending">Pending</option>
-                                    </select>
-                                </div>
-
-                                <div class="col-md-1 d-flex align-items-end">
-                                    <button type="button" class="btn btn-success" id="saveSubscription">
-                                        Save
-                                    </button>
-                                </div>
-                            </div>
-
-                            <!-- Subscription History -->
-                            <div class="table-responsive mt-3">
-                                <table class="table table-bordered table-sm">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th>Plan</th>
-                                            <th>Start</th>
-                                            <th>End</th>
-                                            <th>Amount</th>
-                                            <th>Status</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="subscriptionTable"></tbody>
-                                </table>
-                            </div>
-
+                            </form>
                         </div>
                     </div>
-                </form>
-            </div>
-        </div>
-    </div>
+                </div> <!-- container-fluid -->
+            </div> <!-- page-content -->
+
+            <!-- Footer auto appended -->
+
+        </div> <!-- main-content -->
+
+    </div> <!-- app-wrapper -->
 
     <!-- Toast Container -->
     <div class="position-fixed top-0 end-0 p-3" style="z-index: 9999">
@@ -471,7 +537,6 @@
     <script src="../../assets/js/utils/utils.js"></script>
     <script src="../../assets/js/utils/pincode-helper.js"></script>
     <script src="../../assets/js/utils/navbar.js"></script>
-    <script src="../../assets/js/utils/footer.js"></script>
     <script src="../../assets/js/utils/logout.js"></script>
     <script src="../../assets/js/utils/GlobalShortcut.js" defer></script>
 

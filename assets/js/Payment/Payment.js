@@ -44,6 +44,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     enableForm();
     await loadSuggestions("partySuggestions", "PartyDetails", CompanyID);
+    updatePageTitle();
     resetForm();
 
     const suspenseModalEl = document.getElementById("suspenseModal");
@@ -418,6 +419,15 @@ function clearInvoiceInputs() {
 // ------------------------------------------
 // RESET FORM
 // ------------------------------------------
+function updatePageTitle() {
+    const type = new URLSearchParams(window.location.search).get("type");
+
+    if (type && (type.toLowerCase() === "credit" || type.toLowerCase() === "debit")) {
+        document.title = `Payment Details - ${type}`;
+    } else {
+        document.title = "Payment Details";
+    }
+}
 function resetForm() {
     document.querySelector("form")?.reset();
     document.querySelector("#paymentDetails tbody").innerHTML = "";
@@ -431,17 +441,19 @@ function resetForm() {
     const urlParams = new URLSearchParams(window.location.search);
     const type = urlParams.get("type");
 
+    // Set transaction type
     if (type === "Credit" || type === "Debit") {
         paymentFormElements.transactionType.value = type;
         paymentFormElements.transactionType.disabled = true;
-        pageTitle.textContent = `Payment Details - ${type}`;
-        // 🔥 LOAD PAYMENT ID LIST AFTER TYPE SET
+
         loadPaymentIDSuggestions(CompanyID, "");
     } else {
         paymentFormElements.transactionType.value = "";
         paymentFormElements.transactionType.disabled = false;
-        pageTitle.textContent = "Payment Details";
     }
+
+    // ✅ Update browser title (single line)
+    updatePageTitle();
 
     // Button states
     saveButton.innerHTML = '<i class="bi bi-save"></i> Save';
@@ -450,7 +462,6 @@ function resetForm() {
     deleteButton.disabled = true;
     reportButton.disabled = true;
 
-
     // Enable inputs
     paymentFormElements.paymentID.disabled = false;
     paymentFormElements.paymentID.value = "";
@@ -458,16 +469,16 @@ function resetForm() {
     const paymentList = document.getElementById("paymentIDSuggestions");
     if (paymentList) paymentList.innerHTML = "";
 
-    invoiceMap = {}; // 🔥 IMPORTANT
+    invoiceMap = {};
 
     const statusEl = document.getElementById("status");
     if (statusEl) statusEl.value = "New";
+
     addInvoiceDetailsButton.disabled = false;
 
     enableForm();
     paymentFormElements.paymentID.focus();
 }
-
 // ------------------------------------------
 // GENERATE PAYMENT ID
 // ------------------------------------------

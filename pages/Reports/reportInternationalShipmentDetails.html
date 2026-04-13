@@ -24,18 +24,14 @@
     <script src="https://cdn.jsdelivr.net/npm/flatpickr" defer></script>
     <script src="https://unpkg.com/@supabase/supabase-js" defer></script>
 
+
+    <!-- Sidebar CSS -->
+    <link rel="stylesheet" href="../../assets/css/navbar.css" />
+
     <!-- UI Enhancements -->
     <style>
         #root {
             flex: 1;
-        }
-
-        body {
-            font-family: 'Segoe UI', sans-serif;
-            background-color: #f8f9fa;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
         }
 
         .table-responsive {
@@ -100,137 +96,166 @@
     </style>
 </head>
 
-<body class="p-3">
-    <div class="container-fluid" style="margin-top: 55px;" id="root">
+<body class="bg-light">
+    <!-- 🔥 APP LAYOUT -->
+    <div class="app-wrapper">
 
-        <!-- Filter Toggle -->
-        <div class="mb-3 d-flex justify-content-between align-items-center flex-wrap">
-            <h2 class="mb-0">International Bookings Report</h2>
-            <button class="btn btn-outline-secondary" type="button" data-bs-toggle="collapse"
-                data-bs-target="#filterSection">
-                <i class="bi bi-funnel"></i> Toggle Filters
-            </button>
+        <!-- Sidebar -->
+        <div id="sidebar">
+            <!-- fallback -->
+            <div class="text-center text-white p-3">Loading...</div>
         </div>
 
-        <!-- Filters Section -->
-        <div class="collapse" id="filterSection">
-            <div class="row g-3 mb-4" id="searchFilters">
-                <!-- Inputs: Customer Name, Docket No, Date Range, Movement, Mode, Provider, Month, Year, Fin Year, Invoice Status -->
-                <div class="col-12 col-md-6 col-lg-3">
-                    <label for="customerName" class="form-label">Customer Name</label>
-                    <input id="customerName" class="form-control" list="customerNameList"
-                        placeholder="Enter Customer Name">
-                    <datalist id="customerNameList"></datalist>
-                </div>
-                <div class="col-6 col-md-6 col-lg-2">
-                    <label for="docketNo" class="form-label">Docket No</label>
-                    <input id="docketNo" class="form-control" list="docketNoList" placeholder="Enter Docket No">
-                    <datalist id="docketNoList"></datalist>
-                </div>
-                <div class="col-6 col-md-6 col-lg-3">
-                    <label for="dateRange" class="form-label">Booked Date Range</label>
-                    <input id="dateRange" class="form-control" placeholder="Select Date Range" readonly>
-                </div>
-                <div class="col-6 col-md-6 col-lg-2">
-                    <label for="movementType" class="form-label">Movement Type</label>
-                    <input id="movementType" class="form-control" list="movementTypeList"
-                        placeholder="Enter Movement Type">
-                    <datalist id="movementTypeList"></datalist>
-                </div>
-                <div class="col-6 col-md-6 col-lg-2">
-                    <label for="modeType" class="form-label">Mode Type</label>
-                    <input id="modeType" class="form-control" list="modeTypeList" placeholder="Enter Mode Type">
-                    <datalist id="modeTypeList"></datalist>
-                </div>
-                <div class="col-6 col-md-6 col-lg-2">
-                    <label for="serviceProviderName" class="form-label">Service Provider</label>
-                    <input id="serviceProviderName" class="form-control" list="serviceProviderNameList"
-                        placeholder="Enter Service Provider">
-                    <datalist id="serviceProviderNameList"></datalist>
-                </div>
-                <div class="col-6 col-md-2 col-lg-2">
-                    <label for="bookedMonth" class="form-label">Booked Month</label>
-                    <input type="month" id="bookedMonth" class="form-control">
-                </div>
-                <div class="col-6 col-md-4 col-lg-2">
-                    <label for="bookedYear" class="form-label">Booked Year</label>
-                    <input type="number" id="bookedYear" class="form-control" placeholder="YYYY" min="2000" max="2100">
-                </div>
-                <div class="col-6 col-md-4 col-lg-2">
-                    <label for="financialYear" class="form-label">Financial Year</label>
-                    <input id="financialYear" class="form-control" placeholder="YYYY-YYYY" list="financialYearList">
-                    <datalist id="financialYearList"></datalist>
-                </div>
-                <div class="col-6 col-md-4 col-lg-2">
-                    <label for="invoiceStatus" class="form-label">Invoice Status</label>
-                    <input id="invoiceStatus" class="form-control" list="invoiceStatusList" placeholder="Enter Status">
-                    <datalist id="invoiceStatusList"></datalist>
-                </div>
-                <div class="col-6 col-md-2 col-lg-2 d-grid align-self-end">
-                    <button class="btn btn-primary" id="searchBtn"><i class="bi bi-search"></i> Search</button>
-                </div>
-            </div>
-        </div>
+        <!-- Main Content -->
+        <div class="main-content">
 
-        <!-- Spinner -->
-        <div id="loadingSpinner" class="text-center my-4" style="display: none;">
-            <div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div>
-        </div>
+            <!-- 🔥 PAGE CONTENT -->
+            <div class="page-content">
 
-        <!-- Table -->
-        <!-- Table with outer border -->
-        <div class="table-responsive border border-secondary rounded shadow-sm">
-            <table class="table table-bordered table-hover table-sm mb-0" id="bookingTable">
-                <thead class="table-dark text-center">
-                    <tr>
-                        <th data-key="RowID">Sr No</th>
-                        <th data-key="DocketNo">Docket No</th>
-                        <th data-key="BookedDate">Booked Date</th>
-                        <th data-key="CustomerName">Customer Name</th>
-                        <th data-key="MovementType">Movement Type</th>
-                        <th data-key="ModeType">Mode Type</th>
-                        <th data-key="ServiceProviderName">Service Provider</th>
-                        <th data-key="CourierName">Courier Name</th>
-                        <th data-key="Consignee">Consignee</th>
-                        <th data-key="OriginName">Origin</th>
-                        <th data-key="PortofLoading">Port of Loading</th>
-                        <th data-key="DestinationName">Destination</th>
-                        <th data-key="PortofDischarge">Port of Discharge</th>
-                        <th data-key="UOM">UOM</th>
-                        <th data-key="NoOfUnits">No. of Units</th>
-                        <th data-key="ActualWeight">Actual Weight</th>
-                        <th data-key="VolumeWeight">Volume Weight</th>
-                        <th data-key="ChargeableWeight">Chargeable Weight</th>
-                        <th data-key="TotalAmount">Total Amount</th>
-                        <th data-key="SGST">SGST</th>
-                        <th data-key="CGST">CGST</th>
-                        <th data-key="IGST">IGST</th>
-                        <th data-key="GST">Total GST</th>
-                        <th data-key="GrandTotal">Grand Total</th>
-                        <th data-key="InvoiceNo">Invoice No</th>
-                        <th data-key="InvoiceStatus">Invoice Status</th>
-                        <th data-key="ShipperRef">Shipper Ref</th>
-                        <th data-key="Commodity">Commodity</th>
-                        <th data-key="ShippingType">Shipping Type</th>
-                        <th data-key="ConsignmentValue">Consignment Value</th>
-                        <th data-key="PONo">PO No</th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
-        </div>
+                <!-- YOUR EXISTING UI (UNCHANGED) -->
+
+                <div class="container-fluid" id="root">
+
+                    <!-- Filter Toggle -->
+                    <div class="mb-3 d-flex justify-content-between align-items-center flex-wrap">
+                        <h2 class="mb-0">International Bookings Report</h2>
+                        <button class="btn btn-outline-secondary" type="button" data-bs-toggle="collapse"
+                            data-bs-target="#filterSection">
+                            <i class="bi bi-funnel"></i> Toggle Filters
+                        </button>
+                    </div>
+
+                    <!-- Filters Section -->
+                    <div class="collapse" id="filterSection">
+                        <div class="row g-3 mb-4" id="searchFilters">
+                            <!-- Inputs: Customer Name, Docket No, Date Range, Movement, Mode, Provider, Month, Year, Fin Year, Invoice Status -->
+                            <div class="col-12 col-md-6 col-lg-3">
+                                <label for="customerName" class="form-label">Customer Name</label>
+                                <input id="customerName" class="form-control" list="customerNameList"
+                                    placeholder="Enter Customer Name">
+                                <datalist id="customerNameList"></datalist>
+                            </div>
+                            <div class="col-6 col-md-6 col-lg-2">
+                                <label for="docketNo" class="form-label">Docket No</label>
+                                <input id="docketNo" class="form-control" list="docketNoList"
+                                    placeholder="Enter Docket No">
+                                <datalist id="docketNoList"></datalist>
+                            </div>
+                            <div class="col-6 col-md-6 col-lg-3">
+                                <label for="dateRange" class="form-label">Booked Date Range</label>
+                                <input id="dateRange" class="form-control" placeholder="Select Date Range" readonly>
+                            </div>
+                            <div class="col-6 col-md-6 col-lg-2">
+                                <label for="movementType" class="form-label">Movement Type</label>
+                                <input id="movementType" class="form-control" list="movementTypeList"
+                                    placeholder="Enter Movement Type">
+                                <datalist id="movementTypeList"></datalist>
+                            </div>
+                            <div class="col-6 col-md-6 col-lg-2">
+                                <label for="modeType" class="form-label">Mode Type</label>
+                                <input id="modeType" class="form-control" list="modeTypeList"
+                                    placeholder="Enter Mode Type">
+                                <datalist id="modeTypeList"></datalist>
+                            </div>
+                            <div class="col-6 col-md-6 col-lg-2">
+                                <label for="serviceProviderName" class="form-label">Service Provider</label>
+                                <input id="serviceProviderName" class="form-control" list="serviceProviderNameList"
+                                    placeholder="Enter Service Provider">
+                                <datalist id="serviceProviderNameList"></datalist>
+                            </div>
+                            <div class="col-6 col-md-2 col-lg-2">
+                                <label for="bookedMonth" class="form-label">Booked Month</label>
+                                <input type="month" id="bookedMonth" class="form-control">
+                            </div>
+                            <div class="col-6 col-md-4 col-lg-2">
+                                <label for="bookedYear" class="form-label">Booked Year</label>
+                                <input type="number" id="bookedYear" class="form-control" placeholder="YYYY" min="2000"
+                                    max="2100">
+                            </div>
+                            <div class="col-6 col-md-4 col-lg-2">
+                                <label for="financialYear" class="form-label">Financial Year</label>
+                                <input id="financialYear" class="form-control" placeholder="YYYY-YYYY"
+                                    list="financialYearList">
+                                <datalist id="financialYearList"></datalist>
+                            </div>
+                            <div class="col-6 col-md-4 col-lg-2">
+                                <label for="invoiceStatus" class="form-label">Invoice Status</label>
+                                <input id="invoiceStatus" class="form-control" list="invoiceStatusList"
+                                    placeholder="Enter Status">
+                                <datalist id="invoiceStatusList"></datalist>
+                            </div>
+                            <div class="col-6 col-md-2 col-lg-2 d-grid align-self-end">
+                                <button class="btn btn-primary" id="searchBtn"><i class="bi bi-search"></i>
+                                    Search</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Spinner -->
+                    <div id="loadingSpinner" class="text-center my-4" style="display: none;">
+                        <div class="spinner-border text-primary" role="status"><span
+                                class="visually-hidden">Loading...</span></div>
+                    </div>
+
+                    <!-- Table -->
+                    <!-- Table with outer border -->
+                    <div class="table-responsive border border-secondary rounded shadow-sm">
+                        <table class="table table-bordered table-hover table-sm mb-0" id="bookingTable">
+                            <thead class="table-dark text-center">
+                                <tr>
+                                    <th data-key="RowID">Sr No</th>
+                                    <th data-key="DocketNo">Docket No</th>
+                                    <th data-key="BookedDate">Booked Date</th>
+                                    <th data-key="CustomerName">Customer Name</th>
+                                    <th data-key="MovementType">Movement Type</th>
+                                    <th data-key="ModeType">Mode Type</th>
+                                    <th data-key="ServiceProviderName">Service Provider</th>
+                                    <th data-key="CourierName">Courier Name</th>
+                                    <th data-key="Consignee">Consignee</th>
+                                    <th data-key="OriginName">Origin</th>
+                                    <th data-key="PortofLoading">Port of Loading</th>
+                                    <th data-key="DestinationName">Destination</th>
+                                    <th data-key="PortofDischarge">Port of Discharge</th>
+                                    <th data-key="UOM">UOM</th>
+                                    <th data-key="NoOfUnits">No. of Units</th>
+                                    <th data-key="ActualWeight">Actual Weight</th>
+                                    <th data-key="VolumeWeight">Volume Weight</th>
+                                    <th data-key="ChargeableWeight">Chargeable Weight</th>
+                                    <th data-key="TotalAmount">Total Amount</th>
+                                    <th data-key="SGST">SGST</th>
+                                    <th data-key="CGST">CGST</th>
+                                    <th data-key="IGST">IGST</th>
+                                    <th data-key="GST">Total GST</th>
+                                    <th data-key="GrandTotal">Grand Total</th>
+                                    <th data-key="InvoiceNo">Invoice No</th>
+                                    <th data-key="InvoiceStatus">Invoice Status</th>
+                                    <th data-key="ShipperRef">Shipper Ref</th>
+                                    <th data-key="Commodity">Commodity</th>
+                                    <th data-key="ShippingType">Shipping Type</th>
+                                    <th data-key="ConsignmentValue">Consignment Value</th>
+                                    <th data-key="PONo">PO No</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
 
 
-        <!-- Pagination & Export -->
-        <div class="mb-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
-            <nav>
-                <ul class="pagination mb-0" id="paginationControls"></ul>
-            </nav>
-            <div class="d-flex flex-wrap gap-2">
-                <button class="btn btn-success" id="exportExcelBtn"><i class="bi bi-file-earmark-excel"></i> Export to
-                    Excel</button>
-                <button class="btn btn-danger" id="exportPdfBtn"><i class="bi bi-file-earmark-pdf"></i> Export to
-                    PDF</button>
+                    <!-- Pagination & Export -->
+                    <div class="mb-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
+                        <nav>
+                            <ul class="pagination mb-0" id="paginationControls"></ul>
+                        </nav>
+                        <div class="d-flex flex-wrap gap-2">
+                            <button class="btn btn-success" id="exportExcelBtn"><i class="bi bi-file-earmark-excel"></i>
+                                Export to
+                                Excel</button>
+                            <button class="btn btn-danger" id="exportPdfBtn"><i class="bi bi-file-earmark-pdf"></i>
+                                Export to
+                                PDF</button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -238,7 +263,6 @@
     <!-- App Scripts -->
     <script src="../../assets/js/utils/server.js"></script>
     <script src="../../assets/js/utils/navbar.js"></script>
-    <script src="../../assets/js/utils/footer.js"></script>
     <script src="../../assets/js/utils/utils.js"></script>
     <script src="../../assets/js/Report/reportInternationalShipmentDetails.js"></script>
     <script src="../../assets/js/utils/logout.js"></script>

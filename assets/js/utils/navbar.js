@@ -1,202 +1,479 @@
-document.addEventListener("DOMContentLoaded", async () => {
-  // Redirect to login if not logged in
-  const userLoginID = localStorage.getItem('UserLoginID');
-  if (!userLoginID) {
-    location.replace('/index.html');
-    return;
-  }
+const Navbar = (() => {
 
-  // Helper: Generate FormID
-  const generateFormID = (item) => {
-    if (item.href.includes("PaymentDetails.html")) {
-      const url = new URL(item.href, window.location.origin);
-      const type = url.searchParams.get("type") || "";
-      return `PaymentDetails${type}`;
+    // ==========================
+    // MENU CONFIG
+    // ==========================
+    const MENU = [
+        {
+            title: "Master",
+            icon: "bi-database",
+            children: [
+                { label: "Company", icon: "bi-building", href: "/pages/master/companyProfile.html" },
+                { label: "Party", icon: "bi-people", href: "/pages/master/PartyRegistration.html" },
+                { label: "Service Provider", icon: "bi-truck", href: "/pages/master/ServiceProvider.html" },
+                { label: "Employee", icon: "bi-person-badge", href: "/pages/master/EmployeeMaster.html" },
+                { label: "User Rules", icon: "bi-shield", href: "/pages/master/UserAccessRules.html" }
+            ]
+        },
+        {
+            title: "Operations",
+            icon: "bi-gear",
+            children: [
+                { label: "Enquiry", icon: "bi-search", href: "/pages/Functions/Enquiry.html" },
+                { label: "Quotation", icon: "bi-file-earmark-text", href: "/pages/Functions/Quotation.html" },
+                { label: "International", icon: "bi-globe", href: "/pages/Functions/InternationalBooking.html" },
+                { label: "Domestic", icon: "bi-truck", href: "/pages/Functions/DomesticBooking.html" },
+                { label: "Customs Clearance", icon: "bi-box-seam", href: "/pages/Functions/CustomsClearance.html" },
+                { label: "Full Truck Load", icon: "bi-truck", href: "/pages/Functions/fulltruckload.html" },
+                { label: "Upload Data", icon: "bi-upload", href: "#" }
+            ]
+        },
+        {
+            title: "Accounts",
+            icon: "bi-cash-stack",
+            children: [
+                { label: "Customer Invoice", icon: "bi-receipt", href: "/pages/Accounting/CustomerInvoice.html" },
+                { label: "Vendor Billing", icon: "bi-receipt", href: "/pages/Accounting/VendorBilling.html" },
+                { label: "Payments Credit", icon: "bi-wallet", href: "/pages/Accounting/PaymentDetails.html?type=Credit" },
+                { label: "Payment Debit", icon: "bi-wallet", href: "/pages/Accounting/PaymentDetails.html?type=Debit" },
+                { label: "Tax Details", icon: "bi-receipt", href: "/pages/Accounting/TaxDetails.html" }
+            ]
+        },
+        {
+            title: "Reports",
+            icon: "bi-cash-stack",
+            children: [
+                { label: "International Report", icon: "bi-globe", href: "/pages/Reports/reportInternationalShipmentDetails.html" },
+                { label: "Domestic Report", icon: "bi-truck", href: "/pages/Reports/reportDomesticDetails.html" },
+                { label: "Customs Clearance Report", icon: "bi-box-seam", href: "/pages/Reports/reportCustomsClearance.html" },
+                { label: "Full Truck Load Report", icon: "bi-truck", href: "/pages/Reports/reportFulltruckDetails.html" },
+                { label: "Customer Invoice Report", icon: "bi-receipt", href: "/pages/Reports/reportCustomerInvoiceDetails.html" },
+                { label: "Vendor Billing Report", icon: "bi-receipt", href: "#" },
+                { label: "Payment Received", icon: "bi-wallet", href: "#" },
+                { label: "Payment Receivable", icon: "bi-wallet", href: "#" },
+                { label: "Payment Paid", icon: "bi-wallet", href: "#" },
+                { label: "Payment Payable", icon: "bi-wallet", href: "#" },
+                { label: "Accounting Ledger", icon: "bi-receipt", href: "#" }
+            ]
+        },
+        {
+            title: "Tools",
+            icon: "bi-tools",
+            children: [
+                { label: "Settings", icon: "bi-gear", href: "/pages/Tools/setting.html" },
+                { label: "Error Log", icon: "bi-exclamation-triangle", href: "#" },
+                { label: "Docket Master", icon: "bi-file-earmark-text", href: "#" },
+                { label: "Reset Database", icon: "bi-trash", href: "#" },
+                { label: "Route Master", icon: "bi-truck", href: "/pages/Tools/routemaster.html" },
+                { label: "Application Settings", icon: "bi-gear", href: "/pages/Tools/ApplicationSettings.html" },
+            ]
+        }
+
+    ];
+
+    let permissionsCache = null;
+    // ==========================
+    // INIT
+    // ==========================
+    async function init() {
+        const userLoginID = localStorage.getItem("UserLoginID");
+
+        if (!userLoginID) {
+            location.replace("/index.html");
+            return;
+        }
+
+        renderSidebar();
+        createTopNavbar();
+        setupMenuToggle();
+        setActiveMenu();
+        await applyPermissions(userLoginID);
+        mobileToggle();
+
+        // Features
+        setupPageAnimation();
+        setupPageTransition();
+        createCollapseButton();
+        createFooter(); // ✅ NEW
     }
-    return item.href
-      .replace("/pages/master/", "")
-      .replace("/pages/Accounting/", "")
-      .replace("/pages/Functions/", "")
-      .replace("/pages/Reports/", "")
-      .replace("/pages/Tools/", "")
-      .replace("/reports/", "")
-      .replace(".html", "")
-      .replace(/[^a-zA-Z0-9]/g, "");
-  };
 
-  // Helper: Create dropdown section
-  const menuSection = (title, items) => `
-    <li class="nav-item dropdown">
-        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">${title}</a>
-        <ul class="dropdown-menu">
-            ${items.map(item =>
-    item === 'divider'
-      ? '<li><hr class="dropdown-divider" /></li>'
-      : `<li><a class="dropdown-item menu-item" href="${item.href}" data-form-id="${generateFormID(item)}">${item.label}</a></li>`
-  ).join('')}
-        </ul>
-    </li>`;
+    // ==========================
+    // SIDEBAR RENDER
+    // ==========================
+    function renderSidebar() {
+        document.getElementById("sidebar").innerHTML = `
+        <div class="sidebar" id="sidebarMenu">
+           <div class="logo">
+                <a href="/pages/Tools/home.html" class="logo-box" onclick="event.preventDefault(); navigateWithAnimation('/pages/Tools/home.html')">
+                    <img src="../../assets/img/applogo.png" alt="Logo" class="logo-img" />
+                    <span class="logo-text">BizNavigation</span>
+                </a>
+            </div>
+            <ul class="menu">
+                ${MENU.map(section => `
+                    <li class="menu-group">
+                        <div class="menu-title">
+                            <i class="bi ${section.icon}"></i>
+                            <span>${section.title}</span>
+                            <i class="bi bi-chevron-down arrow"></i>
+                        </div>
 
-  // Navbar HTML
-  const header = `
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
-        <div class="container-fluid">
-            <a class="navbar-brand d-flex align-items-center" href="/pages/Tools/home.html">
-                <img src="../../assets/img/applogo.png" alt="Logo" width="40" class="me-2" />
-                <div>
-                    <h2 class="mb-0 fs-6">BizNavigation</h2>
-                    <span class="d-block text-center" style="font-size: 0.6rem;">TAKE YOUR BUSINESS TO THE NEXT LEVEL</span>
-                </div>
-            </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
-                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
+                        <ul class="submenu">
+                           ${section.children.map(item => `
+    <li class="menu-item" data-href="${item.href}" data-label="${item.label}">
+        <i class="bi ${item.icon}"></i>
+        <span>${item.label}</span>
+    </li>
+`).join("")}
+                        </ul>
+                    </li>
+                `).join("")}
+            </ul>
+        </div>`;
+    }
 
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto">
+    // ==========================
+    // MENU TOGGLE
+    // ==========================
+    function setupMenuToggle() {
+        const menuGroups = document.querySelectorAll(".menu-group");
 
-                    ${menuSection("Master", [
-    { label: "Company", href: "/pages/master/companyProfile.html" },
-    { label: "Party Registration", href: "/pages/master/PartyRegistration.html" },
-    'divider',
-    { label: "Employee", href: "/pages/master/EmployeeMaster.html" },
-    { label: "User Rules", href: "/pages/master/UserAccessRules.html" }
-  ])}
+        document.querySelectorAll(".menu-title").forEach(el => {
+            el.onclick = () => {
+                const parent = el.parentElement;
 
-                    ${menuSection("Functions", [
-    { label: "Enquiry", href: "/pages/Functions/Enquiry.html" },
-    { label: "Quotation", href: "/pages/Functions/Quotation.html" },
-    'divider',
-    { label: "International Booking", href: "/pages/Functions/InternationalBooking.html" },
-    { label: "Domestic", href: "/pages/Functions/DomesticBooking.html" },
-    { label: "Customs Clearance", href: "/pages/Functions/CustomsClearance.html" },
-    { label: "Full Truck Load", href: "/pages/Functions/fulltruckload.html" },
-    'divider',
-    { label: "Upload Data", href: "#" }
-  ])}
+                // ✅ Close all other menus
+                menuGroups.forEach(group => {
+                    if (group !== parent) {
+                        group.classList.remove("open");
+                    }
+                });
 
-                    ${menuSection("Accounting", [
-    { label: "Customer Invoicing", href: "/pages/Accounting/CustomerInvoice.html" },
-    { label: "Vendor Billing", href: "/pages/Accounting/VendorBilling.html" },
-    'divider',
-    { label: "Payment Credit", href: "/pages/Accounting/PaymentDetails.html?type=Credit" },
-    { label: "Payment Debit", href: "/pages/Accounting/PaymentDetails.html?type=Debit" },
-    'divider',
-    { label: "Tax Details", href: "/pages/Accounting/TaxDetails.html" }
-  ])}
+                // ✅ Toggle current menu
+                parent.classList.toggle("open");
+            };
+        });
+    }
 
-                    ${menuSection("Reports", [
-    { label: "International Report", href: "/pages/Reports/reportInternationalShipmentDetails.html" },
-    { label: "Domestic Report", href: "/pages/Reports/reportDomesticDetails.html" },
-    { label: "Customs Clearance Report", href: "/pages/Reports/reportCustomsClearance.html" },
-    { label: "Full Truck Load Report", href: "/pages/Reports/reportFulltruckDetails.html" },
-    'divider',
-    { label: "Customer Invoice Report", href: "/pages/Reports/reportCustomerInvoiceDetails.html" },
-    { label: "Vendor Billing Report", href: "#" },
-    'divider',
-    { label: "Payment Received", href: "#" },
-    { label: "Payment Receivable", href: "#" },
-    { label: "Payment Paid", href: "#" },
-    { label: "Payment Payable", href: "#" },
-    'divider',
-    { label: "Accounting Ledger", href: "#" }
-  ])}
+    // ==========================
+    // ACTIVE MENU
+    // ==========================
+    function setActiveMenu() {
+        const current = window.location.pathname;
 
-                    ${menuSection("Tools", [
-    { label: "Settings", href: "/pages/Tools/setting.html" },
-    { label: "Error Log", href: "#" },
-    { label: "Docket Master", href: "#" },
-    { label: "Reset Database", href: "#" },
-    { label: "Route Master", href: "/pages/Tools/routemaster.html" },
-    { label: "Application Settings", href: "/pages/Tools/ApplicationSettings.html" },
-    { label: "Pincode Master", href: "/pages/Tools/PincodeMaster.html" }
-  ])}
+        document.querySelectorAll(".menu-item").forEach(item => {
+            const href = item.dataset.href;
 
+            // ✅ Normalize both paths
+            const currentPath = current.toLowerCase();
+            const menuPath = href.toLowerCase();
+
+            if (currentPath === menuPath) {
+                item.classList.add("active");
+                item.closest(".menu-group").classList.add("open");
+
+                const breadcrumb = document.getElementById("breadcrumb");
+                if (breadcrumb) {
+                    breadcrumb.innerHTML =
+                        `<div class="breadcrumb-box">Home / ${item.innerText}</div>`;
+                }
+            }
+
+            item.onclick = () => navigateWithAnimation(href);
+        });
+    }
+
+    // ==========================
+    // PERMISSIONS
+    // ==========================
+    async function applyPermissions(userLoginID) {
+        let permissions = JSON.parse(localStorage.getItem("permissions"));
+
+        if (!permissions) {
+            permissions = await fetchPermissions(userLoginID);
+            localStorage.setItem("permissions", JSON.stringify(permissions));
+        }
+
+        document.querySelectorAll(".menu-item").forEach(item => {
+            const id = generateFormID(item.dataset.href);
+            if (!permissions[id]?.CanRead) {
+                item.style.display = "none";
+            }
+        });
+    }
+
+    // ==========================
+    // MOBILE TOGGLE
+    // ==========================
+    function mobileToggle() {
+        document.body.insertAdjacentHTML("afterbegin", `
+            <button id="toggleSidebar" class="btn btn-dark d-md-none"
+                style="position:fixed;top:10px;left:10px;z-index:1100;">☰</button>
+        `);
+
+        document.getElementById("toggleSidebar").onclick = () => {
+            document.getElementById("sidebarMenu").classList.toggle("show");
+        };
+    }
+
+    // ==========================
+    // 🔥 PAGE ANIMATION
+    // ==========================
+    function setupPageAnimation() {
+        document.body.style.opacity = 0;
+
+        requestAnimationFrame(() => {
+            document.body.style.opacity = 1;
+        });
+    }
+
+    // ==========================
+    // 🔥 PAGE TRANSITION
+    // ==========================
+    function setupPageTransition() {
+        document.addEventListener("click", function (event) {
+
+            const link = event.target.closest("a");
+            const menuItem = event.target.closest(".menu-item");
+
+            let href = null;
+
+            if (link && link.href.startsWith(window.location.origin)) {
+                href = link.href;
+            }
+
+            if (menuItem && menuItem.dataset.href) {
+                href = menuItem.dataset.href;
+            }
+
+            if (!href) return;
+
+            event.preventDefault();
+            navigateWithAnimation(href);
+        });
+    }
+
+    function navigateWithAnimation(href) {
+        document.body.classList.remove("page-enter");
+        document.body.classList.add("page-exit");
+
+        setTimeout(() => {
+            window.location.href = href;
+        }, 300);
+    }
+
+    // ==========================
+    // 🔥 COLLAPSE BUTTON
+    // ==========================
+    function createCollapseButton() {
+        const sidebar = document.getElementById("sidebarMenu");
+
+        const btn = document.createElement("button");
+        btn.innerHTML = '<i class="bi bi-chevron-left"></i>';
+        btn.className = "collapse-btn";
+
+        sidebar.appendChild(btn);
+
+        btn.onclick = () => {
+            sidebar.classList.toggle("collapsed");
+
+            // Toggle icon direction
+            btn.innerHTML = sidebar.classList.contains("collapsed")
+                ? '<i class="bi bi-chevron-right"></i>'
+                : '<i class="bi bi-chevron-left"></i>';
+        };
+    }
+
+    // ==========================
+    // HELPERS
+    // ==========================
+    function generateFormID(href) {
+        if (href.includes("PaymentDetails")) {
+            const type = new URL(href, location.origin).searchParams.get("type") || "";
+            return `PaymentDetails${type}`;
+        }
+        return href.split("/").pop().replace(".html", "");
+    }
+
+    async function fetchPermissions(userLoginID) {
+        const { data, error } = await supabaseClient
+            .from("UserAccessRules")
+            .select("*")
+            .eq("UserLoginID", userLoginID);
+
+        if (error) return {};
+        return Object.fromEntries(data.map(r => [r.FormID, r]));
+    }
+
+    return { init };
+
+})();
+
+// footer is simpler, so we can directly append it without needing a separate function
+
+function createFooter() {
+    const footer = document.createElement("footer");
+    footer.className = "bg-dark text-white mt-4";
+
+    footer.innerHTML = `
+        <div class="container py-3">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-center text-center">
+
+                <p class="mb-3 mb-md-0 fs-6">
+                    &copy; 2024 BizNavigation - All Rights Reserved.
+                </p>
+
+                <ul class="list-inline mb-3 mb-md-0 fs-6">
+                    <li class="list-inline-item">
+                        <a href="#" class="text-white text-decoration-none">Privacy Policy</a>
+                    </li>
+                    <li class="list-inline-item">|</li>
+                    <li class="list-inline-item">
+                        <a href="#" class="text-white text-decoration-none">Terms of Service</a>
+                    </li>
+                    <li class="list-inline-item">|</li>
+                    <li class="list-inline-item">
+                        <a href="#" class="text-white text-decoration-none">Contact Us</a>
+                    </li>
                 </ul>
 
-                <div class="d-flex align-items-center">
-                    <span class="text-white me-3">User ID: <span id="userLoginID">UserLoginID</span></span>
-                    <button class="btn btn-outline-light logout-btn">Logout</button>
+                <div>
+                    <a href="#" class="mx-2">
+                        <img src="../../assets/img/icons/facebook.svg" width="24">
+                    </a>
+                    <a href="#" class="mx-2">
+                        <img src="../../assets/img/icons/twitter.svg" width="24">
+                    </a>
+                    <a href="#" class="mx-2">
+                        <img src="../../assets/img/icons/linkedin.svg" width="24">
+                    </a>
                 </div>
+
             </div>
         </div>
-    </nav>`;
+    `;
 
-  document.body.insertAdjacentHTML("afterbegin", header);
-
-  // Show logged-in user ID
-  const userLoginIDSpan = document.getElementById("userLoginID");
-  if (userLoginIDSpan) {
-    userLoginIDSpan.textContent = userLoginID;
-  }
-
-  // Logout functionality
-  const logoutBtn = document.querySelector(".logout-btn");
-  if (logoutBtn) {
-    logoutBtn.addEventListener("click", async () => {
-      console.log("Logging out...", userLoginID);
-      await logoutOtherSessions(userLoginID);
-      localStorage.clear();
-      location.replace("/index.html");
-    });
-  }
-
-  // ✅ Permission check for all menu items
-  const menuItems = document.querySelectorAll(".menu-item");
-
-  // Fetch all permissions for the user at once
-  const permissions = await fetchAllPermissions(userLoginID);
-
-  menuItems.forEach(item => {
-    const formID = item.getAttribute("data-form-id");
-    const href = item.getAttribute("href");
-
-    if (!formID || !href) return;
-
-    const accessGranted = permissions[formID]?.CanRead ?? false;
-    checkSessionToken();
-    if (!accessGranted) {
-      item.classList.add("disabled");
-      item.setAttribute("aria-disabled", "true");
-      item.removeAttribute("href");
-      item.style.pointerEvents = "none";
-      item.style.opacity = "0.5";
-    } else {
-      item.addEventListener("click", (e) => {
-        window.location.href = href;
-      });
+    const container = document.querySelector(".main-content");
+    if (container) {
+        container.appendChild(footer);
     }
-  });
+}
+
+function createTopNavbar() {
+
+    const userName = localStorage.getItem("UserName") || "User";
+
+    // ✅ Get page title dynamically
+    const pageTitle = document.title || "Dashboard";
+
+    const navbar = document.createElement("div");
+    navbar.className = "top-navbar";
+
+    navbar.innerHTML = `
+        <div class="navbar-left">
+            <h5 class="mb-0">${pageTitle}</h5>
+        </div>
+
+        <div class="navbar-right">
+
+            <button id="themeToggle" class="theme-btn">
+                <i class="bi bi-moon"></i>
+            </button>
+
+            <div class="user-box">
+                <div class="avatar">${userName.charAt(0).toUpperCase()}</div>
+                <span class="username">${userName}</span>
+            </div>
+
+            <button id="logoutBtn" class="logout-btn">
+                <i class="bi bi-box-arrow-right"></i>
+            </button>
+
+        </div>
+    `;
+
+    document.querySelector(".main-content")?.prepend(navbar);
+
+    setupThemeToggle();
+
+    navbar.querySelector("#logoutBtn").addEventListener("click", () => {
+        localStorage.clear();
+        window.location.href = "/index.html";
+    });
+}
+// PROFILE DROPDOWN
+function setupProfileDropdown(header) {
+    const trigger = header.querySelector(".profile-trigger");
+    const dropdown = header.querySelector(".profile-dropdown");
+
+    trigger.onclick = () => dropdown.classList.toggle("show");
+
+    document.addEventListener("click", (e) => {
+        if (!trigger.contains(e.target)) {
+            dropdown.classList.remove("show");
+        }
+    });
+
+    // document.getElementById("logoutBtn").onclick = () => {
+    //     localStorage.clear();
+    //     window.location.href = "/index.html";
+    // };
+}
+
+// 🔔 NOTIFICATIONS
+function setupNotifications(header) {
+    const icon = header.querySelector(".notification-icon");
+    const dropdown = header.querySelector(".notification-dropdown");
+
+    icon.onclick = () => dropdown.classList.toggle("show");
+
+    document.addEventListener("click", (e) => {
+        if (!icon.contains(e.target)) {
+            dropdown.classList.remove("show");
+        }
+    });
+}
+
+// 🌙 DARK MODE
+function setupThemeToggle() {
+    const btn = document.getElementById("themeToggle");
+    const currentTheme = localStorage.getItem("theme");
+
+    if (currentTheme === "dark") {
+        document.body.classList.add("dark-mode");
+    }
+
+    btn.onclick = () => {
+        document.body.classList.toggle("dark-mode");
+
+        const isDark = document.body.classList.contains("dark-mode");
+        localStorage.setItem("theme", isDark ? "dark" : "light");
+    };
+}
+
+function navigateWithAnimation(href) {
+    document.getElementById("sidebarMenu")?.classList.remove("show");
+
+    document.body.classList.remove("page-enter");
+    document.body.classList.add("page-exit");
+
+    setTimeout(() => {
+        window.location.href = href;
+    }, 250);
+}
+
+document.addEventListener("click", function (e) {
+    const link = e.target.closest("a");
+
+    if (link && link.href.includes("PaymentDetails.html")) {
+        setTimeout(() => {
+            const type = new URLSearchParams(window.location.search).get("type");
+
+            if (type) {
+                document.title = `Payment Details - ${type}`;
+            }
+        }, 100);
+    }
 });
 
-// ✅ Fetch all permissions for the user
-async function fetchAllPermissions(userLoginID) {
-  try {
-    // checkSessionToken();
-    const { data, error } = await supabaseClient
-      .from("UserAccessRules")
-      .select("*")
-      .eq("UserLoginID", userLoginID);
-
-    if (error) {
-      console.error("Error fetching permissions:", error);
-      return {};
-    }
-
-    const permissionMap = {};
-    data.forEach(row => {
-      permissionMap[row.FormID] = {
-        CanRead: row.CanRead ?? false,
-        CanWrite: row.CanWrite ?? false,
-        CanDelete: row.CanDelete ?? false,
-        CanUpdate: row.CanUpdate ?? false
-      };
-    });
-    return permissionMap;
-
-  } catch (err) {
-    console.error("Unexpected error fetching permissions:", err);
-    return {};
-  }
-}
+document.addEventListener("DOMContentLoaded", Navbar.init);

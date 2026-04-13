@@ -12,35 +12,6 @@ const fixedvalueInput = document.getElementById('fixedvalue');
 const hsncodeInput = document.getElementById('hsncode');
 const tempFormID = document.getElementById('tempFormID');
 
-/*************************************************
- * INIT
- *************************************************/
-document.getElementById('dropdownListdetails-tab')
-    ?.addEventListener('shown.bs.tab', initDropdownTab);
-
-async function initDropdownTab() {
-    if (dropdownMenuListTabInitialized) return;
-    dropdownMenuListTabInitialized = true;
-
-    createLoader();
-
-    const addBtn = document.getElementById('addDropdownMenuList');
-    if (!addBtn) return;
-
-    // Prevent duplicate listeners
-    addBtn.onclick = saveDropdownItem;
-
-    const checkPermission = () => {
-        addBtn.disabled = !canModify();
-    };
-
-    checkPermission();
-    setTimeout(checkPermission, 150);
-
-    await fetchDropdownList();
-    setupFilterListeners();
-    attachTableEvents(); // ✅ delegated events
-}
 
 /*************************************************
  * FETCH DROPDOWN LIST
@@ -368,3 +339,34 @@ function applyDropdownFilters() {
         document.getElementById('noDataRow')?.remove();
     }
 }
+
+
+// /*************************************************
+//  * INIT
+//  *************************************************/
+// document.getElementById('dropdownListdetails-tab')
+//     ?.addEventListener('shown.bs.tab', initDropdownTab);
+
+// async function initDropdownTab() {
+//     if (dropdownMenuListTabInitialized) return;
+//     dropdownMenuListTabInitialized = true;
+
+//     createLoader();
+
+//     const addBtn = document.getElementById('addDropdownMenuList');
+//     if (!addBtn) return;
+
+//     // Prevent duplicate listeners
+//     addBtn.onclick = saveDropdownItem;
+
+//     const checkPermission = () => {
+//         addBtn.disabled = !canModify();
+//     };
+
+//     checkPermission();
+//     setTimeout(checkPermission, 150);
+
+//     await fetchDropdownList();
+//     setupFilterListeners();
+//     attachTableEvents(); // ✅ delegated events
+// }

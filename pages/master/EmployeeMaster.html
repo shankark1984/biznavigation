@@ -10,283 +10,313 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/js-sha256@0.9.0/build/sha256.min.js" defer></script>
+    <!-- Sidebar CSS -->
+    <link rel="stylesheet" href="../../assets/css/navbar.css" />
 </head>
 
 <body class="bg-light">
-    <div class="container mt-4 pt-5" id="root">
-        <div class="card shadow-lg rounded">
-            <div class="card-header bg-primary text-white">
-                <div class="d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">Employee Master</h5>
-                    <i class="bi bi-person-badge fs-4"></i>
+    <!-- 🔥 APP LAYOUT -->
+    <div class="app-wrapper">
+
+        <!-- Sidebar -->
+        <div id="sidebar">
+            <!-- fallback -->
+            <div class="text-center text-white p-3">Loading...</div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+
+            <!-- 🔥 PAGE CONTENT -->
+            <div class="page-content">
+
+                <div class="container-fluid mt-2">
+                    <div class="card shadow-lg rounded">
+
+                        <div class="card-body">
+                            <form id="employeeForm" autocomplete="off">
+
+                                <!-- Action Buttons -->
+                                <div class="d-flex flex-wrap gap-1 mb-3">
+                                    <button type="button" class="btn btn-primary btn-sm" id="newButton"
+                                        title="Create new booking">
+                                        <i class="bi bi-file-earmark-plus"></i> New
+                                    </button>
+                                    <button type="button" class="btn btn-warning btn-sm" id="modifyButton" disabled
+                                        title="Modify booking">
+                                        <i class="bi bi-pencil"></i> Modify
+                                    </button>
+                                    <button type="button" class="btn btn-danger btn-sm" id="deleteButton" disabled
+                                        title="Delete booking">
+                                        <i class="bi bi-trash"></i> Delete
+                                    </button>
+                                    <button type="button" class="btn btn-info btn-sm" id="reportButton" disabled
+                                        title="Generate report">
+                                        <i class="bi bi-file-earmark-text"></i> Report
+                                    </button>
+                                    <button id="saveButton" class="btn btn-primary btn-sm" type="button"
+                                        data-mode="insert">
+                                        <span id="saveSpinnerBtn"
+                                            class="spinner-border spinner-border-sm me-2 d-none"></span>
+                                        <i class="bi bi-save"></i> Save
+                                    </button>
+                                    <div id="saveSpinnerOverlay" class="spinner-border text-primary d-none"></div>
+                                    <input type="text" class="form-control bg-light d-none" id="status" value="New"
+                                        readonly>
+                                    <input type="hidden" id="tempFormID">
+                                </div>
+
+                                <!-- BASIC DETAILS -->
+                                <div class="row g-2">
+                                    <div class="col-md-2">
+                                        <label class="form-label small" for="employeeCode">Employee Code</label>
+                                        <input type="text" class="form-control" id="employeeCode" name="employeeCode"
+                                            readonly>
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <label class="form-label small" for="employeeName">Employee Name</label>
+                                        <input list="employeeList" class="form-control" id="employeeName"
+                                            name="employeeName" required>
+                                        <datalist id="employeeList"></datalist>
+                                    </div>
+
+                                    <div class="col-md-3">
+                                        <label class="form-label small" for="employeeType">Employee Type</label>
+                                        <select class="form-select" id="employeeType" name="employeeType">
+                                            <option value="">Select</option>
+                                            <option>Permanent</option>
+                                            <option>Contract</option>
+                                            <option>Intern</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="col-md-3">
+                                        <label class="form-label small" for="dateOfJoining">Date of Joining</label>
+                                        <input type="date" class="form-control" id="dateOfJoining" name="dateOfJoining"
+                                            required>
+                                    </div>
+
+                                    <div class="col-md-2">
+                                        <label class="form-label small" for="gender">Gender</label>
+                                        <select class="form-select" id="gender" name="gender">
+                                            <option value="">Select</option>
+                                            <option>Male</option>
+                                            <option>Female</option>
+                                            <option>Other</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="col-md-2">
+                                        <label class="form-label small" for="maritalStatus">Marital Status</label>
+                                        <select class="form-select" id="maritalStatus" name="maritalStatus">
+                                            <option value="">Select</option>
+                                            <option>Single</option>
+                                            <option>Married</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="col-md-2">
+                                        <label class="form-label small" for="dateOfBirth">Date of Birth</label>
+                                        <input type="date" class="form-control" id="dateOfBirth" name="dateOfBirth"
+                                            required>
+                                    </div>
+
+                                    <div class="col-md-2">
+                                        <label class="form-label small" for="bloodGroup">Blood Group</label>
+                                        <input list="bloodGroupList" class="form-control" id="bloodGroup"
+                                            name="bloodGroup">
+                                        <datalist id="bloodGroupList"></datalist>
+                                    </div>
+
+                                    <div class="col-md-2">
+                                        <label class="form-label small" for="panNumber">PAN Number</label>
+                                        <input type="text" class="form-control text-uppercase" id="panNumber"
+                                            name="panNumber" required pattern="[A-Z]{5}[0-9]{4}[A-Z]{1}"
+                                            oninput="this.value=this.value.toUpperCase()">
+                                    </div>
+
+                                    <div class="col-md-2">
+                                        <label class="form-label small" for="passportNumber">Passport Number</label>
+                                        <input type="text" class="form-control text-uppercase" id="passportNumber"
+                                            name="passportNumber" oninput="this.value=this.value.toUpperCase()">
+                                    </div>
+
+                                    <div class="col-md-2">
+                                        <label class="form-label small" for="aadharNumber">Aadhar Number</label>
+                                        <input type="text" class="form-control" id="aadharNumber" name="aadharNumber"
+                                            pattern="[0-9]{12}" maxlength="12">
+                                    </div>
+
+                                    <div class="col-md-2">
+                                        <label class="form-label small" for="uanNumber">UAN Number</label>
+                                        <input type="text" class="form-control" id="uanNumber" name="uanNumber">
+                                    </div>
+
+                                    <div class="col-md-3">
+                                        <label class="form-label small" for="personalContactNo">Personal Contact
+                                            No</label>
+                                        <input type="tel" class="form-control" id="personalContactNo"
+                                            pattern="[0-9]{10}" maxlength="10" name="personalContactNo">
+                                    </div>
+
+                                    <div class="col-md-3">
+                                        <label class="form-label small" for="personalEmail">Personal Email ID</label>
+                                        <input type="email" class="form-control" id="personalEmail" name="personalEmail"
+                                            required>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label class="form-label small" for="permanentAddress">Permanent Address</label>
+                                        <textarea class="form-control" rows="2" id="permanentAddress"
+                                            name="permanentAddress"></textarea>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label class="form-label small" for="currentAddress">Current Address</label>
+                                        <textarea class="form-control" rows="2" id="currentAddress"
+                                            name="currentAddress"></textarea>
+                                    </div>
+
+                                    <div class="col-md-3">
+                                        <label class="form-label small" for="employeeStatus">Employee Status</label>
+                                        <select class="form-select" id="employeeStatus" name="employeeStatus">
+                                            <option value="">Select</option>
+                                            <option>Active</option>
+                                            <option>Inactive</option>
+                                            <option>Left</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="col-md-3">
+                                        <label class="form-label small" for="statusDate">Status Date</label>
+                                        <input type="date" class="form-control" id="statusDate" name="statusDate"
+                                            disabled>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label class="form-label small" for="leavingReason">Leaving Reason</label>
+                                        <input type="text" class="form-control" id="leavingReason" name="leavingReason"
+                                            disabled>
+                                    </div>
+                                </div>
+                                <!-- Tabs -->
+                                <ul class="nav nav-tabs mt-4" id="partyTabs" role="tablist">
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link active" id="familyDetails-tab" data-bs-toggle="tab"
+                                            data-bs-target="#familyDetails" type="button" role="tab"
+                                            aria-controls="familyDetails" aria-selected="true">
+                                            Family Details
+                                        </button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link" id="employmentCharges-tab" data-bs-toggle="tab"
+                                            data-bs-target="#employmentCharges" type="button" role="tab"
+                                            aria-controls="employmentCharges" aria-selected="false">
+                                            Employment Details
+                                        </button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link" id="userCredentials-tab" data-bs-toggle="tab"
+                                            data-bs-target="#userCredentials" type="button" role="tab"
+                                            aria-controls="userCredentials" aria-selected="false">
+                                            User Credentials
+                                        </button>
+                                    </li>
+                                </ul>
+                                <div class="tab-content border border-top-0 p-3">
+
+                                    <!-- Family Details Tab -->
+                                    <div class="tab-pane fade show active" id="familyDetails" role="tabpanel">
+                                        <div class="row g-2">
+                                            <div class="col-md-3">
+                                                <label class="form-label small" for="relation">Relation</label>
+                                                <input type="text" class="form-control" id="relation" name="relation">
+                                            </div>
+                                            <div class="col-md-3">
+                                                <label class="form-label small" for="familyName">Name</label>
+                                                <input type="text" class="form-control" id="familyName"
+                                                    name="familyName">
+                                            </div>
+                                            <div class="col-md-2">
+                                                <label class="form-label small" for="familyDOB">DOB</label>
+                                                <input type="date" class="form-control" id="familyDOB" name="familyDOB">
+                                            </div>
+                                            <div class="col-md-2 d-flex align-items-end">
+                                                <button type="button" class="btn btn-primary btn-sm">Add</button>
+                                            </div>
+                                        </div>
+                                        <table class="table table-sm mt-2">
+                                            <thead>
+                                                <tr>
+                                                    <th>Relation</th>
+                                                    <th>Name</th>
+                                                    <th>DOB</th>
+                                                    <th></th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="familyTable"></tbody>
+                                        </table>
+                                    </div>
+
+                                    <!-- Employment Details Tab -->
+                                    <div class="tab-pane fade" id="employmentCharges" role="tabpanel">
+                                        <div class="row g-2">
+                                            <div class="col-md-3">
+                                                <label class="form-label small" for="department">Department</label>
+                                                <input type="text" class="form-control" id="department"
+                                                    name="department">
+                                            </div>
+                                            <div class="col-md-3">
+                                                <label class="form-label small" for="designation">Designation</label>
+                                                <input type="text" class="form-control" id="designation"
+                                                    name="designation">
+                                            </div>
+                                            <div class="col-md-3">
+                                                <label class="form-label small" for="ctc">CTC</label>
+                                                <input type="number" class="form-control" id="ctc" name="ctc"
+                                                    step="0.01">
+                                            </div>
+
+                                        </div>
+                                    </div>
+                                    <!-- User Credentials Tab -->
+                                    <div class="tab-pane fade" id="userCredentials" role="tabpanel">
+                                        <div class="row g-2">
+                                            <div class="col-md-4">
+                                                <label class="form-label small" for="loginID">Login ID</label>
+                                                <input type="text" class="form-control" id="loginID" name="loginID">
+                                            </div>
+
+                                            <div class="col-md-4">
+                                                <label class="form-label small" for="userType">User Type</label>
+                                                <select class="form-select" id="userType" name="userType">
+                                                    <option value="">Select User Type</option>
+                                                </select>
+                                            </div>
+
+                                            <div class="col-md-2 d-flex align-items-end">
+                                                <button type="button" class="btn btn-primary btn-sm" id="setUserID"
+                                                    disabled>Create
+                                                    User
+                                                    ID</button>
+                                            </div>
+                                            <div class="col-md-2 d-flex align-items-end">
+                                                <button type="button" class="btn btn-primary btn-sm" id="resetPassword"
+                                                    disabled>Reset
+                                                    Password</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
                 </div>
-
-                <!-- Hidden Fields -->
-                <input type="hidden" id="tempFormID">
-            </div>
-
-            <div class="card-body">
-                <form id="employeeForm" autocomplete="off">
-
-                    <!-- Action Buttons -->
-                    <div class="d-flex flex-wrap gap-1 mb-3">
-                        <button type="button" class="btn btn-primary btn-sm" id="newButton" title="Create new booking">
-                            <i class="bi bi-file-earmark-plus"></i> New
-                        </button>
-                        <button type="button" class="btn btn-warning btn-sm" id="modifyButton" disabled
-                            title="Modify booking">
-                            <i class="bi bi-pencil"></i> Modify
-                        </button>
-                        <button type="button" class="btn btn-danger btn-sm" id="deleteButton" disabled
-                            title="Delete booking">
-                            <i class="bi bi-trash"></i> Delete
-                        </button>
-                        <button type="button" class="btn btn-info btn-sm" id="reportButton" disabled
-                            title="Generate report">
-                            <i class="bi bi-file-earmark-text"></i> Report
-                        </button>
-                        <button id="saveButton" class="btn btn-primary btn-sm" type="button" data-mode="insert">
-                            <span id="saveSpinnerBtn" class="spinner-border spinner-border-sm me-2 d-none"></span>
-                            <i class="bi bi-save"></i> Save
-                        </button>
-                        <div id="saveSpinnerOverlay" class="spinner-border text-primary d-none"></div>
-                        <input type="text" class="form-control bg-light d-none" id="status" value="New" readonly>
-                    </div>
-
-                    <!-- BASIC DETAILS -->
-                    <div class="row g-2">
-                        <div class="col-md-2">
-                            <label class="form-label small" for="employeeCode">Employee Code</label>
-                            <input type="text" class="form-control" id="employeeCode" name="employeeCode" disabled>
-                        </div>
-
-                        <div class="col-md-4">
-                            <label class="form-label small" for="employeeName">Employee Name</label>
-                            <input list="employeeList" class="form-control" id="employeeName" name="employeeName"
-                                required>
-                            <datalist id="employeeList"></datalist>
-                        </div>
-
-                        <div class="col-md-3">
-                            <label class="form-label small" for="employeeType">Employee Type</label>
-                            <select class="form-select" id="employeeType" name="employeeType">
-                                <option value="">Select</option>
-                                <option>Permanent</option>
-                                <option>Contract</option>
-                                <option>Intern</option>
-                            </select>
-                        </div>
-
-                        <div class="col-md-3">
-                            <label class="form-label small" for="dateOfJoining">Date of Joining</label>
-                            <input type="date" class="form-control" id="dateOfJoining" name="dateOfJoining" required>
-                        </div>
-
-                        <div class="col-md-2">
-                            <label class="form-label small" for="gender">Gender</label>
-                            <select class="form-select" id="gender" name="gender">
-                                <option value="">Select</option>
-                                <option>Male</option>
-                                <option>Female</option>
-                                <option>Other</option>
-                            </select>
-                        </div>
-
-                        <div class="col-md-2">
-                            <label class="form-label small" for="maritalStatus">Marital Status</label>
-                            <select class="form-select" id="maritalStatus" name="maritalStatus">
-                                <option value="">Select</option>
-                                <option>Single</option>
-                                <option>Married</option>
-                            </select>
-                        </div>
-
-                        <div class="col-md-2">
-                            <label class="form-label small" for="dateOfBirth">Date of Birth</label>
-                            <input type="date" class="form-control" id="dateOfBirth" name="dateOfBirth" required>
-                        </div>
-
-                        <div class="col-md-2">
-                            <label class="form-label small" for="bloodGroup">Blood Group</label>
-                            <input list="bloodGroupList" class="form-control" id="bloodGroup" name="bloodGroup">
-                            <datalist id="bloodGroupList"></datalist>
-                        </div>
-
-                        <div class="col-md-2">
-                            <label class="form-label small" for="panNumber">PAN Number</label>
-                            <input type="text" class="form-control text-uppercase" id="panNumber" name="panNumber"
-                                required pattern="[A-Z]{5}[0-9]{4}[A-Z]{1}"
-                                oninput="this.value=this.value.toUpperCase()">
-                        </div>
-
-                        <div class="col-md-2">
-                            <label class="form-label small" for="passportNumber">Passport Number</label>
-                            <input type="text" class="form-control text-uppercase" id="passportNumber"
-                                name="passportNumber" oninput="this.value=this.value.toUpperCase()">
-                        </div>
-
-                        <div class="col-md-2">
-                            <label class="form-label small" for="aadharNumber">Aadhar Number</label>
-                            <input type="text" class="form-control" id="aadharNumber" name="aadharNumber"
-                                pattern="[0-9]{12}" maxlength="12">
-                        </div>
-
-                        <div class="col-md-2">
-                            <label class="form-label small" for="uanNumber">UAN Number</label>
-                            <input type="text" class="form-control" id="uanNumber" name="uanNumber">
-                        </div>
-
-                        <div class="col-md-3">
-                            <label class="form-label small" for="personalContactNo">Personal Contact No</label>
-                            <input type="tel" class="form-control" id="personalContactNo" pattern="[0-9]{10}"
-                                maxlength="10" name="personalContactNo">
-                        </div>
-
-                        <div class="col-md-3">
-                            <label class="form-label small" for="personalEmail">Personal Email ID</label>
-                            <input type="email" class="form-control" id="personalEmail" name="personalEmail" required>
-                        </div>
-
-                        <div class="col-md-6">
-                            <label class="form-label small" for="permanentAddress">Permanent Address</label>
-                            <textarea class="form-control" rows="2" id="permanentAddress"
-                                name="permanentAddress"></textarea>
-                        </div>
-
-                        <div class="col-md-6">
-                            <label class="form-label small" for="currentAddress">Current Address</label>
-                            <textarea class="form-control" rows="2" id="currentAddress"
-                                name="currentAddress"></textarea>
-                        </div>
-
-                        <div class="col-md-3">
-                            <label class="form-label small" for="employeeStatus">Employee Status</label>
-                            <select class="form-select" id="employeeStatus" name="employeeStatus">
-                                <option value="">Select</option>
-                                <option>Active</option>
-                                <option>Inactive</option>
-                                <option>Left</option>
-                            </select>
-                        </div>
-
-                        <div class="col-md-3">
-                            <label class="form-label small" for="statusDate">Status Date</label>
-                            <input type="date" class="form-control" id="statusDate" name="statusDate" disabled>
-                        </div>
-
-                        <div class="col-md-6">
-                            <label class="form-label small" for="leavingReason">Leaving Reason</label>
-                            <input type="text" class="form-control" id="leavingReason" name="leavingReason" disabled>
-                        </div>
-                    </div>
-                    <!-- Tabs -->
-                    <ul class="nav nav-tabs mt-4" id="partyTabs" role="tablist">
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link active" id="familyDetails-tab" data-bs-toggle="tab"
-                                data-bs-target="#familyDetails" type="button" role="tab" aria-controls="familyDetails"
-                                aria-selected="true">
-                                Family Details
-                            </button>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="employmentCharges-tab" data-bs-toggle="tab"
-                                data-bs-target="#employmentCharges" type="button" role="tab"
-                                aria-controls="employmentCharges" aria-selected="false">
-                                Employment Details
-                            </button>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="userCredentials-tab" data-bs-toggle="tab"
-                                data-bs-target="#userCredentials" type="button" role="tab"
-                                aria-controls="userCredentials" aria-selected="false">
-                                User Credentials
-                            </button>
-                        </li>
-                    </ul>
-                    <div class="tab-content border border-top-0 p-3">
-
-                        <!-- Family Details Tab -->
-                        <div class="tab-pane fade show active" id="familyDetails" role="tabpanel">
-                            <div class="row g-2">
-                                <div class="col-md-3">
-                                    <label class="form-label small" for="relation">Relation</label>
-                                    <input type="text" class="form-control" id="relation" name="relation">
-                                </div>
-                                <div class="col-md-3">
-                                    <label class="form-label small" for="familyName">Name</label>
-                                    <input type="text" class="form-control" id="familyName" name="familyName">
-                                </div>
-                                <div class="col-md-2">
-                                    <label class="form-label small" for="familyDOB">DOB</label>
-                                    <input type="date" class="form-control" id="familyDOB" name="familyDOB">
-                                </div>
-                                <div class="col-md-2 d-flex align-items-end">
-                                    <button type="button" class="btn btn-primary btn-sm">Add</button>
-                                </div>
-                            </div>
-                            <table class="table table-sm mt-2">
-                                <thead>
-                                    <tr>
-                                        <th>Relation</th>
-                                        <th>Name</th>
-                                        <th>DOB</th>
-                                        <th></th>
-                                    </tr>
-                                </thead>
-                                <tbody id="familyTable"></tbody>
-                            </table>
-                        </div>
-
-                        <!-- Employment Details Tab -->
-                        <div class="tab-pane fade" id="employmentCharges" role="tabpanel">
-                            <div class="row g-2">
-                                <div class="col-md-3">
-                                    <label class="form-label small" for="department">Department</label>
-                                    <input type="text" class="form-control" id="department" name="department">
-                                </div>
-                                <div class="col-md-3">
-                                    <label class="form-label small" for="designation">Designation</label>
-                                    <input type="text" class="form-control" id="designation" name="designation">
-                                </div>
-                                <div class="col-md-3">
-                                    <label class="form-label small" for="ctc">CTC</label>
-                                    <input type="number" class="form-control" id="ctc" name="ctc" step="0.01">
-                                </div>
-
-                            </div>
-                        </div>
-                        <!-- User Credentials Tab -->
-                        <div class="tab-pane fade" id="userCredentials" role="tabpanel">
-                            <div class="row g-2">
-                                <div class="col-md-4">
-                                    <label class="form-label small" for="loginID">Login ID</label>
-                                    <input type="text" class="form-control" id="loginID" name="loginID">
-                                </div>
-
-                                <div class="col-md-4">
-                                    <label class="form-label small" for="userType">User Type</label>
-                                    <select class="form-select" id="userType" name="userType">
-                                        <option value="">Select User Type</option>
-                                    </select>
-                                </div>
-
-                                <div class="col-md-2 d-flex align-items-end">
-                                    <button type="button" class="btn btn-primary btn-sm" id="setUserID" disabled>Create
-                                        User
-                                        ID</button>
-                                </div>
-                                <div class="col-md-2 d-flex align-items-end">
-                                    <button type="button" class="btn btn-primary btn-sm" id="resetPassword"
-                                        disabled>Reset
-                                        Password</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </form>
             </div>
         </div>
     </div>
+
     <!-- Loading Spinner -->
     <div id="loadingSpinner"
         class="d-none position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center bg-dark bg-opacity-50">
@@ -306,20 +336,16 @@
         </div>
     </div>
 
-    <!-- Optimized Script Loading -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" defer></script>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js" defer></script>
-    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/2.3.10/purify.min.js" defer></script> -->
-    <script src="https://unpkg.com/@supabase/supabase-js" defer></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
-
+    <!-- Your scripts -->
     <script src="../../assets/js/utils/server.js"></script>
-    <script src="../../assets/js/utils/navbar.js" defer></script>
-    <script src="../../assets/js/utils/footer.js" defer></script>
-    <script src="../../assets/js/utils/utils.js" defer></script>
-    <script src="../../assets/js/utils/logout.js" defer></script>
-    <script src="../../assets/js/utils/GlobalShortcut.js" defer></script>
-
+    <script src="../../assets/js/utils/navbar.js"></script>
+    <script src="../../assets/js/utils/utils.js"></script>
+    <script src="../../assets/js/utils/logout.js"></script>
+    <script src="../../assets/js/utils/GlobalShortcut.js"></script>
     <script src="../../assets/js/EmployeeMaster/employee.js"></script>
 </body>
 

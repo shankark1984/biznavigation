@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Service Provider</title>
+
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+
+    <!-- Sidebar CSS -->
+    <link rel="stylesheet" href="../../assets/css/navbar.css" />
+</head>
+
+<body class="bg-light">
+
+    <div class="app-wrapper">
+
+        <!-- Sidebar -->
+        <div id="sidebar">
+            <div class="text-center text-white p-3">Loading...</div>
+        </div>
+
+        <!-- Main -->
+        <div class="main-content">
+
+            <div class="page-content">
+
+                <main class="container-fluid mt-2">
+
+                    <div class="card shadow rounded">
+                        <div class="card-body">
+
+                            <form class="needs-validation" novalidate>
+
+                                <!-- ACTION BUTTONS -->
+                                <div class="d-flex flex-wrap gap-2 mb-3">
+                                    <button type="button" class="btn btn-primary btn-sm">
+                                        <i class="bi bi-file-earmark-plus"></i> New
+                                    </button>
+                                    <button type="button" class="btn btn-warning btn-sm">
+                                        <i class="bi bi-pencil"></i> Modify
+                                    </button>
+                                    <button type="button" class="btn btn-danger btn-sm" disabled>
+                                        <i class="bi bi-trash"></i> Delete
+                                    </button>
+                                    <button type="button" class="btn btn-info btn-sm" disabled>
+                                        <i class="bi bi-file-earmark-text"></i> Report
+                                    </button>
+                                    <button type="button" class="btn btn-success btn-sm">
+                                        <i class="bi bi-save"></i> Save
+                                    </button>
+                                </div>
+
+                                <!-- HIDDEN -->
+                                <input type="hidden" id="tempFormID">
+                                <input type="hidden" id="partyCode">
+                                <input type="hidden" id="vendorCode">
+                                <input type="hidden" id="billingAddressID">
+
+                                <!-- FORM -->
+                                <div class="row g-2">
+
+                                    <div class="col-md-2">
+                                        <label class="form-label">Courier Code</label>
+                                        <input type="text" class="form-control bg-light" id="courierCode" readonly>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label class="form-label">Courier Name</label>
+                                        <input list="courierSuggestions" class="form-control" id="courierName" required>
+                                        <datalist id="courierSuggestions"></datalist>
+                                        <div class="invalid-feedback">Required</div>
+                                    </div>
+
+                                    <div class="col-md-2">
+                                        <label class="form-label">Status</label>
+                                        <select class="form-select" id="serviceProviderStatus" required>
+                                            <option value="">Select</option>
+                                            <option>Active</option>
+                                            <option>De-Active</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="col-md-2">
+                                        <label class="form-label">De-Active Date</label>
+                                        <input type="date" class="form-control" id="deActiveDate" disabled>
+                                    </div>
+
+                                    <div class="col-md-3">
+                                        <label class="form-label">Contact Person</label>
+                                        <input type="text" class="form-control" id="partyContactPerson" required>
+                                    </div>
+
+                                    <div class="col-md-3">
+                                        <label class="form-label">Phone</label>
+                                        <input type="tel" class="form-control" id="phoneNumber" required>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label class="form-label">Email</label>
+                                        <input type="email" class="form-control" id="emailID" required>
+                                    </div>
+
+                                </div>
+
+                                <!-- FSC SECTION -->
+                                <div class="mt-4 p-3 border bg-white rounded">
+
+                                    <div class="row g-2 align-items-end">
+
+                                        <div class="col-md-2">
+                                            <label class="form-label">Effective Date</label>
+                                            <input type="date" class="form-control" id="effectiveDate">
+                                        </div>
+
+                                        <div class="col-md-2">
+                                            <label class="form-label">Mode</label>
+                                            <input type="text" class="form-control" id="mode">
+                                        </div>
+
+                                        <div class="col-md-2">
+                                            <label class="form-label">Movement Type</label>
+                                            <input type="text" class="form-control" id="movementType">
+                                        </div>
+
+                                        <div class="col-md-2">
+                                            <label class="form-label">Fuel %</label>
+                                            <input type="number" class="form-control text-end" id="fuelSurcharge">
+                                        </div>
+
+                                        <div class="col-md-2 d-grid">
+                                            <button type="button" class="btn btn-primary">
+                                                <i class="bi bi-plus-circle"></i> Add
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <!-- TABLE -->
+                                    <div class="table-responsive mt-3">
+                                        <table class="table table-sm table-bordered text-center align-middle">
+                                            <thead class="table-dark">
+                                                <tr>
+                                                    <th>Date</th>
+                                                    <th>Description</th>
+                                                    <th>Fuel %</th>
+                                                    <th>Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="fuelSurchargeTableBody">
+                                                <tr>
+                                                    <td colspan="4" class="text-muted">No data</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+
+                                </div>
+
+                            </form>
+
+                        </div>
+                    </div>
+
+                </main>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- LOADER -->
+    <div id="loadingSpinner"
+        class="d-none position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center bg-dark bg-opacity-50">
+        <div class="spinner-border text-light"></div>
+    </div>
+
+    <!-- TOAST -->
+    <div class="position-fixed top-0 end-0 p-3">
+        <div id="errorToast" class="toast text-white bg-danger border-0">
+            <div class="d-flex">
+                <div class="toast-body"></div>
+                <button class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" defer></script>
+    <script src="https://unpkg.com/@supabase/supabase-js" defer></script>
+
+    <script src="../../assets/js/utils/navbar.js" defer></script>
+    <script src="../../assets/js/utils/server.js" defer></script>
+    <script src="../../assets/js/utils/utils.js" defer></script>
+    <script src="../../assets/js/utils/GlobalShortcut.js" defer></script>
+    <script src="../../assets/js/utils/dropdownLoader.js" defer></script>
+    <script src="../../assets/js/PartyRegistration/ServiceProvider.js" defer></script>
+
+</body>
+
+</html>

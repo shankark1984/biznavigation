@@ -15,7 +15,6 @@ async function initSettings() {
     const saveBtn = document.getElementById('saveSettingsBtn');
     const inputs = document.querySelectorAll('#SettingParameters input[id]');
     const canEdit = [1, 2].includes(Number(UserType));
-    console.log('UserType:', UserType, typeof UserType);
 
     try {
         cachedSettings = await loadSettings();

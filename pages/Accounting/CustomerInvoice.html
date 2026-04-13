@@ -4,352 +4,336 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BizNavigation - Customer Invoice</title>
-
-    <!-- Bootstrap CSS -->
+    <title>Customer Invoice</title>
+    <!-- Bootstrap CSS & Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <!-- jsPDF core -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
 
-    <!-- jsPDF AutoTable -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
-
-
-    <style>
-        .form-control-sm {
-            min-height: calc(1.5em + 0.5rem + 2px);
-        }
-
-        .bg-light-input {
-            background-color: #e6f7ff;
-        }
-
-        #pendingShipmentTable,
-        #pendingShipmentCharges {
-            font-size: 0.8rem;
-            white-space: nowrap;
-        }
-
-        .sticky-header thead th {
-            position: sticky;
-            top: 0;
-            background-color: #f8f9fa;
-            z-index: 1020;
-        }
-
-        .text-right {
-            text-align: right;
-        }
-
-        th:last-child,
-        td:last-child {
-            position: sticky;
-            right: 0;
-            background: white;
-        }
-    </style>
+    <!-- Sidebar CSS -->
+    <link rel="stylesheet" href="../../assets/css/navbar.css" />
 </head>
 
 <body class="bg-light">
-    <div class="container mt-4 pt-5" id="root">
-        <div class="card shadow-lg rounded">
-            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                <h3 class="mb-0">Customer Invoice</h3>
-                <!-- Hidden Fields -->
-                <input type="hidden" id="tempFormID">
-                <input type="hidden" id="partyCode">
-                <input type="hidden" id="bankIDs">
-            </div>
+    <!-- 🔥 APP LAYOUT -->
+    <div class="app-wrapper">
 
-            <div class="card-body">
-                <form class="invoiceForm">
-                    <!-- Action Buttons -->
-                    <div class="d-flex flex-wrap gap-1 mb-3">
-                        <button type="button" class="btn btn-primary btn-sm" id="newButton" title="Create new booking">
-                            <i class="bi bi-file-earmark-plus"></i> New
-                        </button>
-                        <button type="button" class="btn btn-warning btn-sm" id="modifyButton" disabled
-                            title="Modify booking">
-                            <i class="bi bi-pencil"></i> Modify
-                        </button>
-                        <button type="button" class="btn btn-danger btn-sm" id="deleteButton" disabled
-                            title="Delete booking">
-                            <i class="bi bi-trash"></i> Delete
-                        </button>
-                        <button type="button" class="btn btn-info btn-sm" id="reportButton" disabled
-                            title="Generate report">
-                            <i class="bi bi-file-earmark-text"></i> Report
-                        </button>
-                        <button id="saveButton" class="btn btn-primary btn-sm" type="button" data-mode="insert">
-                            <span id="saveSpinnerBtn" class="spinner-border spinner-border-sm me-2 d-none"></span>
-                            <i class="bi bi-save"></i> Save
-                        </button>
-                        <div id="saveSpinnerOverlay" class="spinner-border text-primary d-none"></div>
-                        <input type="text" class="form-control bg-light d-none" id="status" value="New" readonly>
-                    </div>
+        <!-- Sidebar -->
+        <div id="sidebar">
+            <!-- fallback -->
+            <div class="text-center text-white p-3">Loading...</div>
+        </div>
 
-                    <!-- Form Inputs -->
-                    <div class="row g-2">
-                        <!-- Customer Details -->
-                        <div class="col-lg-5">
-                            <label for="partyName" class="form-label">Customer Name</label>
-                            <input list="partySuggestions" class="form-control mb-2" id="partyName" required
-                                placeholder="Choose..." autocomplete="off">
-                            <datalist id="partySuggestions"></datalist>
+        <!-- Main Content -->
+        <div class="main-content">
 
-                            <label for="invoiceAddress" class="form-label">Invoice Address</label>
-                            <textarea class="form-control" id="invoiceAddress" rows="4" readonly></textarea>
-                        </div>
+            <!-- 🔥 PAGE CONTENT -->
+            <div class="page-content">
 
-                        <!-- Invoice Details -->
-                        <div class="col-lg-7">
-                            <div class="row g-2">
-                                <div class="col-md-4">
-                                    <label for="invoiceNo" class="form-label">Invoice No</label>
-                                    <input list="invoiceNoSuggestions" class="form-control bg-light-input"
-                                        id="invoiceNo" required autocomplete="off">
-                                    <datalist id="invoiceNoSuggestions"></datalist>
-                                </div>
+                <!-- YOUR EXISTING UI (UNCHANGED) -->
+                <div class="container-fluid mt-2">
+                    <div class="card shadow-lg rounded">
 
-                                <div class="col-md-4">
-                                    <label for="invoiceDate" class="form-label">Booked Date</label>
-                                    <input type="date" class="form-control" id="invoiceDate" required>
-                                </div>
-
-                                <div class="col-md-4">
-                                    <label for="movementType" class="form-label">Movement Type</label>
-                                    <select class="form-control" id="movementType" required>
-                                        <option value="">Choose...</option>
-                                        <option value="Customs Clearance">Customs Clearance</option>
-                                        <option value="Domestic">Domestic</option>
-                                        <option value="Export">Export</option>
-                                        <option value="Forwarding">Forwarding</option>
-                                        <option value="Full Truck Load">Full Truck Load</option>
-                                        <option value="Import">Import</option>
-                                    </select>
-                                </div>
-
-                                <div class="col-md-3">
-                                    <label for="transitType" class="form-label">Transit Type</label>
-                                    <select class="form-control" id="transitType">
-                                        <option value="">Choose...</option>
-                                        <option value="By Air Freight">By Air Freight</option>
-                                        <option value="By Courier">By Courier</option>
-                                        <option value="By Sea Freight">By Sea Freight</option>
-                                    </select>
-                                </div>
-
-                                <div class="col-md-3">
-                                    <label for="modeType" class="form-label">Mode Type</label>
-                                    <select class="form-control" id="modeType">
-                                        <option value="">Choose...</option>
-                                        <option value="Dox">Dox</option>
-                                        <option value="Non-Dox">Non-Dox</option>
-                                        <option value="FCL">FCL</option>
-                                        <option value="LCL">LCL</option>
-                                    </select>
-                                </div>
-
-                                <div class="col-md-3">
-                                    <label for="startDate" class="form-label">Start Date</label>
-                                    <input type="date" class="form-control" id="startDate">
-                                </div>
-
-                                <div class="col-md-3">
-                                    <label for="endDate" class="form-label">End Date</label>
-                                    <input type="date" class="form-control" id="endDate">
-                                </div>
-
-                                <div class="col-md-3">
-                                    <label for="department" class="form-label">Department</label>
-                                    <input list="departmentList" class="form-control bg-light-input" id="department"
-                                        autocomplete="off">
-                                    <datalist id="departmentList"></datalist>
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label for="invoiceInformation" class="form-label">Information</label>
-                                    <input type="text" class="form-control" id="invoiceInformation">
-                                </div>
-
-
-                                <div class="col-md-3 d-grid align-items-end">
-                                    <button type="button" class="btn btn-primary mt-4" id="fetchPendingInvoices">
-                                        <i class="bi bi-plus-circle"></i> Get Data
+                        <div class="card-body">
+                            <form class="invoiceForm">
+                                <!-- Action Buttons -->
+                                <div class="d-flex flex-wrap gap-1 mb-3">
+                                    <button type="button" class="btn btn-primary btn-sm" id="newButton"
+                                        title="Create new booking">
+                                        <i class="bi bi-file-earmark-plus"></i> New
                                     </button>
+                                    <button type="button" class="btn btn-warning btn-sm" id="modifyButton" disabled
+                                        title="Modify booking">
+                                        <i class="bi bi-pencil"></i> Modify
+                                    </button>
+                                    <button type="button" class="btn btn-danger btn-sm" id="deleteButton" disabled
+                                        title="Delete booking">
+                                        <i class="bi bi-trash"></i> Delete
+                                    </button>
+                                    <button type="button" class="btn btn-info btn-sm" id="reportButton" disabled
+                                        title="Generate report">
+                                        <i class="bi bi-file-earmark-text"></i> Report
+                                    </button>
+                                    <button id="saveButton" class="btn btn-primary btn-sm" type="button"
+                                        data-mode="insert">
+                                        <span id="saveSpinnerBtn"
+                                            class="spinner-border spinner-border-sm me-2 d-none"></span>
+                                        <i class="bi bi-save"></i> Save
+                                    </button>
+                                    <div id="saveSpinnerOverlay" class="spinner-border text-primary d-none"></div>
+                                    <input type="text" class="form-control bg-light d-none" id="status" value="New"
+                                        readonly>
+                                    <!-- Hidden Fields -->
+                                    <input type="hidden" id="tempFormID">
+                                    <input type="hidden" id="partyCode">
+                                    <input type="hidden" id="bankIDs">
                                 </div>
-                            </div>
-                        </div>
-                    </div>
 
-                    <!-- Tabs -->
-                    <ul class="nav nav-tabs mt-4" id="partyTabs" role="tablist">
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link active" id="shipmentDetails-tab" data-bs-toggle="tab"
-                                data-bs-target="#shipmentDetails" type="button" role="tab"
-                                aria-controls="shipmentDetails" aria-selected="true">
-                                Shipment Details
-                            </button>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="shipmentCharges-tab" data-bs-toggle="tab"
-                                data-bs-target="#shipmentCharges" type="button" role="tab"
-                                aria-controls="shipmentCharges" aria-selected="false">
-                                Shipment Charges
-                            </button>
-                        </li>
-                    </ul>
+                                <!-- Form Inputs -->
+                                <div class="row g-2">
+                                    <!-- Customer Details -->
+                                    <div class="col-lg-5">
+                                        <label for="partyName" class="form-label">Customer Name</label>
+                                        <input list="partySuggestions" class="form-control mb-2" id="partyName" required
+                                            placeholder="Choose..." autocomplete="off">
+                                        <datalist id="partySuggestions"></datalist>
 
-                    <!-- Tab Content -->
-                    <div class="tab-content p-3 border border-top-0 bg-white">
-                        <!-- Shipment Details Table -->
-                        <div class="tab-pane fade show active" id="shipmentDetails" role="tabpanel"
-                            aria-labelledby="shipmentDetails-tab">
-                            <div class="table-responsive mt-4">
-                                <table
-                                    class="table table-sm table-bordered text-center align-middle small sticky-header"
-                                    id="pendingShipmentTable">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th>Docket<br>No</th>
-                                            <th>Booked<br>Date</th>
-                                            <th>Movement<br>Type</th>
-                                            <th>Transit<br>Type</th>
-                                            <th>Mode<br>Type</th>
-                                            <th>Origin</th>
-                                            <th>Destination</th>
-                                            <th>No.<br>of Units</th>
-                                            <th>Actual<br>Weight</th>
-                                            <th>Chargeable<br>Weight</th>
-                                            <th>Basic<br>Freight</th>
-                                            <th>FSC<br>Amount</th>
-                                            <th>Other<br>Amount</th>
-                                            <th>SGST<br>Amount</th>
-                                            <th>CGST<br>Amount</th>
-                                            <th>IGST<br>Amount</th>
-                                            <th>Total GST<br>Amount</th>
-                                            <th>Total<br>Amount</th>
-                                            <th>Action</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody></tbody>
-                                    <tfoot class="table-light">
-                                        <tr id="totalsRow">
-                                            <th colspan="10" class="text-end">Totals:</th>
-                                            <th class="text-end" id="totalQuantity">0.00</th>
-                                            <th class="text-end" id="totalChargeableWeight">0.00</th>
-                                            <th class="text-end" id="totalFreight">0.00</th>
-                                            <th class="text-end" id="totalFSCAmt">0.00</th>
-                                            <th class="text-end" id="totalOtherAmt">0.00</th>
-                                            <th class="text-end" id="totalSGST">0.00</th>
-                                            <th class="text-end" id="totalCGST">0.00</th>
-                                            <th class="text-end" id="totalIGST">0.00</th>
-                                            <th class="text-end" id="totalGST">0.00</th>
-                                            <th class="text-end" id="totalGrand">0.00</th>
-                                        </tr>
-                                    </tfoot>
-                                </table>
-                            </div>
-                        </div>
+                                        <label for="invoiceAddress" class="form-label">Invoice Address</label>
+                                        <textarea class="form-control" id="invoiceAddress" rows="4" readonly></textarea>
+                                    </div>
 
-                        <!-- Shipment Charges Table -->
-                        <div class="tab-pane fade" id="shipmentCharges" role="tabpanel"
-                            aria-labelledby="shipmentCharges-tab">
-                            <div class="table-responsive mt-4">
-                                <table
-                                    class="table table-sm table-bordered text-center align-middle small sticky-header"
-                                    id="pendingShipmentCharges">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th>Charges Type</th>
-                                            <th>Total Amount</th>
-                                            <th>SGST Amt</th>
-                                            <th>CGST Amt</th>
-                                            <th>IGST Amt</th>
-                                            <th>Total GST Amt</th>
-                                            <th>Grand Total Amt</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody></tbody>
-                                    <tfoot class="table-light">
-                                        <tr id="ChargestotalsRow">
-                                            <th class="text-end">Totals:</th>
-                                            <th class="text-end" id="totalFreightAmt">0.00</th>
-                                            <th class="text-end" id="totalSGSTAmt">0.00</th>
-                                            <th class="text-end" id="totalCGSTAmt">0.00</th>
-                                            <th class="text-end" id="totalIGSTAmt">0.00</th>
-                                            <th class="text-end" id="totalGSTAmt">0.00</th>
-                                            <th class="text-end" id="totalGrandAmt">0.00</th>
-                                        </tr>
-                                    </tfoot>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row g-2">
-                        <!-- Bank Name Input -->
-                        <div class="col-md-4">
-                            <label for="inputBankName" class="form-label">Bank Name</label>
-                            <input list="bankNameSuggestions" class="form-control bg-light-input" id="inputBankName"
-                                required autocomplete="off" required>
-                            <datalist id="bankNameSuggestions"></datalist>
-                        </div>
+                                    <!-- Invoice Details -->
+                                    <div class="col-lg-7">
+                                        <div class="row g-2">
+                                            <div class="col-md-4">
+                                                <label for="invoiceNo" class="form-label">Invoice No</label>
+                                                <input list="invoiceNoSuggestions" class="form-control bg-light-input"
+                                                    id="invoiceNo" required autocomplete="off">
+                                                <datalist id="invoiceNoSuggestions"></datalist>
+                                            </div>
 
-                        <!-- Shipment Number Input -->
-                        <div class="col-md-4">
-                            <label for="shipmentNo" class="form-label">Shipment Number</label>
-                            <input list="shipmentNoSuggestions" class="form-control bg-light-input" id="shipmentNo"
-                                required autocomplete="off">
-                            <datalist id="shipmentNoSuggestions"></datalist>
-                        </div>
-                        <!-- Add Button -->
-                        <div class="col-md-1 d-grid align-items-end">
-                            <button type="button" class="btn btn-primary mt-4" id="addShipmentNo">
-                                <i class="bi bi-plus-circle"></i>
-                            </button>
-                        </div>
-                        <div class="col-md-3">
-                            <label for="reportType" class="form-label">Report Type</label>
-                            <select class="form-select" id="reportType">
-                                <option value="Main">Choose...</option>
-                                <option value="Latter Head">Latter Head</option>
-                                <option value="Print Annexure">Print Annexure</option>
-                                <!-- <option value="Domestic Booking">R3</option>
+                                            <div class="col-md-4">
+                                                <label for="invoiceDate" class="form-label">Booked Date</label>
+                                                <input type="date" class="form-control" id="invoiceDate" required>
+                                            </div>
+
+                                            <div class="col-md-4">
+                                                <label for="movementType" class="form-label">Movement Type</label>
+                                                <select class="form-control" id="movementType" required>
+                                                    <option value="">Choose...</option>
+                                                    <option value="Customs Clearance">Customs Clearance</option>
+                                                    <option value="Domestic">Domestic</option>
+                                                    <option value="Export">Export</option>
+                                                    <option value="Forwarding">Forwarding</option>
+                                                    <option value="Full Truck Load">Full Truck Load</option>
+                                                    <option value="Import">Import</option>
+                                                </select>
+                                            </div>
+
+                                            <div class="col-md-3">
+                                                <label for="transitType" class="form-label">Transit Type</label>
+                                                <select class="form-control" id="transitType">
+                                                    <option value="">Choose...</option>
+                                                    <option value="By Air Freight">By Air Freight</option>
+                                                    <option value="By Courier">By Courier</option>
+                                                    <option value="By Sea Freight">By Sea Freight</option>
+                                                </select>
+                                            </div>
+
+                                            <div class="col-md-3">
+                                                <label for="modeType" class="form-label">Mode Type</label>
+                                                <select class="form-control" id="modeType">
+                                                    <option value="">Choose...</option>
+                                                    <option value="Dox">Dox</option>
+                                                    <option value="Non-Dox">Non-Dox</option>
+                                                    <option value="FCL">FCL</option>
+                                                    <option value="LCL">LCL</option>
+                                                </select>
+                                            </div>
+
+                                            <div class="col-md-3">
+                                                <label for="startDate" class="form-label">Start Date</label>
+                                                <input type="date" class="form-control" id="startDate">
+                                            </div>
+
+                                            <div class="col-md-3">
+                                                <label for="endDate" class="form-label">End Date</label>
+                                                <input type="date" class="form-control" id="endDate">
+                                            </div>
+
+                                            <div class="col-md-3">
+                                                <label for="department" class="form-label">Department</label>
+                                                <input list="departmentList" class="form-control bg-light-input"
+                                                    id="department" autocomplete="off">
+                                                <datalist id="departmentList"></datalist>
+                                            </div>
+
+                                            <div class="col-md-6">
+                                                <label for="invoiceInformation" class="form-label">Information</label>
+                                                <input type="text" class="form-control" id="invoiceInformation">
+                                            </div>
+
+
+                                            <div class="col-md-3 d-grid align-items-end">
+                                                <button type="button" class="btn btn-primary mt-4"
+                                                    id="fetchPendingInvoices">
+                                                    <i class="bi bi-plus-circle"></i> Get Data
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Tabs -->
+                                <ul class="nav nav-tabs mt-4" id="partyTabs" role="tablist">
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link active" id="shipmentDetails-tab" data-bs-toggle="tab"
+                                            data-bs-target="#shipmentDetails" type="button" role="tab"
+                                            aria-controls="shipmentDetails" aria-selected="true">
+                                            Shipment Details
+                                        </button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link" id="shipmentCharges-tab" data-bs-toggle="tab"
+                                            data-bs-target="#shipmentCharges" type="button" role="tab"
+                                            aria-controls="shipmentCharges" aria-selected="false">
+                                            Shipment Charges
+                                        </button>
+                                    </li>
+                                </ul>
+
+                                <!-- Tab Content -->
+                                <div class="tab-content p-3 border border-top-0 bg-white">
+                                    <!-- Shipment Details Table -->
+                                    <div class="tab-pane fade show active" id="shipmentDetails" role="tabpanel"
+                                        aria-labelledby="shipmentDetails-tab">
+                                        <div class="table-responsive mt-4">
+                                            <table
+                                                class="table table-sm table-bordered text-center align-middle small sticky-header"
+                                                id="pendingShipmentTable">
+                                                <thead class="table-light">
+                                                    <tr>
+                                                        <th>Docket<br>No</th>
+                                                        <th>Booked<br>Date</th>
+                                                        <th>Movement<br>Type</th>
+                                                        <th>Transit<br>Type</th>
+                                                        <th>Mode<br>Type</th>
+                                                        <th>Origin</th>
+                                                        <th>Destination</th>
+                                                        <th>No.<br>of Units</th>
+                                                        <th>Actual<br>Weight</th>
+                                                        <th>Chargeable<br>Weight</th>
+                                                        <th>Basic<br>Freight</th>
+                                                        <th>FSC<br>Amount</th>
+                                                        <th>Other<br>Amount</th>
+                                                        <th>SGST<br>Amount</th>
+                                                        <th>CGST<br>Amount</th>
+                                                        <th>IGST<br>Amount</th>
+                                                        <th>Total GST<br>Amount</th>
+                                                        <th>Total<br>Amount</th>
+                                                        <th>Action</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody></tbody>
+                                                <tfoot class="table-light">
+                                                    <tr id="totalsRow">
+                                                        <th colspan="10" class="text-end">Totals:</th>
+                                                        <th class="text-end" id="totalQuantity">0.00</th>
+                                                        <th class="text-end" id="totalChargeableWeight">0.00</th>
+                                                        <th class="text-end" id="totalFreight">0.00</th>
+                                                        <th class="text-end" id="totalFSCAmt">0.00</th>
+                                                        <th class="text-end" id="totalOtherAmt">0.00</th>
+                                                        <th class="text-end" id="totalSGST">0.00</th>
+                                                        <th class="text-end" id="totalCGST">0.00</th>
+                                                        <th class="text-end" id="totalIGST">0.00</th>
+                                                        <th class="text-end" id="totalGST">0.00</th>
+                                                        <th class="text-end" id="totalGrand">0.00</th>
+                                                    </tr>
+                                                </tfoot>
+                                            </table>
+                                        </div>
+                                    </div>
+
+                                    <!-- Shipment Charges Table -->
+                                    <div class="tab-pane fade" id="shipmentCharges" role="tabpanel"
+                                        aria-labelledby="shipmentCharges-tab">
+                                        <div class="table-responsive mt-4">
+                                            <table
+                                                class="table table-sm table-bordered text-center align-middle small sticky-header"
+                                                id="pendingShipmentCharges">
+                                                <thead class="table-light">
+                                                    <tr>
+                                                        <th>Charges Type</th>
+                                                        <th>Total Amount</th>
+                                                        <th>SGST Amt</th>
+                                                        <th>CGST Amt</th>
+                                                        <th>IGST Amt</th>
+                                                        <th>Total GST Amt</th>
+                                                        <th>Grand Total Amt</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody></tbody>
+                                                <tfoot class="table-light">
+                                                    <tr id="ChargestotalsRow">
+                                                        <th class="text-end">Totals:</th>
+                                                        <th class="text-end" id="totalFreightAmt">0.00</th>
+                                                        <th class="text-end" id="totalSGSTAmt">0.00</th>
+                                                        <th class="text-end" id="totalCGSTAmt">0.00</th>
+                                                        <th class="text-end" id="totalIGSTAmt">0.00</th>
+                                                        <th class="text-end" id="totalGSTAmt">0.00</th>
+                                                        <th class="text-end" id="totalGrandAmt">0.00</th>
+                                                    </tr>
+                                                </tfoot>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row g-2">
+                                    <!-- Bank Name Input -->
+                                    <div class="col-md-4">
+                                        <label for="inputBankName" class="form-label">Bank Name</label>
+                                        <input list="bankNameSuggestions" class="form-control bg-light-input"
+                                            id="inputBankName" required autocomplete="off" required>
+                                        <datalist id="bankNameSuggestions"></datalist>
+                                    </div>
+
+                                    <!-- Shipment Number Input -->
+                                    <div class="col-md-4">
+                                        <label for="shipmentNo" class="form-label">Shipment Number</label>
+                                        <input list="shipmentNoSuggestions" class="form-control bg-light-input"
+                                            id="shipmentNo" required autocomplete="off">
+                                        <datalist id="shipmentNoSuggestions"></datalist>
+                                    </div>
+                                    <!-- Add Button -->
+                                    <div class="col-md-1 d-grid align-items-end">
+                                        <button type="button" class="btn btn-primary mt-4" id="addShipmentNo">
+                                            <i class="bi bi-plus-circle"></i>
+                                        </button>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label for="reportType" class="form-label">Report Type</label>
+                                        <select class="form-select" id="reportType">
+                                            <option value="Main">Choose...</option>
+                                            <option value="Latter Head">Latter Head</option>
+                                            <option value="Print Annexure">Print Annexure</option>
+                                            <!-- <option value="Domestic Booking">R3</option>
                                 <option value="FTL or FCL Booking">R4</option>
                                 <option value="Import Booking">R5</option> -->
-                            </select>
-                        </div>
+                                        </select>
+                                    </div>
 
-                    </div>
-                </form>
+                                </div>
+                            </form>
 
-                <!-- Loading Spinner -->
-                <div id="loadingSpinner"
-                    class="d-none position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center bg-dark bg-opacity-50">
-                    <div class="spinner-border text-light" role="status">
-                        <span class="visually-hidden">Loading...</span>
-                    </div>
-                </div>
-
-
-                <!-- Address Selection Modal -->
-                <div class="modal fade" id="addressSelectionModal" tabindex="-1" aria-labelledby="addressModalLabel"
-                    aria-hidden="true">
-                    <div class="modal-dialog modal-dialog-centered">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title" id="addressModalLabel">Select Invoice Address</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                    aria-label="Close"></button>
+                            <!-- Loading Spinner -->
+                            <div id="loadingSpinner"
+                                class="d-none position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center bg-dark bg-opacity-50">
+                                <div class="spinner-border text-light" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
                             </div>
-                            <div class="modal-body" id="addressListContainer"></div>
+
+
+                            <!-- Address Selection Modal -->
+                            <div class="modal fade" id="addressSelectionModal" tabindex="-1"
+                                aria-labelledby="addressModalLabel" aria-hidden="true">
+                                <div class="modal-dialog modal-dialog-centered">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="addressModalLabel">Select Invoice Address</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                                aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body" id="addressListContainer"></div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
-
             </div>
         </div>
     </div>
@@ -373,7 +357,6 @@
 
     <script src="../../assets/js/utils/server.js"></script>
     <script src="../../assets/js/utils/navbar.js"></script>
-    <script src="../../assets/js/utils/footer.js"></script>
     <script src="../../assets/js/utils/utils.js"></script>
     <script src="../../assets/js/utils/GlobalShortcut.js" defer></script>
     <script src="../../assets/js/utils/api.js" defer></script>

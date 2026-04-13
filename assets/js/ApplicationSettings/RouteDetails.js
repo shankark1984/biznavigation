@@ -5,37 +5,7 @@
 // Global cache
 let routeDetails = [];
 
-/*************************************************
- * INIT
- *************************************************/
-document.addEventListener('DOMContentLoaded', async () => {
-
-    const addRouteBtn = document.getElementById('addRouteDetails');
-    createLoader();
-    addRouteBtn.addEventListener('click', saveRoute);
-
-    const checkPermission = () => {
-        if (canModify()) {
-            addRouteBtn.disabled = false;
-        } else {
-            addRouteBtn.disabled = true;
-        }
-    };
-
-    // Run immediately
-    checkPermission();
-
-    // Run again if UserType is set later
-    setTimeout(checkPermission, 150);
-
-    await fetchRoutes();
-
-    const form = document.getElementById('applicationSettingsForm');
-    if (form) {
-        form.addEventListener('submit', e => e.preventDefault());
-    }
-
-});
+document.getElementById('addRouteDetails').addEventListener('click', saveRoute);
 
 
 /*************************************************

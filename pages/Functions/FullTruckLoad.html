@@ -5,389 +5,432 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BizNavigation - Full Truck Load</title>
-
-    <!-- Bootstrap CSS -->
+    <!-- Bootstrap CSS & Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
 
-    <!-- Bootstrap Icons -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
+    <!-- jQuery FIRST -->
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
 
-    <style>
-        .tab-content {
-            min-height: 200px;
-        }
-    </style>
+    <!-- Then Select2 -->
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <!-- Sidebar CSS -->
+    <link rel="stylesheet" href="../../assets/css/navbar.css" />
 
 </head>
 
 <body class="bg-light">
-    <div class="container mt-2" id="root">
-        <div class="card shadow-lg rounded">
-            <div class="card-header bg-primary text-white" style="margin-top: 68px;">
-                <h3 class="mb-0">Full Truck Load</h3>
-                <input type="hidden" id="tempFormID" name="tempFormID">
-                <input type="hidden" id="partyCode" name="partyCode">
-                <input type="hidden" id="vendorCode" name="vendorCode">
-            </div>
+    <!-- 🔥 APP LAYOUT -->
+    <div class="app-wrapper">
 
-            <div class="card-body">
-                <form id="fullTruckLoadForm" autocomplete="off">
-                    <!-- Button Group -->
-                    <div class="d-flex flex-wrap gap-1 mb-2" role="group" aria-label="Booking action buttons">
-                        <button type="button" class="btn btn-primary btn-sm" id="newButton" title="Create new booking">
-                            <i class="bi bi-file-earmark-plus"></i> New
-                        </button>
-                        <button type="button" class="btn btn-warning btn-sm" id="modifyButton" disabled
-                            title="Modify booking">
-                            <i class="bi bi-pencil"></i> Modify
-                        </button>
-                        <button type="button" class="btn btn-danger btn-sm" id="deleteButton" disabled
-                            title="Delete booking">
-                            <i class="bi bi-trash"></i> Delete
-                        </button>
-                        <button type="button" class="btn btn-info btn-sm" id="reportButton" disabled
-                            title="Generate report">
-                            <i class="bi bi-file-earmark-text"></i> Report
-                        </button>
-                        <button type="button" class="btn btn-success btn-sm" id="saveButton" data-mode="insert"
-                            title="Save booking">
-                            <i class="bi bi-save"></i> Save
-                        </button>
+        <!-- Sidebar -->
+        <div id="sidebar">
+            <!-- fallback -->
+            <div class="text-center text-white p-3">Loading...</div>
+        </div>
 
+        <!-- Main Content -->
+        <div class="main-content">
+
+            <!-- 🔥 PAGE CONTENT -->
+            <div class="page-content">
+
+                <!-- YOUR EXISTING UI (UNCHANGED) -->
+                <div class="container-fluid mt-2">
+                    <div class="card shadow-lg rounded">
+
+                        <div class="card-body">
+                            <form id="fullTruckLoadForm" autocomplete="off">
+                                <!-- Button Group -->
+                                <div class="d-flex flex-wrap gap-1 mb-2" role="group"
+                                    aria-label="Booking action buttons">
+                                    <button type="button" class="btn btn-primary btn-sm" id="newButton"
+                                        title="Create new booking">
+                                        <i class="bi bi-file-earmark-plus"></i> New
+                                    </button>
+                                    <button type="button" class="btn btn-warning btn-sm" id="modifyButton" disabled
+                                        title="Modify booking">
+                                        <i class="bi bi-pencil"></i> Modify
+                                    </button>
+                                    <button type="button" class="btn btn-danger btn-sm" id="deleteButton" disabled
+                                        title="Delete booking">
+                                        <i class="bi bi-trash"></i> Delete
+                                    </button>
+                                    <button type="button" class="btn btn-info btn-sm" id="reportButton" disabled
+                                        title="Generate report">
+                                        <i class="bi bi-file-earmark-text"></i> Report
+                                    </button>
+                                    <button type="button" class="btn btn-success btn-sm" id="saveButton"
+                                        data-mode="insert" title="Save booking">
+                                        <i class="bi bi-save"></i> Save
+                                    </button>
+                                    <input type="hidden" id="tempFormID" name="tempFormID">
+                                    <input type="hidden" id="partyCode" name="partyCode">
+                                    <input type="hidden" id="vendorCode" name="vendorCode">
+
+                                </div>
+
+                                <!-- Form Grid -->
+                                <div class="row g-3">
+
+                                    <div class="col-md-2 col-sm-6">
+                                        <label for="lrNumber" class="form-label">LR Number</label>
+                                        <input list="lrNumberSuggestions" id="lrNumber" name="lrNumber"
+                                            class="form-control" style="background-color:#e9f5ff;" autocomplete="off" />
+                                        <datalist id="lrNumberSuggestions"></datalist>
+                                    </div>
+                                    <div class="col-md-2 col-sm-6">
+                                        <label for="lrDate" class="form-label">LR Date</label>
+                                        <input type="date" id="lrDate" name="lrDate" class="form-control" />
+                                    </div>
+
+                                    <div class="col-md-4 col-sm-6">
+                                        <label for="partyName" class="form-label">Customer Name</label>
+                                        <input list="partySuggestions" class="form-control" id="partyName"
+                                            name="partyName" required placeholder="Choose..." autocomplete="off">
+                                        <datalist id="partySuggestions"></datalist>
+                                    </div>
+                                    <div class="col-md-2 col-sm-6">
+                                        <label for="requestedDate" class="form-label">Requested Date</label>
+                                        <input type="date" id="requestedDate" name="requestedDate"
+                                            class="form-control" />
+                                    </div>
+                                    <div class="col-md-2 col-sm-6">
+                                        <label for="quotationID" class="form-label">Quotation ID</label>
+                                        <input list="quotationIDSuggestions" type="text" id="quotationID"
+                                            name="quotationID" class="form-control" />
+                                        <datalist id="quotationIDSuggestions"></datalist>
+                                    </div>
+
+                                    <div class="col-md-2 col-sm-6">
+                                        <label for="modeType" class="form-label">Mode Type</label>
+                                        <select class="form-control" id="modeType" name="modeType">
+                                            <option value="" disabled selected>Select Mode Type</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-2 col-sm-6">
+                                        <label for="movementType" class="form-label">Movement Type</label>
+                                        <select class="form-control" id="movementType" name="movementType" required>
+                                            <option value="" disabled selected>Select Movement Type</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-2 col-sm-6">
+                                        <label for="originPinCode" class="form-label">Pickup Pincode</label>
+                                        <input type="text" class="form-control" id="originPinCode" name="originPinCode"
+                                            list="originPinCodeSuggestions" required autocomplete="off"
+                                            placeholder="Origin Pincode">
+                                        <datalist id="originPinCodeSuggestions"></datalist>
+                                    </div>
+                                    <div class="col-md-2 col-sm-6">
+                                        <label for="originCity" class="form-label">Pickup City</label>
+                                        <input type="text" id="originCity" name="originCity"
+                                            style="text-transform: capitalize;" required autocomplete="off"
+                                            class="form-control">
+                                    </div>
+
+                                    <div class="col-md-4 col-sm-6">
+                                        <label for="originAddress" class="form-label">Pickup Address</label>
+                                        <textarea id="originAddress" class="form-control" name="originAddress"
+                                            style="text-transform: capitalize;" required rows="1" autocomplete="off"
+                                            placeholder="Origin Address"></textarea>
+                                    </div>
+                                    <div class="col-md-2 col-sm-6">
+                                        <label for="destinationPinCode" class="form-label">Delivery Pincode</label>
+                                        <input type="text" id="destinationPinCode" name="destinationPinCode" required
+                                            autocomplete="off" class="form-control" list="destinationPinCodeSuggestions"
+                                            placeholder="Destination Pincode">
+                                    </div>
+                                    <div class="col-md-2 col-sm-6">
+                                        <label for="destinationCity" class="form-label">Delivery City</label>
+                                        <input type="text" id="destinationCity" name="destinationCity"
+                                            style="text-transform: capitalize;" required autocomplete="off"
+                                            class="form-control">
+                                    </div>
+
+                                    <div class="col-md-4 col-sm-6">
+                                        <label for="destinationAddress" class="form-label">Delivery Address</label>
+                                        <textarea id="destinationAddress" class="form-control" name="destinationAddress"
+                                            style="text-transform: capitalize;" required rows="1" autocomplete="off"
+                                            placeholder="Destination Address"></textarea>
+                                    </div>
+
+                                    <div class="col-md-2 col-sm-6">
+                                        <label for="referenceNumber" class="form-label">Reference No</label>
+                                        <input type="text" class="form-control" id="referenceNumber"
+                                            name="referenceNumber" style="text-transform: uppercase;" required
+                                            autocomplete="off" maxlength="50">
+                                    </div>
+
+                                    <div class="col-md-2 col-sm-6">
+                                        <label for="invoiceValue" class="form-label">Invoice Value</label>
+                                        <input type="number" class="form-control text-end" id="invoiceValue"
+                                            name="invoiceValue" min="0" step="0.01" placeholder="00.00" value="00.00"
+                                            onblur="formatCurrency(this)">
+                                    </div>
+                                    <div class="col-md-4 col-sm-6">
+                                        <label for="vendorName" class="form-label">Vendor Name</label>
+                                        <input list="vendorSuggestions" class="form-control" id="vendorName"
+                                            name="vendorName" required placeholder="Vendor Name" autocomplete="off">
+                                        <datalist id="vendorSuggestions"></datalist>
+                                    </div>
+                                    <div class="col-md-2 col-sm-6">
+                                        <label for="vehicleType" class="form-label">Vehicle Type</label>
+                                        <select class="form-control" id="vehicleType" name="vehicleType">
+                                            <option value="" disabled selected>Select Vehicle Type</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-2 col-sm-6">
+                                        <label for="vehicleNumber" class="form-label">Vehicle Number</label>
+                                        <input type="text" class="form-control" id="vehicleNumber" name="vehicleNumber"
+                                            style="text-transform: uppercase;" required autocomplete="off">
+                                    </div>
+                                    <div class="col-md-2 col-sm-6">
+                                        <label for="containerNumber" class="form-label">Container No</label>
+                                        <input type="text" class="form-control" id="containerNumber"
+                                            name="containerNumber" style="text-transform: uppercase;"
+                                            autocomplete="off">
+                                        <div id="containerFeedback" class="invalid-feedback d-none"></div>
+                                    </div>
+                                    <div class="col-md-2 col-sm-6">
+                                        <label for="quantity" class="form-label">Quantity</label>
+                                        <input type="number" class="form-control text-end" id="quantity" name="quantity"
+                                            min="0" step="01.00" placeholder="00.00" value="1.00" required>
+                                    </div>
+                                    <div class="col-md-2 col-sm-6">
+                                        <label for="actualWt" class="form-label">Actual Wt (Kgs)</label>
+                                        <input type="number" class="form-control text-end" id="actualWt" name="actualWt"
+                                            min="0" step="0.50" placeholder="00.00" value="00.00" required>
+                                    </div>
+                                    <div class="col-md-2 col-sm-6">
+                                        <label for="chargeWt" class="form-label">Charge Wt (Kgs)</label>
+                                        <input type="number" class="form-control text-end" id="chargeWt" name="chargeWt"
+                                            min="0" step="0.50" placeholder="00.00" value="00.00" required>
+                                    </div>
+                                    <div class="col-md-2 col-sm-6">
+                                        <label for="paymentType" class="form-label">Payment Type</label>
+                                        <select class="form-control" id="paymentType" name="paymentType" required>
+                                            <option value="" disabled selected>Select Payment Type</option>
+                                            <option value="To-Pay">To-Pay</option>
+                                            <option value="Paid">Paid</option>
+                                            <option value="TBB">TBB</option>
+                                            <option value="Credit">Credit</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6 col-sm-6">
+                                        <label for="routeDetails" class="form-label">Route Details</label>
+                                        <input list="routeSuggestions" class="form-control" id="routeDetails"
+                                            name="routeDetails" required placeholder="Select Route" autocomplete="off">
+                                        <datalist id="routeSuggestions"></datalist>
+                                    </div>
+                                    <div class="col-md-12 col-sm-6">
+                                        <label for="information" class="form-label">Information</label>
+                                        <input type="text" class="form-control" id="information" name="information"
+                                            placeholder="Enter Information">
+                                    </div>
+
+                                    <!-- Tabbed Form Section -->
+                                    <div class="mt-3">
+                                        <ul class="nav nav-tabs" id="bookingTabs" role="tablist">
+                                            <li class="nav-item" role="presentation">
+                                                <button class="nav-link active" id="freightCharges-tab"
+                                                    data-bs-toggle="tab" data-bs-target="#freightCharges" type="button"
+                                                    role="tab">Freight
+                                                    Charges</button>
+                                            </li>
+                                            <li class="nav-item" role="presentation">
+                                                <button class="nav-link" id="vendorCharges-details-tab"
+                                                    data-bs-toggle="tab" data-bs-target="#vendorCharges" type="button"
+                                                    role="tab">Vendor
+                                                    Charges</button>
+                                            </li>
+                                            <li class="nav-item" role="presentation">
+                                                <button class="nav-link" id="description-tab" data-bs-toggle="tab"
+                                                    data-bs-target="#description" type="button"
+                                                    role="tab">Description</button>
+                                            </li>
+                                            <li class="nav-item" role="presentation">
+                                                <button class="nav-link" id="status-tab" data-bs-toggle="tab"
+                                                    data-bs-target="#status" type="button" role="tab">Status</button>
+                                            </li>
+                                        </ul>
+                                        <div class="tab-content p-3 border border-top-0">
+                                            <!-- Customer Freight Charges Tab -->
+                                            <div class="tab-pane fade show active" id="freightCharges" role="tabpanel"
+                                                aria-labelledby="freightCharges-tab">
+                                                <div class="row g-2 text-center">
+
+                                                    <div class="col-md-3 col-sm-4 text-start">
+                                                        <label for="chargesType" class="form-label small">Charges
+                                                            Type</label>
+                                                        <input list="chargesTypeList" id="chargesType"
+                                                            name="chargesType" class="form-control form-control-sm"
+                                                            placeholder="Charges Type">
+                                                        <datalist id="chargesTypeList"></datalist>
+                                                    </div>
+                                                    <div class="col-md-2 col-sm-3 text-start">
+                                                        <label for="customerFreightAmt"
+                                                            class="form-label small">Amount</label>
+                                                        <input type="number" id="customerFreightAmt"
+                                                            name="customerFreightAmt"
+                                                            class="form-control form-control-sm text-end" min="0"
+                                                            step="0.01" value="0.00" placeholder="00.00">
+                                                    </div>
+                                                    <div class="col-md-3 col-sm-4 text-start">
+                                                        <label for="partyDefaultTax" class="form-label small">Tax
+                                                            Rate</label>
+                                                        <select id="partyDefaultTax" name="partyDefaultTax"
+                                                            class="form-control form-control-sm">
+                                                            <option value="" disabled selected>Select Tax</option>
+                                                        </select>
+                                                    </div>
+                                                    <div class="col-md-1 col-sm-2 d-flex align-items-end">
+                                                        <button type="button" id="addFreightRow"
+                                                            class="btn btn-sm btn-primary w-100">Add</button>
+                                                    </div>
+                                                    <div id="chargesDetailsTableContainer" class="mt-4"
+                                                        style="max-height: 400px; overflow: auto; border: 1px solid #ddd;">
+                                                        <table id="chargesDetailsTable"
+                                                            class="table table-striped table-bordered table-sm">
+                                                            <thead>
+                                                                <tr>
+                                                                    <th>Charges Type</th>
+                                                                    <th>GST %</th>
+                                                                    <th>Amount</th>
+                                                                    <th>CGST Amount</th>
+                                                                    <th>SGST Amount</th>
+                                                                    <th>IGST Amount</th>
+                                                                    <th>Total GST Amount</th>
+                                                                    <th>Grand Total Billing</th>
+                                                                    <th>Action</th>
+                                                                    <th class="d-none">HSN</th>
+                                                                    <th class="d-none">TaxID</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                <!-- Dynamic rows will be added here -->
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Vendor Freight Charges Tab -->
+                                            <div class="tab-pane fade" id="vendorCharges" role="tabpanel"
+                                                aria-labelledby="vendorCharges-tab">
+                                                <div class="row g-2 text-center">
+                                                    <div class="col-md-3 col-sm-4 text-start">
+                                                        <label for="vendorChargesType" class="form-label small">Charges
+                                                            Type</label>
+                                                        <input list="vendorChargesTypeList" id="vendorChargesType"
+                                                            name="vendorChargesType"
+                                                            class="form-control form-control-sm"
+                                                            placeholder="Charges Type">
+                                                        <datalist id="vendorChargesTypeList"></datalist>
+                                                    </div>
+                                                    <div class="col-md-2 col-sm-3 text-start">
+                                                        <label for="vendorFreightAmt"
+                                                            class="form-label small">Amount</label>
+                                                        <input type="number" id="vendorFreightAmt"
+                                                            name="vendorFreightAmt"
+                                                            class="form-control form-control-sm text-end" min="0"
+                                                            step="0.01" value="0.00" placeholder="00.00">
+                                                    </div>
+                                                    <div class="col-md-3 col-sm-4 text-start">
+                                                        <label for="vendorDefaultTax" class="form-label small">Tax
+                                                            Rate</label>
+                                                        <select id="vendorDefaultTax" name="vendorDefaultTax"
+                                                            class="form-control form-control-sm">
+                                                            <option value="" disabled selected>Select Tax</option>
+                                                        </select>
+                                                    </div>
+
+                                                    <div class="col-md-1 col-sm-2 d-flex align-items-end">
+                                                        <button type="button" id="addVendorFreightRow"
+                                                            class="btn btn-sm btn-primary w-100">Add</button>
+                                                    </div>
+                                                    <div id="vendorChargesDetailsTableContainer" class="mt-4"
+                                                        style="max-height: 400px; overflow: auto; border: 1px solid #ddd;">
+                                                        <table id="vendorChargesDetailsTable"
+                                                            class="table table-striped table-bordered table-sm">
+                                                            <thead>
+                                                                <tr>
+                                                                    <th>Charges Type</th>
+                                                                    <th>GST %</th>
+                                                                    <th>Amount</th>
+                                                                    <th>CGST Amount</th>
+                                                                    <th>SGST Amount</th>
+                                                                    <th>IGST Amount</th>
+                                                                    <th>Total GST Amount</th>
+                                                                    <th>Grand Total Billing</th>
+                                                                    <th>Action</th>
+                                                                    <th class="d-none">HSN</th>
+                                                                    <th class="d-none">TaxID</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                <!-- Dynamic rows will be added here -->
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Description Tab -->
+                                            <div class="tab-pane fade" id="description" role="tabpanel"
+                                                aria-labelledby="description-tab">
+                                                <div class="row g-2 text-center">
+                                                    <div class="col-md-4 col-sm-4 text-start">
+                                                        <label for="descriptionofGoods"
+                                                            class="form-label text-end small">Description
+                                                            of Goods</label>
+                                                        <textarea class="form-control" id="descriptionofGoods"
+                                                            name="descriptionofGoods"
+                                                            style="text-transform: capitalize;" rows="1"
+                                                            autocomplete="off"></textarea>
+                                                    </div>
+                                                    <div class="col-md-4 col-sm-3 text-start">
+                                                        <label for="wayBillNo" class="form-label text-end small">E-Way
+                                                            Bill Number</label>
+                                                        <input type="text" class="form-control" id="wayBillNo"
+                                                            name="wayBillNo" style="text-transform: uppercase;"
+                                                            autocomplete="off">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <!-- Status Tab -->
+                                            <div class="tab-pane fade" id="status" role="tabpanel"
+                                                aria-labelledby="status-tab">
+                                                <div class="row g-2 text-center">
+                                                    <div class="col-md-3 col-sm-4 text-start">
+                                                        <label for="statusDetails"
+                                                            class="form-label small">Status</label>
+                                                        <textarea class="form-control" id="statusDetails"
+                                                            name="statusDetails" rows="1" autocomplete="off"
+                                                            placeholder="Enter Status"></textarea>
+                                                    </div>
+                                                    <div class="col-md-3 col-sm-4 text-start">
+                                                        <label for="statusDate" class="form-label small">Status
+                                                            Date</label>
+                                                        <input type="date" class="form-control" id="statusDate"
+                                                            name="statusDate" required>
+                                                    </div>
+                                                    <div class="col-md-3 col-sm-4 text-start">
+                                                        <label for="statusTime" class="form-label small">Status
+                                                            Time</label>
+                                                        <input type="time" class="form-control" id="statusTime"
+                                                            name="statusTime" required>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
                     </div>
-
-                    <!-- Form Grid -->
-                    <div class="row g-3">
-
-                        <div class="col-md-2 col-sm-6">
-                            <label for="lrNumber" class="form-label">LR Number</label>
-                            <input list="lrNumberSuggestions" id="lrNumber" name="lrNumber" class="form-control"
-                                style="background-color:#e9f5ff;" autocomplete="off" />
-                            <datalist id="lrNumberSuggestions"></datalist>
-                        </div>
-                        <div class="col-md-2 col-sm-6">
-                            <label for="lrDate" class="form-label">LR Date</label>
-                            <input type="date" id="lrDate" name="lrDate" class="form-control" />
-                        </div>
-
-                        <div class="col-md-4 col-sm-6">
-                            <label for="partyName" class="form-label">Customer Name</label>
-                            <input list="partySuggestions" class="form-control" id="partyName" name="partyName" required
-                                placeholder="Choose..." autocomplete="off">
-                            <datalist id="partySuggestions"></datalist>
-                        </div>
-                        <div class="col-md-2 col-sm-6">
-                            <label for="requestedDate" class="form-label">Requested Date</label>
-                            <input type="date" id="requestedDate" name="requestedDate" class="form-control" />
-                        </div>
-                        <div class="col-md-2 col-sm-6">
-                            <label for="quotationID" class="form-label">Quotation ID</label>
-                            <input list="quotationIDSuggestions" type="text" id="quotationID" name="quotationID"
-                                class="form-control" />
-                            <datalist id="quotationIDSuggestions"></datalist>
-                        </div>
-
-                        <div class="col-md-2 col-sm-6">
-                            <label for="modeType" class="form-label">Mode Type</label>
-                            <select class="form-control" id="modeType" name="modeType">
-                                <option value="" disabled selected>Select Mode Type</option>
-                            </select>
-                        </div>
-                        <div class="col-md-2 col-sm-6">
-                            <label for="movementType" class="form-label">Movement Type</label>
-                            <select class="form-control" id="movementType" name="movementType" required>
-                                <option value="" disabled selected>Select Movement Type</option>
-                            </select>
-                        </div>
-                        <div class="col-md-2 col-sm-6">
-                            <label for="originPinCode" class="form-label">Pickup Pincode</label>
-                            <input type="text" class="form-control" id="originPinCode" name="originPinCode"
-                                list="originPinCodeSuggestions" required autocomplete="off"
-                                placeholder="Origin Pincode">
-                            <datalist id="originPinCodeSuggestions"></datalist>
-                        </div>
-                        <div class="col-md-2 col-sm-6">
-                            <label for="originCity" class="form-label">Pickup City</label>
-                            <input type="text" id="originCity" name="originCity" style="text-transform: capitalize;"
-                                required autocomplete="off" class="form-control">
-                        </div>
-
-                        <div class="col-md-4 col-sm-6">
-                            <label for="originAddress" class="form-label">Pickup Address</label>
-                            <textarea id="originAddress" class="form-control" name="originAddress"
-                                style="text-transform: capitalize;" required rows="1" autocomplete="off"
-                                placeholder="Origin Address"></textarea>
-                        </div>
-                        <div class="col-md-2 col-sm-6">
-                            <label for="destinationPinCode" class="form-label">Delivery Pincode</label>
-                            <input type="text" id="destinationPinCode" name="destinationPinCode" required
-                                autocomplete="off" class="form-control" list="destinationPinCodeSuggestions"
-                                placeholder="Destination Pincode">
-                        </div>
-                        <div class="col-md-2 col-sm-6">
-                            <label for="destinationCity" class="form-label">Delivery City</label>
-                            <input type="text" id="destinationCity" name="destinationCity"
-                                style="text-transform: capitalize;" required autocomplete="off" class="form-control">
-                        </div>
-
-                        <div class="col-md-4 col-sm-6">
-                            <label for="destinationAddress" class="form-label">Delivery Address</label>
-                            <textarea id="destinationAddress" class="form-control" name="destinationAddress"
-                                style="text-transform: capitalize;" required rows="1" autocomplete="off"
-                                placeholder="Destination Address"></textarea>
-                        </div>
-
-                        <div class="col-md-2 col-sm-6">
-                            <label for="referenceNumber" class="form-label">Reference No</label>
-                            <input type="text" class="form-control" id="referenceNumber" name="referenceNumber"
-                                style="text-transform: uppercase;" required autocomplete="off" maxlength="50">
-                        </div>
-
-                        <div class="col-md-2 col-sm-6">
-                            <label for="invoiceValue" class="form-label">Invoice Value</label>
-                            <input type="number" class="form-control text-end" id="invoiceValue" name="invoiceValue"
-                                min="0" step="0.01" placeholder="00.00" value="00.00" onblur="formatCurrency(this)">
-                        </div>
-                        <div class="col-md-4 col-sm-6">
-                            <label for="vendorName" class="form-label">Vendor Name</label>
-                            <input list="vendorSuggestions" class="form-control" id="vendorName" name="vendorName"
-                                required placeholder="Vendor Name" autocomplete="off">
-                            <datalist id="vendorSuggestions"></datalist>
-                        </div>
-                        <div class="col-md-2 col-sm-6">
-                            <label for="vehicleType" class="form-label">Vehicle Type</label>
-                            <select class="form-control" id="vehicleType" name="vehicleType">
-                                <option value="" disabled selected>Select Vehicle Type</option>
-                            </select>
-                        </div>
-                        <div class="col-md-2 col-sm-6">
-                            <label for="vehicleNumber" class="form-label">Vehicle Number</label>
-                            <input type="text" class="form-control" id="vehicleNumber" name="vehicleNumber"
-                                style="text-transform: uppercase;" required autocomplete="off">
-                        </div>
-                        <div class="col-md-2 col-sm-6">
-                            <label for="containerNumber" class="form-label">Container No</label>
-                            <input type="text" class="form-control" id="containerNumber" name="containerNumber"
-                                style="text-transform: uppercase;" autocomplete="off">
-                            <div id="containerFeedback" class="invalid-feedback d-none"></div>
-                        </div>
-                        <div class="col-md-2 col-sm-6">
-                            <label for="quantity" class="form-label">Quantity</label>
-                            <input type="number" class="form-control text-end" id="quantity" name="quantity" min="0"
-                                step="01.00" placeholder="00.00" value="1.00" required>
-                        </div>
-                        <div class="col-md-2 col-sm-6">
-                            <label for="actualWt" class="form-label">Actual Wt (Kgs)</label>
-                            <input type="number" class="form-control text-end" id="actualWt" name="actualWt" min="0"
-                                step="0.50" placeholder="00.00" value="00.00" required>
-                        </div>
-                        <div class="col-md-2 col-sm-6">
-                            <label for="chargeWt" class="form-label">Charge Wt (Kgs)</label>
-                            <input type="number" class="form-control text-end" id="chargeWt" name="chargeWt" min="0"
-                                step="0.50" placeholder="00.00" value="00.00" required>
-                        </div>
-                        <div class="col-md-2 col-sm-6">
-                            <label for="paymentType" class="form-label">Payment Type</label>
-                            <select class="form-control" id="paymentType" name="paymentType" required>
-                                <option value="" disabled selected>Select Payment Type</option>
-                                <option value="To-Pay">To-Pay</option>
-                                <option value="Paid">Paid</option>
-                                <option value="TBB">TBB</option>
-                                <option value="Credit">Credit</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6 col-sm-6">
-                            <label for="routeDetails" class="form-label">Route Details</label>
-                            <input list="routeSuggestions" class="form-control" id="routeDetails" name="routeDetails"
-                                required placeholder="Select Route" autocomplete="off">
-                            <datalist id="routeSuggestions"></datalist>
-                        </div>
-                        <div class="col-md-12 col-sm-6">
-                            <label for="information" class="form-label">Information</label>
-                            <input type="text" class="form-control" id="information" name="information"
-                                placeholder="Enter Information">
-                        </div>
-
-                        <!-- Tabbed Form Section -->
-                        <div class="mt-3">
-                            <ul class="nav nav-tabs" id="bookingTabs" role="tablist">
-                                <li class="nav-item" role="presentation">
-                                    <button class="nav-link active" id="freightCharges-tab" data-bs-toggle="tab"
-                                        data-bs-target="#freightCharges" type="button" role="tab">Freight
-                                        Charges</button>
-                                </li>
-                                <li class="nav-item" role="presentation">
-                                    <button class="nav-link" id="vendorCharges-details-tab" data-bs-toggle="tab"
-                                        data-bs-target="#vendorCharges" type="button" role="tab">Vendor
-                                        Charges</button>
-                                </li>
-                                <li class="nav-item" role="presentation">
-                                    <button class="nav-link" id="description-tab" data-bs-toggle="tab"
-                                        data-bs-target="#description" type="button" role="tab">Description</button>
-                                </li>
-                                <li class="nav-item" role="presentation">
-                                    <button class="nav-link" id="status-tab" data-bs-toggle="tab"
-                                        data-bs-target="#status" type="button" role="tab">Status</button>
-                                </li>
-                            </ul>
-                            <div class="tab-content p-3 border border-top-0">
-                                <!-- Customer Freight Charges Tab -->
-                                <div class="tab-pane fade show active" id="freightCharges" role="tabpanel"
-                                    aria-labelledby="freightCharges-tab">
-                                    <div class="row g-2 text-center">
-
-                                        <div class="col-md-3 col-sm-4 text-start">
-                                            <label for="chargesType" class="form-label small">Charges Type</label>
-                                            <input list="chargesTypeList" id="chargesType" name="chargesType"
-                                                class="form-control form-control-sm" placeholder="Charges Type">
-                                            <datalist id="chargesTypeList"></datalist>
-                                        </div>
-                                        <div class="col-md-2 col-sm-3 text-start">
-                                            <label for="customerFreightAmt" class="form-label small">Amount</label>
-                                            <input type="number" id="customerFreightAmt" name="customerFreightAmt"
-                                                class="form-control form-control-sm text-end" min="0" step="0.01"
-                                                value="0.00" placeholder="00.00">
-                                        </div>
-                                        <div class="col-md-3 col-sm-4 text-start">
-                                            <label for="partyDefaultTax" class="form-label small">Tax
-                                                Rate</label>
-                                            <select id="partyDefaultTax" name="partyDefaultTax"
-                                                class="form-control form-control-sm">
-                                                <option value="" disabled selected>Select Tax</option>
-                                            </select>
-                                        </div>
-                                        <div class="col-md-1 col-sm-2 d-flex align-items-end">
-                                            <button type="button" id="addFreightRow"
-                                                class="btn btn-sm btn-primary w-100">Add</button>
-                                        </div>
-                                        <div id="chargesDetailsTableContainer" class="mt-4"
-                                            style="max-height: 400px; overflow: auto; border: 1px solid #ddd;">
-                                            <table id="chargesDetailsTable"
-                                                class="table table-striped table-bordered table-sm">
-                                                <thead>
-                                                    <tr>
-                                                        <th>Charges Type</th>
-                                                        <th>GST %</th>
-                                                        <th>Amount</th>
-                                                        <th>CGST Amount</th>
-                                                        <th>SGST Amount</th>
-                                                        <th>IGST Amount</th>
-                                                        <th>Total GST Amount</th>
-                                                        <th>Grand Total Billing</th>
-                                                        <th>Action</th>
-                                                        <th class="d-none">HSN</th>
-                                                        <th class="d-none">TaxID</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    <!-- Dynamic rows will be added here -->
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Vendor Freight Charges Tab -->
-                                <div class="tab-pane fade" id="vendorCharges" role="tabpanel"
-                                    aria-labelledby="vendorCharges-tab">
-                                    <div class="row g-2 text-center">
-                                        <div class="col-md-3 col-sm-4 text-start">
-                                            <label for="vendorChargesType" class="form-label small">Charges Type</label>
-                                            <input list="vendorChargesTypeList" id="vendorChargesType"
-                                                name="vendorChargesType" class="form-control form-control-sm"
-                                                placeholder="Charges Type">
-                                            <datalist id="vendorChargesTypeList"></datalist>
-                                        </div>
-                                        <div class="col-md-2 col-sm-3 text-start">
-                                            <label for="vendorFreightAmt" class="form-label small">Amount</label>
-                                            <input type="number" id="vendorFreightAmt" name="vendorFreightAmt"
-                                                class="form-control form-control-sm text-end" min="0" step="0.01"
-                                                value="0.00" placeholder="00.00">
-                                        </div>
-                                        <div class="col-md-3 col-sm-4 text-start">
-                                            <label for="vendorDefaultTax" class="form-label small">Tax
-                                                Rate</label>
-                                            <select id="vendorDefaultTax" name="vendorDefaultTax"
-                                                class="form-control form-control-sm">
-                                                <option value="" disabled selected>Select Tax</option>
-                                            </select>
-                                        </div>
-
-                                        <div class="col-md-1 col-sm-2 d-flex align-items-end">
-                                            <button type="button" id="addVendorFreightRow"
-                                                class="btn btn-sm btn-primary w-100">Add</button>
-                                        </div>
-                                        <div id="vendorChargesDetailsTableContainer" class="mt-4"
-                                            style="max-height: 400px; overflow: auto; border: 1px solid #ddd;">
-                                            <table id="vendorChargesDetailsTable"
-                                                class="table table-striped table-bordered table-sm">
-                                                <thead>
-                                                    <tr>
-                                                        <th>Charges Type</th>
-                                                        <th>GST %</th>
-                                                        <th>Amount</th>
-                                                        <th>CGST Amount</th>
-                                                        <th>SGST Amount</th>
-                                                        <th>IGST Amount</th>
-                                                        <th>Total GST Amount</th>
-                                                        <th>Grand Total Billing</th>
-                                                        <th>Action</th>
-                                                        <th class="d-none">HSN</th>
-                                                        <th class="d-none">TaxID</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    <!-- Dynamic rows will be added here -->
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Description Tab -->
-                                <div class="tab-pane fade" id="description" role="tabpanel"
-                                    aria-labelledby="description-tab">
-                                    <div class="row g-2 text-center">
-                                        <div class="col-md-4 col-sm-4 text-start">
-                                            <label for="descriptionofGoods"
-                                                class="form-label text-end small">Description
-                                                of Goods</label>
-                                            <textarea class="form-control" id="descriptionofGoods"
-                                                name="descriptionofGoods" style="text-transform: capitalize;" rows="1"
-                                                autocomplete="off"></textarea>
-                                        </div>
-                                        <div class="col-md-4 col-sm-3 text-start">
-                                            <label for="wayBillNo" class="form-label text-end small">E-Way
-                                                Bill Number</label>
-                                            <input type="text" class="form-control" id="wayBillNo" name="wayBillNo"
-                                                style="text-transform: uppercase;" autocomplete="off">
-                                        </div>
-                                    </div>
-                                </div>
-                                <!-- Status Tab -->
-                                <div class="tab-pane fade" id="status" role="tabpanel" aria-labelledby="status-tab">
-                                    <div class="row g-2 text-center">
-                                        <div class="col-md-3 col-sm-4 text-start">
-                                            <label for="statusDetails" class="form-label small">Status</label>
-                                            <textarea class="form-control" id="statusDetails" name="statusDetails"
-                                                rows="1" autocomplete="off" placeholder="Enter Status"></textarea>
-                                        </div>
-                                        <div class="col-md-3 col-sm-4 text-start">
-                                            <label for="statusDate" class="form-label small">Status Date</label>
-                                            <input type="date" class="form-control" id="statusDate" name="statusDate"
-                                                required>
-                                        </div>
-                                        <div class="col-md-3 col-sm-4 text-start">
-                                            <label for="statusTime" class="form-label small">Status Time</label>
-                                            <input type="time" class="form-control" id="statusTime" name="statusTime"
-                                                required>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </form>
+                </div>
             </div>
         </div>
     </div>
@@ -404,34 +447,25 @@
         </div>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js" defer
-        crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" defer></script>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/2.3.10/purify.min.js" defer
         crossorigin="anonymous"></script>
 
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://unpkg.com/@supabase/supabase-js"></script>
 
     <!-- Local Scripts -->
     <script src="../../assets/js/utils/server.js" defer></script>
+    <script src="../../assets/js/utils/navbar.js" defer></script>
     <script src="../../assets/js/utils/utils.js" defer></script>
     <script src="../../assets/js/utils/dropdownLoader.js" defer></script>
     <script src="../../assets/js/utils/pincode-helper.js" defer></script>
     <script src="../../assets/js/utils/taxDescription.js" defer></script>
-
-    <script src="../../assets/js/utils/navbar.js" defer></script>
-    <script src="../../assets/js/utils/footer.js" defer></script>
     <script src="../../assets/js/utils/logout.js" defer></script>
     <script src="../../assets/js/utils/GlobalShortcut.js" defer></script>
-
-
-    <!-- <script src="../../assets/js/routemaster.js"></script> -->
-
-    <!-- <script src="../../assets/js/fulltruckload.js"></script> -->
     <script src="../../assets/js/FullTruckLoad/FullTruckLoad.js" defer></script>
 
 </body>
