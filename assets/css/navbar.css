@@ -356,3 +356,22 @@ body.page-exit {
 body.page-enter {
     opacity: 1;
 }
+
+#toggleSidebar {
+    border-radius: 8px;
+    padding: 6px 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.menu-item,
+.menu-title {
+    cursor: pointer;
+    user-select: none;
+}
+
+.menu-item:hover,
+.menu-title:hover {
+    background: rgba(0, 0, 0, 0.05);
+}

@@ -85,10 +85,11 @@ const Navbar = (() => {
 
         renderSidebar();
         createTopNavbar();
+        mobileToggle();
         setupMenuToggle();
         setActiveMenu();
         await applyPermissions(userLoginID);
-        mobileToggle();
+
 
         // Features
         setupPageAnimation();
@@ -206,16 +207,53 @@ const Navbar = (() => {
     // MOBILE TOGGLE
     // ==========================
     function mobileToggle() {
-        document.body.insertAdjacentHTML("afterbegin", `
-            <button id="toggleSidebar" class="btn btn-dark d-md-none"
-                style="position:fixed;top:10px;left:10px;z-index:1100;">☰</button>
-        `);
+        const navbarRight = document.querySelector(".navbar-right");
+        const sidebar = document.getElementById("sidebarMenu");
 
-        document.getElementById("toggleSidebar").onclick = () => {
-            document.getElementById("sidebarMenu").classList.toggle("show");
+        if (!navbarRight || !sidebar) return;
+
+        const btn = document.createElement("button");
+        btn.id = "toggleSidebar";
+        btn.className = "btn btn-sm btn-dark d-md-none ms-2";
+
+        let isOpen = false;
+
+        const updateIcon = () => {
+            btn.innerHTML = isOpen
+                ? '<i class="bi bi-chevron-up"></i>'
+                : '<i class="bi bi-chevron-down"></i>';
         };
-    }
 
+        const openSidebar = () => {
+            sidebar.classList.add("show");
+            isOpen = true;
+            updateIcon();
+        };
+
+        const closeSidebar = () => {
+            sidebar.classList.remove("show");
+            isOpen = false;
+            updateIcon();
+        };
+
+        btn.onclick = (e) => {
+            e.stopPropagation(); // prevent outside click trigger
+            isOpen ? closeSidebar() : openSidebar();
+        };
+
+        // ✅ CLICK OUTSIDE TO CLOSE
+        document.addEventListener("click", (e) => {
+            const isClickInsideSidebar = sidebar.contains(e.target);
+            const isClickOnButton = btn.contains(e.target);
+
+            if (!isClickInsideSidebar && !isClickOnButton && isOpen) {
+                closeSidebar();
+            }
+        });
+
+        updateIcon();
+        navbarRight.appendChild(btn);
+    }
     // ==========================
     // 🔥 PAGE ANIMATION
     // ==========================
@@ -396,9 +434,15 @@ function createTopNavbar() {
 
     setupThemeToggle();
 
-    navbar.querySelector("#logoutBtn").addEventListener("click", () => {
-        localStorage.clear();
-        window.location.href = "/index.html";
+    navbar.querySelector("#logoutBtn").addEventListener("click", async () => {
+        const user = JSON.parse(localStorage.getItem("user"));
+
+        if (user?.id) {
+            await logoutOtherSessions(user.id); // DB update
+        }
+
+        localStorage.clear(); // clear browser
+        logoutUser(); // UI / redirect
     });
 }
 // PROFILE DROPDOWN
