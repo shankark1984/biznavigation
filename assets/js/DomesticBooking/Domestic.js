@@ -225,10 +225,18 @@ async function checkAWBBilledStatus(docketNo) {
 
 //newbutton on click clear form & enable saveButton
 document.getElementById('newButton').addEventListener('click', () => {
-    // Clear form fields
-    document.querySelectorAll('#root input, #root select').forEach(input => {
-        input.value = '';
-    });
+    clearForm();
+    enableForm();
+    toggleEditMode(true);
+
+    // Button States
+    saveButton.disabled = false;
+    modifyButton.disabled = true;
+    deleteButton.disabled = true;
+    reportButton.disabled = true;
+    saveButton.innerHTML = '<i class="bi bi-save"></i> Save';
+    saveButton.dataset.mode = 'insert';
+
     // Total container refresh
     // location.reload();
 
@@ -257,7 +265,7 @@ document.getElementById('newButton').addEventListener('click', () => {
     // Recalculate Totals
     recalcTotals();
     // updateTotals(); // Reset totals display
-    const tbody = document.querySelector('#bookingStatusTable tbody').innerHTML = ''; // Clear previous data
+    document.querySelector('#bookingStatusTable tbody').innerHTML = ''; // Clear previous data
 
     // Disable calculated weight fields
     ['totalActualWtV', 'volumeWtV', 'totalVolumeWtV', 'chargeableWtV', 'chargeableWeight'].forEach(id => {
@@ -285,6 +293,7 @@ document.getElementById('saveButton').addEventListener('click', async () => {
     const mode = document.getElementById('saveButton').dataset.mode || 'insert';
 
     const val = id => document.getElementById(id)?.value || "";
+    saveButton.disabled = true;
 
     const formData = {
         DocketNo: val('docketNo'),
@@ -362,6 +371,10 @@ document.getElementById('saveButton').addEventListener('click', async () => {
         await saveNewVolumetricRows();
         await saveEquipmentDetails();
         toggleEditMode(true);
+        disableForm();
+        document.getElementById('addFreightRow').disabled = true;
+        document.getElementById('addVolumetricRow').disabled = true;
+        document.getElementById('addContainer').disabled = true;
 
         showToast(`Booking details ${mode} successful!`);
 

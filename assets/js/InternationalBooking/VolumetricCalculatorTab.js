@@ -292,7 +292,7 @@ async function loadVolumetricDetails() {
         }
 
         if (!data || data.length === 0) {
-            console.log('No volumetric records found.');
+            // console.log('No volumetric records found.');
             return;
         }
 

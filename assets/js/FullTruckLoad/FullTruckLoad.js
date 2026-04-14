@@ -567,18 +567,12 @@ document.getElementById("addVendorFreightRow").addEventListener("click", async f
 });
 
 async function addFreightRow(tableId, chargesInput, amountInput, taxInput) {
-
     const chargesType = document.getElementById(chargesInput).value.trim();
     const amount = parseFloat(document.getElementById(amountInput).value) || 0;
-    let taxText = document.getElementById(taxInput).value || "";
+    let taxID = document.getElementById(taxInput).value || 1;
     const HSNCode = await getDropdownDataValue(chargesType, "ChargesType");
     document.getElementById("addVendorFreightRow").disabled = true;
     document.getElementById("addFreightRow").disabled = true;
-
-    if (!taxText) {
-        taxText = "CGST 0% SGST 0% IGST 0%";
-
-    }
 
     if (!chargesType || amount <= 0) {
         alert("Enter Charges Type and Amount");
@@ -604,27 +598,8 @@ async function addFreightRow(tableId, chargesInput, amountInput, taxInput) {
         }
     }
 
-    const cgstRate = parseFloat((taxText.match(/CGST\s*(\d+(\.\d+)?)%/) || [])[1]) || 0;
-    const sgstRate = parseFloat((taxText.match(/SGST\s*(\d+(\.\d+)?)%/) || [])[1]) || 0;
-    const igstRate = parseFloat((taxText.match(/IGST\s*(\d+(\.\d+)?)%/) || [])[1]) || 0;
-
-    let gstType = "";
-    let taxDetails = await fetchTaxDetails(taxText);
-
-    if (igstRate > 0) {
-        gstType = `IGST ${igstRate}%`;
-    } else if (cgstRate > 0 || sgstRate > 0) {
-        gstType = `CGST ${cgstRate}% SGST ${sgstRate}%`;
-    } else {
-        gstType = "No GST";
-    }
-
-    const cgst = amount * cgstRate / 100;
-    const sgst = amount * sgstRate / 100;
-    const igst = amount * igstRate / 100;
-
-    const totalGST = cgst + sgst + igst;
-    const grandTotal = amount + totalGST;
+    const taxes = await getTaxRatesById(taxID);;
+    const taxCalculations = calculateTaxes(amount, taxes);
 
     const tr = document.createElement("tr");
 
@@ -632,18 +607,18 @@ async function addFreightRow(tableId, chargesInput, amountInput, taxInput) {
 
     tr.innerHTML = `
         <td>${chargesType}</td>
-        <td>${taxDetails.taxRate}%</td>
+        <td>${taxCalculations.totalRate}%</td>
         <td class="text-end">${amount.toFixed(2)}</td>
-        <td class="text-end">${cgst.toFixed(2)}</td>
-        <td class="text-end">${sgst.toFixed(2)}</td>
-        <td class="text-end">${igst.toFixed(2)}</td>
-        <td class="text-end">${totalGST.toFixed(2)}</td>
-        <td class="text-end">${grandTotal.toFixed(2)}</td>
+        <td class="text-end">${taxCalculations.sgstAmt.toFixed(2)}</td>
+        <td class="text-end">${taxCalculations.cgstAmt.toFixed(2)}</td>
+        <td class="text-end">${taxCalculations.igstAmt.toFixed(2)}</td>
+        <td class="text-end">${taxCalculations.totalGstAmt.toFixed(2)}</td>
+        <td class="text-end">${taxCalculations.grandTotal.toFixed(2)}</td>
         <td>
             <button type="button" class="btn btn-sm btn-danger deleteRow">Delete</button>
         </td>
         <td class="d-none">${HSNCode ? HSNCode.hsn_code : "0"}</td>
-        <td class="d-none">${taxDetails.taxId}</td>
+        <td class="d-none">${taxID}</td>
     `;
 
     tableBody.appendChild(tr);

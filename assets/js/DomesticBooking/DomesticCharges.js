@@ -89,14 +89,15 @@ async function addFreightRow() {
     if (!docketNoValue) return alert('Docket no cannot be empty!');
     if (!chargesType) return alert('Charges Type cannot be empty!');
     if (!freightAmountValue) return alert('Freight Amount cannot be empty!');
+    const taxID = partyDefaultTax.value.trim() || 1;
+    console.log("Selected tax ID:", taxID);
 
-
-    const taxDetails = await fetchTaxDetails(partyDefaultTax.value);
-    const taxID = taxDetails?.taxId;
+    const taxes = await getTaxRatesById(taxID);
+    // const taxID = taxDetails?.taxId;
+    console.log("Fetched tax details:", taxes);
 
     if (!taxID) return alert('Tax details not found!');
 
-    const taxes = parseTaxPercentages(partyDefaultTax.value);
     const taxCalculations = calculateTaxes(freightAmountValue, taxes);
     const isFreight = chargesType.includes('Freight');
 

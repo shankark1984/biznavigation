@@ -8,11 +8,11 @@ const jobNoInput = document.getElementById('jobNo'); // Assuming this exists
 async function initializeForm() {
     try {
         await Promise.all([
-            loadSuggestions('partySuggestions', 'PartyDetails', CompanyID),
-            loadSuggestions('customsBrokerSuggestions', 'PartyDetails', CompanyID),
-            loadJobNoSuggestions(CompanyID),
-            loadBlAwbNumberSuggestions(CompanyID),
-            loadBeNumberSuggestions(CompanyID),
+            await loadJobNoSuggestions(CompanyID),
+            await loadSuggestions('partySuggestions', 'PartyDetails', CompanyID),
+            await loadSuggestions('customsBrokerSuggestions', 'PartyDetails', CompanyID),
+            await loadBlAwbNumberSuggestions(CompanyID),
+            await loadBeNumberSuggestions(CompanyID),
         ]);
         loadTaxData();
 
@@ -40,11 +40,12 @@ function getFormData() {
         Address: document.getElementById('deliveryAddress').value.trim(),
         Quantity: parseFloat(document.getElementById('quantity').value) || 0,
         CargoWeight: parseFloat(document.getElementById('cargoWeight').value) || 0,
-        CustomsBroker: document.getElementById('customsBroker').value.trim(),
-        ClearancePort: clearancePortInput.value.trim(),
-        ClearanceCountry: clearanceCountryInput.value.trim(),
         ClearanceMode: document.getElementById('clearanceMode').value.trim(),
         Commodity: document.getElementById('commodity').value.trim(),
+        Origin: document.getElementById('originCountry').value.trim(),
+        Destination: document.getElementById('destinationCountry').value.trim(),
+        ClearancePort: clearancePortInput.value.trim(),
+        CustomsBroker: document.getElementById('customsBroker').value.trim(),
         AnyInformation: document.getElementById('information').value.trim(),
         // company_id will be appended in save logic (to keep formData clean)
     };
@@ -198,11 +199,23 @@ saveButton.addEventListener('click', async function () {
 
 
 if (clearancePortInput) {
+
     clearancePortInput.addEventListener('input', updateSuggestionsAndCountry);
+
     clearancePortInput.addEventListener('change', () => {
+
         const val = clearancePortInput.value.trim().toLowerCase();
-        const matchedPort = currentSuggestions.find(s => s.label.toLowerCase() === val);
-        clearanceCountryInput.value = matchedPort ? matchedPort.portDetails.PortCountry : '';
+
+        const matchedPort = currentSuggestions.find(
+            s => s.label.toLowerCase() === val
+        );
+
+        selectedPortData = matchedPort
+            ? matchedPort.portDetails
+            : null;
+
+        console.log("Selected Port Data:", selectedPortData);
+
     });
 }
 
@@ -331,11 +344,12 @@ function populateForm(data) {
     document.getElementById('deliveryAddress').value = data.Address || '';
     document.getElementById('quantity').value = data.Quantity || '';
     document.getElementById('cargoWeight').value = data.CargoWeight || '';
-    document.getElementById('customsBroker').value = data.CustomsBroker || '';
-    document.getElementById('clearancePort').value = data.ClearancePort || '';
-    document.getElementById('clearanceCountry').value = data.ClearanceCountry || '';
     document.getElementById('clearanceMode').value = data.ClearanceMode || '';
     document.getElementById('commodity').value = data.Commodity || '';
+    document.getElementById('originCountry').value = data.Origin || '';
+    document.getElementById('destinationCountry').value = data.Destination || '';
+    document.getElementById('clearancePort').value = data.ClearancePort || '';
+    document.getElementById('customsBroker').value = data.CustomsBroker || '';
     document.getElementById('information').value = data.AnyInformation || '';
 
 
@@ -424,4 +438,3 @@ newButton.addEventListener('click', () => {
     tbody.innerHTML = ''; // Clear current rows
     resetTotalsRow();
 });
-

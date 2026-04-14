@@ -1,44 +1,14 @@
-// Your parsing function to extract tax rates from a string
-function parseTaxPercentages(taxString) {
-    const taxes = { cgst: 0, sgst: 0, igst: 0 };
-    const patterns = {
-        cgst: /CGST\s*(\d+(\.\d+)?)%/i,
-        sgst: /SGST\s*(\d+(\.\d+)?)%/i,
-        igst: /IGST\s*(\d+(\.\d+)?)%/i
-    };
-
-    for (const [tax, pattern] of Object.entries(patterns)) {
-        const match = taxString.match(pattern);
-        if (match) taxes[tax] = parseFloat(match[1]);
-    }
-    return taxes;
-}
-
 // Your helper function to calculate tax amounts based on rates
-function calculateTaxes(amount, { cgst, sgst, igst }) {
-    const sgstAmt = (amount * sgst) / 100;
-    const cgstAmt = (amount * cgst) / 100;
-    const igstAmt = (amount * igst) / 100;
-    const totalGstAmt = sgstAmt + cgstAmt + igstAmt;
-    const grandTotal = amount + totalGstAmt;
-    console.log('Tax Calculation:', (cgst + sgst + igst).toFixed(2))
-    return {
-        sgstAmt,
-        cgstAmt,
-        igstAmt,
-        totalGstAmt,
-        grandTotal,
-        totalRate: (cgst + sgst + igst).toFixed(2)
-    };
-}
 
-document.getElementById('addChargesRow').addEventListener('click', function () {
+document.getElementById('addChargesRow').addEventListener('click', async function () {
     const chargesType = document.getElementById('chargesTypeInput').value.trim();
     const hsnNumber = document.getElementById('hsnNumber').value.trim();
     const amountValue = parseFloat(document.getElementById('freightAmount').value);
     const remarks = document.getElementById('remarksDetails').value.trim();
-    const taxInput = document.getElementById('partyDefaultTax').value.trim(); // This should contain a string like "CGST 9%, SGST 9%"
+    const taxID = document.getElementById('partyDefaultTax').value.trim() || 1; // Assuming this is the TaxID or tax selection input
+    const taxRates = await getTaxRatesById(taxID); // This should contain a string like "CGST 9%, SGST 9%"
     const currency = document.getElementById('currencyCode').value.trim().toUpperCase();
+
 
     if (!chargesType) {
         alert('Please enter Charges Type.');
@@ -52,7 +22,7 @@ document.getElementById('addChargesRow').addEventListener('click', function () {
         alert('Please enter a valid Amount.');
         return;
     }
-    if (!taxInput) {
+    if (!taxID) {
         alert('Please enter/select a valid Tax Rate.');
         return;
     }
@@ -60,9 +30,6 @@ document.getElementById('addChargesRow').addEventListener('click', function () {
         alert('Currency code is required.');
         return;
     }
-
-    // Parse tax rates from the taxInput string
-    const taxRates = parseTaxPercentages(taxInput);
 
     // Calculate tax amounts
     const taxAmounts = calculateTaxes(amountValue, taxRates);
@@ -95,7 +62,7 @@ document.getElementById('addChargesRow').addEventListener('click', function () {
       <td class="text-end">${taxAmounts.totalGstAmt.toFixed(2)}</td>
       <td class="text-end">${taxAmounts.grandTotal.toFixed(2)}</td>
       <td><button type="button" class="btn btn-sm btn-danger btn-delete-row">Delete</button></td>
-      <td class="hide-col-13">${taxType}</td>
+      <td class="hide-col-13 d-none">${taxID}</td>
     `;
 
     tbody.appendChild(tr);
@@ -238,7 +205,7 @@ async function loadChargesByJobID(jobID) {
         <td class="text-end">${charge.TotalGSTAmt?.toFixed(2) || '0.00'}</td>
         <td class="text-end">${charge.GrandTotalAmt?.toFixed(2) || '0.00'}</td>
         <td><button type="button" class="btn btn-sm btn-danger btn-delete-row" disabled>Delete</button></td>
-        <td class="hide-col-13">${charge.TaxID || ''}</td>
+        <td class="hide-col-13 d-none">${charge.TaxID || ''}</td>
       `;
             addChargesRow.disabled = true;
             tbody.appendChild(tr);

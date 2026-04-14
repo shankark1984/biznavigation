@@ -88,6 +88,7 @@ document.getElementById('newButton').addEventListener('click', function () {
     deleteButton.disabled = true;
     reportButton.disabled = true;
     saveButton.innerHTML = '<i class="bi bi-save"></i> Save';
+    saveButton.dataset.mode = 'insert';
 
     // Enable adding freight
     document.getElementById('addFreightRow').disabled = false;

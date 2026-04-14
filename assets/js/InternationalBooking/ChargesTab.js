@@ -23,26 +23,6 @@ const freightElements = {
     }
 };
 
-
-
-// Helper function to calculate tax amounts
-function calculateTaxes(amount, { cgst, sgst, igst }) {
-    const sgstAmt = (amount * sgst) / 100;
-    const cgstAmt = (amount * cgst) / 100;
-    const igstAmt = (amount * igst) / 100;
-    const totalGstAmt = sgstAmt + cgstAmt + igstAmt;
-    const grandTotal = amount + totalGstAmt;
-
-    return {
-        sgstAmt,
-        cgstAmt,
-        igstAmt,
-        totalGstAmt,
-        grandTotal,
-        totalRate: (cgst + sgst + igst).toFixed(2)
-    };
-}
-
 // Clear form inputs
 function clearFreightInputs() {
     freightElements.chargesTypeInput.value = '';
@@ -72,8 +52,8 @@ async function addFreightRow() {
     if (!awbNoValue) return alert('AWB No cannot be empty!');
     if (!chargesType) return alert('Charges Type cannot be empty!');
     if (!freightAmountValue) return alert('Freight Amount cannot be empty!');
-
-    const taxes = parseTaxPercentages(partyDefaultTax.value);
+    const taxID = partyDefaultTax.value.trim();
+    const taxes = await getTaxRatesById(taxID);;
     const taxCalculations = calculateTaxes(freightAmountValue, taxes);
 
     // determine quantity display
@@ -167,7 +147,7 @@ async function saveFreightCharges() {
                 IGSTAmt: parseFloat(cells[8].textContent) || 0,
                 TotalGSTAmt: parseFloat(cells[9].textContent) || 0,
                 GrandTotalAmt: parseFloat(cells[10].textContent) || 0,
-                created_by: userLoginID,
+                created_by: UserLoginID,
                 created_at: localtimeStamp
             });
         }

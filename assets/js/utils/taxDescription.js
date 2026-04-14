@@ -25,8 +25,8 @@ async function loadTaxData() {
 function populateTaxDropdown(selector, data) {
     const dropdown = document.querySelector(selector);
 
-    console.log("Dropdown:", dropdown);
-    console.log("Data:", data);
+    // console.log("Dropdown:", dropdown);
+    // console.log("Data:", data);
 
     if (!dropdown) return;
 
@@ -131,3 +131,34 @@ async function loadGSTDropdown(selectId, {
     }
 }
 
+async function getTaxRatesById(taxId) {
+    const { data, error } = await supabaseClient
+        .from('tax_details') // your table name
+        .select('cgst, sgst, igst')
+        .eq('id', taxId)
+        .single();
+
+    if (error) {
+        console.error('Error fetching tax:', error);
+        return { cgst: 0, sgst: 0, igst: 0 };
+    }
+
+    return data;
+}
+
+function calculateTaxes(amount, { cgst, sgst, igst }) {
+    const sgstAmt = (amount * sgst) / 100;
+    const cgstAmt = (amount * cgst) / 100;
+    const igstAmt = (amount * igst) / 100;
+    const totalGstAmt = sgstAmt + cgstAmt + igstAmt;
+    const grandTotal = amount + totalGstAmt;
+
+    return {
+        sgstAmt,
+        cgstAmt,
+        igstAmt,
+        totalGstAmt,
+        grandTotal,
+        totalRate: (cgst + sgst + igst).toFixed(2)
+    };
+}

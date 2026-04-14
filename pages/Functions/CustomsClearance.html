@@ -139,13 +139,16 @@
 
                                     <!-- Consignee -->
                                     <div class="col-md-2 col-sm-6">
-                                        <label for="consigneeName" class="form-label">Consignee</label>
+                                        <label class="form-label">Consignor</label>
                                         <input list="consigneeNameSuggestions" class="form-control" id="consigneeName"
-                                            required />
+                                            required
+                                            oninput="consigneeDetails(this.value, 'ConsigneeName', 'consigneeNameSuggestions')"
+                                            onchange="updateDeliveryAddress()">
                                         <datalist id="consigneeNameSuggestions"></datalist>
                                     </div>
+
                                     <div class="col-md-4 col-sm-6">
-                                        <label for="deliveryAddress" class="form-label">Consignee Address</label>
+                                        <label for="deliveryAddress" class="form-label">Pickup Address</label>
                                         <textarea class="form-control" id="deliveryAddress" rows="1"></textarea>
                                     </div>
 
@@ -160,24 +163,6 @@
                                         <input type="number" id="cargoWeight" class="form-control text-end" value="0.00"
                                             step="0.01" min="0" placeholder="Enter Cargo Weight" />
                                     </div>
-
-                                    <!-- Clearance -->
-                                    <div class="col-md-4 col-sm-6">
-                                        <label for="customsBroker" class="form-label">Customs Broker</label>
-                                        <input list="customsBrokerSuggestions" id="customsBroker" class="form-control"
-                                            placeholder="Choose..." autocomplete="off" required />
-                                        <datalist id="customsBrokerSuggestions"></datalist>
-                                    </div>
-                                    <div class="col-md-3 col-sm-6">
-                                        <label for="clearancePort" class="form-label">Clearance at</label>
-                                        <input list="clearancePortSuggestions" id="clearancePort" class="form-control"
-                                            placeholder="Choose..." autocomplete="off" required />
-                                        <datalist id="clearancePortSuggestions"></datalist>
-                                    </div>
-                                    <div class="col-md-2 col-sm-6">
-                                        <label for="clearanceCountry" class="form-label">Clearance Country</label>
-                                        <input type="text" id="clearanceCountry" class="form-control" disabled />
-                                    </div>
                                     <div class="col-md-2 col-sm-6">
                                         <label for="clearanceMode" class="form-label">Clearance Mode</label>
                                         <input list="clearanceModeSuggestions" id="clearanceMode" class="form-control"
@@ -185,14 +170,47 @@
                                         <datalist id="clearanceModeSuggestions"></datalist>
                                     </div>
 
-                                    <!-- Commodity & Info -->
                                     <div class="col-md-2 col-sm-6">
                                         <label for="commodity" class="form-label">Commodity</label>
                                         <input list="commoditySuggestions" id="commodity" class="form-control"
                                             placeholder="Choose..." required />
                                         <datalist id="commoditySuggestions"></datalist>
                                     </div>
-                                    <div class="col-md-3 col-sm-12">
+
+                                    <div class="col-md-2 col-sm-6">
+                                        <label class="form-label">Origin</label>
+                                        <input list="originCountrySuggestions" class="form-control" id="originCountry"
+                                            required placeholder="Choose..." autocomplete="new-password"
+                                            data-force-list="true" data-list-id="originCountrySuggestions"
+                                            oninput="CountryDetails(this.value, 'originCountrySuggestions', 'originCountry')">
+                                        <datalist id="originCountrySuggestions"></datalist>
+                                    </div>
+
+                                    <div class="col-md-2 col-sm-6">
+                                        <label class="form-label">Destination</label>
+                                        <input list="destinationCountrySuggestions" class="form-control"
+                                            id="destinationCountry" required placeholder="Choose..."
+                                            autocomplete="new-password" data-force-list="true"
+                                            data-list-id="destinationCountrySuggestions"
+                                            oninput="CountryDetails(this.value, 'destinationCountrySuggestions', 'destinationCountry')">
+                                        <datalist id="destinationCountrySuggestions"></datalist>
+                                    </div>
+
+                                    <div class="col-md-3 col-sm-6">
+                                        <label for="clearancePort" class="form-label">Clearance at</label>
+                                        <input list="clearancePortSuggestions" id="clearancePort" class="form-control"
+                                            placeholder="Choose..." autocomplete="off" required />
+                                        <datalist id="clearancePortSuggestions"></datalist>
+                                    </div>
+
+                                    <div class="col-md-5 col-sm-6">
+                                        <label for="customsBroker" class="form-label">Customs Broker</label>
+                                        <input list="customsBrokerSuggestions" id="customsBroker" class="form-control"
+                                            placeholder="Choose..." autocomplete="off" required />
+                                        <datalist id="customsBrokerSuggestions"></datalist>
+                                    </div>
+
+                                    <div class="col-md-12 col-sm-12">
                                         <label for="information" class="form-label">Information</label>
                                         <input type="text" id="information" class="form-control"
                                             placeholder="Enter Information" />
@@ -285,7 +303,7 @@
                                                             <th>Total GST Amt</th>
                                                             <th>Grand Total</th>
                                                             <th>Action</th>
-                                                            <th class="hide-col-13">Tax Type</th>
+                                                            <th class="hide-col-13 d-none">Tax Type</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody></tbody>
@@ -299,7 +317,7 @@
                                                             <th class="text-end" id="totalGST">0.00</th>
                                                             <th class="text-end" id="totalGrand">0.00</th>
                                                             <th></th>
-                                                            <th class="hide-col-13"></th>
+                                                            <th class="hide-col-13 d-none"></th>
                                                         </tr>
                                                     </tfoot>
                                                 </table>
@@ -376,54 +394,51 @@
                                 </div>
                             </form>
 
-                            <!-- Add Consignee Modal -->
-                            <div class="modal fade" id="addConsigneeModal" tabindex="-1"
-                                aria-labelledby="addConsigneeModalLabel" aria-hidden="true">
+                            <!-- Add Consignor Modal -->
+                            <div class="modal fade" id="addConsigneeModal" tabindex="-1">
                                 <div class="modal-dialog">
                                     <div class="modal-content">
                                         <div class="modal-header">
-                                            <h5 class="modal-title" id="addConsigneeModalLabel">Add New Consignee</h5>
-                                            <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                                aria-label="Close"></button>
+                                            <h5 class="modal-title">Add New Consignor</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                         </div>
+
                                         <div class="modal-body">
-                                            <form id="consigneeForm" novalidate>
+                                            <form id="consigneeForm">
                                                 <div class="mb-3">
-                                                    <label for="newConsigneeName" class="form-label">Consignee
-                                                        Name</label>
+                                                    <label class="form-label">Consignor Name</label>
                                                     <input type="text" class="form-control" id="newConsigneeName"
-                                                        required />
+                                                        required>
                                                 </div>
                                                 <div class="mb-3">
-                                                    <label for="newConsigneeAddress" class="form-label">Consignee
-                                                        Address</label>
+                                                    <label class="form-label">Consignor Address</label>
                                                     <textarea class="form-control" id="newConsigneeAddress"
                                                         required></textarea>
                                                 </div>
                                                 <div class="mb-3">
-                                                    <label for="newContactPerson" class="form-label">Contact
-                                                        Person</label>
+                                                    <label class="form-label">Contact Person</label>
                                                     <input type="text" class="form-control" id="newContactPerson"
-                                                        required />
+                                                        required>
                                                 </div>
                                                 <div class="mb-3">
-                                                    <label for="newContactNumber" class="form-label">Contact
-                                                        Number</label>
+                                                    <label class="form-label">Contact Number</label>
                                                     <input type="tel" class="form-control" id="newContactNumber"
-                                                        required />
+                                                        required>
                                                 </div>
                                                 <div class="mb-3">
-                                                    <label for="newEmailID" class="form-label">Email ID</label>
-                                                    <input type="email" class="form-control" id="newEmailID" required />
+                                                    <label class="form-label">Email ID</label>
+                                                    <input type="email" class="form-control" id="newEmailID" required>
                                                 </div>
                                             </form>
                                         </div>
+
                                         <div class="modal-footer">
                                             <button type="button" class="btn btn-secondary"
                                                 data-bs-dismiss="modal">Cancel</button>
                                             <button type="button" class="btn btn-primary"
-                                                onclick="addNewConsignee(event)">Add
-                                                Consignee</button>
+                                                onclick="addNewConsignee(event)">
+                                                Add Consignee
+                                            </button>
                                         </div>
                                     </div>
                                 </div>

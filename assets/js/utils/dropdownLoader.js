@@ -367,7 +367,7 @@ async function getDropdownDataValue(inputListId, listType) {
             console.error('Error loading HSN code:', error.message);
             return null;
         }
-        console.log(`Fetched dropdown data for "${inputListId}" (${listType}):`, data);
+        // console.log(`Fetched dropdown data for "${inputListId}" (${listType}):`, data);
         return data; // ✅ RETURN DATA
     } catch (err) {
         console.error('Unexpected error:', err);

@@ -850,7 +850,7 @@ function updateDeliveryAddress() {
     const deliveryAddressInput = document.getElementById('deliveryAddress');
     const selectedConsignee = consigneeNameInput.value;
 
-    if (selectedConsignee === "Add New Consignee") {
+    if (selectedConsignee === "Add New Consignee" || selectedConsignee === "Add New Consignor") {
         const modal = new bootstrap.Modal(document.getElementById('addConsigneeModal'));
         modal.show();
     }
@@ -925,31 +925,40 @@ async function addNewConsignee(event) {
 
 // Clearance Port Suggestions
 const clearancePortInput = document.getElementById('clearancePort');
-const clearanceCountryInput = document.getElementById('clearanceCountry');
+const clearanceCountryInput = document.getElementById('clearanceCountry') || null;
 const datalistElement = document.getElementById('clearancePortSuggestions');
 
 let currentSuggestions = [];
 
 
+let selectedPortData = null;
+
 async function updateSuggestionsAndCountry() {
     const query = clearancePortInput.value.trim();
-    clearanceCountryInput.value = '';
     datalistElement.innerHTML = '';
 
-    if (query.length === 0) return;
+    if (!query) return;
 
-    currentSuggestions = await fetchPortSuggestions(query, 10);
+    const suggestions = await fetchPortSuggestions(query, 10);
 
-    currentSuggestions.forEach(({ label }) => {
+    suggestions.forEach(({ label }) => {
         const option = document.createElement('option');
-        option.value = label; // show full label to user
+        option.value = label;
         datalistElement.appendChild(option);
     });
 
-    // Case-insensitive exact match
-    const matchedPort = currentSuggestions.find(s => s.label.toLowerCase() === query.toLowerCase());
-    if (matchedPort) {
-        clearanceCountryInput.value = matchedPort.portDetails.PortCountry;
+    const matched = suggestions.find(
+        s => s.label.toLowerCase() === query.toLowerCase()
+    );
+
+    if (matched) {
+        selectedPortData = matched.portDetails;
+
+        // Optional UI update if field exists
+        const clearanceCountryInput = document.getElementById('clearanceCountry');
+        if (clearanceCountryInput) {
+            clearanceCountryInput.value = selectedPortData.PortCountry;
+        }
     }
 }
 
@@ -1563,21 +1572,4 @@ function checkPageBreak(doc, y, height, PAGE) {
         return PAGE.x;
     }
     return y;
-}
-
-// Helper function to parse tax percentages
-function parseTaxPercentages(taxString) {
-    const taxes = { cgst: 0, sgst: 0, igst: 0 };
-    const patterns = {
-        cgst: /CGST\s*(\d+(\.\d+)?)%/,
-        sgst: /SGST\s*(\d+(\.\d+)?)%/,
-        igst: /IGST\s*(\d+(\.\d+)?)%/
-    };
-
-    for (const [tax, pattern] of Object.entries(patterns)) {
-        const match = taxString.match(pattern);
-        if (match) taxes[tax] = parseFloat(match[1]);
-    }
-
-    return taxes;
 }
