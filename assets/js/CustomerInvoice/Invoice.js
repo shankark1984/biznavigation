@@ -469,12 +469,11 @@ async function getInvoiceDetails(invoiceNo) {
             .select('*')
             .eq('InvoiceNo', invoiceNo)
             .eq('company_id', CompanyID)
-            .single(); // Expecting one invoice per number per company
-
+            .maybeSingle();// Expecting one invoice per number per company
         if (error) throw error;
 
         if (!data) {
-            alert('Invoice not found.');
+            showToast('Invoice not found');
             return null;
         }
 
