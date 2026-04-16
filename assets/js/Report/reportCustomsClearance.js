@@ -62,7 +62,7 @@ function enableSortableHeaders() {
 async function loadReportSuggestions() {
     const { data, error } = await supabaseClient
         .from('CustomsClearanceView')
-        .select('JobID, PartyName, BLAWBNo, BENo, MovementType, TransitType, ModeType, ClearanceCountry, ClearancePort, CustomsBroker, InvoiceStatus, JobDate');
+        .select('JobID, PartyName, BLAWBNo, BENo, MovementType, TransitType, ModeType, Origin, Destination, ClearancePort, CustomsBroker, InvoiceStatus, JobDate');
 
     if (error) return console.error('Error fetching suggestions:', error);
 
@@ -73,7 +73,8 @@ async function loadReportSuggestions() {
     populateDatalists(data, 'MovementType', 'movementTypeList');
     populateDatalists(data, 'TransitType', 'transitTypeList');
     populateDatalists(data, 'ModeType', 'modeTypeList');
-    populateDatalists(data, 'ClearanceCountry', 'clearanceCountryList');
+    populateDatalists(data, 'Origin', 'originList');
+    populateDatalists(data, 'Destination', 'destinationList');
     populateDatalists(data, 'ClearancePort', 'clearancePortList');
     populateDatalists(data, 'InvoiceStatus', 'invoiceStatusList');
     populateDatalists(data, 'CustomsBroker', 'customsBrokerList');
@@ -187,10 +188,11 @@ function renderTable(data) {
             <td>${row.MovementType || ''}</td>
             <td>${row.TransitType || ''}</td>
             <td>${row.ModeType || ''}</td>
-            <td>${row.Consignee || ''}</td>
-            <td>${row.CustomsBroker || ''}</td>
+            <td>${row.Consignor || ''}</td>
+            <td>${row.Origin || ''}</td>
+            <td>${row.Destination || ''}</td>
             <td>${row.ClearancePort || ''}</td>
-            <td>${row.ClearanceCountry || ''}</td>
+            <td>${row.CustomsBroker || ''}</td>
             <td>${row.Quantity || ''}</td>
             <td>${row.CargoWeight || ''}</td>
             <td>${row.ClearanceMode || ''}</td>

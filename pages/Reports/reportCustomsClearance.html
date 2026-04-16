@@ -174,10 +174,15 @@
                                 <datalist id="modeTypeList"></datalist>
                             </div>
                             <div class="col-6 col-md-6 col-lg-2">
-                                <label for="clearanceCountry" class="form-label">Clearance Country</label>
-                                <input id="clearanceCountry" class="form-control" list="clearanceCountryList"
-                                    placeholder="Enter Service Provider">
-                                <datalist id="clearanceCountryList"></datalist>
+                                <label for="origin" class="form-label">Origin</label>
+                                <input id="origin" class="form-control" list="originList" placeholder="Enter Origin">
+                                <datalist id="originList"></datalist>
+                            </div>
+                            <div class="col-6 col-md-6 col-lg-2">
+                                <label for="destination" class="form-label">Destination</label>
+                                <input id="destination" class="form-control" list="destinationList"
+                                    placeholder="Enter Destination">
+                                <datalist id="destinationList"></datalist>
                             </div>
                             <div class="col-6 col-md-6 col-lg-2">
                                 <label for="clearancePort" class="form-label">Clearance Port</label>
@@ -244,9 +249,10 @@
                                     <th data-key="TransitType">Transit Type</th>
                                     <th data-key="ModeType">Mode Type</th>
                                     <th data-key="Consignee">Consignee</th>
-                                    <th data-key="CustomsBroker">Customs Broker</th>
+                                    <th data-key="Origin">Origin</th>
+                                    <th data-key="Destination">Destination</th>
                                     <th data-key="ClearancePort">Clearance Port</th>
-                                    <th data-key="ClearanceCountry">Clearance Country</th>
+                                    <th data-key="CustomsBroker">Customs Broker</th>
                                     <th data-key="Quantity">Quantity</th>
                                     <th data-key="CargoWeight">Cargo Weight</th>
                                     <th data-key="ClearanceMode">Clearance Mode</th>
