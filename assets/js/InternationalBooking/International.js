@@ -8,6 +8,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         loadSuggestions('vendorSuggestions', 'PartyDetails', CompanyID, 'PartyCode', 'PartyName'),
         loadDatalist('departmentList', 'Department')
     ]);
+    document.getElementById('bookedDate').valueAsDate = new Date();
     await initChargeableWeightCalculator("#actualWeight", "#volumetricWeight", "#chargeableWeight", "#uOMType");
 
     const containerTabContent = document.getElementById('container-details');

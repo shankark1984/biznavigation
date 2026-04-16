@@ -1,3 +1,4 @@
+
 async function generate_International_InvoicePDF(header, lines = []) {
 
     // Import jsPDF library
@@ -176,6 +177,16 @@ async function fetchAndRenderShipmentTable_Annexure(doc, startY, PAGE, FONT, inv
         8: { cellWidth: 16, halign: "right" }, // Total GST
         9: { cellWidth: 16, halign: "right" }, // Grand Total
     };
+
+    let totalFreight = 0;
+    let totalGstAmt = 0;
+    let totalGrandTotal = 0;
+    let totalWeight = 0;
+    let totalTaxable = 0;
+    let totalSGST = 0;
+    let totalCGST = 0;
+    let totalIGST = 0;
+
     /* ===============================
     Invoice Details
     =============================== */
@@ -208,7 +219,6 @@ async function fetchAndRenderShipmentTable_Annexure(doc, startY, PAGE, FONT, inv
             totals: { totalFreight: 0, totalGstAmt: 0, totalGrandTotal: 0, totalWeight: 0 },
         };
     }
-
 
     /* ===============================
        FETCH ALL CHARGES (ONE QUERY)
@@ -276,15 +286,6 @@ async function fetchAndRenderShipmentTable_Annexure(doc, startY, PAGE, FONT, inv
     /* ===============================
        GRAND TOTAL VARIABLES
     =============================== */
-
-    let totalFreight = 0;
-    let totalGstAmt = 0;
-    let totalGrandTotal = 0;
-    let totalWeight = 0;
-    let totalTaxable = 0;
-    let totalSGST = 0;
-    let totalCGST = 0;
-    let totalIGST = 0;
 
     let currentY = startY;
 
@@ -363,7 +364,7 @@ async function fetchAndRenderShipmentTable_Annexure(doc, startY, PAGE, FONT, inv
             const igst = safeNumber(c.IGSTAmt);
             const gst = safeNumber(c.TotalGSTAmt);
             const grand = safeNumber(c.GrandTotalAmt);
-
+            console.log(c);
             chTaxable += taxable;
             chSGST += sgst;
             chCGST += cgst;
@@ -375,7 +376,6 @@ async function fetchAndRenderShipmentTable_Annexure(doc, startY, PAGE, FONT, inv
             totalSGST += sgst;
             totalCGST += cgst;
             totalIGST += igst;
-
             return [
                 { content: c.ChargesType || "", colSpan: 2 },
                 c.HSNCode || "",
@@ -592,20 +592,28 @@ async function fetchAndRenderShipmentTable_Main(doc, startY, PAGE, FONT, invoice
     };
     const chargesColumnStyles = { //
         0: { cellWidth: 8, halign: "center" }, //""
-        1: { cellWidth: 25 }, // Charge Name (colSpan 2)
-        2: { cellWidth: 20 }, // HSN Code
+        1: { cellWidth: 23 }, // Charge Name (colSpan 2)
+        2: { cellWidth: 25 }, // Non-Taxable Amount
         3: { cellWidth: 20, halign: "right" }, // Taxable Value
-        4: { cellWidth: 20, halign: "right" }, // GST %
-        5: { cellWidth: 15, halign: "right" }, // SGST
-        6: { cellWidth: 25, halign: "right" }, // CGST
-        7: { cellWidth: 25, halign: "right" }, // IGST
-        8: { cellWidth: 16, halign: "right" }, // Total GST
-        9: { cellWidth: 16, halign: "right" }, // Grand Total
+        4: { cellWidth: 20, halign: "right" }, // SGST
+        5: { cellWidth: 15, halign: "right" }, // CGST
+        6: { cellWidth: 16, halign: "right" }, // IGST
+        7: { cellWidth: 16, halign: "right" }, // Total GST
+        8: { cellWidth: 16, halign: "right" }, // Grand Total
     };
+
+    let totalFreight = 0;
+    let totalGstAmt = 0;
+    let totalGrandTotal = 0;
+    let totalWeight = 0;
+    let totalTaxable = 0;
+    let totalNonTaxable = 0;
+    let totalSGST = 0;
+    let totalCGST = 0;
+    let totalIGST = 0;
     /* ===============================
     Invoice Details
     =============================== */
-    console.log("Fetching invoice details for invoice:", invoiceNo);
     const { data: invoiceDetails, error: invError } = await supabaseClient
         .from("InvoiceDetails")
         .select("*")
@@ -635,14 +643,11 @@ async function fetchAndRenderShipmentTable_Main(doc, startY, PAGE, FONT, invoice
         };
     }
 
-
     /* ===============================
        FETCH ALL CHARGES (ONE QUERY)
     =============================== */
 
     const shipmentIds = lines.map(x => x.id);
-
-    console.log("Fetching charges for shipments:", shipmentIds);
 
     const { data: allCharges } = await supabaseClient
         .from("InternationalBookingCharges")
@@ -660,7 +665,6 @@ async function fetchAndRenderShipmentTable_Main(doc, startY, PAGE, FONT, invoice
     FETCH ALL Equipment (ONE QUERY)
  ================================ */
 
-    console.log("Fetching equipment details for shipments:", shipmentIds);
     const { data: allEquipment, error: equipmenterror } = await supabaseClient
         .from("InternationalBookingEquipment")
         .select("*")
@@ -676,41 +680,17 @@ async function fetchAndRenderShipmentTable_Main(doc, startY, PAGE, FONT, invoice
        BUILD REMARKS TEXT
     ================================ */
     let equipmentText = "Remarks:\n";
-
-    if (Array.isArray(allEquipment) && allEquipment.length > 0) {
-
-        equipmentText += allEquipment
-            .map(e =>
-                `• Eq No: ${e?.EquipmentNumber || "-"} | ` +
-                `Type: ${e?.EquipmentType || "-"} | `
-            )
-            .join("\n");
-
-        console.log("Constructed equipment text:", equipmentText);
-
-    } else {
-        equipmentText += "No Equipment Details";
-    }
+    equipmentText += (allEquipment?.length)
+        ? allEquipment.map(e =>
+            `• Eq No: ${e?.EquipmentNumber || "-"} | Type: ${e?.EquipmentType || "-"} |`
+        ).join("\n")
+        : "No Equipment Details";
 
     /* ===============================
     Payment Details
     =============================== */
     const totalsPayment = await advancedPaymentDetails(invoiceNo, invoiceDetails?.InvoiceDate);
-
     const totalPaymentReceived = totalsPayment.totalPayment + totalsPayment.totalOtherDeduction + totalsPayment.totalTDS;
-
-    /* ===============================
-       GRAND TOTAL VARIABLES
-    =============================== */
-
-    let totalFreight = 0;
-    let totalGstAmt = 0;
-    let totalGrandTotal = 0;
-    let totalWeight = 0;
-    let totalTaxable = 0;
-    let totalSGST = 0;
-    let totalCGST = 0;
-    let totalIGST = 0;
 
     let currentY = startY;
 
@@ -745,15 +725,13 @@ async function fetchAndRenderShipmentTable_Main(doc, startY, PAGE, FONT, invoice
                 (row.TransitType || "") +
                 "\n" +
                 (row.ModeType || ""),
-                // row.TransitType || "",
-                // row.ModeType || "",
                 row.OriginName || "",
                 row.DestinationName || "",
                 row.ChargableWeight + " " + row.UOMType || "0.00",
-                row.FreightAmount,
-                row.FuelSurcharge,
-                row.OtherCharges,
-                row.TotalAmount
+                safeNumber(row.FreightAmount).toFixed(2),
+                safeNumber(row.FuelSurcharge).toFixed(2),
+                safeNumber(row.OtherCharges).toFixed(2),
+                safeNumber(row.TotalAmount).toFixed(2)
             ]],
             columnStyles: shipmentColumnStyles,
             styles: {
@@ -779,179 +757,162 @@ async function fetchAndRenderShipmentTable_Main(doc, startY, PAGE, FONT, invoice
         });
 
         currentY = doc.lastAutoTable.finalY;
-    }
 
-    /* ===============================
-       FINAL GRAND TOTAL
-    =============================== */
+        /* ---------- CHARGES ---------- */
+        const charges = chargesMap[row.id] || [];
 
-    doc.autoTable({
-        startY: currentY,
-        margin: { left: PAGE.x, right: PAGE.x },
-        columnStyles: chargesColumnStyles,
-        head: [[
-            {
-                content: "FINAL TOTAL", colSpan: 2, rowSpan: 2,
-                styles: {
-                    cellWidth: 25, halign: "right", fontStyle: "bold", textColor: [0, 0, 0], valign: "middle", fillColor: [220, 220, 220]
-                },
-            },
-            {
-                content: "Non-Taxable",
-                styles: { cellWidth: 20, halign: "center", fontStyle: "bold", fillColor: [220, 220, 220], textColor: [0, 0, 0] }
-            },
-            {
-                content: "Taxable",
-                styles: { cellWidth: 20, halign: "center", fontStyle: "bold", fillColor: [220, 220, 220], textColor: [0, 0, 0] }
-            },
-            {
-                content: "SGST",
-                styles: { cellWidth: 20, halign: "center", fontStyle: "bold", fillColor: [220, 220, 220], textColor: [0, 0, 0] }
-            },
-            {
-                content: "CGST",
-                styles: { cellWidth: 20, halign: "center", fontStyle: "bold", fillColor: [220, 220, 220], textColor: [0, 0, 0] }
-            },
-            {
-                content: "IGST",
-                styles: { cellWidth: 20, halign: "center", fontStyle: "bold", fillColor: [220, 220, 220], textColor: [0, 0, 0] }
-            },
-            {
-                content: "Total GST",
-                styles: { cellWidth: 20, halign: "center", fontStyle: "bold", fillColor: [220, 220, 220], textColor: [0, 0, 0] }
-            },
-            {
-                content: "Grand Total",
-                styles: { cellWidth: 20, halign: "center", fontStyle: "bold", fillColor: [220, 220, 220], textColor: [0, 0, 0] }
-            },
-        ]],
-        body: [[
-            "",
-            "",
-            {
-                content: totalTaxable.toFixed(2),
-                styles: { cellWidth: 20, halign: "right", fontStyle: "bold", fillColor: [220, 220, 220], textColor: [0, 0, 0] }
-            },
-
-            {
-                content: totalTaxable.toFixed(2),
-                styles: { cellWidth: 20, halign: "right", fontStyle: "bold", fillColor: [220, 220, 220], textColor: [0, 0, 0] }
-            },
-            {
-                content: totalSGST.toFixed(2),
-                styles: { cellWidth: 20, halign: "right", fontStyle: "bold", fillColor: [220, 220, 220], textColor: [0, 0, 0] }
-            },
-            {
-                content: totalCGST.toFixed(2),
-                styles: { cellWidth: 20, halign: "right", fontStyle: "bold", fillColor: [220, 220, 220], textColor: [0, 0, 0] }
-            },
-            {
-                content: totalIGST.toFixed(2),
-                styles: { cellWidth: 20, halign: "right", fontStyle: "bold", fillColor: [220, 220, 220], textColor: [0, 0, 0] }
-            },
-            {
-                content: totalGstAmt.toFixed(2),
-                styles: { cellWidth: 20, halign: "right", fontStyle: "bold", fillColor: [220, 220, 220], textColor: [0, 0, 0] }
-            },
-            {
-                content: totalGrandTotal.toFixed(2),
-                styles: { cellWidth: 20, halign: "right", fontStyle: "bold", fillColor: [255, 255, 0], textColor: [0, 0, 0] }
+        charges.forEach(c => {
+            if (safeNumber(c.TotalGSTAmt) > 0) {
+                totalTaxable += safeNumber(c.TotalAmount);
+            } else {
+                totalNonTaxable += safeNumber(c.TotalAmount);
             }
-        ]],
+            totalSGST += safeNumber(c.SGSTAmt);
+            totalCGST += safeNumber(c.CGSTAmt);
+            totalIGST += safeNumber(c.IGSTAmt);
+        });
 
-        styles: {
-            fontSize: FONT.small,
-            cellPadding: 1,
-            lineWidth: 0.2,
-            lineColor: [0, 0, 0],
-        },
-        footStyles: {
-            fillColor: [255, 255, 255],
-            textColor: [0, 0, 255],
-            fontStyle: "bold",
-            lineWidth: 0.2,
-            lineColor: [0, 0, 0]
-        },
-        foot: [
-            [
+        doc.autoTable({
+            startY: currentY,
+            margin: { left: PAGE.x, right: PAGE.x },
+            columnStyles: chargesColumnStyles,
+            head: [[
+                { content: "FINAL TOTAL", colSpan: 3, rowSpan: 2, styles: { halign: "right", fontStyle: "bold", textColor: [0, 0, 0], valign: "middle", fillColor: [220, 220, 220] } },
+                { content: "Non-Taxable", styles: { halign: "right", fontStyle: "bold", textColor: [0, 0, 0], valign: "middle", fillColor: [220, 220, 220] } },
+                { content: "Taxable", styles: { halign: "right", fontStyle: "bold", textColor: [0, 0, 0], valign: "middle", fillColor: [220, 220, 220] } },
+                { content: "SGST", styles: { halign: "right", fontStyle: "bold", textColor: [0, 0, 0], valign: "middle", fillColor: [220, 220, 220] } },
+                { content: "CGST", styles: { halign: "right", fontStyle: "bold", textColor: [0, 0, 0], valign: "middle", fillColor: [220, 220, 220] } },
+                { content: "IGST", styles: { halign: "right", fontStyle: "bold", textColor: [0, 0, 0], valign: "middle", fillColor: [220, 220, 220] } },
+                { content: "Total GST", styles: { halign: "right", fontStyle: "bold", textColor: [0, 0, 0], valign: "middle", fillColor: [220, 220, 220] } },
+                { content: "Grand Total", styles: { halign: "right", fontStyle: "bold", textColor: [0, 0, 0], valign: "middle", fillColor: [255, 255, 0] } }
+            ]],
+            body: [[
+                "",
+                "",
+                "",
                 {
-                    content: "Amount in Words:",
-                    rowSpan: 2,
-                    styles: {
-                        halign: "left", cellWidth: 23, textColor: [0, 0, 0],
-                        fontStyle: "bold", fillColor: [220, 220, 220], fontSize: 6.5, valign: "middle",   // ✅ vertical center
+                    content: totalNonTaxable.toFixed(2),
+                    styles: { halign: "right", fontStyle: "bold", fillColor: [220, 220, 220], textColor: [0, 0, 0] }
+                },
+
+                {
+                    content: totalTaxable.toFixed(2),
+                    styles: { halign: "right", fontStyle: "bold", fillColor: [220, 220, 220], textColor: [0, 0, 0] }
+                },
+                {
+                    content: totalSGST.toFixed(2),
+                    styles: { halign: "right", fontStyle: "bold", fillColor: [220, 220, 220], textColor: [0, 0, 0] }
+                },
+                {
+                    content: totalCGST.toFixed(2),
+                    styles: { halign: "right", fontStyle: "bold", fillColor: [220, 220, 220], textColor: [0, 0, 0] }
+                },
+                {
+                    content: totalIGST.toFixed(2),
+                    styles: { halign: "right", fontStyle: "bold", fillColor: [220, 220, 220], textColor: [0, 0, 0] }
+                },
+                {
+                    content: totalGstAmt.toFixed(2),
+                    styles: { halign: "right", fontStyle: "bold", fillColor: [220, 220, 220], textColor: [0, 0, 0] }
+                },
+                {
+                    content: totalGrandTotal.toFixed(2),
+                    styles: { halign: "right", fontStyle: "bold", fillColor: [255, 255, 0], textColor: [0, 0, 0] }
+                }
+            ]],
+
+            styles: {
+                fontSize: FONT.small,
+                cellPadding: 1,
+                lineWidth: 0.2,
+                lineColor: [0, 0, 0],
+            },
+            footStyles: {
+                fillColor: [255, 255, 255],
+                textColor: [0, 0, 255],
+                fontStyle: "bold",
+                lineWidth: 0.2,
+                lineColor: [0, 0, 0]
+            },
+            foot: [
+                [
+                    {
+                        content: "Amount in Words:",
+                        rowSpan: 2,
+                        styles: {
+                            halign: "left", cellWidth: 23, textColor: [0, 0, 0],
+                            fontStyle: "bold", fillColor: [220, 220, 220], fontSize: 6.5, valign: "middle",   // ✅ vertical center
+                        }
+                    },
+                    {
+                        content: numberToWordsIndian(totalGrandTotal),
+                        colSpan: 6, rowSpan: 2,
+                        styles: { halign: "left", valign: "middle" }
+                    },
+                    {
+                        content: "Advance Amount: ", // Replace with actual advance amount if available
+                        colSpan: 2,
+                        styles: { halign: "right", textColor: [0, 0, 0], fontStyle: "bold" }
+                    },
+                    {
+                        content: totalPaymentReceived.toFixed(2), // Replace with actual advance amount if available
+                        styles: { halign: "right", textColor: [0, 0, 0], fontStyle: "bold" }
                     }
-                },
-                {
-                    content: numberToWordsIndian(totalGrandTotal),
-                    colSpan: 5, rowSpan: 2,
-                    styles: { halign: "left", valign: "middle" }
-                },
-                {
-                    content: "Advance Amount: ", // Replace with actual advance amount if available
-                    colSpan: 2,
-                    styles: { halign: "right", textColor: [0, 0, 0], fontStyle: "bold" }
-                },
-                {
-                    content: totalPaymentReceived.toFixed(2), // Replace with actual advance amount if available
-                    styles: { halign: "right", textColor: [0, 0, 0], fontStyle: "bold" }
-                }
+                ],
+                [
+                    {
+                        content: "Balance Amount: ", // Replace with actual advance amount if available
+                        colSpan: 2,
+                        styles: { halign: "right", textColor: [0, 0, 0], fontStyle: "bold", fillColor: [255, 255, 0] }
+                    },
+                    {
+                        content: safeNumber(totalGrandTotal - totalPaymentReceived).toFixed(2), // Replace with actual advance amount if available
+                        styles: { halign: "right", textColor: [0, 0, 0], fontStyle: "bold", fillColor: [255, 255, 0] }
+                    }
+                ]
+            ]
 
-
+        });
+        currentY = doc.lastAutoTable.finalY;
+        doc.autoTable({
+            startY: currentY,
+            margin: { left: PAGE.x, right: PAGE.x },
+            body: [
+                [
+                    {
+                        content: equipmentText,
+                        colSpan: 4,   // Must match your total columns
+                        styles: { halign: "left" }
+                    },
+                    {
+                        content: invoiceRemarks,
+                        colSpan: 5,
+                        styles: { halign: "left" }
+                    }
+                ]
             ],
-            [
-                {
-                    content: "Balance Amount: ", // Replace with actual advance amount if available
-                    colSpan: 2,
-                    styles: { halign: "right", textColor: [0, 0, 0], fontStyle: "bold", fillColor: [255, 255, 0] }
-                },
-                {
-                    content: safeNumber(totalGrandTotal - totalPaymentReceived).toFixed(2), // Replace with actual advance amount if available
-                    styles: { halign: "right", textColor: [0, 0, 0], fontStyle: "bold", fillColor: [255, 255, 0] }
-                }
-            ]
-        ]
+            styles: {
+                fontSize: FONT.small,
+                cellPadding: 1,
+                lineWidth: 0.2,
+                lineColor: [0, 0, 0]
+            }
+        });
 
-    });
-    currentY = doc.lastAutoTable.finalY;
-    doc.autoTable({
-        startY: currentY,
-        margin: { left: PAGE.x, right: PAGE.x },
-        body: [
-            [
-                {
-                    content: equipmentText,
-                    colSpan: 4,   // Must match your total columns
-                    styles: { halign: "left" }
-                },
-                {
-                    content: invoiceRemarks,
-                    colSpan: 5,
-                    styles: { halign: "left" }
-                }
-            ]
-        ],
-        styles: {
-            fontSize: FONT.small,
-            cellPadding: 1,
-            lineWidth: 0.2,
-            lineColor: [0, 0, 0]
-        }
-    });
+        currentY = doc.lastAutoTable.finalY;
 
-    currentY = doc.lastAutoTable.finalY;
-
-    return {
-        finalY: currentY,
-        totals: {
-            totalFreight,
-            totalGstAmt,
-            totalGrandTotal,
-            totalWeight,
-            totalTaxable,
-            totalSGST,
-            totalCGST,
-            totalIGST
-        }
-    };
+        return {
+            finalY: currentY,
+            totals: {
+                totalFreight,
+                totalGstAmt,
+                totalGrandTotal,
+                totalWeight,
+                totalTaxable,
+                totalSGST,
+                totalCGST,
+                totalIGST
+            }
+        };
+    }
 }

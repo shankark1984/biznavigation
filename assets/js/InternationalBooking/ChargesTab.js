@@ -83,7 +83,7 @@ async function addFreightRow() {
         <td class="text-center">
             <button type="button" class="btn btn-sm btn-danger delete-row">Delete</button>
         </td>
-        <td>${partyDefaultTax.value}</td>
+        <td>${taxID}</td>
     `;
 
     freightElements.freightTable.appendChild(newRow);
@@ -109,12 +109,14 @@ async function saveFreightCharges() {
 
     if (!awbNoValue) return alert('AWB No (Docket No) cannot be empty!');
     const tempFormID = document.getElementById('tempFormID')?.value; // Assuming this is a hidden input field
-
-    const rows = Array.from(freightElements.freightTable.querySelectorAll('tr'));
-    if (!rows.length) return alert('No charges to save!');
+    console.log("tempFormID", tempFormID);
 
     try {
-        /* STEP 1 : Delete old records */
+        if (!tempFormID) {
+            alert("Temp Form ID missing!");
+            return;
+        }
+
         const { error: deleteError } = await supabaseClient
             .from('InternationalBookingCharges')
             .delete()
@@ -122,31 +124,33 @@ async function saveFreightCharges() {
 
         if (deleteError) throw deleteError;
 
+        const rows = Array.from(freightElements.freightTable.querySelectorAll('tr'));
+
+        if (rows.length === 0) return alert('No rows to save!');
         const insertData = [];
 
         for (const row of rows) {
             const cells = row.querySelectorAll('td');
 
-            const taxTypeText = cells[12].textContent.trim();
-            const taxDetails = await fetchTaxDetails(taxTypeText);
-
-
             insertData.push({
                 DocketNo: awbNoValue,
-                ChargesType: cells[0].textContent.trim(),
                 ID_IB: tempFormID,
-                Remarks: cells[2].textContent.trim(),
+                ChargesType: cells[0].textContent.trim(),
                 HSNCode: cells[1].textContent.trim(),
+                Remarks: cells[2].textContent.trim(),
+                TaxRate: parseFloat(cells[3].textContent.trim().replace('%', '')) || 0, // Calculate tax rate, default to 0 if parsing fails.cells[3].textContent.trim().replace('%', '') || "0",
                 Quantity: cells[4].textContent.trim() || "0 Nos",
-                PerQtyAmt: parseFloat(cells[5].textContent) || 0,
+                PerQtyAmt: Number(
+                    (parseFloat(cells[5].textContent || 0) /
+                        (parseFloat(cells[4].textContent.trim().split(' ')[0]) || 1)
+                    ).toFixed(2)), // Calculate per quantity amount, default to 0 if parsing fails
                 TotalAmount: parseFloat(cells[5].textContent) || 0, // Quantity is always 1
-                TaxID: taxDetails?.taxId || null,
-                TaxRate: taxDetails?.taxRate || null,
                 SGSTAmt: parseFloat(cells[6].textContent) || 0,
                 CGSTAmt: parseFloat(cells[7].textContent) || 0,
                 IGSTAmt: parseFloat(cells[8].textContent) || 0,
                 TotalGSTAmt: parseFloat(cells[9].textContent) || 0,
                 GrandTotalAmt: parseFloat(cells[10].textContent) || 0,
+                TaxID: cells[12].textContent.trim(), // default to 1 if tax details not found
                 created_by: UserLoginID,
                 created_at: localtimeStamp
             });
@@ -190,7 +194,7 @@ async function loadFreightCharges() {
                 <td>${item.Remarks || ''}</td>
                 <td class="text-end">${(item.TaxRate || 0).toFixed(2)}%</td>
                 <td class="text-end">${item.Quantity || 0}</td>
-                <td class="text-end">${(item.PerQtyAmt || 0).toFixed(2)}</td>
+                <td class="text-end">${(item.TotalAmount || 0).toFixed(2)}</td>
                 <td class="text-end">${(item.SGSTAmt || 0).toFixed(2)}</td>
                 <td class="text-end">${(item.CGSTAmt || 0).toFixed(2)}</td>
                 <td class="text-end">${(item.IGSTAmt || 0).toFixed(2)}</td>
@@ -199,7 +203,7 @@ async function loadFreightCharges() {
                 <td class="text-center">
                     <button type="button" class="btn btn-sm btn-danger delete-row">Delete</button>
                 </td>
-                <td>${getTaxTypeText(item)}</td>
+                <td>${item.TaxID}</td>
             `;
             freightElements.freightTable.appendChild(row);
         });
@@ -209,16 +213,6 @@ async function loadFreightCharges() {
         console.error('Error:', error.message);
         alert('Failed to load charges: ' + error.message);
     }
-}
-
-
-// Helper to reconstruct tax type text from stored values
-function getTaxTypeText(item) {
-    const parts = [];
-    if (item.SGSTAmt) parts.push(`SGST ${((item.SGSTAmt / item.PerQtyAmt) * 100).toFixed(0)}%`);
-    if (item.CGSTAmt) parts.push(`CGST ${((item.CGSTAmt / item.PerQtyAmt) * 100).toFixed(0)}%`);
-    if (item.IGSTAmt) parts.push(`IGST ${((item.IGSTAmt / item.PerQtyAmt) * 100).toFixed(0)}%`);
-    return parts.join(' ') || 'No taxes';
 }
 
 function recalcTotals() {

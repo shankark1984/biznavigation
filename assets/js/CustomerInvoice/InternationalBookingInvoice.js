@@ -299,7 +299,10 @@ async function updateInvoiceNumbers(invNo) {
         .from('international_booking')
         .update({
             InvoiceStatus: true,
-            InvoiceNumber: invNo
+            InvoiceNumber: invNo,
+            IsLocked: false,
+            LockedBy: null,
+            LockedAt: null
         })
         .in('id', shipmentIds);
 
@@ -456,8 +459,6 @@ async function addSingleShipmentToInvoice(shipmentNo, invoiceNo) {
         const { error: updateError } = await supabaseClient
             .from('international_booking')
             .update({
-                InvoiceStatus: true,
-                InvoiceNumber: invoiceNo,
                 IsLocked: true,
                 LockedBy: UserLoginID,
                 LockedAt: localtimeStamp
@@ -509,7 +510,8 @@ async function addSingleShipmentToInvoice(shipmentNo, invoiceNo) {
         updateTotals_ib(totals);
 
         // Optionally refresh merged charges table
-        renderChargesTable({ [data.DocketNo]: charges.chargesMap });
+        renderChargesTable(charges.chargesMap);
+
 
         alert('Shipment added successfully!');
 

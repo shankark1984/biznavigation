@@ -206,7 +206,7 @@ document.getElementById('saveButton').addEventListener('click', async () => {
         CGSTAmount: totals.cgst,
         IGSTAmount: totals.igst,
         TotalGSTAmount: totals.gst,
-        GrandTotalAmount: totals.grand,
+        GrandTotalAmount: Math.round(totals.grand),
 
         Remarks: document.getElementById('invoiceInformation').value.trim(),
     };
@@ -357,8 +357,6 @@ async function newInvoice() {
     showToast('🚀 New Invoice Ready');
 }
 
-
-
 function clearInvoiceTotals() {
 
     const table = document.getElementById('pendingShipmentTable');
@@ -385,7 +383,6 @@ function clearInvoiceTotals() {
     });
 }
 
-
 function clearChargesTable() {
     const tbody = document.querySelector('#pendingShipmentCharges tbody');
     if (tbody) tbody.innerHTML = '';
@@ -396,7 +393,6 @@ function clearChargesTable() {
     totalGSTAmt.textContent = '0.00';
     totalGrandAmt.textContent = '0.00';
 }
-
 
 function updateTotals(totals) {
     const setValue = (id, value) => {
@@ -578,7 +574,6 @@ document.getElementById('addShipmentNo').addEventListener('click', async () => {
     if (saveSpinner) {
         saveSpinner.classList.remove('d-none');
     }
-
 
     // Check the value and run the relevant function
     if (movementType === 'Forwarding' || movementType === 'Import' || movementType === 'Export') {
