@@ -248,7 +248,7 @@ async function drawShipmentTable(doc, PAGE, FONT, rows = [], y) {
     totalNonTax = totalNonTaxFreight + totalNonTaxFsc + totalNonTaxOther;
 
     totalGST = round2(totalCGST + totalSGST + totalIGST);
-    grandTotal = round2(totalTaxable + totalNonTax + totalGST);
+    grandTotal = Math.round(round2(totalTaxable + totalNonTax + totalGST));
 
     doc.autoTable({
         startY: y,
@@ -445,7 +445,7 @@ async function drawTermsAndTaxSection(doc, PAGE, FONT, company, header, totals, 
         ["SGST", "", totals.totalSGST],
         ["IGST", "", totals.totalIGST],
         ["Total GST", 0, totals.totalGST],
-        ["GRAND TOTAL", 0, totals.grandTotal]
+        ["GRAND TOTAL", 0, Math.round(totals.grandTotal)]
     ];
 
     doc.setFontSize(FONT.small);
@@ -583,7 +583,7 @@ function drawAmountInWords(doc, PAGE, FONT, grandTotal, y) {
     const paddingX = 3;
     const paddingY = 2;
 
-    const text = "Amount in Words: " + numberToWordsIndian(grandTotal);
+    const text = "Amount in Words: " + numberToWordsIndian(Math.round(grandTotal));
 
     // 🔥 Split text based on width
     const maxWidth = PAGE.w - (paddingX * 2);
