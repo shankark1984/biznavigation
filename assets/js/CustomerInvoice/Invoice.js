@@ -407,7 +407,7 @@ function updateTotals(totals) {
     setValue('totalCGST', totals.totalCGST);
     setValue('totalIGST', totals.totalIGST);
     setValue('totalGST', totals.totalGST);
-    setValue('totalGrand', totals.totalGrand);
+    setValue('totalGrand', Math.round(totals.totalGrand));
 
     // ✅ Still update invoiceData (guard with parseFloat defaults)
     invoiceData.BasicAmount = parseFloat(totals.totalFreight) || 0;
@@ -416,7 +416,7 @@ function updateTotals(totals) {
     invoiceData.SGSTAmount = parseFloat(totals.totalSGST) || 0;
     invoiceData.IGSTAmount = parseFloat(totals.totalIGST) || 0;
     invoiceData.TotalGSTAmount = parseFloat(totals.totalGST) || 0;
-    invoiceData.GrandTotalAmount = parseFloat(totals.totalGrand) || 0;
+    invoiceData.GrandTotalAmount = Math.round(totals.totalGrand) || 0;
 }
 
 function renderChargesTable(chargesMap) {
@@ -453,7 +453,7 @@ function renderChargesTable(chargesMap) {
     document.getElementById('totalCGSTAmt').textContent = totalCGST.toFixed(2);
     document.getElementById('totalIGSTAmt').textContent = totalIGST.toFixed(2);
     document.getElementById('totalGSTAmt').textContent = totalGSTAmt.toFixed(2);
-    document.getElementById('totalGrandAmt').textContent = totalGrandAmt.toFixed(2);
+    document.getElementById('totalGrandAmt').textContent = Math.round(totalGrandAmt).toFixed(2);
 }
 
 async function getInvoiceDetails(invoiceNo) {

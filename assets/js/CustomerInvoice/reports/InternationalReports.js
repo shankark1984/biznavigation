@@ -472,7 +472,7 @@ async function fetchAndRenderShipmentTable_Annexure(doc, startY, PAGE, FONT, inv
                 styles: { halign: "right", fontStyle: "bold", fillColor: [220, 220, 220], textColor: [0, 0, 0] }
             },
             {
-                content: totalGrandTotal.toFixed(2),
+                content: Math.round(totalGrandTotal).toFixed(2),
                 styles: { halign: "right", fontStyle: "bold", fillColor: [255, 255, 0], textColor: [0, 0, 0] }
             }
         ]],
@@ -501,7 +501,7 @@ async function fetchAndRenderShipmentTable_Annexure(doc, startY, PAGE, FONT, inv
                     }
                 },
                 {
-                    content: numberToWordsIndian(totalGrandTotal),
+                    content: numberToWordsIndian(Math.round(totalGrandTotal)),
                     colSpan: 5, rowSpan: 2,
                     styles: { halign: "left", valign: "middle" }
                 },
@@ -524,7 +524,7 @@ async function fetchAndRenderShipmentTable_Annexure(doc, startY, PAGE, FONT, inv
                     styles: { halign: "right", textColor: [0, 0, 0], fontStyle: "bold", fillColor: [255, 255, 0] }
                 },
                 {
-                    content: safeNumber(totalGrandTotal - totalPaymentReceived).toFixed(2), // Replace with actual advance amount if available
+                    content: safeNumber(Math.round(totalGrandTotal) - totalPaymentReceived).toFixed(2), // Replace with actual advance amount if available
                     styles: { halign: "right", textColor: [0, 0, 0], fontStyle: "bold", fillColor: [255, 255, 0] }
                 }
             ]
@@ -816,7 +816,7 @@ async function fetchAndRenderShipmentTable_Main(doc, startY, PAGE, FONT, invoice
                     styles: { halign: "right", fontStyle: "bold", fillColor: [220, 220, 220], textColor: [0, 0, 0] }
                 },
                 {
-                    content: totalGrandTotal.toFixed(2),
+                    content: Math.round(totalGrandTotal).toFixed(2), // totalGrandTotal.toFixed(2),
                     styles: { halign: "right", fontStyle: "bold", fillColor: [255, 255, 0], textColor: [0, 0, 0] }
                 }
             ]],
@@ -845,7 +845,7 @@ async function fetchAndRenderShipmentTable_Main(doc, startY, PAGE, FONT, invoice
                         }
                     },
                     {
-                        content: numberToWordsIndian(totalGrandTotal),
+                        content: numberToWordsIndian(Math.round(totalGrandTotal)),
                         colSpan: 6, rowSpan: 2,
                         styles: { halign: "left", valign: "middle" }
                     },
@@ -866,7 +866,7 @@ async function fetchAndRenderShipmentTable_Main(doc, startY, PAGE, FONT, invoice
                         styles: { halign: "right", textColor: [0, 0, 0], fontStyle: "bold", fillColor: [255, 255, 0] }
                     },
                     {
-                        content: safeNumber(totalGrandTotal - totalPaymentReceived).toFixed(2), // Replace with actual advance amount if available
+                        content: safeNumber(Math.round(totalGrandTotal) - totalPaymentReceived).toFixed(2), // Replace with actual advance amount if available
                         styles: { halign: "right", textColor: [0, 0, 0], fontStyle: "bold", fillColor: [255, 255, 0] }
                     }
                 ]

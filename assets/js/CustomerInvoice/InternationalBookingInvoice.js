@@ -249,7 +249,7 @@ function updateTotals_ib(totals) {
     setValue('totalCGST', totals.totalCGST);
     setValue('totalIGST', totals.totalIGST);
     setValue('totalGST', totals.totalGST);
-    setValue('totalGrand', totals.totalGrand);
+    setValue('totalGrand', Math.round(totals.totalGrand));
 
     // ✅ Still update invoiceData (guard with parseFloat defaults)
     invoiceData.BasicAmount = parseFloat(totals.totalFreight) || 0;
@@ -258,7 +258,7 @@ function updateTotals_ib(totals) {
     invoiceData.SGSTAmount = parseFloat(totals.totalSGST) || 0;
     invoiceData.IGSTAmount = parseFloat(totals.totalIGST) || 0;
     invoiceData.TotalGSTAmount = parseFloat(totals.totalGST) || 0;
-    invoiceData.GrandTotalAmount = parseFloat(totals.totalGrand) || 0;
+    invoiceData.GrandTotalAmount = Math.round(totals.totalGrand) || 0;
 }
 
 async function updateInvoiceNumbers(invNo) {

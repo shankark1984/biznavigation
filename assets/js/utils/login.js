@@ -26,6 +26,11 @@ const hideError = () => {
 
 // Store user details locally
 const storeUserDetails = ({ emp_code, user_name, user_login_id, user_type, company_id, working_branch }) => {
+    // 🔥 CLEAR OLD PERMISSIONS (very important)
+    Object.keys(localStorage)
+        .filter(key => key.startsWith("permissions_"))
+        .forEach(key => localStorage.removeItem(key));
+
     localStorage.setItem('EmpCode', emp_code);
     localStorage.setItem('UserName', user_name);
     localStorage.setItem('UserLoginID', user_login_id);
