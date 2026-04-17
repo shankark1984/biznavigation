@@ -1573,3 +1573,47 @@ function checkPageBreak(doc, y, height, PAGE) {
     }
     return y;
 }
+
+async function loadCourierSuggestions() {
+    const datalist = document.getElementById('courierSuggestions');
+    if (!datalist) return;
+
+    try {
+        const { data, error } = await supabaseClient
+            .from('ServiceProviderDetails')
+            .select('CourierCode, CourierName')
+            .eq('company_id', CompanyID)
+            .order('CourierName', { ascending: true });
+
+        if (error) throw error;
+
+        datalist.innerHTML = '';
+
+        // ✅ If no data
+        if (!data || data.length === 0) {
+            const option = document.createElement('option');
+            option.value = 'No data found';
+            option.disabled = true; // won't be selectable
+            datalist.appendChild(option);
+            return;
+        }
+
+        // ✅ Normal data
+        data.forEach(item => {
+            const option = document.createElement('option');
+            option.value = item.CourierName;
+            option.dataset.code = item.CourierCode;
+            datalist.appendChild(option);
+        });
+
+    } catch (err) {
+        console.error('Error loading courier list:', err);
+
+        // ✅ Error fallback
+        datalist.innerHTML = '';
+        const option = document.createElement('option');
+        option.value = 'Error loading data';
+        option.disabled = true;
+        datalist.appendChild(option);
+    }
+}

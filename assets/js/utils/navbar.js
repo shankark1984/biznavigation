@@ -188,11 +188,11 @@ const Navbar = (() => {
     // PERMISSIONS
     // ==========================
     async function applyPermissions(userLoginID) {
-        let permissions = JSON.parse(localStorage.getItem(`permissions_${userLoginID}`));
+        let permissions = JSON.parse(localStorage.getItem("permissions"));
 
         if (!permissions) {
             permissions = await fetchPermissions(userLoginID);
-            localStorage.setItem(`permissions_${userLoginID}`, JSON.stringify(permissions));
+            localStorage.setItem("permissions", JSON.stringify(permissions));
         }
 
         document.querySelectorAll(".menu-item").forEach(item => {
