@@ -36,7 +36,7 @@
 
                                 <!-- 🔹 HIDDEN FIELDS -->
                                 <input type="hidden" id="tempFormID">
-                                <input type="hidden" id="partyCode">
+                                <input type="hidden" id="serviceProviderCode">
                                 <input type="hidden" id="vendorCode">
                                 <input type="hidden" id="billingAddressID">
 
@@ -100,8 +100,8 @@
 
                                     <div class="col-md-3">
                                         <label for="contactPerson" class="form-label">Contact Person</label>
-                                        <input type="text" class="form-control" id="contactPerson"
-                                            name="contactPerson" required>
+                                        <input type="text" class="form-control" id="contactPerson" name="contactPerson"
+                                            required>
                                     </div>
 
                                     <div class="col-md-3">
@@ -125,20 +125,12 @@
                                             <label for="effectiveDate" class="form-label">Effective Date</label>
                                             <input type="date" class="form-control" id="effectiveDate">
                                         </div>
-
-                                        <div class="col-md-2">
-                                            <label for="mode" class="form-label">Mode</label>
-                                            <input type="text" class="form-control" id="mode">
-                                        </div>
-
-                                        <div class="col-md-2">
-                                            <label for="movementType" class="form-label">Movement Type</label>
-                                            <input type="text" class="form-control" id="movementType">
-                                        </div>
-
                                         <div class="col-md-2">
                                             <label for="fuelSurcharge" class="form-label">Fuel %</label>
-                                            <input type="number" class="form-control text-end" id="fuelSurcharge">
+                                            <div class="input-group">
+                                                <input type="number" class="form-control text-end" id="fuelSurcharge">
+                                                <span class="input-group-text">%</span>
+                                            </div>
                                         </div>
 
                                         <div class="col-md-2 d-grid">
@@ -151,7 +143,8 @@
 
                                     <!-- TABLE -->
                                     <div class="table-responsive mt-3">
-                                        <table class="table table-sm table-bordered text-center align-middle">
+                                        <table class="table table-sm table-bordered text-center align-middle"
+                                            id="fuelSurchargeTable">
                                             <thead class="table-dark">
                                                 <tr>
                                                     <th>Date</th>
@@ -183,12 +176,14 @@
         <div class="spinner-border text-light"></div>
     </div>
 
-    <!-- 🔹 TOAST -->
-    <div class="position-fixed top-0 end-0 p-3">
-        <div id="errorToast" class="toast text-white bg-danger border-0">
+    <!-- Toast Container -->
+    <div class="position-fixed top-0 end-0 p-3" style="z-index: 9999">
+        <div id="errorToast" class="toast align-items-center text-white bg-danger border-0" role="alert">
             <div class="d-flex">
-                <div class="toast-body"></div>
-                <button class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
+                <div class="toast-body" id="errorToastMessage">
+                    Error message here...
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
             </div>
         </div>
     </div>

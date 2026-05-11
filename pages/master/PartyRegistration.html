@@ -199,6 +199,13 @@
                                             Fixed Charges
                                         </button>
                                     </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link" id="fuelSurcharge-tab" data-bs-toggle="tab"
+                                            data-bs-target="#fuelSurcharge" type="button" role="tab"
+                                            aria-controls="fuelSurcharge" aria-selected="false">
+                                            Fuel Surcharge
+                                        </button>
+                                    </li>
                                 </ul>
 
                                 <!-- Tab Content -->
@@ -272,7 +279,7 @@
                                                     <i class="bi bi-plus-circle"></i> Add Address
                                                 </button>
                                                 <!-- ①  ADD THIS BUTTON just once below your form;
-                                    it’s hidden until the user chooses “Edit”. -->
+                                                    it’s hidden until the user chooses “Edit”. -->
                                                 <button type="button" class="btn btn-success mt-4 d-none"
                                                     id="updateBillingAddress">
                                                     <i class="bi bi-save"></i> Update Address
@@ -585,7 +592,6 @@
                                             </table>
                                         </div>
                                     </div>
-
                                     <!-- Fixed Charges -->
                                     <div class="tab-pane fade" id="fixedCharges" role="tabpanel"
                                         aria-labelledby="fixedCharges-tab">
@@ -704,6 +710,88 @@
                                             </table>
                                         </div>
                                     </div>
+                                    <!-- Fuel Surcharge -->
+                                    <div class="tab-pane fade" id="fuelSurcharge" role="tabpanel"
+                                        aria-labelledby="fuelSurcharge-tab">
+                                        <div class="row g-3">
+                                            <div class="col-md-2">
+                                                <label for="fuelEffectiveDate" class="form-label">Effective
+                                                    Date</label>
+                                                <input type="date" class="form-control" id="fuelEffectiveDate" required>
+                                            </div>
+
+                                            <div class="col-md-2">
+                                                <label for="fuelMovementType" class="form-label">Movement
+                                                    Type</label>
+                                                <select class="form-control" id="fuelMovementType" required>
+                                                    <option value="">Choose...</option>
+                                                    <option value="Domestic">Domestic</option>
+                                                    <option value="Export">Export</option>
+                                                    <option value="Import">Import</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-2">
+                                                <label for="fuelModeType" class="form-label">Mode Type</label>
+                                                <select class="form-control" id="fuelModeType" required>
+                                                    <option value="">Choose...</option>
+                                                    <option value="Dox">Dox</option>
+                                                    <option value="Non-Dox">Non-Dox</option>
+                                                    <option value="LTL">LTL</option>
+                                                    <option value="LCL">LCL</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-2">
+                                                <label for="fuelPercentage" class="form-label">Fuel %</label>
+                                                <div class="input-group">
+                                                    <input type="number" class="form-control text-end"
+                                                        id="fuelPercentage" step="0.01" min="0" max="100"
+                                                        placeholder="0.00">
+                                                    <span class="input-group-text">%</span>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-2">
+                                                <label for="fuelType" class="form-label">Fuel Type</label>
+                                                <select id="fuelType" class="form-select" required>
+                                                    <option value="" disabled selected>Select type</option>
+                                                    <option value="Buy">Buy</option>
+                                                    <option value="Sell">Sell</option>
+                                                </select>
+                                            </div>
+
+                                            <div class="col-md-2 d-grid">
+                                                <button type="button" class="btn btn-primary mt-4"
+                                                    id="addFuelSurchargeButton">
+                                                    <i class="bi bi-plus-circle"></i> Add Fuel Charges
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <!-- Fixed Charges Table -->
+                                        <div class="table-responsive mt-3">
+                                            <table class="table table-sm table-bordered text-center align-middle"
+                                                id="fuelSurchargesTable">
+                                                <thead class="table-dark">
+                                                    <tr>
+                                                        <th>S.No</th>
+                                                        <th>Effective Date</th>
+                                                        <th>Movement Type</th>
+                                                        <th>Mode Type</th>
+                                                        <th>Description</th>
+                                                        <th>Fuel %</th>
+                                                        <th>Fuel Type</th>
+                                                        <th>Actions</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="fuelSurchargesTableBody">
+                                                    <tr>
+                                                        <td colspan="14" class="text-center text-muted">No Fuel
+                                                            Surcharges Found</td>
+                                                        </td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
 
                                 </div>
                             </form>
@@ -756,6 +844,7 @@
     <script src="../../assets/js/PartyRegistration/Tariff.js" defer></script>
     <script src="../../assets/js/PartyRegistration/FTL_Tariff.js" defer></script>
     <script src="../../assets/js/PartyRegistration/FixedCharges.js" defer></script>
+    <script src="../../assets/js/PartyRegistration/fsc.js" defer></script>
     <script src="../../assets/js/utils/logout.js" defer></script>
 
     <!-- Form Validation -->

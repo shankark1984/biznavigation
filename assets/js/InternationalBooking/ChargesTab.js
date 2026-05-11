@@ -32,6 +32,7 @@ function clearFreightInputs() {
     freightElements.partyDefaultTax.value = '';
 }
 async function addFreightRow() {
+
     const {
         awbNo,
         chargesTypeInput,
@@ -41,68 +42,75 @@ async function addFreightRow() {
         partyDefaultTax
     } = freightElements;
 
+    const tbody = document.querySelector('#freightTable tbody');
+
     const awbNoValue = awbNo.value.trim();
     const chargesType = chargesTypeInput.value.trim();
     const freightAmountValue = parseFloat(freightAmount.value) || 0;
-    const chargeableWeight = parseFloat(document.getElementById('chargeableWeight').value);
+    const chargeableWeight = parseFloat(document.getElementById('chargeableWeight').value) || 0;
     const uOMType = document.getElementById('uOMType').value;
 
-    // console.log("chargeableWeight", chargeableWeight + uOMType);
-    // Validation
+    // ✅ Validation
     if (!awbNoValue) return alert('AWB No cannot be empty!');
     if (!chargesType) return alert('Charges Type cannot be empty!');
     if (!freightAmountValue) return alert('Freight Amount cannot be empty!');
-    const taxID = partyDefaultTax.value.trim();
-    const taxes = await getTaxRatesById(taxID);;
-    const taxCalculations = calculateTaxes(freightAmountValue, taxes);
 
-    // determine quantity display
-    let quantityDisplay;
-    if (chargesType.includes('Freight')) {
-        // assume these globals exist:
-        //   - chargeableWeight  (e.g. 123.45)
-        //   - uOMType           (e.g. "KG")
-        quantityDisplay = `${chargeableWeight} ${uOMType}`;
-    } else {
-        quantityDisplay = '1 Nos';
-    }
+    // 🔹 FSC + HSN
+    const fscData = await isFSCApplicable(chargesType);
+    const isFSC = fscData.isApplicable;
+    const freightHSN = fscData.hsn_code || hsnNumber.value;
 
-    const newRow = document.createElement('tr');
-    newRow.innerHTML = `
+    // 🔹 Tax
+    const taxID = partyDefaultTax.value.trim() || 1; // default to 1 if not selected
+    const taxes = await getTaxRatesById(taxID);
+    const taxCalc = calculateTaxes(freightAmountValue, taxes);
+
+    // 🔹 Quantity
+    const quantityDisplay = chargesType.includes('Freight')
+        ? `${chargeableWeight} ${uOMType}`
+        : '1 Nos';
+
+    // 🔹 Create row
+    const row = document.createElement('tr');
+    row.dataset.type = "freight";
+    row.dataset.fscApplicable = isFSC ? "true" : "false";
+    row.dataset.amount = freightAmountValue;
+
+    row.innerHTML = `
         <td>${chargesType}</td>
-        <td>${hsnNumber.value}</td>
+        <td>${freightHSN}</td>
         <td>${remarksDetails.value}</td>
-        <td class="text-end">${taxCalculations.totalRate}%</td>
+        <td class="text-end">${taxCalc.totalRate}%</td>
         <td class="text-end">${quantityDisplay}</td>
         <td class="text-end">${freightAmountValue.toFixed(2)}</td>
-        <td class="text-end">${taxCalculations.sgstAmt.toFixed(2)}</td>
-        <td class="text-end">${taxCalculations.cgstAmt.toFixed(2)}</td>
-        <td class="text-end">${taxCalculations.igstAmt.toFixed(2)}</td>
-        <td class="text-end">${taxCalculations.totalGstAmt.toFixed(2)}</td>
-        <td class="text-end">${taxCalculations.grandTotal.toFixed(2)}</td>
+        <td class="text-end">${taxCalc.sgstAmt.toFixed(2)}</td>
+        <td class="text-end">${taxCalc.cgstAmt.toFixed(2)}</td>
+        <td class="text-end">${taxCalc.igstAmt.toFixed(2)}</td>
+        <td class="text-end">${taxCalc.totalGstAmt.toFixed(2)}</td>
+        <td class="text-end">${taxCalc.grandTotal.toFixed(2)}</td>
         <td class="text-center">
             <button type="button" class="btn btn-sm btn-danger delete-row">Delete</button>
         </td>
-        <td>${taxID}</td>
+        <td class="d-none">${taxID}</td>
+        <td class="d-none">${isFSC ? 'Yes' : 'No'}</td>
     `;
 
-    freightElements.freightTable.appendChild(newRow);
-    recalcTotals();
+    tbody.appendChild(row);
+
+    // 🔥 Recalculate FSC (this also updates totals)
+    await recalcFSC();
+
     clearFreightInputs();
 }
-
 // Event delegation for delete button
-freightElements.freightTable.addEventListener('click', (e) => {
-    if (!e.target.classList.contains('delete-row')) return;
+document.addEventListener('click', async function (e) {
+    if (e.target.classList.contains('delete-row')) {
+        const row = e.target.closest('tr');
+        row.remove();
 
-    const row = e.target.closest('tr');
-
-    if (!confirm("Remove this row?")) return;
-
-    row.remove();
-    recalcTotals();
+        await recalcFSC(); // ensures totals update correctly
+    }
 });
-
 
 async function saveFreightCharges() {
     const awbNoValue = freightElements.awbNo.value.trim();
@@ -150,7 +158,7 @@ async function saveFreightCharges() {
                 IGSTAmt: parseFloat(cells[8].textContent) || 0,
                 TotalGSTAmt: parseFloat(cells[9].textContent) || 0,
                 GrandTotalAmt: parseFloat(cells[10].textContent) || 0,
-                TaxID: cells[12].textContent.trim(), // default to 1 if tax details not found
+                TaxID: cells[12].textContent.trim() || 1, // default to 1 if tax details not found
                 created_by: UserLoginID,
                 created_at: localtimeStamp
             });
@@ -173,6 +181,7 @@ async function saveFreightCharges() {
 async function loadFreightCharges() {
     const awbNoValue = freightElements.awbNo.value.trim();
     const tempFormID = freightElements.tempFormID.value.trim(); // Assuming this is a hidden input field
+    console.log("Loading charges for Temp Form ID:", tempFormID, "AWB No:", awbNoValue);
     if (!tempFormID) return alert('Please select a valid Temp Form ID!');
     if (!awbNoValue) return alert('Please select a valid AWB No!');
 
@@ -186,27 +195,34 @@ async function loadFreightCharges() {
 
         if (error) throw error;
 
-        data.forEach(item => {
+        for (const item of data) {
+
             const row = document.createElement('tr');
+
+            const fscData = await isFSCApplicable(item.ChargesType);
+            const isFSC = fscData.isApplicable;
+
             row.innerHTML = `
-                <td>${item.ChargesType || ''}</td>
-                <td>${item.HSNCode || ''}</td>
-                <td>${item.Remarks || ''}</td>
-                <td class="text-end">${(item.TaxRate || 0).toFixed(2)}%</td>
-                <td class="text-end">${item.Quantity || 0}</td>
-                <td class="text-end">${(item.TotalAmount || 0).toFixed(2)}</td>
-                <td class="text-end">${(item.SGSTAmt || 0).toFixed(2)}</td>
-                <td class="text-end">${(item.CGSTAmt || 0).toFixed(2)}</td>
-                <td class="text-end">${(item.IGSTAmt || 0).toFixed(2)}</td>
-                <td class="text-end">${(item.TotalGSTAmt || 0).toFixed(2)}</td>
-                <td class="text-end">${(item.GrandTotalAmt || 0).toFixed(2)}</td>
-                <td class="text-center">
-                    <button type="button" class="btn btn-sm btn-danger delete-row">Delete</button>
-                </td>
-                <td>${item.TaxID}</td>
-            `;
+        <td>${item.ChargesType || ''}</td>
+        <td>${item.HSNCode || ''}</td>
+        <td>${item.Remarks || ''}</td>
+        <td class="text-end">${(item.TaxRate || 0).toFixed(2)}%</td>
+        <td class="text-end">${item.Quantity || 0}</td>
+        <td class="text-end">${(item.TotalAmount || 0).toFixed(2)}</td>
+        <td class="text-end">${(item.SGSTAmt || 0).toFixed(2)}</td>
+        <td class="text-end">${(item.CGSTAmt || 0).toFixed(2)}</td>
+        <td class="text-end">${(item.IGSTAmt || 0).toFixed(2)}</td>
+        <td class="text-end">${(item.TotalGSTAmt || 0).toFixed(2)}</td>
+        <td class="text-end">${(item.GrandTotalAmt || 0).toFixed(2)}</td>
+        <td class="text-center">
+            <button type="button" class="btn btn-sm btn-danger delete-row">Delete</button>
+        </td>
+        <td class="d-none">${item.TaxID}</td>
+       <td class="d-none">${isFSC ? 'Yes' : 'No'}</td>
+    `;
+
             freightElements.freightTable.appendChild(row);
-        });
+        }
         toggleEditMode(true);
         recalcTotals();
     } catch (error) {
@@ -237,3 +253,102 @@ function recalcTotals() {
     });
 }
 
+async function recalcFSC() {
+
+    const tbody = document.querySelector('#freightTable tbody');
+
+    let totalBase = 0;
+
+    // 🔹 Get FSC %
+    const fsc = await getFSCCharges({
+        partyCode: document.getElementById('partyCode').value.trim(),
+        carrierCode: document.getElementById('carrierCode').value.trim(),
+        movementType: document.getElementById('movementTypeI').value.trim(),
+        modeType: document.getElementById('modeTypeI').value.trim(),
+        bookingDate: document.getElementById('bookedDate').value.trim()
+    });
+
+    const fscPercent = Number(fsc?.fuelSurcharge || 0);
+
+    // 🔥 Remove old FSC row & calculate total base
+    tbody.querySelectorAll('tr').forEach(row => {
+
+        const chargeName = row.children[0]?.innerText?.trim();
+        const ifFSCCell = row.children[13]?.innerText?.trim(); // 14th column
+
+        // Remove existing FSC row
+        if (chargeName === "Fuel Surcharge") {
+            row.remove();
+            return;
+        }
+
+        // Only rows where FSC applicable = Yes
+        if (ifFSCCell === "Yes") {
+
+            const basicAmt = Number(
+                row.children[5]?.innerText?.replace(/,/g, '') || 0
+            );
+
+            totalBase += basicAmt;
+            console.log(`Adding ${basicAmt} to FSC base from row with charge: ${chargeName}`);
+        }
+    });
+
+    // 🔹 Stop if no FSC applicable
+    if (totalBase <= 0 || fscPercent <= 0) {
+        recalcTotals();
+        return;
+    }
+
+    console.log("Total Base for FSC:", totalBase);
+
+    // 🔹 FSC Amount
+    const fscAmount = (totalBase * fscPercent) / 100;
+
+    // 🔹 Get Party Default Tax ID
+    const taxID = await fetchDefaultTax(document.getElementById('partyCode').value.trim());
+
+    if (!taxID) {
+        console.warn("Party Default Tax ID not found");
+        return;
+    }
+
+    // 🔹 Get Tax Details
+    const taxes = await getTaxRatesById(taxID);
+
+    // 🔹 GST Calculation   
+    const taxCalc = calculateTaxes(fscAmount, taxes);
+
+    // 🔹 FSC HSN
+    const fscHSN = fsc?.hsn_code || await getFSCHSNFromDropdown();
+
+    // 🔥 CREATE FSC ROW
+    const fscRow = document.createElement('tr');
+    fscRow.dataset.type = "fsc";
+
+    fscRow.innerHTML = `
+        <td>Fuel Surcharge</td>
+        <td>${fscHSN}</td>
+        <td>${fsc?.description || ''}</td>
+        <td class="text-end">${taxCalc.totalRate}%</td>
+        <td class="text-end">1 Nos</td>
+        <td class="text-end">${fscAmount.toFixed(2)}</td>
+        <td class="text-end">${taxCalc.sgstAmt.toFixed(2)}</td>
+        <td class="text-end">${taxCalc.cgstAmt.toFixed(2)}</td>
+        <td class="text-end">${taxCalc.igstAmt.toFixed(2)}</td>
+        <td class="text-end">${taxCalc.totalGstAmt.toFixed(2)}</td>
+        <td class="text-end">${taxCalc.grandTotal.toFixed(2)}</td>
+        <td class="text-center">
+            <button type="button" class="btn btn-sm btn-danger delete-row">
+                Delete
+            </button>
+        </td>
+        <td class="d-none">${taxID}</td>
+        <td class="d-none">No</td>
+    `;
+
+    tbody.appendChild(fscRow);
+
+    // 🔹 Recalculate totals
+    recalcTotals();
+}

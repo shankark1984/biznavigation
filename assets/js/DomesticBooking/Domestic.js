@@ -26,7 +26,9 @@ document.getElementById("docketNo")
 docketNoInput.addEventListener('change', async () => {
     const docketNo = docketNoInput.value;
     if (!docketNo) return;
+
     try {
+
         // 2) Load basic docket details
         await fetchDocketDetails(docketNo);
 
@@ -41,8 +43,7 @@ docketNoInput.addEventListener('change', async () => {
 
         // 5) Load remaining sections in parallel (faster)
         await Promise.all([
-
-            loadFreightCharges(tempFormID),
+            loadFreightCharges(),
             loadVolumetricDetails(),
             fetchEquipmentDetails(tempFormID),
             // fetchContainerDetails(tempFormID),

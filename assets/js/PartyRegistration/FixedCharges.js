@@ -214,7 +214,7 @@ async function saveFixedChargesToDB() {
             .insert(insertData);
     }
 
-    alert("Fixed charges saved successfully ✅");
+    // alert("Fixed charges saved successfully ✅");
 
     loadFixedChargesFromDB();
 }

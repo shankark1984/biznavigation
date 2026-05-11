@@ -84,6 +84,8 @@ async function fetchDropdownList() {
         tbody.appendChild(fragment);
 
         populateDropdownDatalists();
+        setupFilterListeners();
+
 
     } catch (err) {
         console.error(err);
@@ -91,6 +93,33 @@ async function fetchDropdownList() {
     } finally {
         hideLoader();
     }
+}
+
+valueassignedto.addEventListener('input', () => {
+    filterDescriptionByAssigned();
+    applyDropdownFilters();
+});
+
+descriptionInput.addEventListener('input', applyDropdownFilters);
+
+
+function filterDescriptionByAssigned() {
+    const selectedAssigned = valueassignedto.value.trim().toLowerCase();
+    const descriptionList = document.getElementById('descriptionSuggestions');
+
+    if (!descriptionList) return;
+
+    descriptionList.innerHTML = '';
+
+    const filteredDescriptions = dropdownListData
+        .filter(d => !selectedAssigned || d.type_of_value.toLowerCase() === selectedAssigned)
+        .map(d => d.description);
+
+    const uniqueDescriptions = [...new Set(filteredDescriptions)];
+
+    descriptionList.innerHTML = uniqueDescriptions
+        .map(desc => `<option value="${desc}">`)
+        .join('');
 }
 
 /*************************************************
@@ -220,6 +249,7 @@ async function deleteDropdownItem(id) {
 
         showToast('Deleted successfully.');
         await fetchDropdownList();
+        setupFilterListeners();
 
     } catch (err) {
         console.error(err);
@@ -303,15 +333,22 @@ function applyDropdownFilters() {
     const value = fixedvalueInput.value.trim().toLowerCase();
     const hsn = hsncodeInput.value.trim().toLowerCase();
 
-    const rows = document.querySelectorAll('#dropdownListTable tbody tr');
+    const tbody = document.querySelector('#dropdownListTable tbody');
+    const rows = tbody.querySelectorAll('tr');
+
     let visibleCount = 0;
+
+    // ✅ remove old "no data"
+    document.getElementById('noDataRow')?.remove();
 
     rows.forEach(row => {
         const cells = row.cells;
 
+        if (cells.length < 6) return; // ✅ critical fix
+
         const match =
-            (!assigned || cells[1].textContent.toLowerCase().includes(assigned)) &&
-            (!desc || cells[2].textContent.toLowerCase().includes(desc)) &&
+            (!assigned || cells[1].textContent.trim().toLowerCase() === assigned) &&
+            (!desc || cells[2].textContent.trim().toLowerCase() === desc) &&
             (!cond || cells[3].textContent.toLowerCase().includes(cond)) &&
             (!value || cells[4].textContent.toLowerCase().includes(value)) &&
             (!hsn || cells[5].textContent.toLowerCase().includes(hsn));
@@ -321,12 +358,7 @@ function applyDropdownFilters() {
         if (match) visibleCount++;
     });
 
-    // remove old message
-    document.getElementById('noDataRow')?.remove();
-
-    // show no data message
     if (visibleCount === 0 && rows.length > 0) {
-        const tbody = document.querySelector('#dropdownListTable tbody');
         const tr = document.createElement('tr');
         tr.id = 'noDataRow';
         tr.innerHTML = `<td colspan="7" class="text-muted text-center">No matching records</td>`;

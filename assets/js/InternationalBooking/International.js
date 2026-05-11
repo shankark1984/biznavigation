@@ -6,6 +6,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     await Promise.all([
         loadSuggestions('partySuggestions', 'PartyDetails', CompanyID, 'PartyCode', 'PartyName'),
         loadSuggestions('vendorSuggestions', 'PartyDetails', CompanyID, 'PartyCode', 'PartyName'),
+        loadSuggestions('carrierSuggestions', 'ServiceProviderDetails', CompanyID, 'CourierCode', 'CourierName'),
         loadDatalist('departmentList', 'Department')
     ]);
     document.getElementById('bookedDate').valueAsDate = new Date();
@@ -28,8 +29,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     loadDatalist('tabPackingTypeSuggestions', 'PackingType'); // Static data
     initDatalistValidation();
     loadTaxData();
-
 });
+
 
 document.getElementById("awbNo")
     .addEventListener("input", e => loadAWBNoDetails(e.target.value));
@@ -290,6 +291,7 @@ async function fetchDocketDetails(docketNo) {
     document.getElementById('poNo').value = data.PONo;
     document.getElementById('shippingType').value = data.ShippingType;
     document.getElementById('carrierName').value = data.CourierName;
+    document.getElementById('carrierCode').value = data.CourierCode;
     document.getElementById('serviceProviderCode').value = data.ServiceProviderCode;
     document.getElementById('serviceProvider').value = data.ServiceProviderName;
     document.getElementById('shipperRef').value = data.ShipperRef;
@@ -334,6 +336,7 @@ async function saveOrUpdateInternationalBooking() {
         Status: document.getElementById("status").value,
         ServiceProviderCode: document.getElementById("serviceProviderCode").value,
         ServiceProviderName: document.getElementById("serviceProvider").value,
+        CourierCode: document.getElementById("carrierCode").value,
         CourierName: document.getElementById("carrierName").value,
         Consignee: document.getElementById("consigneeName").value,
         ShipperRef: document.getElementById("shipperRef").value,

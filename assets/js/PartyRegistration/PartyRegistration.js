@@ -47,10 +47,11 @@ modifyButton.addEventListener('click', () => {
     saveButton.disabled = false;
     modifyButton.disabled = true;
     document.getElementById("addbillingAddress").disabled = false;
-    toggleButtons(".edit-row, .delete-row, .editTariff, .deleteRow,.delete-fixedbutton", true);
+    toggleButtons(".edit-row, .delete-row, .editTariff, .deleteRow,.delete-fixedbutton, .deleteFuelRow", true);
     document.getElementById("addTariffButton").disabled = false;
     document.getElementById("addFtlFCLButton").disabled = false;
     document.getElementById("addFixedChargesButton").disabled = false;
+    document.getElementById("addFuelSurchargeButton").disabled = false;
 });
 
 // New button handler
@@ -63,14 +64,16 @@ newButton.addEventListener('click', () => {
     document.querySelector('#tariffTable tbody').innerHTML = '';
     document.querySelector('#ftlFCLTable tbody').innerHTML = '';
     document.querySelector('#fixedChargesTable tbody').innerHTML = '';
+    document.querySelector('#fuelSurchargesTable tbody').innerHTML = '';
 
     clearForm();
     enableForm();
-    toggleButtons(".edit-row, .delete-row, .editTariff, .deleteRow, .delete-fixedbutton", true);
+    toggleButtons(".edit-row, .delete-row, .editTariff, .deleteRow, .delete-fixedbutton, .deleteFuelRow", true);
     document.getElementById("addbillingAddress").disabled = false;
     document.getElementById("addTariffButton").disabled = false;
     document.getElementById("addFtlFCLButton").disabled = false;
     document.getElementById("addFixedChargesButton").disabled = false;
+    document.getElementById("addFuelSurchargeButton").disabled = false;
 });
 
 async function generateNewPartyCode(partyName) {
@@ -112,8 +115,9 @@ document.getElementById('partyNameReg').addEventListener('change', async () => {
     await fetchTariffs(partyCode);
     await loadFixedChargesFromDB();
     await loadFCLFTLTariffs(partyCode);
+    await loadFuelSurcharge(partyCode);
 
-    toggleButtons(".edit-row, .delete-row, .editTariff, .deleteRow, .delete-fixedbutton", false);
+    toggleButtons(".edit-row, .delete-row, .editTariff, .deleteRow, .delete-fixedbutton, .deleteFuelRow", false);
 
 });
 
@@ -182,7 +186,7 @@ saveButton.addEventListener('click', async (e) => {
     const partyStatus = fields.partyCurrentStatus.value;
 
     const isInsert = saveButton.textContent.trim() === 'Save';
-    console.log("GST Type", fields.defaultTax.value);
+
     const formData = {
         PartyCode: partyCode,
         PartyType: partyType,
@@ -272,6 +276,7 @@ saveButton.addEventListener('click', async (e) => {
     await saveFixedChargesToDB();
 
     await saveFCLFTLTariffs(); // ✅ Save FTL/FCL tariffs after party is saved
+    await saveFuelSurcharge();
 
     showToast(`Party ${isInsert ? 'saved' : 'updated'} successfully!`);
 

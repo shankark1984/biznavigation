@@ -178,6 +178,7 @@ async function loadSuggestions(
     attachPartyCodeFiller('consignorName', 'consignorNameSuggestions', 'consignorCode');
     attachPartyCodeFiller('serviceProviderName', 'serviceProviderSuggestions', 'serviceProviderCode');
     attachPartyCodeFiller('vendorName', 'vendorSuggestions', 'vendorCode');
+    attachPartyCodeFiller('carrierName', 'carrierSuggestions', 'carrierCode');
 }
 
 
@@ -930,7 +931,6 @@ const datalistElement = document.getElementById('clearancePortSuggestions');
 
 let currentSuggestions = [];
 
-
 let selectedPortData = null;
 
 async function updateSuggestionsAndCountry() {
@@ -1574,6 +1574,7 @@ function checkPageBreak(doc, y, height, PAGE) {
     return y;
 }
 
+// Load courier suggestions for autocomplete 
 async function loadCourierSuggestions() {
     const datalist = document.getElementById('courierSuggestions');
     if (!datalist) return;
@@ -1616,4 +1617,125 @@ async function loadCourierSuggestions() {
         option.disabled = true;
         datalist.appendChild(option);
     }
+}
+
+
+// Fuel Surcharge Logic 
+// when user selects a party code, load fuel surcharge data for that party and populate the table
+// Also provide a function to fetch applicable fuel surcharge based on movement type, mode and booking date (for invoice calculation)
+// Data structure in fuelSurchargeList: [{effectiveDate, movementType, modeType, percentage, Description, fuelType}]
+// Table columns: Sr. No., Effective Date, Movement Type, Mode, Fuel Surcharge %, Description, Fuel Type, Actions
+// if no data, show "No data" row spanning all columns
+
+function mapFSC(row) {
+    return {
+        id: row.id,
+        partyId: row.PartyID,
+        effectiveDate: row.EffectiveDate,
+        mode: row.Mode,
+        movementType: row.MovementType,
+        fuelSurcharge: Number(row.FuelSurcharge),
+        description: row.Description,
+        fscType: row.FSCType
+    };
+}
+
+async function getFSCCharges({
+    partyCode,
+    carrierCode,
+    movementType,
+    modeType,
+    bookingDate
+}) {
+    try {
+        const mt = movementType;
+        const md = modeType;
+
+        const orCondition = `
+            and(MovementType.eq.${mt},Mode.eq.${md}),
+            and(MovementType.eq.All,Mode.eq.${md}),
+            and(MovementType.eq.${mt},Mode.eq.All),
+            and(MovementType.eq.All,Mode.eq.All)
+        `.replace(/\s+/g, '');
+
+        const baseQuery = (query) =>
+            query
+                .or(orCondition) // ✅ FIXED (no extra brackets)
+                .eq('FSCType', 'Sell')
+                .lte('EffectiveDate', bookingDate)
+                .order('EffectiveDate', { ascending: false })
+                .limit(1);
+
+        // 🔸 1. Party-wise
+        if (partyCode) {
+            const { data, error } = await baseQuery(
+                supabaseClient
+                    .from('FuelSurcharge')
+                    .select('*')
+                    .eq('PartyID', partyCode)
+            );
+
+            if (error) throw error;
+            if (data?.length) return mapFSC(data[0]);
+        }
+
+        // 🔸 2. Carrier-wise
+        if (carrierCode) {
+            const { data, error } = await baseQuery(
+                supabaseClient
+                    .from('FuelSurcharge')
+                    .select('*')
+                    .eq('PartyID', carrierCode)
+            );
+
+            if (error) throw error;
+            if (data?.length) return mapFSC(data[0]);
+        }
+
+        // 🔸 3. Global fallback
+        const { data: defaultData, error: defaultError } = await baseQuery(
+            supabaseClient
+                .from('FuelSurcharge')
+                .select('*')
+                .eq('PartyID', 'All')
+        );
+
+        if (defaultError) throw defaultError;
+        if (defaultData?.length) return mapFSC(defaultData[0]);
+
+        return null;
+
+    } catch (err) {
+        console.error("Error fetching fuel surcharge:", err);
+        return null;
+    }
+}
+async function isFSCApplicable(chargesType) {
+    const { data, error } = await supabaseClient
+        .from('dropdown_list')
+        .select('condition, hsn_code')
+        .eq('description', chargesType)
+        .maybeSingle();
+
+    if (error || !data) {
+        return {
+            isApplicable: false,
+            hsn_code: null
+        };
+    }
+
+    return {
+        isApplicable: data.condition === 'fsc',
+        hsn_code: data.hsn_code || null
+    };
+}
+
+async function getFSCHSNFromDropdown() {
+    const { data } = await supabaseClient
+        .from('dropdown_list')
+        .select('hsn_code')
+        .eq('description', 'Fuel Surcharge')
+        .maybeSingle();
+
+    return data?.hsn_code || "";
 }
