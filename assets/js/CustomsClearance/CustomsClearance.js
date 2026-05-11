@@ -8,7 +8,7 @@ const jobNoInput = document.getElementById('jobNo'); // Assuming this exists
 async function initializeForm() {
     try {
         await Promise.all([
-            await loadJobNoSuggestions(CompanyID),
+            await loadJobNoSuggestions(),
             await loadSuggestions('partySuggestions', 'PartyDetails', CompanyID),
             await loadSuggestions('customsBrokerSuggestions', 'PartyDetails', CompanyID),
             await loadBlAwbNumberSuggestions(CompanyID),
@@ -235,13 +235,14 @@ if (modifyButton) {
     });
 }
 
-async function loadJobNoSuggestions(companyID) {
+async function loadJobNoSuggestions() {
     try {
+        console.log("Loading job number suggestions for company ID:", CompanyID);
         const { data, error } = await supabaseClient
             .from('CustomsClearance_Details')
             .select('JobID')
-            .eq('company_id', companyID)
-            .limit(100)
+            .eq('company_id', CompanyID)
+            .limit(50)
             .order('JobID', { ascending: true });
 
         if (error) {
