@@ -1581,7 +1581,7 @@ async function loadCourierSuggestions() {
 
     try {
         const { data, error } = await supabaseClient
-            .from('ServiceProviderDetails')
+            .from('CourierRegistration')
             .select('CourierCode, CourierName')
             .eq('company_id', CompanyID)
             .order('CourierName', { ascending: true });

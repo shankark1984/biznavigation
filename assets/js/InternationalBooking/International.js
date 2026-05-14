@@ -6,7 +6,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     await Promise.all([
         loadSuggestions('partySuggestions', 'PartyDetails', CompanyID, 'PartyCode', 'PartyName'),
         loadSuggestions('vendorSuggestions', 'PartyDetails', CompanyID, 'PartyCode', 'PartyName'),
-        loadSuggestions('carrierSuggestions', 'ServiceProviderDetails', CompanyID, 'CourierCode', 'CourierName'),
+        loadSuggestions('carrierSuggestions', 'CourierRegistration', CompanyID, 'CourierCode', 'CourierName'),
         loadDatalist('departmentList', 'Department')
     ]);
     document.getElementById('bookedDate').valueAsDate = new Date();

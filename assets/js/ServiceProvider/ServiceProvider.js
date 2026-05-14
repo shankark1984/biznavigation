@@ -42,6 +42,12 @@ document.getElementById('newButton').addEventListener('click', () => {
     enableForm();
     document.getElementById('deActiveDate').disabled = true;
     document.getElementById('courierCode').disabled = true;
+    document.getElementById('fuelSurchargeTableBody').innerHTML = '';
+    document.getElementById('saveButton').disabled = false;
+    document.getElementById('modifyButton').disabled = true;
+    document.getElementById('addFuelSurchargeButton').disabled = false;
+    document.getElementById('saveButton').innerHTML = '<i class="bi bi-save"></i> Save';
+
 });
 
 document.getElementById('modifyButton').addEventListener('click', () => {
@@ -59,7 +65,7 @@ document.getElementById('modifyButton').addEventListener('click', () => {
 async function generateCourierCode() {
     try {
         const { data, error } = await supabaseClient
-            .from('ServiceProviderDetails')
+            .from('CourierRegistration')
             .select('CourierCode')
             .order('CourierCode', { ascending: false })
             .limit(1);
@@ -88,9 +94,6 @@ async function generateCourierCode() {
 async function saveCourierDetails() {
     const form = document.querySelector('.needs-validation');
     const saveBtn = document.getElementById('saveButton');
-    if (document.getElementById('deActiveDate').value == "") {
-        document.getElementById('deActiveDate').value = "Active";
-    }
     if (!form.checkValidity()) {
         form.classList.add('was-validated');
         return;
@@ -122,7 +125,7 @@ async function saveCourierDetails() {
             courierDetails.created_at = new Date().toISOString();
 
             response = await supabaseClient
-                .from('ServiceProviderDetails')
+                .from('CourierRegistration')
                 .insert([courierDetails]);
 
             if (response.error) throw response.error;
@@ -141,7 +144,7 @@ async function saveCourierDetails() {
             courierDetails.updated_at = new Date().toISOString();
 
             response = await supabaseClient
-                .from('ServiceProviderDetails')
+                .from('CourierRegistration')
                 .update(courierDetails)
                 .eq('CourierCode', courierDetails.CourierCode)
                 .eq('company_id', CompanyID);
@@ -181,7 +184,7 @@ async function saveCourierDetails() {
 async function fetchAndCourierDetails(CourierCode) {
     try {
         const { data, error } = await supabaseClient
-            .from('ServiceProviderDetails')
+            .from('CourierRegistration')
             .select('*')
             .eq('CourierCode', CourierCode);
 
@@ -216,6 +219,8 @@ function addFuelSurchargeRow() {
     const dateInput = document.getElementById('effectiveDate');
     const fuelInput = document.getElementById('fuelSurcharge');
 
+    const PartyID = document.getElementById('courierCode').value;
+
     const date = dateInput.value;
     const fuel = parseFloat(fuelInput.value);
 
@@ -225,9 +230,17 @@ function addFuelSurchargeRow() {
         return;
     }
 
-    // 🚫 Prevent duplicate date
+    // 🚫 Prevent duplicate FSC entry
     if (fuelSurchargeList.some(item => item.EffectiveDate === date)) {
         showToast("Already added for this date", "warning");
+        return;
+    }
+
+    if (isDuplicate) {
+        showToast(
+            "Duplicate entry already exists for same Party, Date, Mode, Movement Type and FSC Type",
+            "warning"
+        );
         return;
     }
 
@@ -290,7 +303,7 @@ async function saveFuelSurcharge(CourierCode) {
             MovementType: "All",
             FuelSurcharge: item.FuelSurcharge,
             Description: item.Description,
-            FSCType: item.FSCType,
+            FSCType: item.FSCType || "Sell",
             created_by: UserLoginID,
             created_at: localtimeStamp
         }));
