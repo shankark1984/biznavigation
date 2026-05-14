@@ -10,7 +10,7 @@ const Navbar = (() => {
             children: [
                 { label: "Company", icon: "bi-building", href: "/pages/master/companyProfile.html" },
                 { label: "Party", icon: "bi-people", href: "/pages/master/PartyRegistration.html" },
-                { label: "Service Provider", icon: "bi-truck", href: "/pages/master/ServiceProvider.html" },
+                { label: "Service Provider", icon: "bi-truck", href: "/pages/master/CourierRegistration.html" },
                 { label: "Employee", icon: "bi-person-badge", href: "/pages/master/EmployeeMaster.html" },
                 { label: "User Rules", icon: "bi-shield", href: "/pages/master/UserAccessRules.html" }
             ]
@@ -442,6 +442,7 @@ function createTopNavbar() {
         }
 
         localStorage.clear(); // clear browser
+
         logoutUser(); // UI / redirect
     });
 }

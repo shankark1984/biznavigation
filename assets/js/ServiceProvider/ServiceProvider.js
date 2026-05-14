@@ -79,7 +79,7 @@ async function generateCourierCode() {
             newCode = 'CR' + String(nextNumber).padStart(3, '0');
         }
         document.getElementById('courierCode').value = newCode;
-
+        return newCode;
     } catch (err) {
         console.error('Error generating code:', err);
     }
@@ -88,7 +88,9 @@ async function generateCourierCode() {
 async function saveCourierDetails() {
     const form = document.querySelector('.needs-validation');
     const saveBtn = document.getElementById('saveButton');
-
+    if (document.getElementById('deActiveDate').value == "") {
+        document.getElementById('deActiveDate').value = "Active";
+    }
     if (!form.checkValidity()) {
         form.classList.add('was-validated');
         return;
@@ -99,7 +101,7 @@ async function saveCourierDetails() {
 
         const courierDetails = {
             CourierName: document.getElementById('courierName').value,
-            Status: document.getElementById('serviceProviderStatus').value,
+            Status: document.getElementById('serviceProviderStatus').value || "Active",
             De_ActiveDate: document.getElementById('deActiveDate').value || null,
             ContactPerson: document.getElementById('contactPerson').value,
             ContactNumber: document.getElementById('phoneNumber').value,
@@ -113,7 +115,9 @@ async function saveCourierDetails() {
         // INSERT
         // ==========================
         if (mode === "insert") {
-            courierDetails.CourierCode = await generateCourierCode();
+            const generatedCode = await generateCourierCode();
+            console.log("Generated Courier Code:", generatedCode);
+            courierDetails.CourierCode = generatedCode;
             courierDetails.created_by = UserLoginID;
             courierDetails.created_at = new Date().toISOString();
 
