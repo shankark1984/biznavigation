@@ -236,14 +236,6 @@ function addFuelSurchargeRow() {
         return;
     }
 
-    if (isDuplicate) {
-        showToast(
-            "Duplicate entry already exists for same Party, Date, Mode, Movement Type and FSC Type",
-            "warning"
-        );
-        return;
-    }
-
     // ✅ 👉 ADD THIS HERE (IMPORTANT)
     fuelSurchargeList.push({
         EffectiveDate: date,
