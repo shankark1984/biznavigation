@@ -38,6 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 document.getElementById('newButton').addEventListener('click', () => {
     mode = "insert";
+    fuelSurchargeList = [];
     clearForm();
     enableForm();
     document.getElementById('deActiveDate').disabled = true;
@@ -58,6 +59,9 @@ document.getElementById('modifyButton').addEventListener('click', () => {
     document.getElementById('saveButton').disabled = false;
     document.getElementById('modifyButton').disabled = true;
     document.getElementById('addFuelSurchargeButton').disabled = false;
+    document.querySelectorAll('.deleteFuelRow').forEach(btn => {
+        btn.disabled = false;
+    });
 });
 
 // ================= SUGGESTIONS ================= 
@@ -175,9 +179,14 @@ async function saveCourierDetails() {
         console.error('Error saving courier details:', err);
         alert(err.message || 'Failed to save courier details.');
     } finally {
+
+        saveBtn.disabled = false;
+
         disableForm();
+
         document.getElementById('modifyButton').disabled = false;
 
+        renderFuelTable();
     }
 }
 
@@ -189,6 +198,11 @@ async function fetchAndCourierDetails(CourierCode) {
             .eq('CourierCode', CourierCode);
 
         if (error) throw error;
+
+        if (!data || data.length === 0) {
+            showToast("Courier not found", "warning");
+            return;
+        }
 
         document.getElementById('courierCode').value = data[0].CourierCode || '';
         document.getElementById('courierName').value = data[0].CourierName || '';
@@ -231,14 +245,28 @@ function addFuelSurchargeRow() {
     }
 
     // 🚫 Prevent duplicate FSC entry
-    if (fuelSurchargeList.some(item => item.EffectiveDate === date)) {
-        showToast("Already added for this date", "warning");
+    const isDuplicate = fuelSurchargeList.some(item =>
+        item.PartyID === PartyID &&
+        item.EffectiveDate === date &&
+        item.Mode === "All" &&
+        item.MovementType === "All" &&
+        item.FSCType === "Sell"
+    );
+
+    if (isDuplicate) {
+        showToast(
+            "Duplicate FSC already exists for same Date/Mode/Movement/FSC Type",
+            "warning"
+        );
         return;
     }
 
     // ✅ 👉 ADD THIS HERE (IMPORTANT)
     fuelSurchargeList.push({
+        PartyID: PartyID,
         EffectiveDate: date,
+        Mode: "All",
+        MovementType: "All",
         FuelSurcharge: fuel,
         Description: `Fuel Surcharge ${fuel}%`,
         FSCType: "Sell"
@@ -268,8 +296,9 @@ function renderFuelTable() {
                     ${item.FuelSurcharge ? parseFloat(item.FuelSurcharge).toFixed(2) + '%' : ''}
             </td>
             <td>
-                <button class="btn btn-sm btn-danger" onclick="removeFuelRow(${index})">
-                    <i class="bi bi-trash"></i>
+                <button class="btn btn-sm btn-danger deleteFuelRow"
+                         onclick="removeFuelRow(${index})"
+                         ${mode !== "update" ? "disabled" : ""}><i class="bi bi-trash"></i>
                 </button>
             </td>
         `;
