@@ -119,12 +119,6 @@ async function calculateVolumetric() {
                 chargeableWeight = maxChargeableWeight;
         }
 
-        console.log(
-            'Actual:', actualWeight,
-            'Volume:', totalVolumeWeight,
-            'Chargeable:', chargeableWeight
-        );
-
         document.getElementById('chargeableWtV').value = chargeableWeight.toFixed(2);
 
         return chargeableWeight;
@@ -217,62 +211,78 @@ function updateTotals() {
 
 async function saveNewVolumetricRows() {
     try {
-        const ID_IB = document.getElementById('tempFormID').value;
-        const DocketNo = document.getElementById('awbNo').value;
+        const ID_IB = parseInt(document.getElementById('tempFormID').value) || null;
+        const DocketNo = document.getElementById('awbNo').value.trim();
 
         if (!ID_IB || !DocketNo) {
-            return { success: false, error: 'ID_IB or DocketNo is missing.' };
+            return {
+                success: false,
+                error: 'ID_IB or DocketNo missing'
+            };
         }
+
         const newRows = Array.from(
-            document.querySelectorAll('#volumetricTable tbody tr[data-volumetric-status="new"]')
+            document.querySelectorAll(
+                '#volumetricTable tbody tr[data-volumetric-status="new"]'
+            )
         );
 
         if (!newRows.length) {
-            return { success: true, count: 0, message: 'No new volumetric rows to save.' };
-        }
-
-        const rowsToInsert = newRows.map(tr => {
-            const td = txt => parseFloat(txt) || 0;
             return {
-                ID_IB: ID_IB,
-                DocketNo: DocketNo,
-                PackingType: tr.cells[0].textContent.trim(),
-                Lengths: td(tr.cells[1].textContent),
-                Widths: td(tr.cells[2].textContent),
-                Heights: td(tr.cells[3].textContent),
-                Quantity: parseInt(tr.cells[4].textContent) || 0,
-                ActualWtPcs: td(tr.cells[5].textContent),
-                ActualWt: td(tr.cells[6].textContent),
-                VolumePerPcs: td(tr.cells[7].textContent),
-                VolumeWt: td(tr.cells[8].textContent),
-                ChargableWt: td(tr.cells[9].textContent),
-                created_by: userLoginID,
-                created_at: localtimeStamp
+                success: true,
+                count: 0,
+                message: 'No rows to save'
             };
-        });
-
-        if (rowsToInsert.length === 0) {
-            return { success: true, count: 0, message: 'No new rows to insert.' };
         }
+
+        const td = val => parseFloat(val?.trim()) || 0;
+
+        const rowsToInsert = newRows.map(tr => ({
+            ID_IB: ID_IB,
+            DocketNo: DocketNo,
+            PackingType: tr.cells[0].textContent.trim(),
+            Lengths: td(tr.cells[1].textContent),
+            Widths: td(tr.cells[2].textContent),
+            Heights: td(tr.cells[3].textContent),
+            Quantity: td(tr.cells[4].textContent),
+            ActualWtPcs: td(tr.cells[5].textContent),
+            ActualWt: td(tr.cells[6].textContent),
+            VolumePerPcs: td(tr.cells[7].textContent),
+            VolumeWt: td(tr.cells[8].textContent),
+            ChargableWt: td(tr.cells[9].textContent),
+            created_by: UserLoginID,
+            created_at: localtimeStamp
+        }));
 
         const { data, error } = await supabaseClient
             .from('VolumetricDetails')
             .insert(rowsToInsert)
             .select();
 
-        if (error) throw error;
+        if (error) {
+            console.error('Insert Error:', error);
+            throw error;
+        }
 
         data.forEach((row, i) => {
             newRows[i].dataset.volumetricStatus = 'saved';
             newRows[i].dataset.volumetricId = row.id;
         });
 
-        return { success: true, count: data.length };
+        return {
+            success: true,
+            count: data.length
+        };
+
     } catch (error) {
-        return { success: false, error: error.message };
+        console.error(error);
+
+        return {
+            success: false,
+            error: error.message
+        };
     }
 }
-
 async function loadVolumetricDetails() {
     try {
         const ID_IB = document.getElementById('tempFormID').value;

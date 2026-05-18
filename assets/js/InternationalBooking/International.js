@@ -175,6 +175,7 @@ document.getElementById('saveButton').addEventListener('click', async function (
     reportButton.disabled = false;
     saveButton.innerHTML = '<i class="bi bi-save"></i> Update';
     deleteButton.disabled = true;
+
     await saveFreightCharges();
     await saveNewVolumetricRows();
     await saveContainerDetails();

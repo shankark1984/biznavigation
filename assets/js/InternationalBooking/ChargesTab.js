@@ -117,7 +117,6 @@ async function saveFreightCharges() {
 
     if (!awbNoValue) return alert('AWB No (Docket No) cannot be empty!');
     const tempFormID = document.getElementById('tempFormID')?.value; // Assuming this is a hidden input field
-    console.log("tempFormID", tempFormID);
 
     try {
         if (!tempFormID) {
@@ -134,7 +133,7 @@ async function saveFreightCharges() {
 
         const rows = Array.from(freightElements.freightTable.querySelectorAll('tr'));
 
-        if (rows.length === 0) return alert('No rows to save!');
+        // if (rows.length === 0) return alert('No rows to save!');
         const insertData = [];
 
         for (const row of rows) {
@@ -158,7 +157,7 @@ async function saveFreightCharges() {
                 IGSTAmt: parseFloat(cells[8].textContent) || 0,
                 TotalGSTAmt: parseFloat(cells[9].textContent) || 0,
                 GrandTotalAmt: parseFloat(cells[10].textContent) || 0,
-                TaxID: cells[12].textContent.trim() || 1, // default to 1 if tax details not found
+                TaxID: cells[12].textContent.trim(), // default to 1 if tax details not found
                 created_by: UserLoginID,
                 created_at: localtimeStamp
             });
@@ -181,7 +180,7 @@ async function saveFreightCharges() {
 async function loadFreightCharges() {
     const awbNoValue = freightElements.awbNo.value.trim();
     const tempFormID = freightElements.tempFormID.value.trim(); // Assuming this is a hidden input field
-    console.log("Loading charges for Temp Form ID:", tempFormID, "AWB No:", awbNoValue);
+
     if (!tempFormID) return alert('Please select a valid Temp Form ID!');
     if (!awbNoValue) return alert('Please select a valid AWB No!');
 
