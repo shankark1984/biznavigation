@@ -1,4 +1,5 @@
 const awbNoInput = document.getElementById('awbNo');
+let insertedID = null;
 
 // On DOM load
 document.addEventListener("DOMContentLoaded", async () => {
@@ -50,8 +51,10 @@ awbNoInput.addEventListener('change', async () => {
         // 4) Read temp form ID
         const tempFormID = document.getElementById('tempFormID').value.trim();
 
-        // If TEMP docket, stop here (do not load other details)
-        if (tempFormID.includes('TEMP')) return;
+        // Stop if empty or TEMP
+        if (!tempFormID || tempFormID.includes('TEMP')) {
+            return;
+        }
 
         // 5) Load remaining sections in parallel (faster)
         await Promise.all([
@@ -113,6 +116,11 @@ document.getElementById('newButton').addEventListener('click', function () {
     ['totalActualWtV', 'volumeWtV', 'totalVolumeWtV', 'chargeableWtV', 'chargeableWeight'].forEach(id => {
         document.getElementById(id).disabled = true;
     });
+    document.querySelectorAll('input, select, textarea').forEach(el => {
+        el.style.backgroundColor = '';
+        el.style.color = '';
+        el.style.border = '';
+    });
 });
 
 
@@ -133,38 +141,6 @@ document.getElementById('modifyButton').addEventListener('click', async function
     document.getElementById('chargeableWtV').disabled = true;
 
     toggleEditMode(false);
-});
-
-
-document.getElementById('deleteButton').addEventListener('click', async function () {
-    const awbNoInput = document.getElementById('awbNo');
-    const docketNo = awbNoInput.value.trim();
-
-    // Reset button states
-    saveButton.disabled = false;
-    modifyButton.disabled = true;
-    deleteButton.disabled = true;
-    reportButton.disabled = true;
-    saveButton.innerHTML = '<i class="bi bi-save"></i> Save';
-
-    console.log('userType: ', userType, '| DocketNo: ', docketNo);
-
-    if (userType === 1 || userType === 2) {
-        const { data, error } = await supabaseClient
-            .from('international_booking')
-            .delete()
-            .eq('DocketNo', docketNo);
-
-        if (error) {
-            console.error("Error deleting record:", error.message);
-        } else {
-            console.log("Record deleted successfully:", data);
-            // Optional: reload page after deletion
-            // location.reload();
-        }
-    } else {
-        console.warn("You do not have permission to delete this record.");
-    }
 });
 
 document.getElementById('saveButton').addEventListener('click', async function () {
@@ -245,6 +221,7 @@ async function loadAWBNoDetails(query) {
         .select('DocketNo')
         .ilike('DocketNo', `${query}%`)
         .eq('company_id', CompanyID)
+        .eq('IsDeleted', false)
         .limit(10);
 
     if (error) {
@@ -278,6 +255,42 @@ async function fetchDocketDetails(docketNo) {
     if (!data) {
         return;
     }
+
+    // Check deleted docket
+    if (data.IsDeleted) {
+
+        document.getElementById('tempFormID').value = data.id;
+        document.getElementById('status').value = 'DELETED';
+
+        disableForm();
+
+        // Add deleted style
+        document.querySelectorAll('input, select, textarea').forEach(el => {
+            el.style.backgroundColor = '#ffe5e5';
+            el.style.color = '#b30000';
+            el.style.border = '1px solid #ff4d4d';
+        });
+
+        saveButton.disabled = true;
+        modifyButton.disabled = true;
+        deleteButton.disabled = true;
+        reportButton.disabled = false;
+
+        showToast('Deleted docket opened in read-only mode.');
+
+        return;
+
+    } else {
+
+        // Remove deleted style
+        document.querySelectorAll('input, select, textarea').forEach(el => {
+            el.style.backgroundColor = '';
+            el.style.color = '';
+            el.style.border = '';
+        });
+    }
+
+
     // Map fields
 
     document.getElementById('tempFormID').value = data.id;
@@ -390,7 +403,7 @@ async function saveOrUpdateInternationalBooking() {
             docketNo: document.getElementById("awbNo").value,
             statusDate: document.getElementById("bookedDate").value,
             arrivedAt: WorkingBranch,
-            information: 'Shimpemt Booked',
+            information: 'Shipment Booked',
         };
         const success = await insertBookingStatus(bookingData);
 
@@ -486,6 +499,7 @@ async function checkAWBBilledStatus(docketNo) {
         .select('InvoiceNumber')
         .eq('DocketNo', docketNo)
         .eq('company_id', CompanyID)
+        .eq('IsDeleted', false)
         .maybeSingle();
 
     // If no record or no invoice → unbilled
@@ -497,6 +511,57 @@ async function checkAWBBilledStatus(docketNo) {
     return { isUnbilled: false, invoiceNo: data.InvoiceNumber };
 }
 
+async function deleteDocket(docketNo) {
 
+    if (!docketNo) {
+        alert('Invalid Docket No');
+        return;
+    }
 
+    const confirmDelete = confirm(
+        `Move Docket ${docketNo} to Trash?`
+    );
+
+    if (!confirmDelete) return;
+
+    try {
+
+        const { data, error } = await supabaseClient
+            .from('international_booking')
+            .update({
+                IsDeleted: true,
+                DeletedAt: localtimeStamp,
+                DeletedBy: UserLoginID
+            })
+            .eq('DocketNo', docketNo)
+            .eq('company_id', CompanyID)
+            .eq('IsDeleted', false)
+            .select();
+
+        if (error) throw error;
+
+        if (!data || data.length === 0) {
+            alert('No matching docket found');
+            return;
+        }
+
+        alert('Docket moved to trash');
+
+        console.log(data);
+
+    } catch (err) {
+
+        console.error(err);
+
+        alert(err.message);
+
+    }
+}
+document.getElementById('deleteButton').addEventListener('click', async () => {
+    const docketNo = document.getElementById('awbNo').value.trim();
+    await deleteDocket(docketNo);
+    clearForm();
+    enableForm();
+    toggleEditMode(true);
+});
 
