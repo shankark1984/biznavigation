@@ -94,7 +94,8 @@ async function loadTable(filters = {}) {
     let query = supabaseClient
         .from('InternationalBookingView')
         .select('*', { count: 'exact' })
-        .eq('company_id', CompanyID);
+        .eq('company_id', CompanyID)
+        .order('BookedDate', { ascending: false });
 
     if (filters.docketNo) query = query.ilike('DocketNo', `%${filters.docketNo}%`);
     if (filters.customerName) query = query.ilike('CustomerName', `%${filters.customerName}%`);
