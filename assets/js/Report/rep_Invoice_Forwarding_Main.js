@@ -32,7 +32,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 });
 
-
 // === Invoice Service ===
 class InvoiceService {
     static async loadInvoice(invoiceNo) {

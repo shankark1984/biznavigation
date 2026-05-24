@@ -176,19 +176,101 @@ function renderTable(data) {
     `).join('');
 }
 
-function renderPagination(totalCount) {
+function renderPagination(totalCount, loadTableFn) {
     const totalPages = Math.ceil(totalCount / pageSize);
     const pagination = document.getElementById('paginationControls');
+
     pagination.innerHTML = '';
 
-    for (let i = 1; i <= totalPages; i++) {
+    const maxVisiblePages = 5;
+
+    // Previous Button
+    const prevLi = document.createElement('li');
+    prevLi.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
+    prevLi.innerHTML = `<a class="page-link" href="#">Previous</a>`;
+
+    prevLi.addEventListener('click', (e) => {
+        e.preventDefault();
+
+        if (currentPage > 1) {
+            currentPage--;
+            loadTableFn(getFilters());
+        }
+    });
+
+    pagination.appendChild(prevLi);
+
+    let startPage = Math.max(1, currentPage - 2);
+    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+
+    // Adjust start page if near end
+    startPage = Math.max(1, endPage - maxVisiblePages + 1);
+
+    // First page + dots
+    if (startPage > 1) {
+        addPageButton(1);
+
+        if (startPage > 2) {
+            addDots();
+        }
+    }
+
+    // Visible Pages
+    for (let i = startPage; i <= endPage; i++) {
+        addPageButton(i);
+    }
+
+    // Last page + dots
+    if (endPage < totalPages) {
+        if (endPage < totalPages - 1) {
+            addDots();
+        }
+
+        addPageButton(totalPages);
+    }
+
+    // Next Button
+    const nextLi = document.createElement('li');
+    nextLi.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
+    nextLi.innerHTML = `<a class="page-link" href="#">Next</a>`;
+
+    nextLi.addEventListener('click', (e) => {
+        e.preventDefault();
+
+        if (currentPage < totalPages) {
+            currentPage++;
+            loadTableFn(getFilters());
+        }
+    });
+
+    pagination.appendChild(nextLi);
+
+    // Helper function
+    function addPageButton(page) {
         const li = document.createElement('li');
-        li.className = `page-item ${i === currentPage ? 'active' : ''}`;
-        li.innerHTML = `<a class="page-link" href="#">${i}</a>`;
-        li.addEventListener('click', () => {
-            currentPage = i;
-            loadTable(getFilters());
+
+        li.className = `page-item ${page === currentPage ? 'active' : ''}`;
+
+        li.innerHTML = `<a class="page-link" href="#">${page}</a>`;
+
+        li.addEventListener('click', (e) => {
+            e.preventDefault();
+
+            currentPage = page;
+            loadTableFn(getFilters());
         });
+
+        pagination.appendChild(li);
+    }
+
+    // Dots (...)
+    function addDots() {
+        const li = document.createElement('li');
+
+        li.className = 'page-item disabled';
+
+        li.innerHTML = `<span class="page-link">...</span>`;
+
         pagination.appendChild(li);
     }
 }
