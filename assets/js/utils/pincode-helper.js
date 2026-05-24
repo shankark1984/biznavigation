@@ -45,6 +45,7 @@ async function setupPincodeListener(pinCodeFieldId, cityFieldId, stateFieldId = 
                 updateFieldValue(stateFieldId, postOffice.State);
                 updateFieldValue(countryFieldId, 'India');
             } else {
+                console.warn(`Pincode ${pincode} not found in API. Checking Supabase fallback.`);
                 clearFields([cityFieldId, stateFieldId, countryFieldId]);
 
                 const { data: missingPincode, error } = await supabaseClient
