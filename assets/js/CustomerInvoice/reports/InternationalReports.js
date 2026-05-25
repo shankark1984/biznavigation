@@ -320,7 +320,7 @@ async function fetchAndRenderShipmentTable_Annexure(doc, startY, PAGE, FONT, inv
                 row.ModeType || "",
                 row.OriginName || "",
                 row.DestinationName || "",
-                row.Quantity ? row.Quantity.toFixed(2) : "0.00",
+                row.NoofUnit ? row.NoofUnit.toFixed(2) : "0.00",
                 row.ChargableWeight + " " + row.UOMType || "0.00",
             ]],
             columnStyles: shipmentColumnStyles,

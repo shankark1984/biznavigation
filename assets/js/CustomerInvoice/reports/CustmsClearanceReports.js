@@ -218,6 +218,8 @@ async function fetchAndRenderShipmentTable(doc, startY, PAGE, FONT, invoiceNo) {
         .eq("InvoiceNo", invoiceNo)
         .order("JobDate", { ascending: true });
 
+    console.log("Fetched shipment lines for invoice:", invoiceNo, lines, error);
+
     if (error || !lines?.length) {
         return {
             finalY: startY,
