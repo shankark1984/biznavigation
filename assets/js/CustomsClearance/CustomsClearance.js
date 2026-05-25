@@ -8,7 +8,7 @@ const jobNoInput = document.getElementById('jobNo'); // Assuming this exists
 async function initializeForm() {
     try {
         await Promise.all([
-            await loadJobNoSuggestions(),
+            // await loadJobNoSuggestions(),
             await loadSuggestions('partySuggestions', 'PartyDetails', CompanyID),
             await loadSuggestions('customsBrokerSuggestions', 'PartyDetails', CompanyID),
             await loadBlAwbNumberSuggestions(CompanyID),
@@ -57,10 +57,11 @@ function getFormData() {
 async function generateJobID(companyID) {
     const { data, error } = await supabaseClient
         .from('CustomsClearance_Details')
-        .select('JobID')
+        .select('JobID, JobRunningNo')
         .eq('company_id', companyID)
-        .order('JobID', { ascending: false })
+        .order('JobRunningNo', { ascending: false })
         .limit(1);
+    console.log("Last JobID data for generating new JobID:", data, "Error:", error);
 
     if (error) throw error;
 
@@ -226,7 +227,7 @@ if (modifyButton) {
         enableForm();
         saveButton.innerHTML = '<i class="bi bi-save"></i> Update';
         saveButton.disabled = false;
-
+        jobNoInput.disabled = true;
         document.querySelectorAll('.btn-delete-row').forEach(button => {
             button.disabled = false;
         });
@@ -235,33 +236,75 @@ if (modifyButton) {
     });
 }
 
-async function loadJobNoSuggestions() {
+// async function loadJobNoSuggestions() {
+//     try {
+//         console.log("Loading job number suggestions for company ID:", CompanyID);
+//         const { data, error } = await supabaseClient
+//             .from('CustomsClearance_Details')
+//             .select('JobID')
+//             .eq('company_id', CompanyID)
+//             .limit(50)
+//             .order('JobID', { ascending: true });
+
+//         if (error) {
+//             console.error('Error fetching jobNo suggestions:', error);
+//             return;
+//         }
+
+//         const datalist = document.getElementById('jobNoSuggestions');
+//         datalist.innerHTML = ''; // Clear previous suggestions
+
+//         data.forEach(item => {
+//             const option = document.createElement('option');
+//             option.value = item.JobID;
+//             datalist.appendChild(option);
+//         });
+//     } catch (err) {
+//         console.error('Unexpected error fetching jobNo suggestions:', err);
+//     }
+// }
+
+
+jobNoInput.addEventListener('input', async function () {
+
+    const searchText = this.value.trim();
+
+    if (searchText.length < 2) return;
+
     try {
-        console.log("Loading job number suggestions for company ID:", CompanyID);
+
         const { data, error } = await supabaseClient
             .from('CustomsClearance_Details')
             .select('JobID')
             .eq('company_id', CompanyID)
-            .limit(50)
-            .order('JobID', { ascending: true });
+            .ilike('JobID', `%${searchText}%`)
+            .order('JobRunningNo', { ascending: false })
+            .limit(100);
 
         if (error) {
-            console.error('Error fetching jobNo suggestions:', error);
+            console.error(error);
             return;
         }
 
         const datalist = document.getElementById('jobNoSuggestions');
-        datalist.innerHTML = ''; // Clear previous suggestions
+        datalist.innerHTML = '';
 
         data.forEach(item => {
+
             const option = document.createElement('option');
             option.value = item.JobID;
+
             datalist.appendChild(option);
+
         });
+
     } catch (err) {
-        console.error('Unexpected error fetching jobNo suggestions:', err);
+
+        console.error(err);
+
     }
-}
+
+});
 
 async function loadBlAwbNumberSuggestions(companyID) {
     try {
