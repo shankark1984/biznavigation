@@ -1,4 +1,4 @@
-const CACHE_NAME = 'biznavigation-cache-v3.04.05.02';
+const CACHE_NAME = 'biznavigation-cache-v3.04.05.03';
 const MAX_CACHE_ITEMS = 50;
 
 const PRECACHE_URLS = [
@@ -111,6 +111,20 @@ self.addEventListener('fetch', event => {
 
     const url = new URL(request.url);
 
+    // block localhost requests completely
+    if (
+        url.hostname === '127.0.0.1' ||
+        url.hostname === 'localhost'
+    ) {
+
+        console.warn(
+            '[SW] Blocked localhost request:',
+            request.url
+        );
+
+        return;
+    }
+
     // only http/https
     if (
         url.protocol !== 'http:' &&
@@ -121,7 +135,6 @@ self.addEventListener('fetch', event => {
 
     /* =========================================================
        EXTERNAL APIs
-       Let browser handle directly
     ========================================================= */
     if (
         url.hostname.includes('api.postalpincode.in')
@@ -131,7 +144,6 @@ self.addEventListener('fetch', event => {
 
     /* =========================================================
        SUPABASE API
-       Network First + Cache Fallback
     ========================================================= */
     if (
         url.hostname.includes('supabase.co')
@@ -143,33 +155,32 @@ self.addEventListener('fetch', event => {
 
                 .then(response => {
 
-                    // cache successful responses
-                    if (response && response.status === 200) {
+                    if (
+                        response &&
+                        response.status === 200
+                    ) {
 
                         const clone = response.clone();
 
-                        caches.open(CACHE_NAME).then(cache => {
+                        caches.open(CACHE_NAME)
+                            .then(cache => {
 
-                            cache.put(request, clone);
+                                cache.put(request, clone);
 
-                            limitCacheSize(
-                                CACHE_NAME,
-                                MAX_CACHE_ITEMS
-                            );
-                        });
+                                limitCacheSize(
+                                    CACHE_NAME,
+                                    MAX_CACHE_ITEMS
+                                );
+                            });
                     }
 
                     return response;
                 })
 
-                .catch(async err => {
+                .catch(async () => {
 
-                    console.warn(
-                        '[SW] Supabase fetch failed:',
-                        err
-                    );
-
-                    const cached = await caches.match(request);
+                    const cached =
+                        await caches.match(request);
 
                     if (cached) {
                         return cached;
@@ -182,7 +193,8 @@ self.addEventListener('fetch', event => {
                         {
                             status: 503,
                             headers: {
-                                'Content-Type': 'application/json'
+                                'Content-Type':
+                                    'application/json'
                             }
                         }
                     );
@@ -194,7 +206,6 @@ self.addEventListener('fetch', event => {
 
     /* =========================================================
        HTML NAVIGATION
-       Network First + Offline Page
     ========================================================= */
     if (request.mode === 'navigate') {
 
@@ -215,7 +226,6 @@ self.addEventListener('fetch', event => {
 
     /* =========================================================
        STATIC FILES
-       Cache First + Network Fallback
     ========================================================= */
     event.respondWith(
 
@@ -223,17 +233,14 @@ self.addEventListener('fetch', event => {
 
             .then(cachedResponse => {
 
-                // return cached version
                 if (cachedResponse) {
                     return cachedResponse;
                 }
 
-                // fetch from network
                 return fetch(request)
 
                     .then(networkResponse => {
 
-                        // invalid response
                         if (
                             !networkResponse ||
                             networkResponse.status !== 200
@@ -241,28 +248,29 @@ self.addEventListener('fetch', event => {
                             return networkResponse;
                         }
 
-                        // clone response
                         const responseClone =
                             networkResponse.clone();
 
-                        // cache same-origin assets only
+                        // cache only production assets
                         if (
                             url.origin === self.location.origin &&
-                            !url.pathname.startsWith('/api/')
+                            !request.url.includes('127.0.0.1') &&
+                            !request.url.includes('localhost')
                         ) {
 
-                            caches.open(CACHE_NAME).then(cache => {
+                            caches.open(CACHE_NAME)
+                                .then(cache => {
 
-                                cache.put(
-                                    request,
-                                    responseClone
-                                );
+                                    cache.put(
+                                        request,
+                                        responseClone
+                                    );
 
-                                limitCacheSize(
-                                    CACHE_NAME,
-                                    MAX_CACHE_ITEMS
-                                );
-                            });
+                                    limitCacheSize(
+                                        CACHE_NAME,
+                                        MAX_CACHE_ITEMS
+                                    );
+                                });
                         }
 
                         return networkResponse;
@@ -281,40 +289,28 @@ self.addEventListener('fetch', event => {
                             request.destination === 'image'
                         ) {
 
-                            const fallbackImage =
-                                await caches.match(
-                                    '/assets/img/applogo-192x192.png'
-                                );
-
-                            if (fallbackImage) {
-                                return fallbackImage;
-                            }
+                            return await caches.match(
+                                '/assets/img/applogo-192x192.png'
+                            );
                         }
 
-                        // offline html fallback
+                        // offline page
                         if (
                             request.mode === 'navigate'
                         ) {
 
-                            const offlinePage =
-                                await caches.match(
-                                    '/pages/Tools/offline.html'
-                                );
-
-                            if (offlinePage) {
-                                return offlinePage;
-                            }
+                            return await caches.match(
+                                '/pages/Tools/offline.html'
+                            );
                         }
 
-                        // generic fallback
                         return new Response(
                             'Offline',
                             {
-                                status: 503,
-                                statusText: 'Offline'
+                                status: 503
                             }
                         );
                     });
             })
     );
-}); 
+});
