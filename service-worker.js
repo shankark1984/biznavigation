@@ -1,4 +1,4 @@
-const CACHE_NAME = 'biznavigation-cache-v3.04.05.01';
+const CACHE_NAME = 'biznavigation-cache-v3.04.05.02';
 const MAX_CACHE_ITEMS = 50;
 
 const PRECACHE_URLS = [
@@ -24,7 +24,7 @@ async function limitCacheSize(cacheName, maxItems) {
 /* ================= INSTALL ================= */
 self.addEventListener('install', event => {
 
-    console.log('[SW] Installing...');
+    // console.log('[SW] Installing...');
 
     event.waitUntil(
         caches.open(CACHE_NAME).then(async cache => {
@@ -41,7 +41,7 @@ self.addEventListener('install', event => {
 
                     await cache.put(url, response);
 
-                    console.log('[SW] Cached:', url);
+                    // console.log('[SW] Cached:', url);
 
                 } catch (err) {
 
@@ -57,7 +57,7 @@ self.addEventListener('install', event => {
 /* ================= ACTIVATE ================= */
 self.addEventListener('activate', event => {
 
-    console.log('[SW] Activating...');
+    // console.log('[SW] Activating...');
 
     event.waitUntil(
         (async () => {
@@ -84,7 +84,7 @@ self.addEventListener('activate', event => {
 
             await self.clients.claim();
 
-            console.log('[SW] Activated');
+            // console.log('[SW] Activated');
 
         })()
     );
@@ -95,7 +95,7 @@ self.addEventListener('message', event => {
 
     if (event.data?.action === 'skipWaiting') {
 
-        console.log('[SW] Skip waiting triggered');
+        // console.log('[SW] Skip waiting triggered');
 
         self.skipWaiting();
     }
