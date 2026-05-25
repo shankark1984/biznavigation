@@ -75,9 +75,17 @@ async function loadReportSuggestions() {
 }
 
 function populateDatalists(data, field, datalistId) {
-    const uniqueValues = [...new Set(data.map(item => item[field]).filter(Boolean))];
+    const uniqueValues = [...new Set(
+        data
+            .map(item => item[field])
+            .filter(Boolean)
+    )].sort((a, b) => a.localeCompare(b)); // A to Z sorting
+
     const datalist = document.getElementById(datalistId);
-    datalist.innerHTML = uniqueValues.map(value => `<option value="${value}">`).join('');
+
+    datalist.innerHTML = uniqueValues
+        .map(value => `<option value="${value}">`)
+        .join('');
 }
 
 function populateArrayDatalist(array, datalistId) {
@@ -186,21 +194,21 @@ async function renderTable(data) {
         tr.innerHTML = `
             <td>${(currentPage - 1) * pageSize + idx + 1}</td>
             <td>${row.InvoiceNo || ''}</td>
-            <td>${row.InvoiceDate || ''}</td>
+            <td>${formatDate(row.InvoiceDate) || ''}</td>
             <td>${row.InvoiceType || ''}</td>
             <td>${partyName || ''}</td>
-            <td>${row.BasicAmount || '0'}</td>
-            <td>${row.OtherAmount || '0'}</td>
-            <td>${row.CGSTAmount || '0'}</td>
-            <td>${row.SGSTAmount || '0'}</td>
-            <td>${row.IGSTAmount || '0'}</td>
-            <td>${row.TotalGSTAmount || '0'}</td>
-            <td>${row.GrandTotalAmount || '0'}</td>
-            <td>${row.PaymentAmount || '0'}</td>
-            <td>${row.OtherDeductionAmount || '0'}</td>
-            <td>${row.TDSDeductionAmount || '0'}</td>
-            <td>${row.PaymentTotalAmount || '0'}</td>
-            <td>${row.BalanceAmount || '0'}</td>
+            <td class="text-end">${formatAmount(row.BasicAmount || '0')}</td>
+            <td class="text-end">${formatAmount(row.OtherAmount || '0')}</td>
+            <td class="text-end">${formatAmount(row.CGSTAmount || '0')}</td>
+            <td class="text-end">${formatAmount(row.SGSTAmount || '0')}</td>
+            <td class="text-end">${formatAmount(row.IGSTAmount || '0')}</td>
+            <td class="text-end">${formatAmount(row.TotalGSTAmount || '0')}</td>
+            <td class="text-end">${formatAmount(row.GrandTotalAmount || '0')}</td>
+            <td class="text-end">${formatAmount(row.PaymentAmount || '0')}</td>
+            <td class="text-end">${formatAmount(row.OtherDeductionAmount || '0')}</td>
+            <td class="text-end">${formatAmount(row.TDSDeductionAmount || '0')}</td>
+            <td class="text-end">${formatAmount(row.PaymentTotalAmount || '0')}</td>
+            <td class="text-end">${formatAmount(row.BalanceAmount || '0')}</td>
             <td>${row.PaymentStatus || ''}</td>
         `;
 

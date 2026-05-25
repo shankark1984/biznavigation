@@ -32,7 +32,14 @@ function formatCurrency(input) {
     const value = parseFloat(input.value);
     input.value = isNaN(value) ? '0.00' : value.toFixed(2);
 }
+function formatAmount(value) {
+    const number = parseFloat(value || 0);
 
+    return number.toLocaleString('en-IN', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
+}
 // ✅ Convert string to Proper Case (first letter uppercase for each word)
 function toProperCase(str) {
     return str.toLowerCase()

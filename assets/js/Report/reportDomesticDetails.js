@@ -153,26 +153,26 @@ function renderTable(data) {
             <td>${row.ModeType || ''}</td>
             <td>${row.ServiceProvider || ''}</td>
             <td>${row.CustomerReferenceNo || ''}</td>
-            <td>${row.InvoiceValue || '0'}</td>
-            <td>${row.Quantity || '0'}</td>
+            <td class="text-end">${row.InvoiceValue || '0'}</td>
+            <td class="text-end">${row.Quantity || '0'}</td>
             <td>${row.UOMType || ''}</td>
-            <td>${row.ActualWeight || '0'}</td>
-            <td>${row.VolumetricWeight || '0'}</td>
-            <td>${row.ChargeableWeight || '0'}</td>
+            <td class="text-end">${row.ActualWeight || '0'}</td>
+            <td class="text-end">${row.VolumetricWeight || '0'}</td>
+            <td class="text-end">${row.ChargeableWeight || '0'}</td>
             <td>${row.CargoDescription || ''}</td>
             <td>${row.PaymentType || ''}</td>
-            <td>${row.FreightAmount || '0'}</td>
-            <td>${row.FuelSurcharge || '0'}</td>
-            <td>${row.OtherCharges || '0'}</td>
-            <td>${row.TotalAmount || '0'}</td>
-            <td>${row.SGSTAmt || '0'}</td>
-            <td>${row.CGSTAmt || '0'}</td>
-            <td>${row.IGSTAmt || '0'}</td>
-            <td>${row.TotalGSTAmt || '0'}</td>
-            <td>${row.GrandTotalAmt || '0'}</td>
+            <td class="text-end">${formatAmount(row.FreightAmount)}</td >
+            <td class="text-end">${formatAmount(row.FuelSurcharge) || '0'}</td>
+            <td class="text-end">${formatAmount(row.OtherCharges) || '0'}</td>
+            <td class="text-end">${formatAmount(row.TotalAmount) || '0'}</td>
+            <td class="text-end">${formatAmount(row.SGSTAmt) || '0'}</td>
+            <td class="text-end">${formatAmount(row.CGSTAmt) || '0'}</td>
+            <td class="text-end">${formatAmount(row.IGSTAmt) || '0'}</td>
+            <td class="text-end">${formatAmount(row.TotalGSTAmt) || '0'}</td>
+            <td class="text-end">${formatAmount(row.GrandTotalAmt) || '0'}</td>
             <td>${row.InvoiceNumber || ''}</td>
             <td>${row.InvoiceStatus || ''}</td>
-        </tr>
+        </tr >
     `).join('');
 }
 
@@ -315,11 +315,11 @@ async function fetchAllFilteredData(filters = {}) {
             .select('*')
             .eq('company_id', CompanyID);
 
-        if (filters.docketNo) query = query.ilike('DocketNo', `%${filters.docketNo}%`);
-        if (filters.customerName) query = query.ilike('CustomerName', `%${filters.customerName}%`);
-        if (filters.transitType) query = query.ilike('TransitType', `%${filters.transitType}%`);
-        if (filters.modeType) query = query.ilike('ModeType', `%${filters.modeType}%`);
-        if (filters.invoiceStatus) query = query.ilike('InvoiceStatus', `%${filters.invoiceStatus}%`);
+        if (filters.docketNo) query = query.ilike('DocketNo', `% ${filters.docketNo}% `);
+        if (filters.customerName) query = query.ilike('CustomerName', `% ${filters.customerName}% `);
+        if (filters.transitType) query = query.ilike('TransitType', `% ${filters.transitType}% `);
+        if (filters.modeType) query = query.ilike('ModeType', `% ${filters.modeType}% `);
+        if (filters.invoiceStatus) query = query.ilike('InvoiceStatus', `% ${filters.invoiceStatus}% `);
 
         const { data } = await query.range(from, to);
 

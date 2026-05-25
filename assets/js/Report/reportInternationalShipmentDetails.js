@@ -57,9 +57,20 @@ function enableSortableHeaders() {
 async function loadReportSuggestions() {
     const { data, error } = await supabaseClient
         .from('InternationalBookingView')
-        .select('DocketNo, CustomerName, MovementType, ModeType, ServiceProviderName, InvoiceStatus, BookedDate');
+        .select(`
+            DocketNo,
+            CustomerName,
+            MovementType,
+            ModeType,
+            ServiceProviderName,
+            InvoiceStatus,
+            BookedDate
+        `);
 
-    if (error) return console.error('Error fetching suggestions:', error);
+    if (error) {
+        console.error('Error fetching suggestions:', error);
+        return;
+    }
 
     populateDatalists(data, 'DocketNo', 'docketNoList');
     populateDatalists(data, 'CustomerName', 'customerNameList');
@@ -68,18 +79,31 @@ async function loadReportSuggestions() {
     populateDatalists(data, 'ServiceProviderName', 'serviceProviderNameList');
     populateDatalists(data, 'InvoiceStatus', 'invoiceStatusList');
 
-    const financialYears = [...new Set(data.map(item => {
-        const year = new Date(item.BookedDate).getFullYear();
-        return `${year}-${year + 1}`;
-    }))];
+    const financialYears = [
+        ...new Set(
+            data.map(item => {
+                const year = new Date(item.BookedDate).getFullYear();
+                return `${year}-${year + 1}`;
+            })
+        )
+    ].sort((a, b) => a.localeCompare(b));
 
     populateArrayDatalist(financialYears, 'financialYearList');
 }
 
 function populateDatalists(data, field, datalistId) {
-    const uniqueValues = [...new Set(data.map(item => item[field]).filter(Boolean))];
+
+    const uniqueValues = [...new Set(
+        data
+            .map(item => item[field])
+            .filter(Boolean)
+    )].sort((a, b) => a.localeCompare(b)); // A-Z sorting
+
     const datalist = document.getElementById(datalistId);
-    datalist.innerHTML = uniqueValues.map(value => `<option value="${value}">`).join('');
+
+    datalist.innerHTML = uniqueValues
+        .map(value => `<option value="${value}">`)
+        .join('');
 }
 
 function populateArrayDatalist(array, datalistId) {
@@ -176,22 +200,30 @@ function renderTable(data) {
             <td>${row.DestinationName || ''}</td>
             <td>${row.PortofDischarge || ''}</td>
             <td>${row.UOMType || ''}</td>
-            <td>${row.NoofUnit || ''}</td>
-            <td>${row.AcutalWeight || ''}</td>
-            <td>${row.VolumeWeight || ''}</td>
-            <td>${row.ChargableWeight || ''}</td>
-            <td>${row.TotalAmount || ''}</td>
-            <td>${row.TotalSGSTAmt || ''}</td>
-            <td>${row.TotalCGSTAmt || ''}</td>
-            <td>${row.TotalIGSTAmt || ''}</td>
-            <td>${row.TotalGSTAmt || ''}</td>
-            <td>${row.GrandTotalAmt || ''}</td>
+            <td class="text-end">${row.NoofUnit || ''}</td>
+            <td class="text-end">${row.AcutalWeight || ''}</td>
+            <td class="text-end">${row.VolumeWeight || ''}</td>
+            <td class="text-end">${row.ChargableWeight || ''}</td>
+            <td class="text-end">${formatAmount(row.TotalAmount) || ''}</td>
+            <td class="text-end">${formatAmount(row.TotalSGSTAmt) || ''}</td>
+            <td class="text-end">${formatAmount(row.TotalCGSTAmt) || ''}</td>
+            <td class="text-end">${formatAmount(row.TotalIGSTAmt) || ''}</td>
+            <td class="text-end">${formatAmount(row.TotalGSTAmt) || ''}</td>
+            <td class="text-end">${formatAmount(row.GrandTotalAmt) || ''}</td>
             <td>${row.InvoiceNumber || ''}</td>
             <td>${row.InvoiceStatus || ''}</td>
             <td>${row.ShipperRef || ''}</td>
-            <td>${row.Commodity || ''}</td>
+           <td style="
+    min-width: 200px;
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+">
+    ${row.Commodity || ''}
+</td>
             <td>${row.ShippingType || ''}</td>
-            <td>${row.ConsignmentValue || ''}</td>
+            <td>${formatAmount(row.ConsignmentValue) || ''}</td>
             <td>${row.PONo || ''}</td>
         </tr>
     `).join('');
