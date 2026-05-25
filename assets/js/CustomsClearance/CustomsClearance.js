@@ -72,7 +72,10 @@ async function generateJobID(companyID) {
     const lastNumber = matches ? parseInt(matches[1], 10) : 0;
     const nextNumber = lastNumber + 1;
 
-    return `${companyID}_CC${String(nextNumber).padStart(3, '0')}`;
+    return {
+        JobID: `${companyID}_CC${String(nextNumber).padStart(3, '0')}`,
+        JobRunningNo: nextNumber
+    };
 }
 
 /**
@@ -138,8 +141,9 @@ async function saveFormData() {
 
         } else {
             // Insert new record
-            formData.JobID = await generateJobID(CompanyID);
-
+            const jobIDResult = await generateJobID(CompanyID);
+            formData.JobID = jobIDResult.JobID;
+            formData.JobRunningNo = jobIDResult.JobRunningNo;
             // Set jobNo input to new JobID
             document.getElementById('jobNo').value = formData.JobID;
 
