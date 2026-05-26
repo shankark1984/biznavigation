@@ -339,6 +339,12 @@ async function saveOrUpdateInternationalBooking() {
     // Get the button type: "save" or "update"
     const actionType = document.getElementById("saveButton").textContent.trim();
     const updateID = document.getElementById('tempFormID').value;
+    let uomType = document.getElementById("uOMType").value;
+
+    if (uomType == "Gms") {
+        uomType = "Kgs";
+    }
+
     const formData = {
         DocketNo: document.getElementById("awbNo").value.trim(),
         BookedDate: document.getElementById("bookedDate").value,
