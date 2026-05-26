@@ -1834,3 +1834,186 @@ function addFOVCharges(event) {
 
     modal.hide();
 }
+
+// ===============================
+// Reusable Fuel Surcharge Modal
+// ===============================
+
+
+function getFSCTotal(tableId = 'freightTable') {
+
+    let total = 0;
+
+    // Get all rows
+    const rows = document.querySelectorAll(`#${tableId} tbody tr`);
+
+    rows.forEach(row => {
+
+        const cells = row.querySelectorAll('td');
+
+        // Table Column Index
+        // Basic Amount = 5
+        // FSC = 13
+
+        const basicAmountCell = cells[5];
+        const fscCell = cells[13];
+
+        if (!basicAmountCell || !fscCell) return;
+
+        const fscValue = fscCell.textContent.trim().toLowerCase();
+
+        // Only FSC = Yes
+        if (fscValue === 'yes') {
+
+            const amount = parseFloat(
+                basicAmountCell.textContent
+                    .replace(/,/g, '')
+                    .replace(/[^\d.-]/g, '')
+            ) || 0;
+
+            total += amount;
+        }
+    });
+
+    return total.toFixed(2);
+}
+
+async function loadFSCModal() {
+
+    if (chargesTypeInput.value !== 'Fuel Surcharge') return;
+
+    // const invoiceValue =
+    // parseFloat(getFSCTotal() || 0;
+
+    const fovPercentageInput =
+        document.getElementById('fovPercentage');
+
+    const fovAmountInput =
+        document.getElementById('fovAmount');
+
+    // Default percentage
+    fovPercentageInput.value = 0.2;
+
+    // Initial calculation
+    calculateFOVAmount();
+
+    // Recalculate when percentage changes
+    fovPercentageInput.oninput = calculateFOVAmount;
+
+    function calculateFOVAmount() {
+
+        const fovPercentage =
+            parseFloat(fovPercentageInput.value) || 0;
+
+        const fovAmount =
+            invoiceValue * (fovPercentage / 100);
+
+        fovAmountInput.value = fovAmount.toFixed(2);
+    }
+
+    const modalElement =
+        document.getElementById('addFOVChargesModal');
+
+    const modal =
+        bootstrap.Modal.getOrCreateInstance(modalElement);
+
+    modal.show();
+}
+function setupFuelSurcharge(options = {}) {
+
+    const {
+        triggerInputId = 'chargesTypeInput',
+        triggerValue = 'Fuel Surcharge',
+        tableId = 'freightTable',
+        basicAmountClass = 'basic-amount-column',
+        fscClass = 'fsc-column',
+        modalId = 'addFuelSurchargeModal',
+        totalAmountId = 'totalAmount',
+        percentageId = 'fuelSurchargePercentage',
+        surchargeAmountId = 'fuelSurchargeAmount',
+        defaultPercentage = 35
+    } = options;
+
+    const triggerInput = document.getElementById(triggerInputId);
+    const percentageInput = document.getElementById(percentageId);
+
+    if (!triggerInput) return;
+
+    // =========================
+    // Calculate FSC Amount
+    // =========================
+    function calculateFuelSurcharge() {
+
+        const total =
+            parseFloat(document.getElementById(totalAmountId).value) || 0;
+
+        const percentage =
+            parseFloat(document.getElementById(percentageId).value) || 0;
+
+        const surchargeAmount = (total * percentage) / 100;
+
+        document.getElementById(surchargeAmountId).value =
+            surchargeAmount.toFixed(2);
+    }
+
+    // =========================
+    // Trigger Change Event
+    // =========================
+    triggerInput.addEventListener('change', function () {
+
+        const chargeType = this.value.trim();
+
+        if (chargeType !== triggerValue) return;
+
+        let totalBasicAmount = 0;
+
+        // Get all rows
+        const rows = document.querySelectorAll(`#${tableId} tbody tr`);
+
+        rows.forEach(row => {
+
+            const fscCell = row.querySelector(`td.${fscClass}`);
+            const basicAmountCell = row.querySelector(`td.${basicAmountClass}`);
+
+            if (!fscCell || !basicAmountCell) return;
+
+            const fscValue = fscCell.textContent.trim().toLowerCase();
+
+            // Add only FSC = Yes
+            if (fscValue === 'yes') {
+
+                const amount = parseFloat(
+                    basicAmountCell.textContent.replace(/,/g, '')
+                ) || 0;
+
+                totalBasicAmount += amount;
+            }
+        });
+
+        // Set Total Amount
+        document.getElementById(totalAmountId).value =
+            totalBasicAmount.toFixed(2);
+
+        // Initial Calculation
+        calculateFuelSurcharge();
+
+        // Show Modal
+        const modal = new bootstrap.Modal(
+            document.getElementById(modalId)
+        );
+
+        modal.show();
+    });
+
+    // =========================
+    // Percentage Input Event
+    // =========================
+    if (percentageInput) {
+        percentageInput.addEventListener('input', calculateFuelSurcharge);
+    }
+
+    // Return reusable methods
+    return {
+        calculate: calculateFuelSurcharge
+    };
+}

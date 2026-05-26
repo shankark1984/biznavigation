@@ -352,4 +352,18 @@ async function recalcFSC() {
     recalcTotals();
 }
 
-chargesTypeInput.addEventListener('change', loadFOVModal);
+chargesTypeInput.addEventListener('change', (event) => {
+
+    // Existing FOV Modal
+    loadFOVModal(event);
+
+    // Fuel Surcharge
+    fuelSurcharge.handleChange(event);
+});
+
+
+const fuelSurcharge = setupFuelSurcharge({
+    triggerInputId: 'chargesTypeInput',
+    tableId: 'freightTable',
+    defaultPercentage: 35
+});
