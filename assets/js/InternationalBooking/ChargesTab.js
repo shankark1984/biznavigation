@@ -267,7 +267,12 @@ async function recalcFSC() {
         bookingDate: document.getElementById('bookedDate').value.trim()
     });
 
-    const fscPercent = Number(fsc?.fuelSurcharge || 0);
+    let fscPercent = Number(fsc?.fuelSurcharge || 0);
+
+    // Manual FSC % fallback
+    if (fscPercent <= 0) {
+        fscPercent = fscPercentManual || 0;
+    }
 
     // 🔥 Remove old FSC row & calculate total base
     tbody.querySelectorAll('tr').forEach(row => {
@@ -292,7 +297,7 @@ async function recalcFSC() {
             console.log(`Adding ${basicAmt} to FSC base from row with charge: ${chargeName}`);
         }
     });
-
+    console.log("Total Base for FSC after recalculating:", totalBase, fscPercent);
     // 🔹 Stop if no FSC applicable
     if (totalBase <= 0 || fscPercent <= 0) {
         recalcTotals();
@@ -358,12 +363,5 @@ chargesTypeInput.addEventListener('change', (event) => {
     loadFOVModal(event);
 
     // Fuel Surcharge
-    // fuelSurcharge.handleChange(event);
-});
-
-
-const fuelSurcharge = setupFuelSurcharge({
-    triggerInputId: 'chargesTypeInput',
-    tableId: 'freightTable',
-    defaultPercentage: 35
+    loadFSCModal(event);
 });
