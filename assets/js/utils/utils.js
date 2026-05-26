@@ -1655,6 +1655,10 @@ async function getFSCCharges({
     bookingDate
 }) {
     try {
+        const isFSCApplicableToParty = await fscApplicabletoParty(partyCode); // Check if FSC is applicable to the party
+        if (!isFSCApplicableToParty) {
+            return null;
+        }
         const mt = movementType;
         const md = modeType;
 
@@ -1745,4 +1749,88 @@ async function getFSCHSNFromDropdown() {
         .maybeSingle();
 
     return data?.hsn_code || "";
+}
+
+async function fscApplicabletoParty(partyCode) {
+    const { data, error } = await supabaseClient
+        .from('FixedCharges')
+        .select('ChargesType')
+        .eq('PartyCode', partyCode)
+        .eq('ChargesType', 'Fuel Surcharge')
+        .maybeSingle();
+
+    if (error || !data) {
+        return false;
+    }
+
+    return true;
+}
+
+async function loadFOVModal() {
+
+    if (chargesTypeInput.value !== 'FOV Charges') return;
+
+    const invoiceValue =
+        parseFloat(document.getElementById('invoiceValue').value) || 0;
+
+    const fovPercentageInput =
+        document.getElementById('fovPercentage');
+
+    const fovAmountInput =
+        document.getElementById('fovAmount');
+
+    // Default percentage
+    fovPercentageInput.value = 0.2;
+
+    // Initial calculation
+    calculateFOVAmount();
+
+    // Recalculate when percentage changes
+    fovPercentageInput.oninput = calculateFOVAmount;
+
+    function calculateFOVAmount() {
+
+        const fovPercentage =
+            parseFloat(fovPercentageInput.value) || 0;
+
+        const fovAmount =
+            invoiceValue * (fovPercentage / 100);
+
+        fovAmountInput.value = fovAmount.toFixed(2);
+    }
+
+    const modalElement =
+        document.getElementById('addFOVChargesModal');
+
+    const modal =
+        bootstrap.Modal.getOrCreateInstance(modalElement);
+
+    modal.show();
+}
+
+function addFOVCharges(event) {
+
+    event.preventDefault();
+
+    const fovPercentage =
+        parseFloat(document.getElementById('fovPercentage').value) || 0;
+
+    const fovAmount =
+        parseFloat(document.getElementById('fovAmount').value) || 0;
+
+    // Set values
+    document.getElementById('freightAmount').value =
+        fovAmount.toFixed(2);
+
+    document.getElementById('remarksDetails').value =
+        `FOV Charges ${fovPercentage}%`;
+
+    // Close modal
+    const modalElement =
+        document.getElementById('addFOVChargesModal');
+
+    const modal =
+        bootstrap.Modal.getInstance(modalElement);
+
+    modal.hide();
 }

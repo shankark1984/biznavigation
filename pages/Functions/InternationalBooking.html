@@ -673,6 +673,42 @@
                                     </div>
                                 </div>
                             </div>
+
+                            <!-- Add FOV Charges Modal -->
+                            <div class="modal fade" id="addFOVChargesModal" tabindex="-1">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title">FOV Charges</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                        </div>
+
+                                        <div class="modal-body">
+                                            <form id="consigneeForm">
+                                                <div class="mb-3">
+                                                    <label class="form-label">FOV Percentage (%)</label>
+                                                    <input type="number" class="form-control" id="fovPercentage"
+                                                        value="0.2" step="0.01">
+                                                </div>
+
+                                                <div class="mb-3">
+                                                    <label class="form-label">FOV Amount</label>
+                                                    <input type="number" class="form-control" id="fovAmount" readonly>
+                                                </div>
+                                            </form>
+                                        </div>
+
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary"
+                                                data-bs-dismiss="modal">Cancel</button>
+                                            <button type="button" class="btn btn-primary"
+                                                onclick="addFOVCharges(event)">
+                                                Confirm
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

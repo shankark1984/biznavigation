@@ -351,3 +351,5 @@ async function recalcFSC() {
     // 🔹 Recalculate totals
     recalcTotals();
 }
+
+chargesTypeInput.addEventListener('change', loadFOVModal);
