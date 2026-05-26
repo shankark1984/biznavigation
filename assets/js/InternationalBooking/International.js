@@ -373,7 +373,7 @@ async function saveOrUpdateInternationalBooking() {
         PackingType: document.getElementById("packingType").value,
         ConsignmentValue: parseFloat(document.getElementById("invoiceValue").value) || 0,
         Department: document.getElementById("department").value,
-        UOMType: document.getElementById("uOMType").value,
+        UOMType: uomType,
         NoofUnit: parseInt(document.getElementById("quantity").value) || 0,
         AcutalWeight: parseFloat(document.getElementById("actualWeight").value) || 0,
         VolumeWeight: parseFloat(document.getElementById("volumetricWeight").value) || 0,
