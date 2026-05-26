@@ -1880,7 +1880,6 @@ function getFSCTotal(tableId = 'freightTable') {
     return total;
 }
 
-
 // =========================
 // Calculate FSC Amount
 // =========================

@@ -46,60 +46,153 @@ async function addFreightRow() {
 
     const awbNoValue = awbNo.value.trim();
     const chargesType = chargesTypeInput.value.trim();
-    const freightAmountValue = parseFloat(freightAmount.value) || 0;
-    const chargeableWeight = parseFloat(document.getElementById('chargeableWeight').value) || 0;
-    const uOMType = document.getElementById('uOMType').value;
+    const freightAmountValue =
+        parseFloat(freightAmount.value) || 0;
 
-    // ✅ Validation
-    if (!awbNoValue) return alert('AWB No cannot be empty!');
-    if (!chargesType) return alert('Charges Type cannot be empty!');
-    if (!freightAmountValue) return alert('Freight Amount cannot be empty!');
+    const chargeableWeight =
+        parseFloat(document.getElementById('chargeableWeight').value) || 0;
 
-    // 🔹 FSC + HSN
-    const fscData = await isFSCApplicable(chargesType);
-    const isFSC = fscData.isApplicable;
-    const freightHSN = fscData.hsn_code || hsnNumber.value;
+    const uOMType =
+        document.getElementById('uOMType').value;
 
-    // 🔹 Tax
-    const taxID = partyDefaultTax.value.trim() || 1; // default to 1 if not selected
-    const taxes = await getTaxRatesById(taxID);
-    const taxCalc = calculateTaxes(freightAmountValue, taxes);
+    // =========================
+    // Validation
+    // =========================
+    if (!awbNoValue) {
+        return alert('AWB No cannot be empty!');
+    }
 
-    // 🔹 Quantity
-    const quantityDisplay = chargesType.includes('Freight')
-        ? `${chargeableWeight} ${uOMType}`
-        : '1 Nos';
+    if (!chargesType) {
+        return alert('Charges Type cannot be empty!');
+    }
 
-    // 🔹 Create row
+    if (!freightAmountValue) {
+        return alert('Freight Amount cannot be empty!');
+    }
+
+    // =========================
+    // FSC + HSN
+    // =========================
+    const fscData =
+        await isFSCApplicable(chargesType);
+
+    const isFSC =
+        fscData.isApplicable;
+
+    const freightHSN =
+        fscData.hsn_code || hsnNumber.value;
+
+    // =========================
+    // Tax
+    // =========================
+    const taxID =
+        partyDefaultTax.value.trim() || 1;
+
+    const taxes =
+        await getTaxRatesById(taxID);
+
+    const taxCalc =
+        calculateTaxes(freightAmountValue, taxes);
+
+    // =========================
+    // Quantity
+    // =========================
+    const quantityDisplay =
+        chargesType.includes('Freight')
+            ? `${chargeableWeight} ${uOMType}`
+            : '1 Nos';
+
+    // =========================
+    // Fuel Surcharge Special Handling
+    // =========================
+    if (chargesType === 'Fuel Surcharge') {
+
+        await recalcFSC();
+
+        clearFreightInputs();
+
+        return;
+    }
+
+    // =========================
+    // Create Row
+    // =========================
     const row = document.createElement('tr');
-    row.dataset.type = "freight";
-    row.dataset.fscApplicable = isFSC ? "true" : "false";
-    row.dataset.amount = freightAmountValue;
+
+    row.dataset.type = 'freight';
+
+    row.dataset.fscApplicable =
+        isFSC ? 'true' : 'false';
+
+    row.dataset.amount =
+        freightAmountValue;
 
     row.innerHTML = `
         <td>${chargesType}</td>
         <td>${freightHSN}</td>
         <td>${remarksDetails.value}</td>
-        <td class="text-end">${taxCalc.totalRate}%</td>
-        <td class="text-end">${quantityDisplay}</td>
-        <td class="text-end">${freightAmountValue.toFixed(2)}</td>
-        <td class="text-end">${taxCalc.sgstAmt.toFixed(2)}</td>
-        <td class="text-end">${taxCalc.cgstAmt.toFixed(2)}</td>
-        <td class="text-end">${taxCalc.igstAmt.toFixed(2)}</td>
-        <td class="text-end">${taxCalc.totalGstAmt.toFixed(2)}</td>
-        <td class="text-end">${taxCalc.grandTotal.toFixed(2)}</td>
-        <td class="text-center">
-            <button type="button" class="btn btn-sm btn-danger delete-row">Delete</button>
+
+        <td class="text-end">
+            ${taxCalc.totalRate}%
         </td>
-        <td class="d-none">${taxID}</td>
-        <td class="d-none">${isFSC ? 'Yes' : 'No'}</td>
+
+        <td class="text-end">
+            ${quantityDisplay}
+        </td>
+
+        <td class="text-end">
+            ${freightAmountValue.toFixed(2)}
+        </td>
+
+        <td class="text-end">
+            ${taxCalc.sgstAmt.toFixed(2)}
+        </td>
+
+        <td class="text-end">
+            ${taxCalc.cgstAmt.toFixed(2)}
+        </td>
+
+        <td class="text-end">
+            ${taxCalc.igstAmt.toFixed(2)}
+        </td>
+
+        <td class="text-end">
+            ${taxCalc.totalGstAmt.toFixed(2)}
+        </td>
+
+        <td class="text-end">
+            ${taxCalc.grandTotal.toFixed(2)}
+        </td>
+
+        <td class="text-center">
+            <button type="button"
+                class="btn btn-sm btn-danger delete-row">
+                Delete
+            </button>
+        </td>
+
+        <td class="d-none">
+            ${taxID}
+        </td>
+
+        <td class="d-none">
+            ${isFSC ? 'Yes' : 'No'}
+        </td>
     `;
 
+    // =========================
+    // Append Row
+    // =========================
     tbody.appendChild(row);
 
-    // 🔥 Recalculate FSC (this also updates totals)
+    // =========================
+    // Recalculate FSC
+    // =========================
     await recalcFSC();
 
+    // =========================
+    // Clear Inputs
+    // =========================
     clearFreightInputs();
 }
 // Event delegation for delete button
@@ -256,84 +349,121 @@ async function recalcFSC() {
 
     const tbody = document.querySelector('#freightTable tbody');
 
+    if (!tbody) return;
+
     let totalBase = 0;
 
-    // 🔹 Get FSC %
+    // =========================
+    // Get FSC Configuration
+    // =========================
     const fsc = await getFSCCharges({
-        partyCode: document.getElementById('partyCode').value.trim(),
-        carrierCode: document.getElementById('carrierCode').value.trim(),
-        movementType: document.getElementById('movementTypeI').value.trim(),
-        modeType: document.getElementById('modeTypeI').value.trim(),
-        bookingDate: document.getElementById('bookedDate').value.trim()
+        partyCode: document.getElementById('partyCode')?.value.trim(),
+        carrierCode: document.getElementById('carrierCode')?.value.trim(),
+        movementType: document.getElementById('movementTypeI')?.value.trim(),
+        modeType: document.getElementById('modeTypeI')?.value.trim(),
+        bookingDate: document.getElementById('bookedDate')?.value.trim()
     });
 
+    // Auto FSC %
     let fscPercent = Number(fsc?.fuelSurcharge || 0);
 
-    // Manual FSC % fallback
-    if (fscPercent <= 0) {
-        fscPercent = fscPercentManual || 0;
+    // Manual FSC Override
+    if (Number(fscPercentManual) > 0) {
+        fscPercent = Number(fscPercentManual);
     }
 
-    // 🔥 Remove old FSC row & calculate total base
+    // Reset manual override
+    fscPercentManual = 0;
+
+    // =========================
+    // Remove Existing FSC Rows
+    // =========================
     tbody.querySelectorAll('tr').forEach(row => {
 
-        const chargeName = row.children[0]?.innerText?.trim();
-        const ifFSCCell = row.children[13]?.innerText?.trim(); // 14th column
+        const chargeName =
+            row.children[0]?.innerText?.trim();
 
-        // Remove existing FSC row
-        if (chargeName === "Fuel Surcharge") {
+        if (chargeName === 'Fuel Surcharge') {
             row.remove();
-            return;
-        }
-
-        // Only rows where FSC applicable = Yes
-        if (ifFSCCell === "Yes") {
-
-            const basicAmt = Number(
-                row.children[5]?.innerText?.replace(/,/g, '') || 0
-            );
-
-            totalBase += basicAmt;
-            console.log(`Adding ${basicAmt} to FSC base from row with charge: ${chargeName}`);
         }
     });
-    console.log("Total Base for FSC after recalculating:", totalBase, fscPercent);
-    // 🔹 Stop if no FSC applicable
+
+    // =========================
+    // Calculate FSC Base Amount
+    // =========================
+    tbody.querySelectorAll('tr').forEach(row => {
+
+        const fscApplicable =
+            row.children[13]?.innerText?.trim()?.toLowerCase();
+
+        // Only FSC = Yes
+        if (fscApplicable !== 'yes') return;
+
+        const basicAmt = parseFloat(
+            row.children[5]?.innerText
+                ?.replace(/,/g, '')
+                ?.replace(/[^\d.-]/g, '')
+        ) || 0;
+
+        totalBase += basicAmt;
+    });
+
+    // =========================
+    // Stop if invalid
+    // =========================
     if (totalBase <= 0 || fscPercent <= 0) {
         recalcTotals();
         return;
     }
 
-    console.log("Total Base for FSC:", totalBase);
+    // =========================
+    // FSC Amount
+    // =========================
+    const fscAmount =
+        (totalBase * fscPercent) / 100;
 
-    // 🔹 FSC Amount
-    const fscAmount = (totalBase * fscPercent) / 100;
+    // =========================
+    // Party Tax
+    // =========================
+    const partyCode =
+        document.getElementById('partyCode')?.value.trim();
 
-    // 🔹 Get Party Default Tax ID
-    const taxID = await fetchDefaultTax(document.getElementById('partyCode').value.trim());
+    const taxID = await fetchDefaultTax(partyCode);
 
     if (!taxID) {
-        console.warn("Party Default Tax ID not found");
+
+        console.warn('Party Default Tax ID not found');
+
+        recalcTotals();
         return;
     }
 
-    // 🔹 Get Tax Details
-    const taxes = await getTaxRatesById(taxID);
+    // =========================
+    // Tax Details
+    // =========================
+    const taxes =
+        await getTaxRatesById(taxID);
 
-    // 🔹 GST Calculation   
-    const taxCalc = calculateTaxes(fscAmount, taxes);
+    const taxCalc =
+        calculateTaxes(fscAmount, taxes);
 
-    // 🔹 FSC HSN
-    const fscHSN = fsc?.hsn_code || await getFSCHSNFromDropdown();
+    // =========================
+    // FSC HSN
+    // =========================
+    const fscHSN =
+        fsc?.hsn_code || await getFSCHSNFromDropdown();
 
-    // 🔥 CREATE FSC ROW
+    // =========================
+    // Create FSC Row
+    // =========================
     const fscRow = document.createElement('tr');
-    fscRow.dataset.type = "fsc";
+
+    fscRow.dataset.type = 'fsc';
 
     fscRow.innerHTML = `
         <td>Fuel Surcharge</td>
-        <td>${fscHSN}</td>
-        <td>${fsc?.description || ''}</td>
+        <td>${fscHSN || ''}</td>
+        <td>Fuel Surcharge ${fscPercent}%</td>
         <td class="text-end">${taxCalc.totalRate}%</td>
         <td class="text-end">1 Nos</td>
         <td class="text-end">${fscAmount.toFixed(2)}</td>
@@ -342,18 +472,26 @@ async function recalcFSC() {
         <td class="text-end">${taxCalc.igstAmt.toFixed(2)}</td>
         <td class="text-end">${taxCalc.totalGstAmt.toFixed(2)}</td>
         <td class="text-end">${taxCalc.grandTotal.toFixed(2)}</td>
+
         <td class="text-center">
-            <button type="button" class="btn btn-sm btn-danger delete-row">
+            <button type="button"
+                class="btn btn-sm btn-danger delete-row">
                 Delete
             </button>
         </td>
+
         <td class="d-none">${taxID}</td>
         <td class="d-none">No</td>
     `;
 
+    // =========================
+    // Append Row
+    // =========================
     tbody.appendChild(fscRow);
 
-    // 🔹 Recalculate totals
+    // =========================
+    // Recalculate Totals
+    // =========================
     recalcTotals();
 }
 

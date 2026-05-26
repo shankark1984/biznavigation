@@ -571,3 +571,20 @@ document.getElementById('deleteButton').addEventListener('click', async () => {
     toggleEditMode(true);
 });
 
+
+awbNoInput.addEventListener('input', function () {
+
+    this.value = this.value
+        .toUpperCase()          // Capital letters
+        .replace(/[\r\n]/g, '') // Remove new lines
+        .replace(/\s+/g, ' ')   // Single space only
+        .trim();                // Remove start/end spaces
+});
+
+// Prevent Enter key
+awbNoInput.addEventListener('keydown', function (event) {
+
+    if (event.key === 'Enter') {
+        event.preventDefault();
+    }
+});
