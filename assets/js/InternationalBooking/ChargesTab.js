@@ -358,7 +358,7 @@ chargesTypeInput.addEventListener('change', (event) => {
     loadFOVModal(event);
 
     // Fuel Surcharge
-    fuelSurcharge.handleChange(event);
+    // fuelSurcharge.handleChange(event);
 });
 
 
