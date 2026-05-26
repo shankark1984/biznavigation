@@ -107,8 +107,8 @@ document.addEventListener('click', async function (e) {
     if (e.target.classList.contains('delete-row')) {
         const row = e.target.closest('tr');
         row.remove();
-
-        await recalcFSC(); // ensures totals update correctly
+        recalcTotals();
+        // await recalcFSC(); // ensures totals update correctly
     }
 });
 

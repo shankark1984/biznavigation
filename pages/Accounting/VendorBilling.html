@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Coming Soon</title>
+    <title>Vendor Billing</title>
     <!-- Bootstrap CSS & Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
@@ -15,7 +15,26 @@
 
     <!-- Sidebar CSS -->
     <link rel="stylesheet" href="../../assets/css/navbar.css" />
+    <style>
+        .invoice-bg {
+            background-color: #d8e26b !important;
+        }
+
+        #saveSpinnerOverlay {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            z-index: 9999;
+        }
+
+        .sticky-header thead th {
+            position: sticky;
+            top: 0;
+            z-index: 2;
+        }
+    </style>
 </head>
+
 
 <body class="bg-light">
     <!-- 🔥 APP LAYOUT -->
@@ -30,33 +49,230 @@
         <!-- Main Content -->
         <div class="main-content">
 
-            <!-- 🔥 PAGE CONTENT -->
-            <div class="page-content">
+            <!-- YOUR EXISTING UI (UNCHANGED) -->
+            <div class="container-fluid mt-2">
+                <div class="card shadow-lg rounded">
 
-                <!-- YOUR EXISTING UI (UNCHANGED) -->
-                <div class="container-fluid mt-2">
-                    <img src="https://img.icons8.com/ios-filled/100/ffffff/under-construction.png" alt="Coming Soon"
-                        class="mb-4">
-                    <h1 class="coming-title">Vendor Billing</h1>
-                    <p class="coming-subtitle">This feature is under development. Stay tuned!</p>
-                    <a href="../../pages/Tools/home.html" class="btn btn-light btn-lg">Back to Home</a>
+                    <div class="card-body">
+                        <form class="invoiceForm" autocomplete="off">
+                            <!-- Action Buttons -->
+                            <div class="d-flex flex-wrap gap-1 mb-3">
+                                <button type="button" class="btn btn-primary btn-sm" id="newButton"
+                                    title="Create new booking">
+                                    <i class="bi bi-file-earmark-plus"></i> New
+                                </button>
+                                <button type="button" class="btn btn-warning btn-sm" id="modifyButton" disabled
+                                    title="Modify booking">
+                                    <i class="bi bi-pencil"></i> Modify
+                                </button>
+                                <button type="button" class="btn btn-danger btn-sm" id="deleteButton" disabled
+                                    title="Delete booking">
+                                    <i class="bi bi-trash"></i> Delete
+                                </button>
+                                <button type="button" class="btn btn-info btn-sm" id="reportButton" disabled
+                                    title="Generate report">
+                                    <i class="bi bi-file-earmark-text"></i> Report
+                                </button>
+                                <button id="saveButton" class="btn btn-primary btn-sm" type="button" data-mode="insert">
+                                    <span id="saveSpinnerBtn"
+                                        class="spinner-border spinner-border-sm me-2 d-none"></span>
+                                    <i class="bi bi-save"></i> Save
+                                </button>
+                                <div id="saveSpinnerOverlay" class="spinner-border text-primary d-none"></div>
+                                <input type="text" class="form-control bg-light d-none" id="status" value="New"
+                                    readonly>
+                            </div>
+                            <!-- Hidden Fields -->
+                            <input type="hidden" id="tempFormID">
+                            <input type="hidden" id="partyCode">
+                            <input type="hidden" id="bankIDs">
+
+                            <!-- Form Inputs -->
+                            <div class="row g-2">
+                                <!-- Expense Type-->
+                                <div class="col-lg-4">
+                                    <label for="expenseType" class="form-label">Expense Type</label>
+                                    <input type="text" class="form-control" id="expenseType" list="expenseTypeList"
+                                        autocomplete="off" placeholder="Select Expense Type">
+                                    <datalist id="expenseTypeList"></datalist>
+                                </div>
+
+                                <div class="col-lg-4">
+                                    <label for="expenseFor" class="form-label">Expense For</label>
+                                    <input type="text" class="form-control" id="expenseFor" list="expenseForList"
+                                        autocomplete="off" placeholder="Select Expense For">
+                                    <datalist id="expenseForList"></datalist>
+                                </div>
+
+                                <div class="col-md-2">
+                                    <label for="referenceNo" class="form-label">Reference No</label>
+                                    <input list="referenceNoSuggestions" class="form-control invoice-bg"
+                                        id="referenceNo" required autocomplete="off">
+                                    <datalist id="referenceNoSuggestions"></datalist>
+                                </div>
+
+                                <div class="col-md-2">
+                                    <label for="accountedDate" class="form-label">Accounted Date</label>
+                                    <input type="date" class="form-control" id="accountedDate" required>
+                                </div>
+                                <div class="col-lg-4">
+                                    <label for="partyName" class="form-label">Customer Name</label>
+                                    <input list="partySuggestions" class="form-control mb-2" id="partyName" required
+                                        placeholder="Choose..." autocomplete="off">
+                                    <datalist id="partySuggestions"></datalist>
+                                </div>
+                                <div class="col-md-2">
+                                    <label for="billNo" class="form-label">Bill No</label>
+                                    <input list="billNoSuggestions" class="form-control invoice-bg" id="billNo" required
+                                        autocomplete="off">
+                                    <datalist id="billNoSuggestions"></datalist>
+                                </div>
+
+                                <div class="col-md-2">
+                                    <label for="billDate" class="form-label">Bill Date</label>
+                                    <input type="date" class="form-control" id="billDate" required>
+                                </div>
+
+                                <div class="col-md-2">
+                                    <label for="amount" class="form-label">Amount</label>
+                                    <input type="number" class="form-control" id="amount" required>
+                                </div>
+
+                                <div class="col-md-2">
+                                    <label for="dueDate" class="form-label">Due Date</label>
+                                    <input type="date" class="form-control" id="dueDate" required>
+                                </div>
+
+                                <div class="col-md-12">
+                                    <label for="invoiceInformation" class="form-label">Information</label>
+                                    <input type="text" class="form-control" id="invoiceInformation">
+                                </div>
+
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabs -->
+            <ul class="nav nav-tabs mt-4" id="partyTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="shipmentDetails-tab" data-bs-toggle="tab"
+                        data-bs-target="#shipmentDetails" type="button" role="tab" aria-controls="shipmentDetails"
+                        aria-selected="true">
+                        Billing Details
+                    </button>
+                </li>
+            </ul>
+
+            <!-- Tab Content -->
+            <div class="tab-content p-3 border border-top-0 bg-white">
+
+                <div class="col-lg-3 mt-2">
+                    <label for="narration" class="form-label">Narration</label>
+                    <input type="text" class="form-control" id="narration" list="narrationList" autocomplete="off"
+                        placeholder="Select Narration">
+                    <datalist id="narrationList"></datalist>
+                </div>
+
+                <!-- Shipment Details Table -->
+                <div class="tab-pane fade show active" id="shipmentDetails" role="tabpanel"
+                    aria-labelledby="shipmentDetails-tab">
+                    <div class="table-responsive mt-4">
+                        <table class="table table-sm table-bordered text-center align-middle small sticky-header"
+                            id="pendingShipmentTable">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Sl.No</th>
+                                    <th>Narration</th>
+                                    <th>Reference No</th>
+                                    <th>Description</th>
+                                    <th>HSN Code</th>
+                                    <th>GST %</th>
+                                    <th>Non-Taxable Amt</th>
+                                    <th>Taxable Amt</th>
+                                    <th>SGST<br>Amount</th>
+                                    <th>CGST<br>Amount</th>
+                                    <th>IGST<br>Amount</th>
+                                    <th>Total GST<br>Amount</th>
+                                    <th>Total<br>Amount</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                            <tfoot class="table-light">
+                                <tr id="totalsRow">
+                                    <th colspan="6" class="text-end">Totals:</th>
+                                    <th class="text-end" id="nonTaxableAmount">0.00</th>
+                                    <th class="text-end" id="taxableAmount">0.00</th>
+                                    <th class="text-end" id="sgstAmount">0.00</th>
+                                    <th class="text-end" id="cgstAmount">0.00</th>
+                                    <th class="text-end" id="igstAmount">0.00</th>
+                                    <th class="text-end" id="totalGSTAmount">0.00</th>
+                                    <th class="text-end" id="grandTotalAmount">0.00</th>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Loading Spinner -->
+            <div id="loadingSpinner"
+                class="d-none position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center bg-dark bg-opacity-50">
+                <div class="spinner-border text-light" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+
+            <!-- Address Selection Modal -->
+            <div class="modal fade" id="addressSelectionModal" tabindex="-1" aria-labelledby="addressModalLabel"
+                aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="addressModalLabel">Select Invoice Address</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body" id="addressListContainer"></div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
+    </div>
+    </div>
+    </div>
+    </div>
+    <!-- Toast Container -->
+    <div class="position-fixed top-0 end-0 p-3" style="z-index: 9999">
+        <div id="errorToast" class="toast align-items-center text-white bg-danger border-0" role="alert">
+            <div class="d-flex">
+                <div class="toast-body" id="errorToastMessage">
+                    Error message here...
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        </div>
+    </div>
 
-    <!-- Core -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Optimized Script Loading -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/2.3.10/purify.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js" defer></script>
 
-    <!-- Utils -->
     <script src="../../assets/js/utils/server.js"></script>
-    <script src="../../assets/js/utils/utils.js"></script>
-    <script src="../../assets/js/utils/pincode-helper.js"></script>
     <script src="../../assets/js/utils/navbar.js"></script>
-    <script src="../../assets/js/utils/logout.js"></script>
+    <script src="../../assets/js/utils/utils.js"></script>
     <script src="../../assets/js/utils/GlobalShortcut.js" defer></script>
+    <script src="../../assets/js/utils/api.js" defer></script>
+    <script src="../../assets/js/utils/logout.js" defer></script>
+    <script src="../../assets/js/VendorBilling/billing.js" defer></script>
+
+
 </body>
 
 </html>

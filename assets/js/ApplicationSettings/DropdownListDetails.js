@@ -166,7 +166,10 @@ async function saveDropdownItem() {
     const mode = btn.dataset.mode || 'insert';
     const id = Number(document.getElementById('tempFormID').value);
 
-    const type_of_value = valueassignedto.value.trim();
+    const rawValue = valueassignedto.value.trim();
+
+    const type_of_value =
+        rawValue.charAt(0).toLowerCase() + rawValue.slice(1);
     const description = descriptionInput.value.trim();
     const condition = conditionInput.value.trim() || "No Condition";
     const fixedvalueRaw = fixedvalueInput.value.trim();
@@ -281,7 +284,7 @@ function editDropdownDetails(id, valueAssignedTo, desc, cond, val, hsn) {
  *************************************************/
 function resetDropdownForm() {
     tempFormID.value = '';
-    [valueassignedto, descriptionInput, conditionInput, fixedvalueInput, hsncodeInput]
+    [descriptionInput, conditionInput, fixedvalueInput, hsncodeInput]
         .forEach(el => el.value = '');
 
     const btn = document.getElementById('addDropdownMenuList');
