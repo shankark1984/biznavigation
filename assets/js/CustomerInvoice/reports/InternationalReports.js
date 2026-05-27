@@ -231,7 +231,8 @@ async function fetchAndRenderShipmentTable_Annexure(doc, startY, PAGE, FONT, inv
     const { data: allCharges } = await supabaseClient
         .from("InternationalBookingCharges")
         .select("*")
-        .in("ID_IB", shipmentIds);
+        .in("ID_IB", shipmentIds)
+        .order("id", { ascending: true });
 
     /* GROUP CHARGES BY SHIPMENT */
     const chargesMap = {};
