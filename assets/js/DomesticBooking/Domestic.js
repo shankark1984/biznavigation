@@ -390,3 +390,20 @@ document.getElementById('modeTypeD').addEventListener('change', function () {
 department.addEventListener('change', () =>
     handleDatalistInsert(department, 'departmentList', 'Department')
 );
+
+docketNoInput.addEventListener('input', function () {
+
+    this.value = this.value
+        .toUpperCase()          // Capital letters
+        .replace(/[\r\n]/g, '') // Remove new lines
+        .replace(/\s+/g, ' ')   // Single space only
+        .trim();                // Remove start/end spaces
+});
+
+// Prevent Enter key
+docketNoInput.addEventListener('keydown', function (event) {
+
+    if (event.key === 'Enter') {
+        event.preventDefault();
+    }
+});

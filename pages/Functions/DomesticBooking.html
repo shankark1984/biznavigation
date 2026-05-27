@@ -651,6 +651,46 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- Add Fuel Surcharge Modal -->
+                    <div class="modal fade" id="addFuelSurchargeModal" tabindex="-1">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">Fuel Surcharge</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+
+                                <div class="modal-body">
+                                    <form id="consigneeForm">
+                                        <div class="mb-3">
+                                            <label class="form-label">Total Amount </label>
+                                            <input type="number" class="form-control" id="totalAmount" value="0.2"
+                                                step="0.01">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Fuel Surcharge Percentage (%)</label>
+                                            <input type="number" class="form-control" id="fuelSurchargePercentage"
+                                                value="0.2" step="0.01">
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label">Fuel Surcharge Amount</label>
+                                            <input type="number" class="form-control" id="fuelSurchargeAmount" readonly>
+                                        </div>
+                                    </form>
+                                </div>
+
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary"
+                                        data-bs-dismiss="modal">Cancel</button>
+                                    <button type="button" class="btn btn-primary" onclick="addFuelSurcharge(event)">
+                                        Confirm
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

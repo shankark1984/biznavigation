@@ -271,55 +271,151 @@ async function saveFreightCharges() {
 }
 
 async function loadFreightCharges() {
-    const awbNoValue = freightElements.awbNo.value.trim();
-    const tempFormID = freightElements.tempFormID.value.trim(); // Assuming this is a hidden input field
 
-    if (!tempFormID) return alert('Please select a valid Temp Form ID!');
-    if (!awbNoValue) return alert('Please select a valid AWB No!');
+    const awbNoValue =
+        freightElements.awbNo.value.trim();
 
-    freightElements.freightTable.innerHTML = ''; // Clear table
+    const tempFormID =
+        freightElements.tempFormID.value.trim();
+
+    if (!tempFormID) {
+        return alert(
+            'Please select a valid Temp Form ID!'
+        );
+    }
+
+    if (!awbNoValue) {
+        return alert(
+            'Please select a valid AWB No!'
+        );
+    }
+
+    // Clear Table
+    freightElements.freightTable.innerHTML = '';
 
     try {
-        const { data, error } = await supabaseClient
-            .from('InternationalBookingCharges')
-            .select('*')
-            .eq('ID_IB', tempFormID);
+
+        // =========================
+        // Load Charges in Saved Order
+        // =========================
+        const { data, error } =
+            await supabaseClient
+                .from('InternationalBookingCharges')
+                .select('*')
+                .eq('ID_IB', tempFormID)
+
+                // IMPORTANT
+                .order('id', { ascending: true });
 
         if (error) throw error;
 
+        // =========================
+        // Process Rows Sequentially
+        // =========================
         for (const item of data) {
 
-            const row = document.createElement('tr');
+            const row =
+                document.createElement('tr');
 
-            const fscData = await isFSCApplicable(item.ChargesType);
-            const isFSC = fscData.isApplicable;
+            // FSC Applicable
+            const fscData =
+                await isFSCApplicable(
+                    item.ChargesType
+                );
+
+            const isFSC =
+                fscData.isApplicable;
 
             row.innerHTML = `
-        <td>${item.ChargesType || ''}</td>
-        <td>${item.HSNCode || ''}</td>
-        <td>${item.Remarks || ''}</td>
-        <td class="text-end">${(item.TaxRate || 0).toFixed(2)}%</td>
-        <td class="text-end">${item.Quantity || 0}</td>
-        <td class="text-end">${(item.TotalAmount || 0).toFixed(2)}</td>
-        <td class="text-end">${(item.SGSTAmt || 0).toFixed(2)}</td>
-        <td class="text-end">${(item.CGSTAmt || 0).toFixed(2)}</td>
-        <td class="text-end">${(item.IGSTAmt || 0).toFixed(2)}</td>
-        <td class="text-end">${(item.TotalGSTAmt || 0).toFixed(2)}</td>
-        <td class="text-end">${(item.GrandTotalAmt || 0).toFixed(2)}</td>
-        <td class="text-center">
-            <button type="button" class="btn btn-sm btn-danger delete-row">Delete</button>
-        </td>
-        <td class="d-none">${item.TaxID}</td>
-       <td class="d-none">${isFSC ? 'Yes' : 'No'}</td>
-    `;
+                <td>
+                    ${item.ChargesType || ''}
+                </td>
 
-            freightElements.freightTable.appendChild(row);
+                <td>
+                    ${item.HSNCode || ''}
+                </td>
+
+                <td>
+                    ${item.Remarks || ''}
+                </td>
+
+                <td class="text-end">
+                    ${(item.TaxRate || 0).toFixed(2)}%
+                </td>
+
+                <td class="text-end">
+                    ${item.Quantity || 0}
+                </td>
+
+                <td class="text-end">
+                    ${(item.TotalAmount || 0).toFixed(2)}
+                </td>
+
+                <td class="text-end">
+                    ${(item.SGSTAmt || 0).toFixed(2)}
+                </td>
+
+                <td class="text-end">
+                    ${(item.CGSTAmt || 0).toFixed(2)}
+                </td>
+
+                <td class="text-end">
+                    ${(item.IGSTAmt || 0).toFixed(2)}
+                </td>
+
+                <td class="text-end">
+                    ${(item.TotalGSTAmt || 0).toFixed(2)}
+                </td>
+
+                <td class="text-end">
+                    ${(item.GrandTotalAmt || 0).toFixed(2)}
+                </td>
+
+                <td class="text-center">
+                    <button
+                        type="button"
+                        class="btn btn-sm btn-danger delete-row">
+                        Delete
+                    </button>
+                </td>
+
+                <td class="d-none">
+                    ${item.TaxID || ''}
+                </td>
+
+                <td class="d-none">
+                    ${isFSC ? 'Yes' : 'No'}
+                </td>
+            `;
+
+            // Append in exact sequence
+            freightElements.freightTable
+                .appendChild(row);
         }
-        toggleEditMode(true);
+
+        // =========================
+        // Recalculate FSC
+        // =========================
+        await recalcFSC();
+
+        // =========================
+        // Totals
+        // =========================
         recalcTotals();
+
+        toggleEditMode(true);
+
     } catch (error) {
-        console.error('Error:', error.message);
-        alert('Failed to load charges: ' + error.message);
+
+        console.error(
+            'Error:',
+            error.message
+        );
+
+        alert(
+            'Failed to load charges: ' +
+            error.message
+        );
     }
 }
 
@@ -364,7 +460,9 @@ async function recalcFSC() {
         bookingDate: document.getElementById('bookedDate')?.value.trim()
     });
 
-    // Auto FSC %
+    // =========================
+    // FSC Percentage
+    // =========================
     let fscPercent = Number(fsc?.fuelSurcharge || 0);
 
     // Manual FSC Override
@@ -372,7 +470,7 @@ async function recalcFSC() {
         fscPercent = Number(fscPercentManual);
     }
 
-    // Reset manual override
+    // Reset Manual Override
     fscPercentManual = 0;
 
     // =========================
@@ -394,9 +492,11 @@ async function recalcFSC() {
     tbody.querySelectorAll('tr').forEach(row => {
 
         const fscApplicable =
-            row.children[13]?.innerText?.trim()?.toLowerCase();
+            row.children[13]?.innerText
+                ?.trim()
+                ?.toLowerCase();
 
-        // Only FSC = Yes
+        // Only FSC Applicable Rows
         if (fscApplicable !== 'yes') return;
 
         const basicAmt = parseFloat(
@@ -409,9 +509,10 @@ async function recalcFSC() {
     });
 
     // =========================
-    // Stop if invalid
+    // Stop if Invalid
     // =========================
     if (totalBase <= 0 || fscPercent <= 0) {
+
         recalcTotals();
         return;
     }
@@ -428,7 +529,8 @@ async function recalcFSC() {
     const partyCode =
         document.getElementById('partyCode')?.value.trim();
 
-    const taxID = await fetchDefaultTax(partyCode);
+    const taxID =
+        await fetchDefaultTax(partyCode);
 
     if (!taxID) {
 
@@ -451,7 +553,8 @@ async function recalcFSC() {
     // FSC HSN
     // =========================
     const fscHSN =
-        fsc?.hsn_code || await getFSCHSNFromDropdown();
+        fsc?.hsn_code ||
+        await getFSCHSNFromDropdown();
 
     // =========================
     // Create FSC Row
@@ -464,14 +567,36 @@ async function recalcFSC() {
         <td>Fuel Surcharge</td>
         <td>${fscHSN || ''}</td>
         <td>Fuel Surcharge ${fscPercent}%</td>
-        <td class="text-end">${taxCalc.totalRate}%</td>
+
+        <td class="text-end">
+            ${taxCalc.totalRate.toFixed(2)}%
+        </td>
+
         <td class="text-end">1 Nos</td>
-        <td class="text-end">${fscAmount.toFixed(2)}</td>
-        <td class="text-end">${taxCalc.sgstAmt.toFixed(2)}</td>
-        <td class="text-end">${taxCalc.cgstAmt.toFixed(2)}</td>
-        <td class="text-end">${taxCalc.igstAmt.toFixed(2)}</td>
-        <td class="text-end">${taxCalc.totalGstAmt.toFixed(2)}</td>
-        <td class="text-end">${taxCalc.grandTotal.toFixed(2)}</td>
+
+        <td class="text-end">
+            ${fscAmount.toFixed(2)}
+        </td>
+
+        <td class="text-end">
+            ${taxCalc.sgstAmt.toFixed(2)}
+        </td>
+
+        <td class="text-end">
+            ${taxCalc.cgstAmt.toFixed(2)}
+        </td>
+
+        <td class="text-end">
+            ${taxCalc.igstAmt.toFixed(2)}
+        </td>
+
+        <td class="text-end">
+            ${taxCalc.totalGstAmt.toFixed(2)}
+        </td>
+
+        <td class="text-end">
+            ${taxCalc.grandTotal.toFixed(2)}
+        </td>
 
         <td class="text-center">
             <button type="button"
@@ -485,7 +610,7 @@ async function recalcFSC() {
     `;
 
     // =========================
-    // Append Row
+    // Append FSC Row
     // =========================
     tbody.appendChild(fscRow);
 
