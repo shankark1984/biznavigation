@@ -158,7 +158,8 @@ async function FTL_FCL_getPendingInvoiceDetails() {
             .from('FullLoadBookingCharges')
             .select('*')
             .in('LRNumber', lrNumbers)
-            .eq('AccountType', 'Sale');
+            .eq('AccountType', 'Sale')
+            .order('id', { ascending: true });
 
 
         if (chargeError) throw chargeError;

@@ -169,7 +169,8 @@ async function d_getBookingCharges(bookingID) {
         const { data, error } = await supabaseClient
             .from('DomesticBookingCharges')
             .select('ChargesType, TotalAmount, SGSTAmt, CGSTAmt, IGSTAmt, TotalGSTAmt, GrandTotalAmt')
-            .eq('ID_DB', bookingID);
+            .eq('ID_DB', bookingID)
+            .order('id', { ascending: true });
 
         if (error) throw error;
 

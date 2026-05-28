@@ -190,7 +190,8 @@ async function getBookingCharges_cc(bookingID) {
         const { data, error } = await supabaseClient
             .from('CustomsClearanceCharges')
             .select('ChargesType, TotalAmount, SGSTAmt, CGSTAmt, IGSTAmt, TotalGSTAmt, GrandTotalAmt')
-            .eq('ID_CC', bookingID);
+            .eq('ID_CC', bookingID)
+            .order('id', { ascending: true });
 
         if (error) throw error;
         if (!data || data.length === 0) return null;

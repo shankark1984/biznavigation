@@ -503,12 +503,18 @@ async function generatePaymentID(companyID) {
 // ------------------------------------------
 saveButton.addEventListener("click", async function () {
     const isEditMode = saveButton.innerHTML.includes("Update");
+
     saveButton.disabled = true;
     if (!validateSuspenseBeforeSave()) {
         saveButton.disabled = false;
         return;
     }
 
+    if (!paymentFormElements.receiptOn.value) {
+        showToast("Receipt date is required");
+        saveButton.disabled = false;
+        return;
+    }
     let PaymentID = paymentFormElements.paymentID.value.trim();
     const suspenseAmount = calculateSuspenseAmount();
 
@@ -569,6 +575,7 @@ saveButton.addEventListener("click", async function () {
         if (paymentResult.error) {
             console.error(paymentResult.error);
             showToast("Failed to save Payment Details");
+            saveButton.disabled = false;
             return;
         }
 

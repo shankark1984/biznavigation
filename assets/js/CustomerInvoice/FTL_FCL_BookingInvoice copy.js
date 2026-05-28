@@ -208,7 +208,8 @@ async function FTL_FCL_getBookingCharges(bookingID) {
             .from('FullLoadBookingCharges')
             .select('*')
             .eq('LRNumber', bookingID)
-            .eq('AccountType', 'Sale');
+            .eq('AccountType', 'Sale')
+            .order('id', { ascending: true });
 
         if (error) throw error;
         if (!data || data.length === 0) return null;
