@@ -565,11 +565,6 @@ document.getElementById('addShipmentNo').addEventListener('click', async () => {
         return;
     }
 
-    if (!invoiceNo) {
-        alert('Invoice Number is required.');
-        return;
-    }
-
     // Show spinner and disable button
     if (saveSpinner) {
         saveSpinner.classList.remove('d-none');

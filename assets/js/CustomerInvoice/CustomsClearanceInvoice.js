@@ -11,13 +11,11 @@ async function CustomsClearanceInvoiceDetails() {
         return;
     }
 
-
     if (!invoiceDateElement.value) {
         alert('Please select an invoice date first.');
         invoiceDateElement.focus();
         return;
     }
-
 
     if (!movementType) {
         alert('Please select a movement type first.');
@@ -25,16 +23,13 @@ async function CustomsClearanceInvoiceDetails() {
         return;
     }
 
-
     document.getElementById('fetchPendingInvoices').disabled = true;
     showSpinner();
-
 
     let totalFreight = 0, totalFSCAmt = 0, totalOtherAmt = 0;
     let totalSGST = 0, totalCGST = 0, totalIGST = 0, totalGST = 0, totalGrand = 0;
     let mergedChargesMap = {};
     let validDataFound = false;
-
 
     try {
         // Build query
@@ -47,25 +42,11 @@ async function CustomsClearanceInvoiceDetails() {
             .eq('IsLocked', false)
             .order('JobDate', { ascending: true });
 
-
         console.log('Fetching pending invoices for:', CompanyID, partyCode, movementType);
-
-
-        // Movement type condition
-        if (movementType === 'Customs Clearance') {
-            console.log('Fetching invoices for Forwarding movement type');
-            query = query.in('MovementType', ['Import', 'Export']);
-        } else {
-            query = query.eq('MovementType', movementType);
-            console.log('Fetching invoices for movement type:', movementType);
-        }
-
 
         const { data, error } = await query;
 
-
         if (error) throw error;
-
 
         if (!data || data.length === 0) {
             alert('No pending invoices found or all are currently locked.');
@@ -73,25 +54,20 @@ async function CustomsClearanceInvoiceDetails() {
             return;
         }
 
-
         const bookingIds = data.map(item => item.id);
         lockedBookingIds = bookingIds;
         startAutoUnlockTimer();
 
-
         const tableBody = document.getElementById('pendingShipmentTable').querySelector('tbody');
         tableBody.innerHTML = '';
 
-
         // build dynamic header + footer
         createPendingShipmentTableHeaderAndFooter();
-
 
         for (const invoice of data) {
             console.log('Processing invoice:', invoice.id, invoice.JobID);
             const charges = await getBookingCharges_cc(invoice.id);
             if (!charges || charges.grandTotal <= 0) continue;
-
 
             const { error: lockError } = await supabaseClient
                 .from('CustomsClearance_Details')
@@ -103,9 +79,7 @@ async function CustomsClearanceInvoiceDetails() {
                 .eq('id', invoice.id);
             if (lockError) throw lockError;
 
-
             validDataFound = true;
-
 
             totalFreight += charges.BasicFrightAmt;
             totalFSCAmt += charges.FSCAmt;
@@ -116,7 +90,6 @@ async function CustomsClearanceInvoiceDetails() {
             totalGST += charges.totalGST;
             totalGrand += charges.grandTotal;
 
-
             for (const [type, amounts] of Object.entries(charges.chargesMap)) {
                 const normalizedType = toProperCase(type.trim().toLowerCase());
                 if (!mergedChargesMap[normalizedType]) {
@@ -126,7 +99,6 @@ async function CustomsClearanceInvoiceDetails() {
                     };
                 }
 
-
                 const entry = mergedChargesMap[normalizedType];
                 entry.TotalAmount += amounts.TotalAmount;
                 entry.SGSTAmt += amounts.SGSTAmt;
@@ -135,7 +107,6 @@ async function CustomsClearanceInvoiceDetails() {
                 entry.TotalGSTAmt += amounts.TotalGSTAmt;
                 entry.GrandTotalAmt += amounts.GrandTotalAmt;
             }
-
 
             const row = document.createElement('tr');
             row.setAttribute('data-ship-id', invoice.id);
@@ -168,15 +139,12 @@ async function CustomsClearanceInvoiceDetails() {
             tableBody.appendChild(row);
         }
 
-
         if (!validDataFound) {
             alert('No pending invoices with grand total greater than 0 found.');
         }
 
-
         updateTotals_cc({ totalFreight, totalSGST, totalCGST, totalIGST, totalGST, totalGrand });
         renderChargesTable(mergedChargesMap);
-
 
     } catch (err) {
         console.error('Error fetching or locking pending invoices:', err.message);
@@ -366,6 +334,20 @@ async function createPendingShipmentTableHeaderAndFooter() {
 }
 
 function updateTotals_cc() {
+
+    const freightEl = document.getElementById('totalFreight_sc');
+    const sgstEl = document.getElementById('totalSGST_sc');
+    const cgstEl = document.getElementById('totalCGST_sc');
+    const igstEl = document.getElementById('totalIGST_sc');
+    const gstEl = document.getElementById('totalGST_sc');
+    const grandEl = document.getElementById('totalGrand_sc');
+
+    // Prevent null errors
+    if (!freightEl || !sgstEl || !cgstEl || !igstEl || !gstEl || !grandEl) {
+        console.warn('Totals footer elements not found.');
+        return;
+    }
+
     const rows = document.querySelectorAll('#pendingShipmentTable tbody tr');
 
     let totalFreight = 0;
@@ -384,12 +366,12 @@ function updateTotals_cc() {
         totalGrand += parseFloat(r.cells[20]?.textContent) || 0;
     });
 
-    document.getElementById('totalFreight_sc').textContent = totalFreight.toFixed(2);
-    document.getElementById('totalSGST_sc').textContent = totalSGST.toFixed(2);
-    document.getElementById('totalCGST_sc').textContent = totalCGST.toFixed(2);
-    document.getElementById('totalIGST_sc').textContent = totalIGST.toFixed(2);
-    document.getElementById('totalGST_sc').textContent = totalGST.toFixed(2);
-    document.getElementById('totalGrand_sc').textContent = totalGrand.toFixed(2);
+    freightEl.textContent = totalFreight.toFixed(2);
+    sgstEl.textContent = totalSGST.toFixed(2);
+    cgstEl.textContent = totalCGST.toFixed(2);
+    igstEl.textContent = totalIGST.toFixed(2);
+    gstEl.textContent = totalGST.toFixed(2);
+    grandEl.textContent = totalGrand.toFixed(2);
 }
 
 
@@ -609,7 +591,6 @@ async function addSingleShipmentToInvoice_cc(shipmentNo, invoiceNo) {
         const { error: updateError } = await supabaseClient
             .from('CustomsClearance_Details')
             .update({
-                InvoiceNo: invoiceNo,
                 IsLocked: true,
                 LockedBy: UserLoginID,
                 LockedAt: localtimeStamp
