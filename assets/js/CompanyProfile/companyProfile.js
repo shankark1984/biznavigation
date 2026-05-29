@@ -51,7 +51,6 @@ function setButtonState(buttonIDs, enabled) {
     });
 }
 
-
 /* ---------------------- 🏢 Company Data Handling ---------------------- */
 async function fetchCompanyData(selectedCompanyID) {
     try {
@@ -191,6 +190,10 @@ function onNewClick() {
     setEmptyTableMessage('branchTableBody', 'No branches created');
     setEmptyTableMessage('branchBankTableBody', 'No bank created');
     setButtonState(['branchAddDetails', 'bankAddDetails'], false);
+    document.getElementById("termsAndConditionsTable")
+        .innerHTML = "";
+    document.getElementById("subscriptionTable")
+        .innerHTML = "";
 
 }
 
@@ -244,6 +247,7 @@ async function onSaveClick(e) {
             const { error: adminError } = await supabaseClient.from('user_login').insert([adminData]);
             if (adminError) throw adminError;
         }
+        await saveCompanyTandCs();
 
         alert(`Company ${isInsert ? 'saved' : 'updated'} successfully!`);
         saveBtn.innerHTML = '<i class="bi bi-pencil-square"></i> Update';
@@ -419,7 +423,6 @@ async function getAdminUser(companyID) {
     }
 }
 
-
 document.getElementById('adminUserSetting-tab')?.addEventListener(
     'shown.bs.tab',
     () => {
@@ -453,7 +456,6 @@ async function loadCompaniesDropdown() {
     // });
 }
 
-
 // Get selected companyId
 $("#selectCompany").on("change", async function () {
     const selectedCompanyID = this.value;
@@ -465,6 +467,7 @@ $("#selectCompany").on("change", async function () {
         await fetchCompanyData(selectedCompanyID);
         await loadSubscriptions(selectedCompanyID);
         if (typeof loadBranches === "function") await loadBranches();
+        await loadCompanyTandCs(selectedCompanyID);
     }
 });
 

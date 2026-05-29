@@ -294,7 +294,3 @@ const sessionToken = crypto.randomUUID();
 let infomationData = null;
 let reportType = null;
 let fscPercentManual = 0; // To store manual FSC % if needed
-
-// For debugging
-// console.log("Initial UserType:", UserType);
-// console.log("Session Token:", sessionToken);

@@ -219,6 +219,11 @@
                                             data-bs-target="#subscription" type="button">Subscription
                                         </button>
                                     </li>
+                                    <li class="nav-item">
+                                        <button class="nav-link" id="termsAndConditions-tab" data-bs-toggle="tab"
+                                            data-bs-target="#termsAndConditions" type="button">T&Cs
+                                        </button>
+                                    </li>
                                 </ul>
                                 <div class="tab-content p-3 border border-top-0" id="branchTabsContent">
                                     <!-- Branch Details Tab -->
@@ -498,6 +503,50 @@
                                         </div>
 
                                     </div>
+                                    <!-- Terms and Conditions Tab -->
+                                    <div class="tab-pane fade" id="termsAndConditions" role="tabpanel">
+                                        <div class="row g-2 align-items-end">
+                                            <!-- Effective Date -->
+                                            <div class="col-md-2">
+                                                <label for="tcEffectiveDate" class="form-label small">
+                                                    Effective Date
+                                                </label>
+                                                <input type="date" id="tcEffectiveDate" class="form-control">
+                                            </div>
+                                            <!-- Terms and Conditions -->
+                                            <div class="col-md-8">
+                                                <label for="tcDescription" class="form-label small">
+                                                    Terms and Conditions
+                                                </label>
+                                                <textarea class="form-control" id="tcDescription" rows="1"
+                                                    placeholder="Enter terms and conditions"></textarea>
+                                            </div>
+                                            <!-- Add Button -->
+                                            <div class="col-md-2">
+                                                <button type="button" class="btn btn-success w-100" id="addTnC">
+                                                    Add
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <!-- Terms and Conditions History -->
+                                        <div class="table-responsive mt-3">
+
+                                            <table class="table table-bordered table-sm align-middle">
+
+                                                <thead class="table-light">
+                                                    <tr>
+                                                        <th style="width: 140px;">Effective Date</th>
+                                                        <th>Terms and Conditions</th>
+                                                        <th style="width: 120px;">Action</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="termsAndConditionsTable"></tbody>
+                                            </table>
+
+                                        </div>
+
+                                    </div>
                                 </div>
                             </form>
                         </div>
@@ -545,6 +594,7 @@
     <script src="../../assets/js/CompanyProfile/branchManagement.js" defer></script>
     <script src="../../assets/js/CompanyProfile/bankManagement.js" defer></script>
     <script src="../../assets/js/CompanyProfile/subscription.js" defer></script>
+    <script src="../../assets/js/CompanyProfile/termsAndConditions.js" defer></script>
 
 </body>
 
