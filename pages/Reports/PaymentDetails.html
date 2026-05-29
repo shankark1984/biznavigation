@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Payment Report - Credit & Debit</title>
+
+    <!-- Bootstrap & Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+
+    <!-- Flatpickr -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+
+    <!-- SheetJS, jsPDF, jsPDF AutoTable -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+
+    <!-- jQuery, Bootstrap JS, Flatpickr, Supabase -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr" defer></script>
+    <script src="https://unpkg.com/@supabase/supabase-js" defer></script>
+
+
+    <!-- Sidebar CSS -->
+    <link rel="stylesheet" href="../../assets/css/navbar.css" />
+
+    <!-- UI Enhancements -->
+    <style>
+        #root {
+            flex: 1;
+        }
+
+        .table-responsive {
+            max-height: 500px;
+            overflow-y: auto;
+            overflow-x: auto;
+            background: #fff;
+            border-radius: 0.5rem;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        #bookingTable thead th {
+            position: sticky;
+            top: 0;
+            background-color: #343a40;
+            color: white;
+            z-index: 10;
+            cursor: pointer;
+            white-space: nowrap;
+            font-size: 0.85rem;
+            padding: 10px;
+            box-shadow: 0 2px 2px rgba(0, 0, 0, 0.05);
+        }
+
+        #bookingTable tbody td {
+            vertical-align: middle;
+            white-space: nowrap;
+            font-size: 0.8rem;
+            padding: 8px 10px;
+        }
+
+        #bookingTable tbody tr:hover {
+            background-color: #f1f1f1;
+        }
+
+        #bookingTable tbody tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        #bookingTable th,
+        #bookingTable td {
+            text-align: center;
+        }
+
+        @media (max-width: 768px) {
+
+            #bookingTable thead th,
+            #bookingTable tbody td {
+                font-size: 0.75rem;
+                padding: 6px 8px;
+            }
+        }
+
+        .table-wrapper {
+            border: 2px solid #6c757d;
+            /* Bootstrap secondary */
+            border-radius: 8px;
+            padding: 0;
+            overflow: hidden;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.05);
+        }
+
+        #paginationControls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+    </style>
+</head>
+
+<body class="bg-light">
+    <!-- 🔥 APP LAYOUT -->
+    <div class="app-wrapper">
+
+        <!-- Sidebar -->
+        <div id="sidebar">
+            <!-- fallback -->
+            <div class="text-center text-white p-3">Loading...</div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+
+            <!-- 🔥 PAGE CONTENT -->
+            <div class="page-content">
+
+                <!-- YOUR EXISTING UI (UNCHANGED) -->
+
+                <div class="container-fluid" id="root">
+
+                    <!-- Filter Toggle -->
+                    <div class="mb-3 d-flex justify-content-between align-items-center flex-wrap">
+                        <button class="btn btn-outline-secondary" type="button" data-bs-toggle="collapse"
+                            data-bs-target="#filterSection">
+                            <i class="bi bi-funnel"></i> Toggle Filters
+                        </button>
+                    </div>
+
+                    <!-- Filters Section -->
+                    <div class="collapse" id="filterSection">
+                        <div class="row g-3 mb-4" id="searchFilters">
+                            <!-- Inputs: Customer Name, Docket No, Date Range, Movement, Mode, Provider, Month, Year, Fin Year, Invoice Status -->
+                            <div class="col-12 col-md-6 col-lg-3">
+                                <label for="customerName" class="form-label">Customer Name</label>
+                                <input id="customerName" class="form-control" list="customerNameList"
+                                    placeholder="Enter Customer Name">
+                                <datalist id="customerNameList"></datalist>
+                            </div>
+
+                            <div class="col-6 col-md-6 col-lg-3">
+                                <label for="dateRange" class="form-label">Payment Date Range</label>
+                                <input id="dateRange" class="form-control" placeholder="Select Date Range" readonly>
+                            </div>
+                            <div class="col-6 col-md-2 col-lg-2">
+                                <label for="bookedMonth" class="form-label">Payment Month</label>
+                                <input type="month" id="bookedMonth" class="form-control">
+                            </div>
+                            <div class="col-6 col-md-4 col-lg-2">
+                                <label for="bookedYear" class="form-label">Payment Year</label>
+                                <input type="number" id="bookedYear" class="form-control" placeholder="YYYY" min="2000"
+                                    max="2100">
+                            </div>
+                            <div class="col-6 col-md-4 col-lg-2">
+                                <label for="financialYear" class="form-label">Financial Year</label>
+                                <input id="financialYear" class="form-control" placeholder="YYYY-YYYY"
+                                    list="financialYearList">
+                                <datalist id="financialYearList"></datalist>
+                            </div>
+                            <div class="col-6 col-md-2 col-lg-2 d-grid align-self-end">
+                                <button class="btn btn-primary" id="searchBtn"><i class="bi bi-search"></i>
+                                    Search</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Spinner -->
+                    <div id="loadingSpinner" class="text-center my-4" style="display: none;">
+                        <div class="spinner-border text-primary" role="status"><span
+                                class="visually-hidden">Loading...</span></div>
+                    </div>
+
+                    <!-- Table -->
+                    <!-- Table with outer border -->
+                    <div class="table-responsive border border-secondary rounded shadow-sm">
+                        <table class="table table-bordered table-hover table-sm mb-0" id="bookingTable">
+                            <thead class="table-dark text-center">
+                                <tr>
+                                    <th data-key="RowID">Sr No</th>
+                                    <th data-key="DocketNo">Payment No</th>
+                                    <th data-key="BookedDate">Payment Date</th>
+                                    <th data-key="CustomerName">Customer Name</th>
+                                    <th data-key="ActualWeight">Narration</th>
+                                    <th data-key="VolumeWeight">Credit</th>
+                                    <th data-key="ChargeableWeight">Debit</th>
+                                    <th data-key="TotalAmount">Runing Total</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+
+
+                    <!-- Pagination & Export -->
+                    <div class="mb-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
+                        <nav>
+                            <ul class="pagination mb-0" id="paginationControls"></ul>
+                        </nav>
+                        <div class="d-flex flex-wrap gap-2">
+                            <button class="btn btn-success" id="exportExcelBtn"><i class="bi bi-file-earmark-excel"></i>
+                                Export to
+                                Excel</button>
+                            <button class="btn btn-danger" id="exportPdfBtn"><i class="bi bi-file-earmark-pdf"></i>
+                                Export to
+                                PDF</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- App Scripts -->
+    <script src="../../assets/js/utils/server.js"></script>
+    <script src="../../assets/js/utils/navbar.js"></script>
+    <script src="../../assets/js/utils/utils.js"></script>
+    <script src="../../assets/js/Report/reportPaymentDetails.js"></script>
+    <script src="../../assets/js/utils/logout.js"></script>
+</body>
+
+</html>

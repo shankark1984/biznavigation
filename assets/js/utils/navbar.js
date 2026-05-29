@@ -48,10 +48,9 @@ const Navbar = (() => {
                 { label: "Customs Clearance Report", icon: "bi-box-seam", href: "/pages/Reports/reportCustomsClearance.html" },
                 { label: "Full Truck Load Report", icon: "bi-truck", href: "/pages/Reports/reportFulltruckDetails.html" },
                 { label: "Customer Invoice Report", icon: "bi-receipt", href: "/pages/Reports/reportCustomerInvoiceDetails.html" },
+                { label: "Payment Details", icon: "bi-wallet", href: "/pages/Reports/PaymentDetails.html" },
                 { label: "Vendor Billing Report", icon: "bi-receipt", href: "#" },
-                { label: "Payment Received", icon: "bi-wallet", href: "#" },
                 { label: "Payment Receivable", icon: "bi-wallet", href: "#" },
-                { label: "Payment Paid", icon: "bi-wallet", href: "#" },
                 { label: "Payment Payable", icon: "bi-wallet", href: "#" },
                 { label: "Accounting Ledger", icon: "bi-receipt", href: "#" }
             ]
