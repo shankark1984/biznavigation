@@ -97,3 +97,4 @@ function addFooterToAllPages(doc, PAGE) {
         doc.setTextColor(0, 0, 0);
     }
 }
+

@@ -1957,3 +1957,35 @@ function addFuelSurcharge(event) {
 
     modal.hide();
 }
+
+// ==========================================
+// GET TERMS & CONDITIONS FOR PDF
+// ==========================================
+async function getTermsAndConditions(companyID) {
+
+    try {
+        console.log("companyID", companyID);
+        const { data, error } = await supabaseClient
+            .from("CompanyTandCs")
+            .select("Description")
+            .eq("CompanyID", companyID)
+            .order("id", {
+                ascending: true
+            });
+
+        if (error) throw error;
+        console.log("Terms & Conditions data:", data);
+        return data || [];
+
+    } catch (err) {
+
+        console.error(
+            "Error fetching Terms & Conditions:",
+            err
+        );
+
+        return [];
+
+    }
+
+}
