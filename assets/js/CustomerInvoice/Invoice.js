@@ -639,8 +639,8 @@ document.getElementById('reportButton').addEventListener('click', async () => {
     const invoiceDetails = await getInvoiceDetails(invoiceNo);
     if (!invoiceDetails) return;
     if (FORWARDING_TYPES.includes(invoiceDetails.InvoiceType)) {
-        await generate_International_InvoicePDF_R1(invoiceDetails); // Generate PDF for Forwarding/Import/Export
-        // await generate_International_InvoicePDF(invoiceDetails); // Generate PDF for Forwarding/Import/Export
+        // await generate_International_InvoicePDF_R1(invoiceDetails); // Generate PDF for Forwarding/Import/Export
+        await generate_International_InvoicePDF(invoiceDetails); // Generate PDF for Forwarding/Import/Export
     } else if (invoiceDetails.InvoiceType === 'Customs Clearance') {
         await generate_CustmsClearance_InvoicePDF(invoiceDetails); // Generate PDF for Customs Clearance
     } else if (invoiceDetails.InvoiceType === 'Domestic') {
