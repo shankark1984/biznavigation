@@ -1,5 +1,5 @@
 
-async function generate_International_InvoicePDF1(header, lines = []) {
+async function generate_International_InvoicePDF(header, lines = []) {
 
     // Import jsPDF library
     const { jsPDF } = window.jspdf;
@@ -152,7 +152,7 @@ async function generate_International_InvoicePDF1(header, lines = []) {
     doc.save(`${party.name || "NA"}_${header?.InvoiceNo || "NA"}.pdf`);
 }
 
-async function fetchAndRenderShipmentTable_Annexure1(doc, startY, PAGE, FONT, invoiceNo) {
+async function fetchAndRenderShipmentTable_Annexure(doc, startY, PAGE, FONT, invoiceNo) {
     const shipmentColumnStyles = {
         0: { cellWidth: 8, halign: "center" }, // Sl No
         1: { cellWidth: 25 }, // Docket / Job ID
@@ -577,7 +577,7 @@ async function fetchAndRenderShipmentTable_Annexure1(doc, startY, PAGE, FONT, in
     };
 }
 
-async function fetchAndRenderShipmentTable_Main1(doc, startY, PAGE, FONT, invoiceNo) {
+async function fetchAndRenderShipmentTable_Main(doc, startY, PAGE, FONT, invoiceNo) {
     const shipmentColumnStyles = {
         0: { cellWidth: 8, halign: "center" }, // Sl No
         1: { cellWidth: 23 }, // Docket No
