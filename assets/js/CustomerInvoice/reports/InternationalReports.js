@@ -136,9 +136,6 @@ async function generate_International_InvoicePDF(header, lines = []) {
         }
     }
 
-
-
-
     /* ==============================
        TERMS AND BANK DETAILS
     ============================== */
