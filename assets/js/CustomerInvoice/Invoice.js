@@ -646,7 +646,7 @@ document.getElementById('reportButton').addEventListener('click', async () => {
         }
         // await generate_International_InvoicePDF(invoiceDetails); // Generate PDF for Forwarding/Import/Export
     } else if (invoiceDetails.InvoiceType === 'Customs Clearance') {
-        await generate_CustmsClearance_InvoicePDF(invoiceDetails); // Generate PDF for Customs Clearance
+        await generate_Clear_InvoicePDF_Main(invoiceDetails); // Generate PDF for Customs Clearance
     } else if (invoiceDetails.InvoiceType === 'Domestic') {
         await generate_DomesticReports_InvoicePDF(invoiceDetails); // Generate PDF for Domestic
     } else if (invoiceDetails.InvoiceType === 'Full Truck Load') {

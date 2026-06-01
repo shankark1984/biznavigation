@@ -1,7 +1,7 @@
 // ==========================================
 // GENERATE INTERNATIONAL INVOICE PDF
 // ==========================================
-async function generate_International_InvoicePDF_Annexure(header, lines = []) {
+async function generate_Clear_InvoicePDF_Main(header, lines = []) {
 
     const { jsPDF } = window.jspdf;
 
@@ -473,10 +473,10 @@ async function getShipmentData_int_Annexure(invoiceNo) {
         // SHIPMENTS
         // =========================
         const { data: shipments, error: shipError } = await supabaseClient
-            .from("InternationalBookingView")
+            .from("CustomsClearanceView")
             .select("*")
-            .eq("InvoiceNumber", invoiceNo)
-            .order("BookedDate", { ascending: true });
+            .eq("InvoiceNo", invoiceNo)
+            .order("JobDate", { ascending: true });
 
         if (shipError) {
             console.error("Shipment fetch error:", shipError);
@@ -510,15 +510,15 @@ async function getShipmentData_int_Annexure(invoiceNo) {
         // =========================
         const [chargesRes, equipmentRes] = await Promise.all([
             supabaseClient
-                .from("InternationalBookingCharges")
+                .from("CustomsClearanceCharges")
                 .select("*")
-                .in("ID_IB", shipmentIds)
+                .in("ID_CC", shipmentIds)
                 .order("id", { ascending: false }),
 
             supabaseClient
-                .from("InternationalBookingEquipment")
+                .from("CustomsClearanceEquipment")
                 .select("*")
-                .in("ID_IB", shipmentIds)
+                .in("ID_CC", shipmentIds)
         ]);
 
         const charges = Array.isArray(chargesRes.data) ? chargesRes.data : [];
@@ -736,7 +736,6 @@ async function drawShipmentTable_int_Annexure(
                         fillColor: [240, 240, 240],
                         textColor: [0, 0, 0],
                         valign: "middle",
-                        halign: "right",
                         minCellHeight: 2,
                         cellPadding: { top: 0, bottom: 0, left: 2, right: 2 }
                     }
