@@ -55,56 +55,8 @@ async function fetchCompanyDetails(header) {
         logo: data?.logo_path
     };
 }
-// Utility function to load image as base64
-async function drawHeader(doc, PAGE, FONT, company, y) {
-    const headerH = 22;
-    const logoW = PAGE.w * 0.2;
-    const textW = PAGE.w * 0.75;
 
-    doc.rect(PAGE.x, y, PAGE.w, headerH);
 
-    const logoImg = await loadImage(company.logo);
-
-    if (logoImg) {
-        const maxW = logoW - 6;
-        const maxH = headerH - 4;
-        const ratio = logoImg.width / logoImg.height;
-
-        let w = maxW, h = w / ratio;
-        if (h > maxH) { h = maxH; w = h * ratio; }
-
-        doc.addImage(logoImg, "PNG",
-            PAGE.x + (logoW - w) / 2,
-            y + (headerH - h) / 2,
-            w, h
-        );
-    }
-
-    const textX = PAGE.x + logoW + 4;
-    const centerY = y + headerH / 2;
-
-    doc.setFont("helvetica", "bold").setFontSize(FONT.header);
-    doc.text(company.name, textX + textW / 2, centerY - 4, { align: "center" });
-
-    doc.setFont("helvetica", "normal").setFontSize(FONT.body);
-    doc.text(doc.splitTextToSize(company.address, textW - 8),
-        textX + textW / 2, centerY + 1, { align: "center" });
-
-    doc.setFontSize(FONT.small);
-    doc.text(`Ph: ${company.phone} | ${company.email} | GST: ${company.gst}`,
-        textX + textW / 2, centerY + 7, { align: "center" });
-
-    return y + headerH;
-}
-// Utility function to draw title
-function drawTitle(doc, PAGE, FONT, y) {
-    doc.rect(PAGE.x, y, PAGE.w, 6);
-
-    doc.setFont("helvetica", "bold").setFontSize(FONT.title);
-    doc.text("TAX INVOICE", PAGE.x + PAGE.w / 2, y + 4, { align: "center" });
-
-    return y + 6;
-}
 // Utility function to fetch party details
 async function fetchPartyDetails(header) {
     const data = await getPartyProfile(header.PartyCode);

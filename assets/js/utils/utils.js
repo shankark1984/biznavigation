@@ -1420,7 +1420,7 @@ async function paymentDetails(invoiceNumber) {
 }
 
 async function advancedPaymentDetails(invoiceNumber, invoiceDate) {
-    console.log('Fetching payment details for invoice:', invoiceNumber, 'with date filter:', invoiceDate);
+    // console.log('Fetching payment details for invoice:', invoiceNumber, 'with date filter:', invoiceDate);
 
     try {
         const { data, error } = await supabaseClient
@@ -1964,7 +1964,7 @@ function addFuelSurcharge(event) {
 async function getTermsAndConditions(companyID) {
 
     try {
-        console.log("companyID", companyID);
+        // console.log("companyID", companyID);
         const { data, error } = await supabaseClient
             .from("CompanyTandCs")
             .select("Description")
@@ -1974,7 +1974,7 @@ async function getTermsAndConditions(companyID) {
             });
 
         if (error) throw error;
-        console.log("Terms & Conditions data:", data);
+        // console.log("Terms & Conditions data:", data);
         return data || [];
 
     } catch (err) {

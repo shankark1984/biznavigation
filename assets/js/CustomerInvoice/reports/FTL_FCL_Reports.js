@@ -101,8 +101,32 @@ async function drawHeader(doc, PAGE, FONT, company, y) {
         textX + textW / 2, centerY + 1, { align: "center" });
 
     doc.setFontSize(FONT.small);
-    doc.text(`Ph: ${company.phone} | ${company.email} | GST: ${company.gst} | PAN: ${company?.panNo} | UA No: ${company?.uANo} `,
-        textX + textW / 2, centerY + 7, { align: "center" });
+    function hasValue(v) {
+        return v &&
+            v.trim() !== "" &&
+            v !== "-" &&
+            v !== "NA" &&
+            v !== "N/A";
+    }
+
+    const companyInfo = [
+        hasValue(company?.phone) && `Ph: ${company.phone}`,
+        hasValue(company?.email) && company.email,
+        hasValue(company?.gst) && `GST: ${company.gst}`,
+        hasValue(company?.panNo) && `PAN: ${company.panNo}`,
+        hasValue(company?.uANo) && `UA No: ${company.uANo}`
+    ]
+        .filter(Boolean)
+        .join(" | ");
+
+    if (companyInfo) {
+        doc.text(
+            companyInfo,
+            textX + textW / 2,
+            centerY + 7,
+            { align: "center" }
+        );
+    }
 
     return y + headerH;
 }
