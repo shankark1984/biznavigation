@@ -237,7 +237,14 @@ function drawTitle(doc, PAGE, FONT, y) {
 
     return y + 6;
 }
+function drawTitle_Duty_Invoice(doc, PAGE, FONT, y) {
+    doc.rect(PAGE.x, y, PAGE.w, 6);
 
+    doc.setFont("helvetica", "bold").setFontSize(FONT.title);
+    doc.text("DUTY INVOICE", PAGE.x + PAGE.w / 2, y + 4, { align: "center" });
+
+    return y + 6;
+}
 // Utility function to load image as base64
 async function drawHeader(doc, PAGE, FONT, company, y) {
     const headerH = 22;
@@ -279,3 +286,95 @@ async function drawHeader(doc, PAGE, FONT, company, y) {
 
     return y + headerH;
 }
+
+// ==========================================
+// COMMON CENTER TEXT
+// ==========================================
+function drawCenteredText(
+    doc,
+    text,
+    x,
+    width,
+    y,
+    height
+) {
+
+    doc.text(
+        text,
+        x + width / 2,
+        y + height / 2,
+        {
+            align: "center",
+            baseline: "middle"
+        }
+    );
+}
+
+// Draw party details section Invoice no, invoice date, SAC code, GST no, PO no
+function drawPartySection(doc, PAGE, FONT, header, party, company, y) {
+    const left70 = PAGE.w * 0.7;
+    const left40 = PAGE.w * 0.4;
+    const lineHeight = 3.5;
+    const startX = PAGE.x + 3;
+
+    // 🔹 Safe helper
+    const safe = (v, d = "-") => (v ? v : d);
+
+    // ================= LEFT SIDE =================
+    const partyNameLines = doc.splitTextToSize(`M / s ${safe(party.name, "")
+        } `, left70 - 6);
+    const partyAddrLines = doc.splitTextToSize(safe(party.address, ""), left70 - 6);
+
+    // ================= RIGHT SIDE =================
+    const rightData = [
+        { label: "Invoice No :", value: safe(header?.InvoiceNo) },
+        { label: "Invoice Date :", value: formatDate(header?.InvoiceDate) || "-" },
+        { label: "SAC Code :", value: safe(header?.SACCode) }
+    ];
+
+    // 🔹 Calculate label width once
+    doc.setFont("helvetica", "bold").setFontSize(FONT.title);
+    const labelWidth = Math.max(...rightData.map(r => doc.getTextWidth(r.label)));
+
+    // ================= HEIGHT =================
+    const leftLines = partyNameLines.length + partyAddrLines.length + 1; // +1 for GST
+    const rightLines = rightData.length;
+
+    const row1Lines = Math.max(leftLines, rightLines);
+    const row1H = row1Lines * lineHeight + 4;
+
+    const infoH = row1H; // 🔥 removed unused bottom row
+
+    // ================= BOX =================
+    doc.rect(PAGE.x, y, PAGE.w, infoH);
+    doc.line(PAGE.x + left70, y, PAGE.x + left70, y + row1H);
+
+    // ================= DRAW LEFT =================
+    let currentY = y + 4;
+
+    // Party Name
+    doc.setFont("helvetica", "bold").setFontSize(FONT.body);
+    doc.text(partyNameLines, startX, currentY);
+    currentY += partyNameLines.length * lineHeight;
+
+    // Address
+    doc.setFont("helvetica", "normal").setFontSize(FONT.small);
+    doc.text(partyAddrLines, startX, currentY);
+    currentY += partyAddrLines.length * lineHeight;
+
+    // GST
+    drawLabelValue(doc, "GST No :", safe(party.gst), startX, currentY);
+
+    // ================= DRAW RIGHT =================
+    let rightY = y + 4;
+    const rightX = PAGE.x + left70 + 3;
+
+    rightData.forEach(item => {
+        drawLabelValueAligned(doc, item.label, item.value, rightX, rightY, labelWidth);
+        rightY += lineHeight;
+    });
+
+    return y + infoH;
+}
+
+
