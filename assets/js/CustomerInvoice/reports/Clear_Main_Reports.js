@@ -1,304 +1,437 @@
 // ==========================================
-// GENERATE INTERNATIONAL INVOICE PDF
+// GENERATE CLEARANCE INVOICE PDF
 // ==========================================
-async function generate_Clear_InvoicePDF_Main(header, lines = []) {
+async function generate_Clear_InvoicePDF_Main(
+    header,
+    lines = []
+) {
 
-    const { jsPDF } = window.jspdf;
+    try {
 
-    const doc = new jsPDF("p", "mm", "a4");
+        const { jsPDF } = window.jspdf;
 
-    const PAGE = { x: 15, w: 190, h: 297 };
+        const doc = new jsPDF(
+            "p",
+            "mm",
+            "a4"
+        );
 
-    const FONT = { header: 14, title: 10, body: 8, small: 7, tiny: 6, stiny: 5 };
+        const { PAGE, FONT } =
+            PDF_CONFIG;
 
-    let y = 9;
+        let y = 9;
 
-    // ==========================================
-    // FETCH DATA
-    // ==========================================
-    const [company, party, tandcData, shipmentData, bank, totalsPayment
-    ] = await Promise.all([
-        fetchCompanyDetails(header),
-        fetchPartyDetails(header),
-        getTermsAndConditions(header?.company_id),
-        getShipmentData_Clear_Main(header?.InvoiceNo),
-        getInvoiceBankDetails(header?.InvoiceNo),
-        advancedPaymentDetails(
-            header?.InvoiceNo,
-            header?.InvoiceDate
-        )
-    ]);
+        // ==========================================
+        // FETCH DATA (PARALLEL)
+        // ==========================================
+        const [
+            company,
+            party,
+            tandcData,
+            shipmentData,
+            bank,
+            totalsPayment
+        ] = await Promise.all([
 
-    // ==========================================
-    // TOTAL PAYMENT RECEIVED
-    // ==========================================
-    const totalPaymentReceived = round2(
-        safeNumber(totalsPayment?.totalPayment) +
-        safeNumber(totalsPayment?.totalOtherDeduction) +
-        safeNumber(totalsPayment?.totalTDS)
+            fetchCompanyDetails(header),
 
-    );
+            fetchPartyDetails(header),
 
-    // ==========================================
-    // HEADER
-    // ==========================================
-    y = await drawHeader(doc, PAGE, FONT, company, y);
+            getTermsAndConditions(
+                header?.company_id
+            ),
 
-    // ==========================================
-    // TITLE
-    // ==========================================
-    console.log("Report Type:", reportType);
-    if (reportType === "Duty Invoice") {
-        y = drawTitle_Duty_Invoice(doc, PAGE, FONT, y);
-    } else {
-        y = drawTitle(doc, PAGE, FONT, y);
+            getShipmentData_Clear_Main(
+                header?.InvoiceNo
+            ),
+
+            getInvoiceBankDetails(
+                header?.InvoiceNo
+            ),
+
+            advancedPaymentDetails(
+                header?.InvoiceNo,
+                header?.InvoiceDate
+            )
+        ]);
+
+        // ==========================================
+        // PAYMENT RECEIVED
+        // ==========================================
+        const totalPaymentReceived =
+            round2(
+                safeNumber(
+                    totalsPayment?.totalPayment
+                ) +
+                safeNumber(
+                    totalsPayment?.totalOtherDeduction
+                ) +
+                safeNumber(
+                    totalsPayment?.totalTDS
+                )
+            );
+
+        // ==========================================
+        // HEADER
+        // ==========================================
+        y = await drawHeader(
+            doc,
+            PAGE,
+            FONT,
+            company,
+            y
+        );
+
+        // ==========================================
+        // TITLE
+        // ==========================================
+        y =
+            reportType === "Duty Invoice"
+                ? drawTitle_Duty_Invoice(
+                    doc,
+                    PAGE,
+                    FONT,
+                    y
+                )
+                : drawTitle(
+                    doc,
+                    PAGE,
+                    FONT,
+                    y
+                );
+
+        // ==========================================
+        // PARTY DETAILS
+        // ==========================================
+        y = drawPartySection_Clearance(
+            doc,
+            PAGE,
+            FONT,
+            header,
+            party,
+            company,
+            shipmentData?.shipments || [],
+            y
+        );
+
+        // ==========================================
+        // SHIPMENT TABLE
+        // ==========================================
+        const shipmentResult =
+            await drawShipmentTable_Clear_Main(
+                doc,
+                PAGE,
+                FONT,
+                shipmentData?.shipments || [],
+                y,
+                shipmentData?.charges || []
+            );
+
+        y = shipmentResult.y;
+
+        // ==========================================
+        // TERMS + TAX
+        // ==========================================
+        y =
+            await drawTermsAndTaxSection_Clear_Main(
+                doc,
+                PAGE,
+                FONT,
+                company,
+                header,
+                shipmentResult,
+                y,
+                bank,
+                totalPaymentReceived,
+                tandcData || []
+            );
+
+        // ==========================================
+        // AMOUNT IN WORDS
+        // ==========================================
+        y = drawAmountInWords(
+            doc,
+            PAGE,
+            FONT,
+            shipmentResult.grandTotal,
+            y
+        );
+
+        // ==========================================
+        // BANK DETAILS
+        // ==========================================
+        y = drawBankDetailsSection(
+            doc,
+            PAGE,
+            FONT,
+            company,
+            bank,
+            y
+        );
+
+        // ==========================================
+        // GLOBAL ITEMS
+        // ==========================================
+        drawaddFooterToAllPages(
+            doc,
+            PAGE
+        );
+
+        drawInvoiceBorderAllPages(
+            doc,
+            PAGE
+        );
+
+        // ==========================================
+        // SAVE
+        // ==========================================
+        const fileName =
+            `${party?.name || "NA"}_${header?.InvoiceNo || "NA"}.pdf`;
+
+        console.log(
+            "PDF generated successfully",
+            fileName
+        );
+
+        doc.save(fileName);
+
+    } catch (error) {
+
+        console.error(
+            "Invoice PDF generation failed:",
+            error
+        );
+
+        throw error;
     }
-
-    // ==========================================
-    // PARTY SECTION
-    // ==========================================
-    y = drawPartySection_Clearance(
-        doc,
-        PAGE,
-        FONT,
-        header,
-        party,
-        company,
-        shipmentData.shipments,
-        y
-    );
-
-    // ==========================================
-    // SHIPMENT TABLE
-    // ==========================================
-    const shipmentResult = await drawShipmentTable_Clear_Main(
-        doc,
-        PAGE,
-        FONT,
-        shipmentData.shipments,   // ✅ ARRAY
-        y,
-        shipmentData.charges      // ✅ ARRAY
-    );
-
-    y = shipmentResult.y;
-
-    // ==========================================
-    // TERMS + TAX SECTION
-    // ==========================================
-    y = await drawTermsAndTaxSection_Clear_Main(doc, PAGE, FONT, company, header, shipmentResult, y, bank, totalPaymentReceived,
-        tandcData
-    );
-
-    // ==========================================
-    // AMOUNT IN WORDS
-    // ==========================================
-    y = drawAmountInWords(doc, PAGE, FONT, shipmentResult.grandTotal, y);
-
-    // ==========================================
-    // BANK DETAILS SECTION
-    // ==========================================
-    y = drawBankDetailsSection(doc, PAGE, FONT, company, bank, y);
-    // ==========================================
-    // FOOTER
-    // ==========================================
-    drawaddFooterToAllPages(doc, PAGE, y);
-
-    // ==========================================
-    // SAVE PDF
-    // ==========================================
-    drawInvoiceBorderAllPages(doc, PAGE);
-    doc.save(
-        `Invoice_${header?.InvoiceNo || "NA"}.pdf`
-    );
 }
 
 // ==========================================
 // TERMS & TAX SECTION
 // ==========================================
-async function drawTermsAndTaxSection_Clear_Main(doc, PAGE, FONT, company, header, totals, y, bank, totalPaymentReceived, tandcData
+function drawTermsAndTaxSection_Clear_Main(
+    doc,
+    PAGE,
+    FONT,
+    company,
+    header,
+    totals,
+    y,
+    bank,
+    totalPaymentReceived,
+    tandcData = []
 ) {
 
-    // ==========================================
-    // CONFIG
-    // ==========================================
     const CONFIG = {
-        headerH: 5,
-        lineHeight: 1,
-        paragraphGap: 0.3,
+        headerH: 4,
+        lineHeight: 3.545,
+        paragraphGap: 1,
 
         colDescription: 23,
         colNonTax: 23,
         colTax: 23,
 
-        bankTopGap: 1,
-        bankRowHeight: 4,
-
-        bottomMargin: 20,
+        bottomMargin: 35
     };
 
-    const colTerms =
-        PAGE.w -
-        (
-            CONFIG.colDescription +
-            CONFIG.colNonTax +
-            CONFIG.colTax
-        );
-
+    // ==========================================
+    // COLUMN WIDTHS
+    // ==========================================
     const COL = {
-        terms: colTerms,
+        terms:
+            PAGE.w -
+            CONFIG.colDescription -
+            CONFIG.colNonTax -
+            CONFIG.colTax,
+
         desc: CONFIG.colDescription,
         nonTax: CONFIG.colNonTax,
         tax: CONFIG.colTax
     };
 
+    // ==========================================
+    // X POSITIONS
+    // ==========================================
     const X = {
         terms: PAGE.x,
-        desc: PAGE.x + COL.terms,
-        nonTax: PAGE.x + COL.terms + COL.desc,
-        tax: PAGE.x + COL.terms + COL.desc + COL.nonTax,
-        end: PAGE.x + PAGE.w
+
+        desc:
+            PAGE.x +
+            COL.terms,
+
+        nonTax:
+            PAGE.x +
+            COL.terms +
+            COL.desc,
+
+        tax:
+            PAGE.x +
+            COL.terms +
+            COL.desc +
+            COL.nonTax,
+
+        end:
+            PAGE.x +
+            PAGE.w
     };
 
     // ==========================================
-    // HEIGHT CALCULATIONS
+    // TERMS HEIGHT
     // ==========================================
-    const termsHeight = calculateTermsHeight_int_Annexure(doc, tandcData, COL.terms, CONFIG);
+    const termsHeight =
+        calculateTermsHeight_Clear_Main(
+            doc,
+            tandcData,
+            COL.terms,
+            CONFIG
+        );
 
-    const bankHeight = 20;
+    // ==========================================
+    // LEFT HEIGHT
+    // ==========================================
+    const leftHeight =
+        termsHeight + 2;
 
-    const leftHeight = termsHeight + CONFIG.bankTopGap + bankHeight + 2;
-
+    // ==========================================
+    // TAX TABLE HEIGHT
+    // ==========================================
     const taxRows = 8;
 
-    const rightHeight = (taxRows + 1) * CONFIG.headerH;
+    const rightHeight =
+        (taxRows + 1) *
+        CONFIG.headerH;
 
-    const tableH = Math.max(leftHeight, rightHeight);
+
+
+    // Reduce by 1px to avoid extra bottom space
+    const adjustedRightHeight =
+        rightHeight - 1;
 
     // ==========================================
-    // POSITION AT BOTTOM OF LAST PAGE
+    // FINAL TABLE HEIGHT
+    // ==========================================
+    const rowHeight = 6;
+
+    const taxHeight =
+        CONFIG.headerH +
+        (
+            8 * rowHeight
+        );
+
+    const tableH =
+        Math.max(
+            leftHeight,
+            taxHeight
+        );
+
+    // ==========================================
+    // PAGE CHECK
     // ==========================================
     const pageHeight =
         doc.internal.pageSize.getHeight();
 
-    const bottomY = pageHeight - CONFIG.bottomMargin - tableH;
+    const targetY =
+        pageHeight -
+        CONFIG.bottomMargin -
+        tableH;
 
-    // If enough space remains on current page,
-    // move section to bottom.
-    if (bottomY > y) {
+    if (targetY <= y) {
 
-        y = bottomY;
-
-    } else {
-
-        // Move to new page
         doc.addPage();
 
-        const newPageHeight = doc.internal.pageSize.getHeight();
+        y =
+            doc.internal.pageSize.getHeight() -
+            CONFIG.bottomMargin -
+            tableH;
+    }
+    else {
 
-        y = newPageHeight - CONFIG.bottomMargin - tableH;
+        y = targetY;
     }
 
     // ==========================================
-    // OUTER BORDER
+    // DRAW TABLE
     // ==========================================
-    drawOuterTable_int_Annexure(doc, PAGE, X, y, tableH);
-    // ==========================================
-    // HEADER ROW
-    // ==========================================
-    drawHeaderRow_int_Annexure(doc, FONT, X, COL, y, CONFIG.headerH);
+    drawOuterTable_Clear_Main(
+        doc,
+        PAGE,
+        X,
+        y,
+        leftHeight,
+        taxHeight,
+        COL,
+        CONFIG
+    );
 
-    // ==========================================
-    // TERMS CONTENT
-    // ==========================================
-    drawTermsContent_int_Annexure(doc, FONT, tandcData, X, COL, y, CONFIG);
+    drawHeaderRow_Clear_Main(
+        doc,
+        FONT,
+        X,
+        COL,
+        y,
+        CONFIG.headerH
+    );
 
-    // ==========================================
-    // TAX DETAILS
-    // ==========================================
-    drawTaxSection_int_Annexure(doc, FONT, totals, totalPaymentReceived, X, COL, y, CONFIG);
+    drawTermsContent_Clear_Main(
+        doc,
+        FONT,
+        tandcData,
+        X,
+        COL,
+        y,
+        CONFIG
+    );
+
+    drawTaxSection_Clear_Main(
+        doc,
+        FONT,
+        totals,
+        totalPaymentReceived,
+        X,
+        COL,
+        y,
+        CONFIG
+    );
 
     return y + tableH;
 }
 
 // ==========================================
-// HEIGHT OF TERMS
+// CALCULATE TERMS HEIGHT
 // ==========================================
 function calculateTermsHeight_Clear_Main(
     doc,
-    tandcData,
+    tandcData = [],
     termsWidth,
     CONFIG
 ) {
 
-    let height =
-        CONFIG.headerH + 4;
+    const textWidth =
+        termsWidth - 6;
 
-    tandcData.forEach((item, i) => {
+    let totalHeight =
+        CONFIG.headerH + 2;
 
-        const txt =
-            `${i + 1}. ${item.Description || ""}`;
+    tandcData.forEach((item, index) => {
 
-        const split =
+        const text =
+            `${index + 1}. ${item?.TermsCondition || item?.Description || ""}`;
+
+        const lines =
             doc.splitTextToSize(
-                txt,
-                termsWidth - 10
+                text,
+                textWidth
             );
 
-        height +=
-            split.length *
-            CONFIG.lineHeight;
-
-        if (
-            i <
-            tandcData.length - 1
-        ) {
-            height +=
-                CONFIG.paragraphGap;
-        }
-
+        totalHeight +=
+            (lines.length * CONFIG.lineHeight) +
+            CONFIG.paragraphGap;
     });
 
-    return height;
+    return totalHeight;
 }
-
 // ==========================================
-// TABLE BORDERS
-// ==========================================
-function drawOuterTable_Clear_Main(doc, PAGE, X, y, tableH) {
-
-    doc.setLineWidth(0.1);
-
-    doc.rect(PAGE.x, y, PAGE.w, tableH);
-
-    doc.line(X.desc, y, X.desc, y + tableH);
-
-    doc.line(X.nonTax, y, X.nonTax, y + tableH);
-
-    doc.line(X.tax, y, X.tax, y + tableH);
-}
-
-// ==========================================
-// HEADER ROW
-// ==========================================
-function drawHeaderRow_Clear_Main(doc, FONT, X, COL, y, rowH) {
-
-    doc.line(X.terms, y + rowH, X.end, y + rowH);
-
-    PDF_FONT.set(doc, "bold");
-
-    doc.setFontSize(FONT.body);
-
-    drawCenteredText(doc, "Terms & Conditions", X.terms, COL.terms, y, rowH);
-
-    drawCenteredText(doc, "", X.desc, COL.desc, y, rowH); // Empty header for Description column
-
-    drawCenteredText(doc, "Non-Tax Amount", X.nonTax, COL.nonTax, y, rowH);
-
-    drawCenteredText(doc, "Tax Amount", X.tax, COL.tax, y, rowH);
-}
-
-// ==========================================
-// TERMS CONTENT
+// DRAW TERMS CONTENT
 // ==========================================
 function drawTermsContent_Clear_Main(
     doc,
@@ -309,49 +442,170 @@ function drawTermsContent_Clear_Main(
     y,
     CONFIG
 ) {
-    PDF_FONT.set(doc, "normal");
 
-    doc.setFontSize(6);
+    const startX =
+        X.terms + 2;
 
-    let currentY = y + CONFIG.headerH + 4;
+    const textWidth =
+        COL.terms - 4;
 
-    const leftMargin = X.terms + 4;
-    const textWidth = COL.terms - 5;
-    const indent = 2; // hanging indent
+    let currentY =
+        y +
+        CONFIG.headerH +
+        3;
+
+    doc.setFont("times", "normal");
+    doc.setFontSize(FONT.body);
 
     tandcData.forEach((item, index) => {
 
-        const prefix = `${index + 1}. `;
+        const text =
+            `${index + 1}. ${item?.TermsCondition || item?.Description || ""}`;
 
-        const lines = doc.splitTextToSize(
-            item.Description || "",
-            textWidth - indent
-        );
+        const lines =
+            doc.splitTextToSize(
+                text,
+                textWidth
+            );
 
-        // First line with numbering
         doc.text(
-            prefix + (lines[0] || ""),
-            leftMargin,
+            lines,
+            startX,
             currentY
         );
 
-        currentY += 3.8;
-
-        // Remaining lines aligned
-        for (let i = 1; i < lines.length; i++) {
-            doc.text(
-                lines[i],
-                leftMargin + indent,
-                currentY
-            );
-            currentY += 3.8;
-        }
-
-        // Gap between terms
-        currentY += 1.5;
+        currentY +=
+            (lines.length * CONFIG.lineHeight) +
+            CONFIG.paragraphGap;
     });
 
     return currentY;
+}
+
+// ==========================================
+// OUTER TABLE
+// ==========================================
+function drawOuterTable_Clear_Main(
+    doc,
+    PAGE,
+    X,
+    y,
+    leftHeight,
+    taxHeight,
+    COL,
+    CONFIG
+) {
+
+    // ==========================================
+    // LEFT BOX (TERMS)
+    // ==========================================
+    doc.rect(
+        PAGE.x,
+        y,
+        COL.terms,
+        leftHeight
+    );
+
+    // ==========================================
+    // RIGHT BOX (TAX)
+    // ==========================================
+    doc.rect(
+        X.desc,
+        y,
+        (
+            COL.desc +
+            COL.nonTax +
+            COL.tax
+        ),
+        taxHeight
+    );
+
+    // ==========================================
+    // LEFT HEADER LINE
+    // ==========================================
+    doc.line(
+        PAGE.x,
+        y + CONFIG.headerH,
+        PAGE.x + COL.terms,
+        y + CONFIG.headerH
+    );
+
+    // ==========================================
+    // RIGHT HEADER LINE
+    // ==========================================
+    doc.line(
+        X.desc,
+        y + CONFIG.headerH,
+        X.end,
+        y + CONFIG.headerH
+    );
+
+    // ==========================================
+    // COLUMN SEPARATORS
+    // ==========================================
+    doc.line(
+        X.nonTax,
+        y,
+        X.nonTax,
+        y + taxHeight - 18
+    );
+
+    doc.line(
+        X.tax,
+        y,
+        X.tax,
+        y + taxHeight - 18
+    );
+}
+// ==========================================
+// HEADER ROW
+// ==========================================
+function drawHeaderRow_Clear_Main(
+    doc,
+    FONT,
+    X,
+    COL,
+    y,
+    rowH
+) {
+
+    const bottomY = y + rowH;
+
+    doc.line(
+        X.terms,
+        bottomY,
+        X.end,
+        bottomY
+    );
+
+    PDF_FONT.bold(doc, FONT.body);
+
+    drawCenteredText(
+        doc,
+        "Terms & Conditions",
+        X.terms,
+        COL.terms,
+        y,
+        rowH
+    );
+
+    drawCenteredText(
+        doc,
+        "Non-Tax Amount",
+        X.nonTax,
+        COL.nonTax,
+        y,
+        rowH
+    );
+
+    drawCenteredText(
+        doc,
+        "Tax Amount",
+        X.tax,
+        COL.tax,
+        y,
+        rowH
+    );
 }
 
 // ==========================================
@@ -369,78 +623,185 @@ function drawTaxSection_Clear_Main(
 ) {
 
     const advance =
-        safeNumber(
-            totalPaymentReceived
-        );
+        safeNumber(totalPaymentReceived);
+
+    const rowHeight = 6;
 
     const rows = [
-        ["Total Charges", totals.nonTaxableAmount, totals.taxableAmount],
-        ["CGST 9%", 0, totals.totalCGST],
-        ["SGST 9%", 0, totals.totalSGST],
-        ["IGST 18%", 0, totals.totalIGST],
-        ["Total GST", 0, totals.totalGST],
-        ["Grand Total", 0, totals.grandTotal],
-        ["Advance Amount", 0, advance],
-        ["Balance Amount", 0, round2(totals.grandTotal - advance)]
+        {
+            label: "Total Charges",
+            nonTax: totals.nonTaxableAmount,
+            tax: totals.taxableAmount
+        },
+        {
+            label: "CGST 9%",
+            nonTax: 0,
+            tax: totals.totalCGST
+        },
+        {
+            label: "SGST 9%",
+            nonTax: 0,
+            tax: totals.totalSGST
+        },
+        {
+            label: "IGST 18%",
+            nonTax: 0,
+            tax: totals.totalIGST
+        },
+        {
+            label: "Total GST",
+            nonTax: 0,
+            tax: totals.totalGST
+        },
+        {
+            label: "Grand Total",
+            tax: totals.grandTotal,
+            merged: true,
+            bold: true
+        },
+        {
+            label: "Advance Amount",
+            tax: advance,
+            merged: true,
+            bold: true
+        },
+        {
+            label: "Balance Amount",
+            tax: round2(
+                totals.grandTotal - advance
+            ),
+            merged: true,
+            bold: true
+        }
     ];
 
-    doc.setFontSize(
-        FONT.small
-    );
+    const textOffset =
+        rowHeight * 0.68;
 
-    rows.forEach(
-        (row, i) => {
+    for (
+        let i = 0;
+        i < rows.length;
+        i++
+    ) {
 
-            const rowY =
-                y +
-                CONFIG.headerH +
-                (
-                    i *
-                    CONFIG.headerH
-                );
+        const row = rows[i];
 
-            doc.line(
-                X.desc,
-                rowY,
-                X.end,
-                rowY
+        const rowTopY =
+            y +
+            CONFIG.headerH +
+            (
+                i * rowHeight
             );
 
+        const rowBottomY =
+            rowTopY +
+            rowHeight;
+
+        // ==========================================
+        // FONT STYLE
+        // ==========================================
+        if (row.bold) {
+
+            PDF_FONT.bold(
+                doc,
+                FONT.body
+            );
+
+        } else {
+
+            PDF_FONT.normal(
+                doc,
+                FONT.body
+            );
+        }
+
+        // ==========================================
+        // MERGED ROWS
+        // ==========================================
+        if (row.merged) {
+
             doc.text(
-                row[0],
+                row.label,
                 X.desc + 2,
-                rowY + 3.2
+                rowTopY + textOffset
             );
 
             doc.text(
                 safeAmount(
-                    row[1]
+                    row.tax
                 ).toFixed(2),
-                X.nonTax +
-                COL.nonTax -
+                X.tax +
+                COL.tax -
                 2,
-                rowY + 3.2,
+                rowTopY + textOffset,
                 {
                     align: "right"
                 }
             );
 
+        } else {
+
+            // ==========================================
+            // LABEL
+            // ==========================================
+            doc.text(
+                row.label,
+                X.desc + 2,
+                rowTopY + textOffset
+            );
+
+            // ==========================================
+            // NON TAX
+            // ==========================================
             doc.text(
                 safeAmount(
-                    row[2]
+                    row.nonTax
+                ).toFixed(2),
+                X.nonTax +
+                COL.nonTax -
+                2,
+                rowTopY + textOffset,
+                {
+                    align: "right"
+                }
+            );
+
+            // ==========================================
+            // TAX
+            // ==========================================
+            doc.text(
+                safeAmount(
+                    row.tax
                 ).toFixed(2),
                 X.tax +
                 COL.tax -
                 2,
-                rowY + 3.2,
+                rowTopY + textOffset,
                 {
                     align: "right"
                 }
             );
         }
-    );
-}
 
+        // ==========================================
+        // ROW BORDER
+        // ==========================================
+        doc.line(
+            X.desc,
+            rowBottomY,
+            X.end,
+            rowBottomY
+        );
+    }
+
+    // Return actual height
+    return {
+        height:
+            CONFIG.headerH +
+            (rows.length * rowHeight),
+        rowCount: rows.length
+    };
+}
 // ==========================================
 // FETCH SHIPMENT DATA
 // ==========================================
@@ -604,19 +965,19 @@ async function drawShipmentTable_Clear_Main(
     allCharges.sort((a, b) => {
 
         const getPriority = (chargeType = "") => {
-
             const txt = chargeType.toLowerCase();
 
-            if (txt.includes("import duty")) return 1;
-            if (txt.includes("duty")) return 2;
+            if (reportType === "Duty Invoice") {
+                if (txt.includes("import duty")) return 1;
+                if (txt.includes("duty")) return 2;
+            } else {
+                if (txt.includes("customs clearance charges")) return 1;
+            }
 
             return 999;
         };
 
-        return (
-            getPriority(a.ChargesType) -
-            getPriority(b.ChargesType)
-        );
+        return getPriority(a.ChargesType) - getPriority(b.ChargesType);
     });
     // ==========================================
     // CHARGE ROWS
@@ -810,7 +1171,9 @@ async function drawShipmentTable_Clear_Main(
     };
 }
 
-// Draw party details section // Draw party details section Invoice no, invoice date, SAC code, GST no, PO no
+// ==========================================
+// DRAW PARTY DETAILS SECTION
+// ==========================================
 function drawPartySection_Clearance(
     doc,
     PAGE,
@@ -822,14 +1185,18 @@ function drawPartySection_Clearance(
     y
 ) {
 
-    const left70 = PAGE.w * 0.7;
+    const left70 = PAGE.w * 0.62; // More space for right section
     const lineHeight = 3.5;
     const startX = PAGE.x + 3;
 
-    // 🔹 Safe helper
+    // ==========================================
+    // SAFE HELPERS
+    // ==========================================
     const safe = (v, d = "-") =>
-        (v !== null && v !== undefined && String(v).trim() !== "")
-            ? v
+        (v !== null &&
+            v !== undefined &&
+            String(v).trim() !== "")
+            ? String(v)
             : d;
 
     // ==========================================
@@ -837,38 +1204,37 @@ function drawPartySection_Clearance(
     // ==========================================
     const firstShipment = shipments?.[0] || {};
 
-    const mawb =
-        firstShipment.BLAWBNo + " / " + formatDate(firstShipment.BLAWBDate) ||
-        "-";
+    const mawb = firstShipment?.BLAWBNo
+        ? `${safe(firstShipment.BLAWBNo)} / ${formatDate(firstShipment.BLAWBDate)}`
+        : "-";
 
-    const beNo =
-        firstShipment.BENo + " / " + formatDate(firstShipment.BEDate) ||
-        "-";
+    const beNo = firstShipment?.BENo
+        ? `${safe(firstShipment.BENo)} / ${formatDate(firstShipment.BEDate)}`
+        : "-";
 
     const weight =
-        `${safeNumber(firstShipment.CargoWeight)} Kgs /   ${safe(firstShipment.Quantity)} Pcs` || "-";
-
+        `${safeNumber(firstShipment?.CargoWeight)} Kgs / ${safe(firstShipment?.Quantity)} Pcs`;
 
     const poNo =
-        firstShipment.PONo ||
-        header?.PONo ||
+        safe(firstShipment?.PONo, "") ||
+        safe(header?.PONo, "") ||
         "-";
 
     // ==========================================
-    // LEFT SIDE
+    // LEFT SIDE CONTENT
     // ==========================================
     const partyNameLines = doc.splitTextToSize(
         `M / s ${safe(party?.name, "")}`,
-        left70 - 6
+        left70 - 8
     );
 
     const partyAddrLines = doc.splitTextToSize(
         safe(party?.address, ""),
-        left70 - 6
+        left70 - 8
     );
 
     // ==========================================
-    // RIGHT SIDE
+    // RIGHT SIDE DATA
     // ==========================================
     const rightData = [
         {
@@ -901,11 +1267,43 @@ function drawPartySection_Clearance(
     // LABEL WIDTH
     // ==========================================
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(FONT.title);
+    doc.setFontSize(FONT.body);
 
     const labelWidth = Math.max(
-        ...rightData.map(r => doc.getTextWidth(r.label))
+        ...rightData.map(row =>
+            doc.getTextWidth(row.label)
+        )
     );
+
+    // ==========================================
+    // RIGHT WIDTH
+    // ==========================================
+    const rightWidth =
+        PAGE.w - left70 - 6;
+
+    const valueWidth =
+        rightWidth - labelWidth - 4;
+
+    // ==========================================
+    // WRAP RIGHT VALUES
+    // ==========================================
+    const rightRows = rightData.map(row => {
+
+        const valueLines =
+            doc.splitTextToSize(
+                String(row.value || "-"),
+                valueWidth
+            );
+
+        return {
+            ...row,
+            valueLines,
+            lineCount: Math.max(
+                1,
+                valueLines.length
+            )
+        };
+    });
 
     // ==========================================
     // HEIGHT CALCULATION
@@ -916,15 +1314,20 @@ function drawPartySection_Clearance(
         1;
 
     const rightLines =
-        rightData.length;
+        rightRows.reduce(
+            (sum, row) =>
+                sum + row.lineCount,
+            0
+        );
 
-    const row1Lines =
-        Math.max(leftLines, rightLines);
+    const totalLines =
+        Math.max(
+            leftLines,
+            rightLines
+        );
 
-    const row1H =
-        (row1Lines * lineHeight) + 4;
-
-    const infoH = row1H;
+    const infoH =
+        totalLines * lineHeight + 6;
 
     // ==========================================
     // OUTER BOX
@@ -940,13 +1343,13 @@ function drawPartySection_Clearance(
         PAGE.x + left70,
         y,
         PAGE.x + left70,
-        y + row1H
+        y + infoH
     );
 
     // ==========================================
     // LEFT CONTENT
     // ==========================================
-    let currentY = y + 4;
+    let currentY = y + 5;
 
     doc.setFont("helvetica", "bold");
     doc.setFontSize(FONT.body);
@@ -979,29 +1382,42 @@ function drawPartySection_Clearance(
         "GST No :",
         safe(party?.gst),
         startX,
-        currentY
+        currentY,
+        FONT
     );
 
     // ==========================================
     // RIGHT CONTENT
     // ==========================================
-    let rightY = y + 4;
-
     const rightX =
-        PAGE.x + left70 + 3;
+        PAGE.x + left70 + 2;
 
-    rightData.forEach(item => {
+    let rightY = y + 5;
 
-        drawLabelValueAligned(
-            doc,
-            item.label,
-            item.value,
+    rightRows.forEach(row => {
+
+        // Label
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(FONT.body);
+
+        doc.text(
+            row.label,
             rightX,
-            rightY,
-            labelWidth
+            rightY
         );
 
-        rightY += lineHeight;
+        // Value
+        doc.setFont("helvetica", "normal");
+
+        doc.text(
+            row.valueLines,
+            rightX + labelWidth + 2,
+            rightY
+        );
+
+        rightY +=
+            row.lineCount *
+            lineHeight;
     });
 
     return y + infoH;

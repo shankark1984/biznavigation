@@ -1,7 +1,22 @@
+const PDF_CONFIG = {
+    PAGE: {
+        x: 15,
+        w: 190,
+        h: 297
+    },
+
+    FONT: {
+        header: 14,
+        title: 10,
+        body: 8,
+        small: 7,
+        tiny: 6,
+        stiny: 5
+    }
+};
 // Utility function to fetch company details
 async function fetchCompanyDetails(header) {
     const data = await getCompanyProfile(header?.CompanyID || CompanyID);
-
     return {
         name: data?.company_name || "",
         address: [
@@ -13,11 +28,9 @@ async function fetchCompanyDetails(header) {
         phone: data?.phone_no || "-",
         email: data?.e_mail || "-",
         gst: data?.gst_number || "-",
-        state: data?.state,
         logo: data?.logo_path,
         uANo: data?.Udyog_aadhaar_no || "-",
         panNo: data?.pan_number || "-"
-
     };
 }
 // Utility function to fetch party details
@@ -35,16 +48,6 @@ async function fetchPartyDetails(header) {
         gst: data?.GSTNumber || "-",
         state: data?.State
     };
-}
-
-
-// 🔥 Reusable: normal label + value
-function drawLabelValue(doc, label, value, x, y) {
-    doc.setFont("helvetica", "bold");
-    doc.text(label, x, y);
-
-    doc.setFont("helvetica", "normal");
-    doc.text(value, x + doc.getTextWidth(label) + 2, y);
 }
 
 // ================= AMOUNT IN WORDS =================
@@ -72,6 +75,9 @@ function drawAmountInWords(doc, PAGE, FONT, grandTotal) {
     return y + boxH;
 }
 
+// ================= BANK DETAILS =================
+//Company Bank Details Section
+// ==========================================
 function drawBankDetailsSection(
     doc,
     PAGE,
@@ -85,8 +91,8 @@ function drawBankDetailsSection(
 
     doc.rect(PAGE.x, y, PAGE.w, boxHeight);
 
-    PDF_FONT.set(doc, "normal");
-    doc.setFontSize(FONT.tiny);
+    PDF_FONT.set(doc, "bold");
+    doc.setFontSize(FONT.body - 1);
 
     // ==========================
     // LINE 1
@@ -104,7 +110,7 @@ function drawBankDetailsSection(
     x += doc.getTextWidth(label) + 5;
 
     // Normal Text
-    PDF_FONT.set(doc, "normal");
+    PDF_FONT.set(doc, "bold");
 
     const fields = [
         `A/c Name : ${company?.name || "-"}`, "|",
@@ -139,7 +145,7 @@ function drawaddFooterToAllPages(doc, PAGE, y) {
 
         // LEFT
         PDF_FONT.set(doc, "bold");
-        doc.setFontSize(7);
+        doc.setFontSize(8);
         doc.setTextColor(0, 102, 204);
 
         doc.text(
@@ -176,119 +182,110 @@ function drawaddFooterToAllPages(doc, PAGE, y) {
     doc.setTextColor(0, 0, 0);
 }
 
+// ==========================================
+// PDF FONT HELPER
+// ==========================================
 const PDF_FONT = {
 
-    family: "times",
+    family: "times", // change once here for entire PDF
 
-    set(doc, style = "normal") {
-        doc.setFont(this.family, style);
+    set(
+        doc,
+        {
+            family = PDF_FONT.family,
+            style = "normal",
+            size = null
+        } = {}
+    ) {
+        doc.setFont(family, style);
+
+        if (size !== null) {
+            doc.setFontSize(size);
+        }
     },
 
-    normal(doc) {
-        this.set(doc);
+    normal(doc, size = null) {
+        this.set(doc, {
+            style: "normal",
+            size
+        });
     },
 
-    bold(doc) {
-        this.set(doc, "bold");
+    bold(doc, size = null) {
+        this.set(doc, {
+            style: "bold",
+            size
+        });
     },
 
-    italic(doc) {
-        this.set(doc, "italic");
+    italic(doc, size = null) {
+        this.set(doc, {
+            style: "italic",
+            size
+        });
     },
 
-    boldItalic(doc) {
-        this.set(doc, "bolditalic");
+    boldItalic(doc, size = null) {
+        this.set(doc, {
+            style: "bolditalic",
+            size
+        });
     }
-
 };
 
-// =========================
-// INVOICE BORDER
-function drawInvoiceBorder(doc, PAGE) {
+// ==========================================
+// DRAW LABEL + VALUE
+// ==========================================
+function drawLabelValue(
+    doc,
+    label,
+    value,
+    x,
+    y,
+    FONT
+) {
 
-    const left = PAGE.x;        // 15
-    const top = 9;
-    const width = PAGE.w;       // 190
-    const height = PAGE.h - 22; // 5 mm top + 5 mm bottom
+    PDF_FONT.bold(doc, FONT.body);
 
-    doc.setDrawColor(0);
-    doc.setLineWidth(0.1);
+    doc.text(label, x, y);
 
-    doc.rect(left, top, width, height);
-}
-function drawInvoiceBorderAllPages(doc, PAGE) {
+    PDF_FONT.normal(doc, FONT.body);
 
-    const totalPages = doc.getNumberOfPages();
-
-    for (let page = 1; page <= totalPages; page++) {
-
-        doc.setPage(page);
-
-        drawInvoiceBorder(doc, PAGE);
-    }
-}
-
-// Utility function to draw title
-function drawTitle(doc, PAGE, FONT, y) {
-    doc.rect(PAGE.x, y, PAGE.w, 6);
-
-    doc.setFont("helvetica", "bold").setFontSize(FONT.title);
-    doc.text("TAX INVOICE", PAGE.x + PAGE.w / 2, y + 4, { align: "center" });
-
-    return y + 6;
-}
-function drawTitle_Duty_Invoice(doc, PAGE, FONT, y) {
-    doc.rect(PAGE.x, y, PAGE.w, 6);
-
-    doc.setFont("helvetica", "bold").setFontSize(FONT.title);
-    doc.text("DUTY INVOICE", PAGE.x + PAGE.w / 2, y + 4, { align: "center" });
-
-    return y + 6;
-}
-// Utility function to load image as base64
-async function drawHeader(doc, PAGE, FONT, company, y) {
-    const headerH = 22;
-    const logoW = PAGE.w * 0.2;
-    const textW = PAGE.w * 0.75;
-
-    doc.rect(PAGE.x, y, PAGE.w, headerH);
-
-    const logoImg = await loadImage(company.logo);
-
-    if (logoImg) {
-        const maxW = logoW - 6;
-        const maxH = headerH - 4;
-        const ratio = logoImg.width / logoImg.height;
-
-        let w = maxW, h = w / ratio;
-        if (h > maxH) { h = maxH; w = h * ratio; }
-
-        doc.addImage(logoImg, "PNG",
-            PAGE.x + (logoW - w) / 2,
-            y + (headerH - h) / 2,
-            w, h
-        );
-    }
-
-    const textX = PAGE.x + logoW + 4;
-    const centerY = y + headerH / 2;
-
-    doc.setFont("helvetica", "bold").setFontSize(FONT.header);
-    doc.text(company.name, textX + textW / 2, centerY - 4, { align: "center" });
-
-    doc.setFont("helvetica", "normal").setFontSize(FONT.body);
-    doc.text(doc.splitTextToSize(company.address, textW - 8),
-        textX + textW / 2, centerY + 1, { align: "center" });
-
-    doc.setFontSize(FONT.small);
-    doc.text(`Ph: ${company.phone} | ${company.email} | GST: ${company.gst}`,
-        textX + textW / 2, centerY + 7, { align: "center" });
-
-    return y + headerH;
+    doc.text(
+        String(value || "-"),
+        x + doc.getTextWidth(label) + 2,
+        y
+    );
 }
 
 // ==========================================
-// COMMON CENTER TEXT
+// DRAW LABEL + VALUE ALIGNED
+// ==========================================
+function drawLabelValueAligned(
+    doc,
+    label,
+    value,
+    x,
+    y,
+    labelWidth,
+    FONT
+) {
+
+    PDF_FONT.bold(doc, FONT.body);
+
+    doc.text(label, x, y);
+
+    PDF_FONT.normal(doc, FONT.body);
+
+    doc.text(
+        String(value || "-"),
+        x + labelWidth,
+        y
+    );
+}
+
+// ==========================================
+// CENTERED TEXT
 // ==========================================
 function drawCenteredText(
     doc,
@@ -301,8 +298,8 @@ function drawCenteredText(
 
     doc.text(
         text,
-        x + width / 2,
-        y + height / 2,
+        x + (width / 2),
+        y + (height / 2),
         {
             align: "center",
             baseline: "middle"
@@ -310,71 +307,386 @@ function drawCenteredText(
     );
 }
 
-// Draw party details section Invoice no, invoice date, SAC code, GST no, PO no
-function drawPartySection(doc, PAGE, FONT, header, party, company, y) {
-    const left70 = PAGE.w * 0.7;
-    const left40 = PAGE.w * 0.4;
-    const lineHeight = 3.5;
-    const startX = PAGE.x + 3;
+// ==========================================
+// TITLE
+// ==========================================
+function drawTitle(
+    doc,
+    PAGE,
+    FONT,
+    y
+) {
 
-    // 🔹 Safe helper
-    const safe = (v, d = "-") => (v ? v : d);
+    doc.rect(
+        PAGE.x,
+        y,
+        PAGE.w,
+        6
+    );
 
-    // ================= LEFT SIDE =================
-    const partyNameLines = doc.splitTextToSize(`M / s ${safe(party.name, "")
-        } `, left70 - 6);
-    const partyAddrLines = doc.splitTextToSize(safe(party.address, ""), left70 - 6);
+    PDF_FONT.bold(doc, FONT.title);
 
-    // ================= RIGHT SIDE =================
-    const rightData = [
-        { label: "Invoice No :", value: safe(header?.InvoiceNo) },
-        { label: "Invoice Date :", value: formatDate(header?.InvoiceDate) || "-" },
-        { label: "SAC Code :", value: safe(header?.SACCode) }
-    ];
+    doc.text(
+        "TAX INVOICE",
+        PAGE.x + (PAGE.w / 2),
+        y + 4,
+        {
+            align: "center"
+        }
+    );
 
-    // 🔹 Calculate label width once
-    doc.setFont("helvetica", "bold").setFontSize(FONT.title);
-    const labelWidth = Math.max(...rightData.map(r => doc.getTextWidth(r.label)));
-
-    // ================= HEIGHT =================
-    const leftLines = partyNameLines.length + partyAddrLines.length + 1; // +1 for GST
-    const rightLines = rightData.length;
-
-    const row1Lines = Math.max(leftLines, rightLines);
-    const row1H = row1Lines * lineHeight + 4;
-
-    const infoH = row1H; // 🔥 removed unused bottom row
-
-    // ================= BOX =================
-    doc.rect(PAGE.x, y, PAGE.w, infoH);
-    doc.line(PAGE.x + left70, y, PAGE.x + left70, y + row1H);
-
-    // ================= DRAW LEFT =================
-    let currentY = y + 4;
-
-    // Party Name
-    doc.setFont("helvetica", "bold").setFontSize(FONT.body);
-    doc.text(partyNameLines, startX, currentY);
-    currentY += partyNameLines.length * lineHeight;
-
-    // Address
-    doc.setFont("helvetica", "normal").setFontSize(FONT.small);
-    doc.text(partyAddrLines, startX, currentY);
-    currentY += partyAddrLines.length * lineHeight;
-
-    // GST
-    drawLabelValue(doc, "GST No :", safe(party.gst), startX, currentY);
-
-    // ================= DRAW RIGHT =================
-    let rightY = y + 4;
-    const rightX = PAGE.x + left70 + 3;
-
-    rightData.forEach(item => {
-        drawLabelValueAligned(doc, item.label, item.value, rightX, rightY, labelWidth);
-        rightY += lineHeight;
-    });
-
-    return y + infoH;
+    return y + 6;
 }
 
+// ==========================================
+// DUTY TITLE
+// ==========================================
+function drawTitle_Duty_Invoice(
+    doc,
+    PAGE,
+    FONT,
+    y
+) {
 
+    doc.rect(
+        PAGE.x,
+        y,
+        PAGE.w,
+        6
+    );
+
+    PDF_FONT.bold(doc, FONT.title);
+
+    doc.text(
+        "DUTY INVOICE",
+        PAGE.x + (PAGE.w / 2),
+        y + 4,
+        {
+            align: "center"
+        }
+    );
+
+    return y + 6;
+}
+
+// ==========================================
+// HEADER contains company logo, name, address and contact details
+// ==========================================
+async function drawHeader(
+    doc,
+    PAGE,
+    FONT,
+    company,
+    y
+) {
+
+    const headerH = 24;
+    const logoW = PAGE.w * 0.20;
+    const textW = PAGE.w * 0.75;
+
+    doc.rect(
+        PAGE.x,
+        y,
+        PAGE.w,
+        headerH
+    );
+
+    // ==========================
+    // LOGO
+    // ==========================
+    const logoImg = await loadImage(company.logo);
+
+    if (logoImg) {
+
+        const maxW = logoW - 6;
+        const maxH = headerH - 4;
+
+        const ratio = logoImg.width / logoImg.height;
+
+        let w = maxW;
+        let h = w / ratio;
+
+        if (h > maxH) {
+            h = maxH;
+            w = h * ratio;
+        }
+
+        doc.addImage(
+            logoImg,
+            "PNG",
+            PAGE.x + ((logoW - w) / 2),
+            y + ((headerH - h) / 2),
+            w,
+            h
+        );
+    }
+
+    console.log("Company Logo: ", company);
+    // ==========================
+    // TEXT AREA
+    // ==========================
+    const textX = PAGE.x + logoW + 2;
+    const centerX = textX + (textW / 2);
+
+    // Company Name
+    PDF_FONT.bold(doc, FONT.header + 2);
+
+    doc.text(
+        company.name || "",
+        centerX,
+        y + 5,
+        { align: "center" }
+    );
+
+    // ==========================
+    // ADDRESS (MAX 2 LINES)
+    // ==========================
+    PDF_FONT.normal(doc, FONT.body);
+
+    const addressLines = doc
+        .splitTextToSize(
+            company.address || "",
+            textW - 10
+        )
+        .slice(0, 2);
+
+    doc.text(
+        addressLines,
+        centerX,
+        y + 10,
+        {
+            align: "center"
+        }
+    );
+
+    // ==========================
+    // CONTACT DETAILS
+    // ==========================
+    let contactLine =
+        `Ph: ${company.phone || "-"} | ` +
+        `${company.email || "-"} | ` +
+        `GST: ${company.gst || "-"}`;
+
+    if (
+        company?.panNo &&
+        company.panNo.trim() &&
+        company.panNo !== "-"
+    ) {
+        contactLine += ` | PAN: ${company.panNo}`;
+    }
+
+    if (
+        company?.uANo &&
+        company.uANo.trim() &&
+        company.uANo !== "-"
+    ) {
+        contactLine += ` | UA No: ${company.uANo}`;
+    }
+
+    // Position contact line below address
+    const contactY =
+        y +
+        10 +
+        (addressLines.length * 3.8) +
+        2;
+
+    PDF_FONT.normal(doc, FONT.body);
+
+    doc.text(
+        contactLine,
+        centerX,
+        contactY,
+        {
+            align: "center",
+            maxWidth: textW - 8
+        }
+    );
+
+    return y + headerH;
+}
+
+// ==========================================
+// PARTY SECTION contains party details and invoice info like invoice number, date, etc.
+// ==========================================
+function drawPartySection(
+    doc,
+    PAGE,
+    FONT,
+    header,
+    party,
+    company,
+    y
+) {
+
+    const LEFT_WIDTH = PAGE.w * 0.70;
+    const PADDING = 3;
+    const LINE_H = 3.5;
+
+    const safe = (v, fallback = "-") =>
+        v?.toString().trim() || fallback;
+
+    // ==========================
+    // PARTY DATA
+    // ==========================
+    const partyNameLines = doc.splitTextToSize(
+        `M/s ${safe(party?.name, "")}`,
+        LEFT_WIDTH - (PADDING * 2)
+    );
+
+    const partyAddrLines = doc.splitTextToSize(
+        safe(party?.address, ""),
+        LEFT_WIDTH - (PADDING * 2)
+    );
+
+    // ==========================
+    // RIGHT SIDE DATA
+    // ==========================
+    const rightData = [
+        ["Invoice No :", safe(header?.InvoiceNo)],
+        ["Invoice Date :", formatDate(header?.InvoiceDate) || "-"],
+        ["SAC Code :", safe(header?.SACCode)]
+    ];
+
+    PDF_FONT.bold(doc, FONT.body);
+
+    const labelWidth = Math.max(
+        ...rightData.map(([label]) =>
+            doc.getTextWidth(label)
+        )
+    );
+
+    // ==========================
+    // ROW HEIGHT
+    // ==========================
+    const leftLineCount =
+        partyNameLines.length +
+        partyAddrLines.length +
+        1; // GST row
+
+    const rightLineCount =
+        rightData.length;
+
+    const rowHeight =
+        (Math.max(leftLineCount, rightLineCount) * LINE_H) +
+        (PADDING * 2);
+
+    // ==========================
+    // OUTER BOX
+    // ==========================
+    doc.rect(
+        PAGE.x,
+        y,
+        PAGE.w,
+        rowHeight
+    );
+
+    doc.line(
+        PAGE.x + LEFT_WIDTH,
+        y,
+        PAGE.x + LEFT_WIDTH,
+        y + rowHeight
+    );
+
+    // ==========================
+    // LEFT SECTION
+    // ==========================
+    let leftY = y + PADDING + 1;
+    const leftX = PAGE.x + PADDING;
+
+    PDF_FONT.bold(doc, FONT.body);
+
+    doc.text(
+        partyNameLines,
+        leftX,
+        leftY
+    );
+
+    leftY += partyNameLines.length * LINE_H;
+
+    PDF_FONT.normal(doc, FONT.small);
+
+    doc.text(
+        partyAddrLines,
+        leftX,
+        leftY
+    );
+
+    leftY += partyAddrLines.length * LINE_H;
+
+    drawLabelValue(
+        doc,
+        "GST No :",
+        safe(party?.gst),
+        leftX,
+        leftY,
+        FONT
+    );
+
+    // ==========================
+    // RIGHT SECTION
+    // ==========================
+    let rightY = y + PADDING + 1;
+    const rightX =
+        PAGE.x +
+        LEFT_WIDTH +
+        PADDING;
+
+    rightData.forEach(([label, value]) => {
+
+        drawLabelValueAligned(
+            doc,
+            label,
+            value,
+            rightX,
+            rightY,
+            labelWidth,
+            FONT
+        );
+
+        rightY += LINE_H;
+    });
+
+    return y + rowHeight;
+}
+// =========================
+// INVOICE BORDER
+// =========================
+function drawInvoiceBorder(
+    doc,
+    PAGE,
+    {
+        top = 9,
+        bottom = 35,
+        lineWidth = 0.1
+    } = {}
+) {
+
+    doc.setDrawColor(0);
+    doc.setLineWidth(lineWidth);
+
+    doc.rect(
+        PAGE.x,
+        top,
+        PAGE.w,
+        PAGE.h - top - bottom
+    );
+}
+
+// =========================
+// INVOICE BORDER ALL PAGES
+// =========================
+function drawInvoiceBorderAllPages(doc, PAGE) {
+
+    const currentPage =
+        doc.getCurrentPageInfo().pageNumber;
+
+    Array.from(
+        { length: doc.getNumberOfPages() },
+        (_, i) => i + 1
+    ).forEach(page => {
+        doc.setPage(page);
+        drawInvoiceBorder(doc, PAGE);
+    });
+
+    doc.setPage(currentPage);
+}

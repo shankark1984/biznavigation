@@ -1420,7 +1420,6 @@ async function paymentDetails(invoiceNumber) {
 }
 
 async function advancedPaymentDetails(invoiceNumber, invoiceDate) {
-    // console.log('Fetching payment details for invoice:', invoiceNumber, 'with date filter:', invoiceDate);
 
     try {
         const { data, error } = await supabaseClient

@@ -306,27 +306,6 @@ document.getElementById('modifyButton').addEventListener('click', function () {
     document.getElementById("lrNumber").disabled = true; // Prevent changing LR Number during modification
 });
 
-// Generate LR Number using Supabase RPC
-async function generateLRNumber() {
-
-    const companyData = await getCompanyProfile(CompanyID);
-    const shortCode = companyData.short_code;
-
-    const { data, error } = await supabaseClient.rpc("generate_lr_number", {
-        p_company_id: CompanyID,
-        p_short_code: shortCode
-    });
-
-    if (error) {
-        console.error("LR generation failed:", error);
-        return;
-    }
-
-    document.getElementById("lrNumber").value = data;
-    console.log("Generated LR Number:", data);
-    return data;
-}
-
 function areRequiredFieldsFilled() {
     const requiredFields = [
         'lrDate', 'movementType', 'partyName',

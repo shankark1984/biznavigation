@@ -44,15 +44,7 @@ async function generate_FullTruckReports_InvoicePDF(header, lines = []) {
     doc.save(`Invoice_${header?.InvoiceNo || "NA"}.pdf`);
 }
 
-// 🔥 Reusable: aligned labels (right column)
-function drawLabelValueAligned(doc, label, value, x, y, labelWidth) {
-    doc.setFont("helvetica", "bold");
-    doc.text(label, x, y);
 
-    doc.setFont("helvetica", "normal");
-    doc.text(value, x + labelWidth + 2, y);
-
-}
 // Utility function to fetch shipment details
 async function drawShipmentTable(doc, PAGE, FONT, rows = [], y) {
 

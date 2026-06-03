@@ -36,26 +36,6 @@ async function generate_DomesticReports_InvoicePDF(header, lines = []) {
 
     doc.save(`Invoice_${header?.InvoiceNo || "NA"}.pdf`);
 }
-// Utility function to fetch company details
-async function fetchCompanyDetails(header) {
-    const data = await getCompanyProfile(header?.CompanyID || CompanyID);
-
-    return {
-        name: data?.company_name || "",
-        address: [
-            data?.address,
-            data?.city && `${data.city} - ${data.pin_code}`,
-            data?.state,
-            data?.country
-        ].filter(Boolean).join(", "),
-        phone: data?.phone_no || "-",
-        email: data?.e_mail || "-",
-        gst: data?.gst_number || "-",
-        state: data?.state,
-        logo: data?.logo_path
-    };
-}
-
 
 // Utility function to fetch party details
 async function fetchPartyDetails(header) {
