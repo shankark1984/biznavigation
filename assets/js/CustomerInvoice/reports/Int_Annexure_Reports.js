@@ -564,6 +564,7 @@ function drawTaxSection_int_Annexure(
     const totalGST = safeNumber(totals?.totalGST);
     const advance = safeNumber(totalPaymentReceived);
 
+
     // ==========================================
     // TOTALS
     // ==========================================
@@ -959,8 +960,12 @@ async function drawShipmentTable_int_Annexure(
         }
 
         chargesMap[key].push(charge);
-        console.log("Processing charge:", charge);
         // GST totals once only
+        // if (safeNumber(charge.TotalGSTAmt) > 0) {
+        //     taxableAmount += safeNumber(charge.TotalAmount);
+        // } else {
+        //     nonTaxableAmount += safeNumber(charge.TotalAmount);
+        // }
         totalCGST += safeNumber(charge.CGSTAmt);
         totalSGST += safeNumber(charge.SGSTAmt);
         totalIGST += safeNumber(charge.IGSTAmt);
