@@ -1091,7 +1091,7 @@ async function drawShipmentTable_Clear_Main(
         body,
 
         styles: {
-            fontSize: FONT.small,
+            fontSize: FONT.body,
             cellPadding: 1.5,
             textColor: [0, 0, 0],
             lineWidth: 0.2,
@@ -1109,33 +1109,19 @@ async function drawShipmentTable_Clear_Main(
         columnStyles: {
 
             // Sl No
-            0: {
-                cellWidth: 12,
-                halign: "center"
-            },
+            0: { cellWidth: 12, halign: "center" },
 
             // Particulars
-            1: {
-                cellWidth: 90
-            },
+            1: { cellWidth: 90 },
 
             // SAC Code
-            2: {
-                cellWidth: 28,
-                halign: "center"
-            },
+            2: { cellWidth: 28, halign: "center" },
 
             // Non Taxable
-            3: {
-                cellWidth: 30,
-                halign: "right"
-            },
+            3: { cellWidth: 30, halign: "right" },
 
             // Taxable
-            4: {
-                cellWidth: 30,
-                halign: "right"
-            }
+            4: { cellWidth: 30, halign: "right" }
         },
 
         didParseCell(data) {
@@ -1266,8 +1252,7 @@ function drawPartySection_Clearance(
     // ==========================================
     // LABEL WIDTH
     // ==========================================
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(FONT.body);
+    PDF_FONT.bold(doc, FONT.title);
 
     const labelWidth = Math.max(
         ...rightData.map(row =>
@@ -1351,8 +1336,7 @@ function drawPartySection_Clearance(
     // ==========================================
     let currentY = y + 5;
 
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(FONT.body);
+    PDF_FONT.bold(doc, FONT.title + 2);
 
     doc.text(
         partyNameLines,
@@ -1364,8 +1348,7 @@ function drawPartySection_Clearance(
         partyNameLines.length *
         lineHeight;
 
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(FONT.small);
+    PDF_FONT.normal(doc, FONT.title);
 
     doc.text(
         partyAddrLines,
@@ -1397,8 +1380,7 @@ function drawPartySection_Clearance(
     rightRows.forEach(row => {
 
         // Label
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(FONT.body);
+        PDF_FONT.bold(doc, FONT.body);
 
         doc.text(
             row.label,

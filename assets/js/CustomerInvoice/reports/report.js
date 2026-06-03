@@ -75,8 +75,8 @@ function drawAmountInWords(doc, PAGE, FONT, grandTotal) {
     return y + boxH;
 }
 
-// ================= BANK DETAILS =================
-//Company Bank Details Section
+// ==========================================
+// BANK DETAILS SECTION
 // ==========================================
 function drawBankDetailsSection(
     doc,
@@ -87,43 +87,116 @@ function drawBankDetailsSection(
     y
 ) {
 
-    const boxHeight = 4;
+    const padding = 2;
+    const lineHeight = 4;
 
-    doc.rect(PAGE.x, y, PAGE.w, boxHeight);
+    // ==========================================
+    // DATA
+    // ==========================================
+    const line1 =
+        `A/c Name : ${company?.name || "-"} | ` +
+        `A/c No : ${bank?.AccountNo || "-"}`;
 
-    PDF_FONT.set(doc, "bold");
-    doc.setFontSize(FONT.body - 1);
+    const line2 =
+        `Bank : ${bank?.BankName || "-"}`;
 
-    // ==========================
-    // LINE 1
-    // ==========================
-    let rowY = y + 3;
-    let x = PAGE.x + 2;
+    const line3 =
+        `Branch : ${bank?.BranchName || "-"} | ` +
+        `IFSC : ${bank?.IFSCCode || "-"}`;
 
-    // Bold Label
-    PDF_FONT.set(doc, "bold");
+    // ==========================================
+    // WRAP LONG TEXT
+    // ==========================================
+    const textWidth =
+        PAGE.w - (padding * 2) - 2;
 
-    const label = "Bank Details :-";
+    const line1Wrapped =
+        doc.splitTextToSize(
+            line1,
+            textWidth
+        );
 
-    doc.text(label, x, rowY);
+    const line2Wrapped =
+        doc.splitTextToSize(
+            line2,
+            textWidth
+        );
 
-    x += doc.getTextWidth(label) + 5;
+    const line3Wrapped =
+        doc.splitTextToSize(
+            line3,
+            textWidth
+        );
 
-    // Normal Text
-    PDF_FONT.set(doc, "bold");
+    const totalLines =
+        line1Wrapped.length +
+        line2Wrapped.length +
+        line3Wrapped.length;
 
-    const fields = [
-        `A/c Name : ${company?.name || "-"}`, "|",
-        `A/c No : ${bank?.AccountNo || "-"}`, "|",
-        `Bank : ${bank?.BankName || "-"}`, "|",
-        `Branch : ${bank?.BranchName || "-"}`, "|",
-        `IFSC : ${bank?.IFSCCode || "-"}`
-    ];
+    const boxHeight =
+        (totalLines * lineHeight) + 4;
 
-    fields.forEach(text => {
-        doc.text(text, x, rowY);
-        x += doc.getTextWidth(text) + 2;
-    });
+    // ==========================================
+    // OUTER BORDER
+    // ==========================================
+    doc.rect(
+        PAGE.x,
+        y,
+        PAGE.w,
+        boxHeight
+    );
+
+    // ==========================================
+    // TITLE
+    // ==========================================
+    let currentY = y + 3;
+
+    PDF_FONT.bold(
+        doc,
+        FONT.body
+    );
+
+    doc.text(
+        "Bank Details :-",
+        PAGE.x + padding,
+        currentY
+    );
+
+    currentY += lineHeight;
+
+    // ==========================================
+    // CONTENT
+    // ==========================================
+    PDF_FONT.normal(
+        doc,
+        FONT.body
+    );
+
+    doc.text(
+        line1Wrapped,
+        PAGE.x + padding,
+        currentY
+    );
+
+    currentY +=
+        line1Wrapped.length *
+        lineHeight;
+
+    doc.text(
+        line2Wrapped,
+        PAGE.x + padding,
+        currentY
+    );
+
+    currentY +=
+        line2Wrapped.length *
+        lineHeight;
+
+    doc.text(
+        line3Wrapped,
+        PAGE.x + padding,
+        currentY
+    );
 
     return y + boxHeight;
 }
@@ -245,11 +318,11 @@ function drawLabelValue(
     FONT
 ) {
 
-    PDF_FONT.bold(doc, FONT.body);
+    PDF_FONT.bold(doc, FONT.title);
 
     doc.text(label, x, y);
 
-    PDF_FONT.normal(doc, FONT.body);
+    PDF_FONT.normal(doc, FONT.title);
 
     doc.text(
         String(value || "-"),
@@ -271,11 +344,11 @@ function drawLabelValueAligned(
     FONT
 ) {
 
-    PDF_FONT.bold(doc, FONT.body);
+    PDF_FONT.bold(doc, FONT.title);
 
     doc.text(label, x, y);
 
-    PDF_FONT.normal(doc, FONT.body);
+    PDF_FONT.normal(doc, FONT.title);
 
     doc.text(
         String(value || "-"),
@@ -421,7 +494,6 @@ async function drawHeader(
         );
     }
 
-    console.log("Company Logo: ", company);
     // ==========================
     // TEXT AREA
     // ==========================
@@ -441,7 +513,7 @@ async function drawHeader(
     // ==========================
     // ADDRESS (MAX 2 LINES)
     // ==========================
-    PDF_FONT.normal(doc, FONT.body);
+    PDF_FONT.normal(doc, FONT.title - 1);
 
     const addressLines = doc
         .splitTextToSize(
@@ -490,7 +562,7 @@ async function drawHeader(
         (addressLines.length * 3.8) +
         2;
 
-    PDF_FONT.normal(doc, FONT.body);
+    PDF_FONT.normal(doc, FONT.title - 1);
 
     doc.text(
         contactLine,
