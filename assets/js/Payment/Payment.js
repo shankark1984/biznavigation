@@ -807,7 +807,7 @@ function showSuspenseModal(rows) {
 
         tr.innerHTML = `
             <td>${r.PaymentID}</td>
-            <td>${r.ReceiptOn || ""}</td>
+            <td>${formatDate(r.ReceiptOn) || ""}</td>
             <td>${r.ReferenceNo || ""}</td>
             <td class="text-end">${safeNumber(r.PaymentAmount).toFixed(2)}</td>
             <td class="text-end">${safeNumber(r.DeductionAmount).toFixed(2)}</td>
