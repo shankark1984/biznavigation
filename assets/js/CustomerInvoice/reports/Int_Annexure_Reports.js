@@ -1,107 +1,215 @@
 // ==========================================
 // GENERATE INTERNATIONAL INVOICE PDF
 // ==========================================
-async function generate_International_InvoicePDF_Annexure(header, lines = []) {
+async function generate_International_InvoicePDF_Annexure(
+    header,
+    lines = []
+) {
+    try {
 
-    const { jsPDF } = window.jspdf;
+        const { jsPDF } = window.jspdf;
 
-    const doc = new jsPDF("p", "mm", "a4");
+        const doc = new jsPDF("p", "mm", "a4");
 
-    const PAGE = { x: 15, w: 190, h: 297 };
+        const PAGE = {
+            x: 15,
+            w: 190,
+            h: 297
+        };
 
-    const FONT = { header: 14, title: 10, body: 8, small: 7, tiny: 6, stiny: 5 };
+        const FONT = {
+            header: 14,
+            title: 10,
+            body: 8,
+            small: 7,
+            tiny: 6,
+            stiny: 5
+        };
 
-    let y = 9;
+        let y = 9;
 
-    // ==========================================
-    // FETCH DATA
-    // ==========================================
-    const [company, party, tandcData, shipmentData, bank, totalsPayment
-    ] = await Promise.all([
-        fetchCompanyDetails(header),
-        fetchPartyDetails(header),
-        getTermsAndConditions(header?.company_id),
-        getShipmentData_int_Annexure(header?.InvoiceNo),
-        getInvoiceBankDetails(header?.InvoiceNo),
-        advancedPaymentDetails(
-            header?.InvoiceNo,
-            header?.InvoiceDate
-        )
-    ]);
+        const invoiceNo = header?.InvoiceNo;
+        const invoiceDate = header?.InvoiceDate;
+        const companyId = header?.company_id;
 
-    // ==========================================
-    // TOTAL PAYMENT RECEIVED
-    // ==========================================
-    const totalPaymentReceived = round2(
-        safeNumber(totalsPayment?.totalPayment) +
-        safeNumber(totalsPayment?.totalOtherDeduction) +
-        safeNumber(totalsPayment?.totalTDS)
+        // ==========================================
+        // FETCH MASTER DATA (PARALLEL)
+        // ==========================================
+        const [
+            company,
+            party,
+            tandcData,
+            shipmentData,
+            bank,
+            totalsPayment
+        ] = await Promise.all([
+            fetchCompanyDetails(header),
+            fetchPartyDetails(header),
+            getTermsAndConditions(companyId),
+            getShipmentData_int_Annexure(invoiceNo),
+            getInvoiceBankDetails(invoiceNo),
+            advancedPaymentDetails(
+                invoiceNo,
+                invoiceDate
+            )
+        ]);
 
-    );
+        // ==========================================
+        // PAYMENT TOTALS
+        // ==========================================
+        const totalPaymentReceived = round2(
+            safeNumber(totalsPayment?.totalPayment) +
+            safeNumber(totalsPayment?.totalOtherDeduction) +
+            safeNumber(totalsPayment?.totalTDS)
+        );
 
-    // ==========================================
-    // HEADER
-    // ==========================================
-    y = await drawHeader(doc, PAGE, FONT, company, y);
+        // ==========================================
+        // HEADER
+        // ==========================================
+        y = await drawHeader(
+            doc,
+            PAGE,
+            FONT,
+            company,
+            y
+        );
 
-    // ==========================================
-    // TITLE
-    // ==========================================
-    y = drawTitle(doc, PAGE, FONT, y);
+        // ==========================================
+        // TITLE
+        // ==========================================
+        y = drawTitle(
+            doc,
+            PAGE,
+            FONT,
+            y
+        );
 
-    // ==========================================
-    // PARTY SECTION
-    // ==========================================
-    y = drawPartySection(doc, PAGE, FONT, header, party, company, y);
+        // ==========================================
+        // PARTY DETAILS
+        // ==========================================
+        y = drawPartySection(
+            doc,
+            PAGE,
+            FONT,
+            header,
+            party,
+            company,
+            y
+        );
 
-    // ==========================================
-    // SHIPMENT TABLE
-    // ==========================================
-    const shipmentResult = await drawShipmentTable_int_Annexure(
-        doc,
-        PAGE,
-        FONT,
-        shipmentData.shipments,   // ✅ ARRAY
-        y,
-        shipmentData.charges      // ✅ ARRAY
-    );
+        // ==========================================
+        // SHIPMENT TABLE
+        // ==========================================
+        const shipmentResult =
+            await drawShipmentTable_int_Annexure(
+                doc,
+                PAGE,
+                FONT,
+                shipmentData?.shipments || [],
+                y,
+                shipmentData?.charges || []
+            );
 
-    y = shipmentResult.y;
+        y = shipmentResult.y;
 
-    // ==========================================
-    // TERMS + TAX SECTION
-    // ==========================================
-    y = await drawTermsAndTaxSection_int_Annexure(doc, PAGE, FONT, company, header, shipmentResult, y, bank, totalPaymentReceived,
-        tandcData
-    );
+        // ==========================================
+        // TERMS + TAX SECTION
+        // ==========================================
+        console.log("Drawing Terms & Tax Section with:", {
+            tandcData,
+            totals: shipmentResult,
+            totalPaymentReceived
+        });
+        y = await drawTermsAndTaxSection_int_Annexure(
+            doc,
+            PAGE,
+            FONT,
+            company,
+            header,
+            shipmentResult,
+            y,
+            bank,
+            totalPaymentReceived,
+            tandcData
+        );
 
-    // ==========================================
-    // AMOUNT IN WORDS
-    // ==========================================
-    y = drawAmountInWords(doc, PAGE, FONT, shipmentResult.grandTotal, y);
+        // ==========================================
+        // AMOUNT IN WORDS
+        // ==========================================
+        y = drawAmountInWords(
+            doc,
+            PAGE,
+            FONT,
+            shipmentResult?.grandTotal || 0,
+            y
+        );
 
-    // ==========================================
-    // BANK DETAILS SECTION
-    // ==========================================
-    y = drawBankDetailsSection(doc, PAGE, FONT, company, bank, y);
-    // ==========================================
-    // FOOTER
-    // ==========================================
-    drawaddFooterToAllPages(doc, PAGE, y);
+        // ==========================================
+        // BANK DETAILS
+        // ==========================================
+        y = drawBankDetailsSection(
+            doc,
+            PAGE,
+            FONT,
+            company,
+            bank,
+            y
+        );
 
-    // ==========================================
-    // SAVE PDF
-    // ==========================================
-    drawInvoiceBorderAllPages(doc, PAGE);
-    doc.save(
-        `Invoice_${header?.InvoiceNo || "NA"}.pdf`
-    );
+        // ==========================================
+        // FOOTER
+        // ==========================================
+        drawaddFooterToAllPages(
+            doc,
+            PAGE,
+            y
+        );
+
+        // ==========================================
+        // PAGE BORDER
+        // ==========================================
+        drawInvoiceBorderAllPages(
+            doc,
+            PAGE
+        );
+
+        // ==========================================
+        // SAVE PDF
+        // ==========================================
+        doc.save(
+            `Invoice_${invoiceNo || "NA"}.pdf`
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Invoice PDF Generation Failed:",
+            error
+        );
+
+        Swal.fire({
+            icon: "error",
+            title: "PDF Generation Failed",
+            text:
+                error?.message ||
+                "Unable to generate invoice PDF."
+        });
+    }
 }
-
 // ==========================================
 // TERMS & TAX SECTION
 // ==========================================
-async function drawTermsAndTaxSection_int_Annexure(doc, PAGE, FONT, company, header, totals, y, bank, totalPaymentReceived, tandcData
+async function drawTermsAndTaxSection_int_Annexure(
+    doc,
+    PAGE,
+    FONT,
+    company,
+    header,
+    totals,
+    y,
+    bank,
+    totalPaymentReceived,
+    tandcData
 ) {
 
     // ==========================================
@@ -119,24 +227,29 @@ async function drawTermsAndTaxSection_int_Annexure(doc, PAGE, FONT, company, hea
         bankTopGap: 1,
         bankRowHeight: 4,
 
-        bottomMargin: 35,
+        bottomMargin: 35
     };
 
-    const colTerms =
-        PAGE.w -
-        (
-            CONFIG.colDescription +
-            CONFIG.colNonTax +
-            CONFIG.colTax
-        );
-
+    // ==========================================
+    // COLUMN WIDTHS
+    // ==========================================
     const COL = {
-        terms: colTerms,
+        terms:
+            PAGE.w -
+            (
+                CONFIG.colDescription +
+                CONFIG.colNonTax +
+                CONFIG.colTax
+            ),
+
         desc: CONFIG.colDescription,
         nonTax: CONFIG.colNonTax,
         tax: CONFIG.colTax
     };
 
+    // ==========================================
+    // COLUMN POSITIONS
+    // ==========================================
     const X = {
         terms: PAGE.x,
         desc: PAGE.x + COL.terms,
@@ -148,60 +261,94 @@ async function drawTermsAndTaxSection_int_Annexure(doc, PAGE, FONT, company, hea
     // ==========================================
     // HEIGHT CALCULATIONS
     // ==========================================
-    const termsHeight = calculateTermsHeight_int_Annexure(doc, tandcData, COL.terms, CONFIG);
+    const termsHeight =
+        calculateTermsHeight_int_Annexure(
+            doc,
+            tandcData,
+            COL.terms,
+            CONFIG
+        );
 
-    const bankHeight = 20;
+    const BANK_HEIGHT = 20;
+    const TAX_ROWS = 8;
 
-    const leftHeight = termsHeight + CONFIG.bankTopGap + bankHeight + 2;
+    const leftHeight =
+        termsHeight +
+        CONFIG.bankTopGap +
+        BANK_HEIGHT +
+        2;
 
-    const taxRows = 8;
+    const rightHeight =
+        (TAX_ROWS + 1) *
+        CONFIG.headerH;
 
-    const rightHeight = (taxRows + 1) * CONFIG.headerH;
-
-    const tableH = Math.max(leftHeight, rightHeight);
+    const tableH = Math.max(
+        leftHeight,
+        rightHeight
+    );
 
     // ==========================================
-    // POSITION AT BOTTOM OF LAST PAGE
+    // POSITION TABLE AT PAGE BOTTOM
     // ==========================================
     const pageHeight =
         doc.internal.pageSize.getHeight();
 
-    const bottomY = pageHeight - CONFIG.bottomMargin - tableH;
+    const requiredY =
+        pageHeight -
+        CONFIG.bottomMargin -
+        tableH;
 
-    // If enough space remains on current page,
-    // move section to bottom.
-    if (bottomY > y) {
-
-        y = bottomY;
-
-    } else {
-
-        // Move to new page
+    if (requiredY <= y) {
         doc.addPage();
 
-        const newPageHeight = doc.internal.pageSize.getHeight();
-
-        y = newPageHeight - CONFIG.bottomMargin - tableH;
+        y =
+            doc.internal.pageSize.getHeight() -
+            CONFIG.bottomMargin -
+            tableH;
+    } else {
+        y = requiredY;
     }
 
     // ==========================================
-    // OUTER BORDER
+    // DRAW SECTION
     // ==========================================
-    drawOuterTable_int_Annexure(doc, PAGE, X, y, tableH);
-    // ==========================================
-    // HEADER ROW
-    // ==========================================
-    drawHeaderRow_int_Annexure(doc, FONT, X, COL, y, CONFIG.headerH);
+    drawOuterTable_int_Annexure(
+        doc,
+        PAGE,
+        X,
+        y,
+        tableH
+    );
 
-    // ==========================================
-    // TERMS CONTENT
-    // ==========================================
-    drawTermsContent_int_Annexure(doc, FONT, tandcData, X, COL, y, CONFIG);
+    drawHeaderRow_int_Annexure(
+        doc,
+        FONT,
+        X,
+        COL,
+        y,
+        CONFIG.headerH
+    );
 
-    // ==========================================
-    // TAX DETAILS
-    // ==========================================
-    drawTaxSection_int_Annexure(doc, FONT, totals, totalPaymentReceived, X, COL, y, CONFIG);
+    drawTermsContent_int_Annexure(
+        doc,
+        FONT,
+        tandcData,
+        X,
+        COL,
+        y,
+        CONFIG
+    );
+
+    drawTaxSection_int_Annexure(
+        doc,
+        FONT,
+        totals,
+        totalPaymentReceived,
+        X,
+        COL,
+        y,
+        CONFIG
+    );
 
     return y + tableH;
 }
@@ -211,38 +358,34 @@ async function drawTermsAndTaxSection_int_Annexure(doc, PAGE, FONT, company, hea
 // ==========================================
 function calculateTermsHeight_int_Annexure(
     doc,
-    tandcData,
+    tandcData = [],
     termsWidth,
     CONFIG
 ) {
 
-    let height =
-        CONFIG.headerH + 4;
+    const lineHeight = CONFIG.lineHeight;
+    const paragraphGap = CONFIG.paragraphGap;
+    const wrapWidth = termsWidth - 10;
 
-    tandcData.forEach((item, i) => {
+    let height = CONFIG.headerH + 4;
 
-        const txt =
-            `${i + 1}. ${item.Description || ""}`;
+    for (let i = 0; i < tandcData.length; i++) {
 
-        const split =
+        const description =
+            tandcData[i]?.Description || "";
+
+        const lines =
             doc.splitTextToSize(
-                txt,
-                termsWidth - 10
+                `${i + 1}. ${description}`,
+                wrapWidth
             );
 
-        height +=
-            split.length *
-            CONFIG.lineHeight;
+        height += lines.length * lineHeight;
 
-        if (
-            i <
-            tandcData.length - 1
-        ) {
-            height +=
-                CONFIG.paragraphGap;
+        if (i < tandcData.length - 1) {
+            height += paragraphGap;
         }
-
-    });
+    }
 
     return height;
 }
@@ -250,69 +393,127 @@ function calculateTermsHeight_int_Annexure(
 // ==========================================
 // TABLE BORDERS
 // ==========================================
-function drawOuterTable_int_Annexure(doc, PAGE, X, y, tableH) {
+function drawOuterTable_int_Annexure(
+    doc,
+    PAGE,
+    X,
+    y,
+    tableH
+) {
+
+    const bottomY = y + tableH;
 
     doc.setLineWidth(0.1);
 
-    doc.rect(PAGE.x, y, PAGE.w, tableH);
+    doc.rect(
+        PAGE.x,
+        y,
+        PAGE.w,
+        tableH
+    );
 
-    doc.line(X.desc, y, X.desc, y + tableH);
+    const columns = [
+        X.desc,
+        X.nonTax,
+        X.tax
+    ];
 
-    doc.line(X.nonTax, y, X.nonTax, y + tableH);
-
-    doc.line(X.tax, y, X.tax, y + tableH);
+    for (let i = 0; i < columns.length; i++) {
+        doc.line(
+            columns[i],
+            y,
+            columns[i],
+            bottomY
+        );
+    }
 }
 
 // ==========================================
 // HEADER ROW
 // ==========================================
-function drawHeaderRow_int_Annexure(doc, FONT, X, COL, y, rowH) {
+function drawHeaderRow_int_Annexure(
+    doc,
+    FONT,
+    X,
+    COL,
+    y,
+    rowH
+) {
 
-    doc.line(X.terms, y + rowH, X.end, y + rowH);
+    const bottomY = y + rowH;
+
+    // Header Bottom Border
+    doc.line(
+        X.terms,
+        bottomY,
+        X.end,
+        bottomY
+    );
 
     PDF_FONT.set(doc, "bold");
-
     doc.setFontSize(FONT.body);
 
-    drawCenteredText(doc, "Terms & Conditions", X.terms, COL.terms, y, rowH);
+    const headers = [
+        ["Terms & Conditions", X.terms, COL.terms],
+        ["", X.desc, COL.desc],
+        ["Non-Tax Amount", X.nonTax, COL.nonTax],
+        ["Tax Amount", X.tax, COL.tax]
+    ];
 
-    drawCenteredText(doc, "", X.desc, COL.desc, y, rowH); // Empty header for Description column
+    for (let i = 0; i < headers.length; i++) {
 
-    drawCenteredText(doc, "Non-Tax Amount", X.nonTax, COL.nonTax, y, rowH);
+        const [text, x, width] = headers[i];
 
-    drawCenteredText(doc, "Tax Amount", X.tax, COL.tax, y, rowH);
+        drawCenteredText(
+            doc,
+            text,
+            x,
+            width,
+            y,
+            rowH
+        );
+    }
 }
-
 // ==========================================
 // TERMS CONTENT
 // ==========================================
 function drawTermsContent_int_Annexure(
     doc,
     FONT,
-    tandcData,
+    tandcData = [],
     X,
     COL,
     y,
     CONFIG
 ) {
-    PDF_FONT.set(doc, "normal");
 
-    doc.setFontSize(6);
+    PDF_FONT.normal(doc, FONT.body);
 
-    let currentY = y + CONFIG.headerH + 4;
+    const lineHeight = 3.8;
+    const termGap = 1.5;
 
     const leftMargin = X.terms + 4;
+    const indent = 2;
     const textWidth = COL.terms - 5;
-    const indent = 2; // hanging indent
 
-    tandcData.forEach((item, index) => {
+    let currentY =
+        y +
+        CONFIG.headerH +
+        4;
 
-        const prefix = `${index + 1}. `;
+    for (let index = 0; index < tandcData.length; index++) {
 
-        const lines = doc.splitTextToSize(
-            item.Description || "",
-            textWidth - indent
-        );
+        const description =
+            tandcData[index]?.Description || "";
+
+        const prefix =
+            `${index + 1}. `;
+
+        const lines =
+            doc.splitTextToSize(
+                description,
+                textWidth - indent
+            );
 
         // First line with numbering
         doc.text(
@@ -321,21 +522,22 @@ function drawTermsContent_int_Annexure(
             currentY
         );
 
-        currentY += 3.8;
+        currentY += lineHeight;
 
-        // Remaining lines aligned
+        // Remaining wrapped lines
         for (let i = 1; i < lines.length; i++) {
+
             doc.text(
                 lines[i],
                 leftMargin + indent,
                 currentY
             );
-            currentY += 3.8;
+
+            currentY += lineHeight;
         }
 
-        // Gap between terms
-        currentY += 1.5;
-    });
+        currentY += termGap;
+    }
 
     return currentY;
 }
@@ -353,96 +555,142 @@ function drawTaxSection_int_Annexure(
     y,
     CONFIG
 ) {
+    console.log("Totals:", totals);
+    const nonTaxable = safeNumber(totals?.nonTaxableAmount);
+    const taxable = safeNumber(totals?.taxableAmount);
+    const cgst = safeNumber(totals?.totalCGST);
+    const sgst = safeNumber(totals?.totalSGST);
+    const igst = safeNumber(totals?.totalIGST);
+    const totalGST = safeNumber(totals?.totalGST);
+    const advance = safeNumber(totalPaymentReceived);
 
-    const advance =
-        safeNumber(
-            totalPaymentReceived
-        );
+    // ==========================================
+    // TOTALS
+    // ==========================================
+    const grandTotal = Math.ceil(
+        nonTaxable +
+        taxable +
+        totalGST
+    );
 
+    const balanceAmount = Math.ceil(
+        grandTotal - advance
+    );
+
+    // ==========================================
+    // ROW DATA
+    // ==========================================
     const rows = [
-        ["Total Charges", totals.nonTaxableAmount, totals.taxableAmount],
-        ["CGST 9%", 0, totals.totalCGST],
-        ["SGST 9%", 0, totals.totalSGST],
-        ["IGST 18%", 0, totals.totalIGST],
-        ["Total GST", 0, totals.totalGST],
-        ["Grand Total", 0, totals.grandTotal],
-        ["Advance Amount", 0, advance],
-        ["Balance Amount", 0, round2(totals.grandTotal - advance)]
+        { label: "Total Charges", nonTax: nonTaxable, tax: taxable },
+        { label: "CGST 9%", nonTax: 0, tax: cgst },
+        { label: "SGST 9%", nonTax: 0, tax: sgst },
+        { label: "IGST 18%", nonTax: 0, tax: igst },
+        { label: "Total GST", nonTax: 0, tax: totalGST },
+        { label: "Grand Total", nonTax: 0, tax: grandTotal },
+        { label: "Advance Amount", nonTax: 0, tax: advance },
+        { label: "Balance Amount", nonTax: 0, tax: balanceAmount }
     ];
 
-    doc.setFontSize(
-        FONT.small
-    );
+    const boldRows = new Set([
+        "Total GST",
+        "Grand Total",
+        "Balance Amount"
+    ]);
 
-    rows.forEach(
-        (row, i) => {
+    const textYOffset = 3.2;
 
-            const rowY =
-                y +
-                CONFIG.headerH +
-                (
-                    i *
-                    CONFIG.headerH
+    PDF_FONT.normal(doc, FONT.body);
+
+    for (let i = 0; i < rows.length; i++) {
+
+        const row = rows[i];
+
+        const rowY =
+            y +
+            CONFIG.headerH +
+            (i * CONFIG.headerH);
+
+        // Horizontal Line
+        doc.line(
+            X.desc,
+            rowY,
+            X.end,
+            rowY
+        );
+
+        doc.setFont(
+            "times",
+            boldRows.has(row.label)
+                ? "bold"
+                : "normal"
+        );
+
+        // Label
+        doc.text(
+            row.label,
+            X.desc + 2,
+            rowY + textYOffset
+        );
+
+        // Non Tax
+        doc.text(
+            safeAmount(row.nonTax).toFixed(2),
+            X.nonTax + COL.nonTax - 2,
+            rowY + textYOffset,
+            { align: "right" }
+        );
+
+        // Tax Column
+        const value =
+            row.label === "Grand Total" ||
+                row.label === "Balance Amount"
+                ? row.tax.toLocaleString(
+                    "en-IN",
+                    {
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 0
+                    }
+                )
+                : safeAmount(row.tax).toLocaleString(
+                    "en-IN",
+                    {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    }
                 );
 
-            doc.line(
-                X.desc,
-                rowY,
-                X.end,
-                rowY
-            );
+        doc.text(
+            value,
+            X.tax + COL.tax - 2,
+            rowY + textYOffset,
+            { align: "right" }
+        );
+    }
 
-            doc.text(
-                row[0],
-                X.desc + 2,
-                rowY + 3.2
-            );
-
-            doc.text(
-                safeAmount(
-                    row[1]
-                ).toFixed(2),
-                X.nonTax +
-                COL.nonTax -
-                2,
-                rowY + 3.2,
-                {
-                    align: "right"
-                }
-            );
-
-            doc.text(
-                safeAmount(
-                    row[2]
-                ).toFixed(2),
-                X.tax +
-                COL.tax -
-                2,
-                rowY + 3.2,
-                {
-                    align: "right"
-                }
-            );
-        }
-    );
+    return {
+        grandTotal,
+        balanceAmount
+    };
 }
-
 // ==========================================
 // COMMON CENTER TEXT
 // ==========================================
 function drawCenteredText(
     doc,
-    text,
+    text = "",
     x,
     width,
     y,
     height
 ) {
 
+    const centerX = x + (width / 2);
+    const centerY = y + (height / 2);
+
     doc.text(
-        text,
-        x + width / 2,
-        y + height / 2,
+        String(text),
+        centerX,
+        centerY,
         {
             align: "center",
             baseline: "middle"
@@ -452,68 +700,110 @@ function drawCenteredText(
 // ==========================================
 // FETCH SHIPMENT DATA
 // ==========================================
-async function getShipmentData_int_Annexure(invoiceNo) {
+async function getShipmentData_int_Annexure(
+    invoiceNo
+) {
+
+    const EMPTY_RESULT = {
+        invoiceDetails: null,
+        shipments: [],
+        charges: [],
+        equipment: []
+    };
 
     try {
 
-        // =========================
-        // INVOICE DETAILS
-        // =========================
-        const { data: invoiceDetails, error: invError } = await supabaseClient
-            .from("InvoiceDetails")
-            .select("*")
-            .eq("InvoiceNo", invoiceNo)
-            .maybeSingle();
+        // ==========================================
+        // INVOICE + SHIPMENTS PARALLEL
+        // ==========================================
+        const [
+            invoiceRes,
+            shipmentRes
+        ] = await Promise.all([
 
-        if (invError) {
-            console.error("Invoice fetch error:", invError);
+            supabaseClient
+                .from("InvoiceDetails")
+                .select("*")
+                .eq("InvoiceNo", invoiceNo)
+                .maybeSingle(),
+
+            supabaseClient
+                .from("InternationalBookingView")
+                .select("*")
+                .eq("InvoiceNumber", invoiceNo)
+                .order("BookedDate", {
+                    ascending: true
+                })
+        ]);
+
+        if (invoiceRes.error) {
+            console.error(
+                "Invoice fetch error:",
+                invoiceRes.error
+            );
         }
 
-        // =========================
-        // SHIPMENTS
-        // =========================
-        const { data: shipments, error: shipError } = await supabaseClient
-            .from("InternationalBookingView")
-            .select("*")
-            .eq("InvoiceNumber", invoiceNo)
-            .order("BookedDate", { ascending: true });
-
-        if (shipError) {
-            console.error("Shipment fetch error:", shipError);
+        if (shipmentRes.error) {
+            console.error(
+                "Shipment fetch error:",
+                shipmentRes.error
+            );
         }
 
-        const safeShipments = Array.isArray(shipments) ? shipments : [];
+        const invoiceDetails =
+            invoiceRes.data || null;
 
-        if (!safeShipments.length) {
+        const shipments =
+            Array.isArray(shipmentRes.data)
+                ? shipmentRes.data
+                : [];
+
+        // ==========================================
+        // NO SHIPMENTS
+        // ==========================================
+        if (!shipments.length) {
             return {
-                invoiceDetails: invoiceDetails || null,
-                shipments: [],
-                charges: [],
-                equipment: [],
-                paymentDetails: {
-                    totalPayment: 0,
-                    totalOtherDeduction: 0,
-                    totalTDS: 0
-                }
+                ...EMPTY_RESULT,
+                invoiceDetails
             };
         }
 
-        // =========================
-        // SAFE SHIPMENT IDS (FIXED)
-        // =========================
-        const shipmentIds = safeShipments
-            .map(x => x.ID_IB || x.id || x.ShipmentID)
+        // ==========================================
+        // SHIPMENT IDS
+        // ==========================================
+        const shipmentIds = shipments
+            .map(
+                row =>
+                    row.ID_IB ||
+                    row.id ||
+                    row.ShipmentID
+            )
             .filter(Boolean);
 
-        // =========================
-        // CHARGES + EQUIPMENT PARALLEL FETCH
-        // =========================
-        const [chargesRes, equipmentRes] = await Promise.all([
+        if (!shipmentIds.length) {
+            return {
+                invoiceDetails,
+                shipments,
+                charges: [],
+                equipment: []
+            };
+        }
+
+        // ==========================================
+        // CHARGES + EQUIPMENT PARALLEL
+        // ==========================================
+        const [
+            chargesRes,
+            equipmentRes
+        ] = await Promise.all([
+
             supabaseClient
                 .from("InternationalBookingCharges")
                 .select("*")
                 .in("ID_IB", shipmentIds)
-                .order("id", { ascending: false }),
+                .order("id", {
+                    ascending: false
+                }),
 
             supabaseClient
                 .from("InternationalBookingEquipment")
@@ -521,65 +811,47 @@ async function getShipmentData_int_Annexure(invoiceNo) {
                 .in("ID_IB", shipmentIds)
         ]);
 
-        const charges = Array.isArray(chargesRes.data) ? chargesRes.data : [];
-        const equipment = Array.isArray(equipmentRes.data) ? equipmentRes.data : [];
-
         if (chargesRes.error) {
-            console.error("Charges fetch error:", chargesRes.error);
+            console.error(
+                "Charges fetch error:",
+                chargesRes.error
+            );
         }
 
         if (equipmentRes.error) {
-            console.error("Equipment fetch error:", equipmentRes.error);
+            console.error(
+                "Equipment fetch error:",
+                equipmentRes.error
+            );
         }
 
-        // =========================
-        // PAYMENT DETAILS
-        // =========================
-        let paymentDetails = {
-            totalPayment: 0,
-            totalOtherDeduction: 0,
-            totalTDS: 0
-        };
-
-        try {
-            paymentDetails = await advancedPaymentDetails(
-                invoiceNo,
-                invoiceDetails?.InvoiceDate
-            ) || paymentDetails;
-        } catch (err) {
-            console.error("Payment fetch error:", err);
-        }
-
-        // =========================
-        // FINAL RESPONSE
-        // =========================
         return {
-            invoiceDetails: invoiceDetails || null,
-            shipments: safeShipments,
-            charges,
-            equipment,
-            paymentDetails
+            invoiceDetails,
+            shipments,
+            charges:
+                Array.isArray(chargesRes.data)
+                    ? chargesRes.data
+                    : [],
+            equipment:
+                Array.isArray(equipmentRes.data)
+                    ? equipmentRes.data
+                    : []
         };
 
-    } catch (err) {
+    } catch (error) {
 
-        console.error("Unexpected error in getShipmentData_int_Annexure:", err);
+        console.error(
+            "getShipmentData_int_Annexure error:",
+            error
+        );
 
-        return {
-            invoiceDetails: null,
-            shipments: [],
-            charges: [],
-            equipment: [],
-            paymentDetails: {
-                totalPayment: 0,
-                totalOtherDeduction: 0,
-                totalTDS: 0
-            }
-        };
+        return EMPTY_RESULT;
     }
 }
 
-// Utility function to fetch shipment details
+// ==========================================
+// SHIPMENT TABLE
+// ==========================================
 async function drawShipmentTable_int_Annexure(
     doc,
     PAGE,
@@ -608,49 +880,151 @@ async function drawShipmentTable_int_Annexure(
     let nonTaxableAmount = 0;
 
     // =========================
+    // SAFE VALUE
+    // =========================
+    const safe = (val, fallback = "-") =>
+        val !== null &&
+            val !== undefined &&
+            String(val).trim() !== ""
+            ? val
+            : fallback;
+
+    // =========================
+    // CHARGE ORDER
+    // =========================
+    const chargeOrder = {
+        "Freight Amount": 1,
+        "Other Amount": 2
+    };
+
+    // =========================
+    // REUSABLE STYLES
+    // =========================
+    const chargeLabelStyle = {
+        halign: "right",
+        fontStyle: "normal",
+        textColor: [0, 0, 0],
+        valign: "middle",
+        minCellHeight: 1,
+        cellPadding: {
+            top: 0.2,
+            bottom: 0.2,
+            left: 1,
+            right: 1
+        }
+    };
+
+    const chargeAmountStyle = {
+        halign: "right",
+        fontStyle: "normal",
+        textColor: [0, 0, 0],
+        valign: "middle",
+        minCellHeight: 1,
+        cellPadding: {
+            top: 0.2,
+            bottom: 0.2,
+            left: 1,
+            right: 1
+        }
+    };
+
+    const subtotalStyle = {
+        halign: "right",
+        fontStyle: "bold",
+        fillColor: [0, 240, 240],
+        textColor: [0, 0, 0],
+        valign: "middle",
+        minCellHeight: 2,
+        cellPadding: {
+            top: 1,
+            bottom: 1,
+            left: 2,
+            right: 1
+        }
+    };
+
+    // =========================
     // GROUP CHARGES
     // =========================
     const chargesMap = {};
 
-    allCharges.forEach(c => {
-        const key = c.ID_IB;
-        if (!chargesMap[key]) chargesMap[key] = [];
-        chargesMap[key].push(c);
-    });
+    for (const charge of allCharges) {
 
-    const safe = (val, fallback = "-") =>
-        val !== null && val !== undefined && String(val).trim() !== ""
-            ? val
-            : fallback;
+        const key = charge.ID_IB;
 
+        if (!key) continue;
+
+        if (!chargesMap[key]) {
+            chargesMap[key] = [];
+        }
+
+        chargesMap[key].push(charge);
+        console.log("Processing charge:", charge);
+        // GST totals once only
+        totalCGST += safeNumber(charge.CGSTAmt);
+        totalSGST += safeNumber(charge.SGSTAmt);
+        totalIGST += safeNumber(charge.IGSTAmt);
+        totalGST += safeNumber(charge.TotalGSTAmt);
+    }
+
+    // Sort charges once
+    for (const key in chargesMap) {
+
+        chargesMap[key].sort((a, b) => {
+
+            const orderA =
+                chargeOrder[a.ChargesType] || 999;
+
+            const orderB =
+                chargeOrder[b.ChargesType] || 999;
+
+            return orderA - orderB;
+        });
+    }
+
+    // =========================
+    // TABLE BODY
+    // =========================
     const body = [];
 
-    rows.forEach((row, i) => {
+    for (let i = 0; i < rows.length; i++) {
 
-        // 🔥 FIX: SAFE SHIPMENT KEY (IMPORTANT)
-        const shipmentKey = row.ID_IB || row.id || row.BookingID;
+        const row = rows[i];
 
-        console.log(`Shipment Key: ${shipmentKey}`);
+        const shipmentKey =
+            row.ID_IB ||
+            row.id ||
+            row.BookingID;
 
-        const TransitType = [
+        const transitType = [
             row.MovementType,
-            row.ModeType,
-        ].filter(Boolean).join("\n");
-
-        const sector = [
-            `Origin: ${safe(row.Origin)}`,
-            `Dest: ${safe(row.Destination)}`
-        ].join("\n");
+            row.ModeType
+        ]
+            .filter(Boolean)
+            .join("\n");
 
         // =========================
-        // SHIPMENT TOTALS
+        // TOTALS
         // =========================
-        freightAmount += safeNumber(row.FreightAmount || 0);
-        fuelSurcharge += safeNumber(row.FuelSurcharge || 0);
-        otherAmount += safeNumber(row.OtherAmount || 0);
+        freightAmount += safeNumber(
+            row.FreightAmount
+        );
 
-        taxableAmount += safeNumber(row.TaxableAmount || 0);
-        nonTaxableAmount += safeNumber(row.NonTaxableAmount || 0);
+        fuelSurcharge += safeNumber(
+            row.FuelSurcharge
+        );
+
+        otherAmount += safeNumber(
+            row.OtherAmount
+        );
+
+        taxableAmount += safeNumber(
+            row.TaxableAmount
+        );
+
+        nonTaxableAmount += safeNumber(
+            row.NonTaxableAmount
+        );
 
         // =========================
         // SHIPMENT ROW
@@ -659,111 +1033,75 @@ async function drawShipmentTable_int_Annexure(
             i + 1,
             formatDate(row.BookedDate) || "",
             row.DocketNo || "",
-            TransitType || "",
+            transitType,
             safe(row.ClearanceMode),
-            safe(row.Origin) || "",
-            safe(row.Destination) || "",
+            safe(row.Origin),
+            safe(row.Destination),
             row.Consignee || "",
             row.NoofUnit ?? "0",
-            `${safeNumber(row.ChargableWeight)} ${row.UOMType || ""}`,
+            `${safeNumber(row.ChargableWeight)} ${row.UOMType || ""}`
         ]);
 
         // =========================
-        // CHARGES UNDER SHIPMENT
+        // CHARGES
         // =========================
-        const chargeOrder = {
-            "Freight Amount": 1,
-            "Fuel Surcharge": 2,
-            "Other Amount": 3
-        };
+        const charges =
+            chargesMap[shipmentKey] || [];
 
-        const charges = (chargesMap[shipmentKey] || []).sort((a, b) => {
-            const orderA = chargeOrder[a.ChargesType] || 999;
-            const orderB = chargeOrder[b.ChargesType] || 999;
-            return orderA - orderB;
-        });
-
-        // Shipment-wise total
         let shipmentTotal = 0;
 
-        charges.forEach(c => {
+        for (let j = 0; j < charges.length; j++) {
 
-            const amt = safeNumber(c.TotalAmount || 0);
+            const charge = charges[j];
 
-            shipmentTotal += amt;
+            const amount =
+                safeNumber(charge.TotalAmount);
 
-            totalCGST += safeNumber(c.TotalCGSTAmt || 0);
-            totalSGST += safeNumber(c.TotalSGSTAmt || 0);
-            totalIGST += safeNumber(c.TotalIGSTAmt || 0);
-            totalGST += safeNumber(c.TotalGSTAmt || 0);
+            shipmentTotal += amount;
 
             body.push([
                 {
-                    content: c.ChargesType || "",
+                    content:
+                        charge.ChargesType || "",
                     colSpan: 8,
-                    styles: {
-                        halign: "right",
-                        fontStyle: "normal",
-                        textColor: [0, 0, 0],
-                        valign: "middle"
-                    }
+                    styles: chargeLabelStyle
                 },
                 {
-                    content: amt.toFixed(2),
-                    colSpan: 2, // Merge Qty + Weight columns
-                    styles: {
-                        halign: "right",
-                        fontStyle: "bold",
-                        valign: "middle",
-                        textColor: [0, 0, 0]
-                    }
+                    content:
+                        amount.toFixed(2),
+                    colSpan: 2,
+                    styles: chargeAmountStyle
                 }
             ]);
-        });
+        }
 
         // =========================
-        // SHIPMENT TOTAL ROW
+        // SUB TOTAL
         // =========================
-        if (charges.length > 0) {
+        if (shipmentTotal > 0) {
 
             body.push([
                 {
                     content: "Sub Total",
                     colSpan: 8,
-                    styles: {
-                        halign: "right",
-                        fontStyle: "bold",
-                        fillColor: [240, 240, 240],
-                        textColor: [0, 0, 0],
-                        valign: "middle",
-                        halign: "right",
-                        minCellHeight: 2,
-                        cellPadding: { top: 0, bottom: 0, left: 2, right: 2 }
-                    }
+                    styles: subtotalStyle
                 },
                 {
-                    content: shipmentTotal.toFixed(2),
-                    colSpan: 2, // Merge Qty + Weight columns
-                    styles: {
-                        halign: "right",
-                        fontStyle: "bold",
-                        fillColor: [240, 240, 240],
-                        textColor: [0, 0, 0],
-                        valign: "middle"
-                    }
-                },
-                ""
+                    content:
+                        shipmentTotal.toFixed(2),
+                    colSpan: 2,
+                    styles: subtotalStyle
+                }
             ]);
         }
-    });
+    }
 
     // =========================
     // GRAND TOTAL
     // =========================
     const grandTotal = Math.round(
-        freightAmount +
-        fuelSurcharge +
-        otherAmount +
+        taxableAmount +
+        nonTaxableAmount +
         totalGST
     );
 
@@ -771,8 +1109,14 @@ async function drawShipmentTable_int_Annexure(
     // TABLE
     // =========================
     doc.autoTable({
+
         startY,
-        margin: { left: PAGE.x, right: PAGE.x },
+
+        margin: {
+            left: PAGE.x,
+            right: PAGE.x
+        },
+
         tableWidth: PAGE.w,
 
         head: [[
@@ -785,7 +1129,7 @@ async function drawShipmentTable_int_Annexure(
             "Dest.",
             "Consignee",
             "Qty",
-            "Weight",
+            "Weight"
         ]],
 
         body,
@@ -795,7 +1139,8 @@ async function drawShipmentTable_int_Annexure(
             cellPadding: 1.5,
             textColor: 0,
             lineWidth: 0.2,
-            lineColor: [0, 0, 0]
+            lineColor: [0, 0, 0],
+            valign: "middle"
         },
 
         headStyles: {
@@ -805,28 +1150,41 @@ async function drawShipmentTable_int_Annexure(
             halign: "center",
             valign: "middle"
         },
-        didParseCell: function (data) {
+
+        didParseCell(data) {
+
             if (data.section === "body") {
-                data.cell.styles.fillColor = [255, 255, 255];
-                data.cell.styles.textColor = [0, 0, 0];
+
+                data.cell.styles.fillColor = [
+                    255,
+                    255,
+                    255
+                ];
+
+                data.cell.styles.textColor = [
+                    0,
+                    0,
+                    0
+                ];
             }
         },
 
         columnStyles: {
-            0: { cellWidth: 8, halign: "center" }, // Sl
+            0: { cellWidth: 8, halign: "center" }, // Sl No
             1: { cellWidth: 17 }, // Date
-            2: { cellWidth: 25 }, // AWB No
+            2: { cellWidth: 20 }, // AWB No
             3: { cellWidth: 20 }, // Transit
             4: { cellWidth: 20 }, // Mode
             5: { cellWidth: 20 }, // Origin
-            6: { cellWidth: 20 }, // Dest.
-            7: { cellWidth: 40 }, // Consignee
-            8: { cellWidth: 10, halign: "right" }, // Qty,
-            9: { cellWidth: 10, halign: "right" } // Weight
+            6: { cellWidth: 20 }, // Destination
+            7: { cellWidth: 35 }, // Consignee
+            8: { cellWidth: 15, halign: "right" }, // Qty
+            9: { cellWidth: 15, halign: "right" } // Weight
         }
     });
 
     return {
+
         y: doc.lastAutoTable.finalY,
 
         freightAmount,

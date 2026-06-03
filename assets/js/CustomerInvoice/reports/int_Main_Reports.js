@@ -347,6 +347,7 @@ function drawTaxSection(
     CONFIG
 ) {
 
+    console.log("Totals for tax section:", totals, totalPaymentReceived);
     // =========================
     // VALUES
     // =========================
