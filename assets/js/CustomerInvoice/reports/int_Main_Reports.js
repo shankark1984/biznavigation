@@ -112,7 +112,7 @@ async function drawTermsAndTaxSection_int(doc, PAGE, FONT, company, header, tota
         bankTopGap: 1,
         bankRowHeight: 4,
 
-        bottomMargin: 20,
+        bottomMargin: 35,
     };
 
     const colTerms =
@@ -347,77 +347,174 @@ function drawTaxSection(
     CONFIG
 ) {
 
-    const advance =
-        safeNumber(
-            totalPaymentReceived
-        );
+    // =========================
+    // VALUES
+    // =========================
+    const nonTaxable =
+        safeNumber(totals?.nonTaxableAmount);
 
+    const taxable =
+        safeNumber(totals?.taxableAmount);
+
+    const cgst =
+        safeNumber(totals?.totalCGST);
+
+    const sgst =
+        safeNumber(totals?.totalSGST);
+
+    const igst =
+        safeNumber(totals?.totalIGST);
+
+    const advance =
+        safeNumber(totalPaymentReceived);
+
+    // =========================
+    // TOTALS
+    // =========================
+    const totalGST =
+        cgst +
+        sgst +
+        igst;
+
+    const grandTotal = Math.ceil(
+        nonTaxable +
+        taxable +
+        totalGST
+    );
+
+    const balanceAmount = Math.ceil(
+        grandTotal - advance
+    );
+
+    // =========================
+    // TABLE ROWS
+    // =========================
     const rows = [
-        ["Total Charges", totals.nonTaxableAmount, totals.taxableAmount],
-        ["CGST 9%", 0, totals.totalCGST],
-        ["SGST 9%", 0, totals.totalSGST],
-        ["IGST 18%", 0, totals.totalIGST],
-        ["Total GST", 0, totals.totalGST],
-        ["Grand Total", 0, totals.grandTotal],
-        ["Advance Amount", 0, advance],
-        ["Balance Amount", 0, round2(totals.grandTotal - advance)]
+        [
+            "Total Charges",
+            nonTaxable,
+            taxable
+        ],
+        [
+            "CGST 9%",
+            0,
+            cgst
+        ],
+        [
+            "SGST 9%",
+            0,
+            sgst
+        ],
+        [
+            "IGST 18%",
+            0,
+            igst
+        ],
+        [
+            "Total GST",
+            0,
+            totalGST
+        ],
+        [
+            "Grand Total",
+            0,
+            grandTotal
+        ],
+        [
+            "Advance Amount",
+            0,
+            advance
+        ],
+        [
+            "Balance Amount",
+            0,
+            balanceAmount
+        ]
     ];
 
-    doc.setFontSize(
-        FONT.small
+    // =========================
+    // DRAW ROWS
+    // =========================
+    doc.setFontSize(FONT.small);
+
+    rows.forEach((row, i) => {
+
+        const rowY =
+            y +
+            CONFIG.headerH +
+            (i * CONFIG.headerH);
+
+        // Row separator
+        doc.line(
+            X.desc,
+            rowY,
+            X.end,
+            rowY
+        );
+
+        // Bold important rows
+        const isBold =
+            row[0] === "Total GST" ||
+            row[0] === "Grand Total" ||
+            row[0] === "Balance Amount";
+
+        doc.setFont(
+            "times",
+            isBold ? "bold" : "normal"
+        );
+
+        // Description
+        doc.text(
+            row[0],
+            X.desc + 2,
+            rowY + 3.2
+        );
+
+        // Non Tax
+        doc.text(
+            safeAmount(row[1]).toFixed(2),
+            X.nonTax +
+            COL.nonTax -
+            2,
+            rowY + 3.2,
+            {
+                align: "right"
+            }
+        );
+
+        // Tax Amount
+        doc.text(
+            safeAmount(row[2]).toFixed(2),
+            X.tax +
+            COL.tax -
+            2,
+            rowY + 3.2,
+            {
+                align: "right"
+            }
+        );
+    });
+
+    // Bottom Border
+    const endY =
+        y +
+        CONFIG.headerH +
+        rows.length *
+        CONFIG.headerH;
+
+    doc.line(
+        X.desc,
+        endY,
+        X.end,
+        endY
     );
 
-    rows.forEach(
-        (row, i) => {
-
-            const rowY =
-                y +
-                CONFIG.headerH +
-                (
-                    i *
-                    CONFIG.headerH
-                );
-
-            doc.line(
-                X.desc,
-                rowY,
-                X.end,
-                rowY
-            );
-
-            doc.text(
-                row[0],
-                X.desc + 2,
-                rowY + 3.2
-            );
-
-            doc.text(
-                safeAmount(
-                    row[1]
-                ).toFixed(2),
-                X.nonTax +
-                COL.nonTax -
-                2,
-                rowY + 3.2,
-                {
-                    align: "right"
-                }
-            );
-
-            doc.text(
-                safeAmount(
-                    row[2]
-                ).toFixed(2),
-                X.tax +
-                COL.tax -
-                2,
-                rowY + 3.2,
-                {
-                    align: "right"
-                }
-            );
-        }
-    );
+    return {
+        grandTotal,
+        totalGST,
+        balanceAmount,
+        endY
+    };
 }
 
 // ==========================================
@@ -533,9 +630,8 @@ async function drawShipmentTable_int_Main(doc, PAGE, FONT, rows = [], y) {
 
         const mode = [
             row.MovementType,
-            row.TransitType,
             row.ModeType,
-            row.ClearanceMode
+
         ]
             .filter(Boolean)
             .join("\n");
@@ -552,8 +648,9 @@ async function drawShipmentTable_int_Main(doc, PAGE, FONT, rows = [], y) {
             formatDate(row.BookedDate) || "",
             row.DocketNo || "",
             mode || "",
-            sector || "",
-            safe(row.Commodity),
+            safe(row.ClearanceMode),
+            safe(row.Origin) || "",
+            safe(row.Destination) || "",
             row.NoofUnit ?? "0",
             row.ChargableWeight + " " + row.UOMType,
             row.FreightAmount ? safeNumber(row.FreightAmount).toFixed(2) : "0.00",
@@ -574,7 +671,7 @@ async function drawShipmentTable_int_Main(doc, PAGE, FONT, rows = [], y) {
         margin: { left: PAGE.x, right: PAGE.x },
         tableWidth: PAGE.w,
         head: [[
-            "Sl No.", "Date", "AWB No", "Mode", "Sector", "Cmdty", "Qty",
+            "Sl No.", "Date", "AWB No", "Transit", "Mode", "Origin", "Dest.", "Qty",
             "Weight", "Frt. Amt.", "FSC. Chrgs", "Other Charges", "TotalAmt."
         ]],
 
@@ -610,15 +707,16 @@ async function drawShipmentTable_int_Main(doc, PAGE, FONT, rows = [], y) {
             0: { cellWidth: 7, halign: "center", valign: "middle" }, // Sl
             1: { cellWidth: 16, valign: "middle" }, // Date
             2: { cellWidth: 19, valign: "middle" }, // AWB No
-            3: { cellWidth: 19, valign: "middle" }, // Mode
-            4: { cellWidth: 25, valign: "middle" }, // sector
-            5: { cellWidth: 20, valign: "middle" }, // Cmdty
-            6: { cellWidth: 10, halign: "right", valign: "middle" }, // Qty
-            7: { cellWidth: 12, halign: "right", valign: "middle" }, // Weight/CBM
-            8: { cellWidth: 17, halign: "right", valign: "middle" }, // Frt. Amt.
-            9: { cellWidth: 14, halign: "right", valign: "middle" }, // FSC. Chrgs
-            10: { cellWidth: 14, halign: "right", valign: "middle" },  // Other Charges
-            11: { cellWidth: 17, halign: "right", valign: "middle" }, // TotalAmt.
+            3: { cellWidth: 19, valign: "middle" }, // Transit
+            4: { cellWidth: 15, valign: "middle" }, // Mode
+            5: { cellWidth: 15, valign: "middle" }, // Origin
+            6: { cellWidth: 15, valign: "middle" }, // Dest.
+            7: { cellWidth: 10, halign: "right", valign: "middle" }, // Qty
+            8: { cellWidth: 12, halign: "right", valign: "middle" }, // Weight/CBM
+            9: { cellWidth: 17, halign: "right", valign: "middle" }, // Frt. Amt.
+            10: { cellWidth: 14, halign: "right", valign: "middle" }, // FSC. Chrgs
+            11: { cellWidth: 14, halign: "right", valign: "middle" },  // Other Charges
+            12: { cellWidth: 17, halign: "right", valign: "middle" }, // TotalAmt.
         },
 
         didDrawCell: (data) => {

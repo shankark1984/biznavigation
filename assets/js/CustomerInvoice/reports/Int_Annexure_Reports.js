@@ -119,7 +119,7 @@ async function drawTermsAndTaxSection_int_Annexure(doc, PAGE, FONT, company, hea
         bankTopGap: 1,
         bankRowHeight: 4,
 
-        bottomMargin: 20,
+        bottomMargin: 35,
     };
 
     const colTerms =
