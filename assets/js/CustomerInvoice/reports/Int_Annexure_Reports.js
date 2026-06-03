@@ -632,11 +632,9 @@ async function drawShipmentTable_int_Annexure(
 
         console.log(`Shipment Key: ${shipmentKey}`);
 
-        const mode = [
+        const TransitType = [
             row.MovementType,
-            row.TransitType,
             row.ModeType,
-            row.ClearanceMode
         ].filter(Boolean).join("\n");
 
         const sector = [
@@ -661,10 +659,11 @@ async function drawShipmentTable_int_Annexure(
             i + 1,
             formatDate(row.BookedDate) || "",
             row.DocketNo || "",
-            mode || "",
-            sector || "",
+            TransitType || "",
+            safe(row.ClearanceMode),
+            safe(row.Origin) || "",
+            safe(row.Destination) || "",
             row.Consignee || "",
-            safe(row.Commodity),
             row.NoofUnit ?? "0",
             `${safeNumber(row.ChargableWeight)} ${row.UOMType || ""}`,
         ]);
@@ -711,13 +710,14 @@ async function drawShipmentTable_int_Annexure(
                 },
                 {
                     content: amt.toFixed(2),
+                    colSpan: 2, // Merge Qty + Weight columns
                     styles: {
                         halign: "right",
                         fontStyle: "bold",
-                        valign: "middle"
+                        valign: "middle",
+                        textColor: [0, 0, 0]
                     }
-                },
-                ""
+                }
             ]);
         });
 
@@ -743,6 +743,7 @@ async function drawShipmentTable_int_Annexure(
                 },
                 {
                     content: shipmentTotal.toFixed(2),
+                    colSpan: 2, // Merge Qty + Weight columns
                     styles: {
                         halign: "right",
                         fontStyle: "bold",
@@ -778,10 +779,11 @@ async function drawShipmentTable_int_Annexure(
             "Sl",
             "Date",
             "AWB No",
+            "Transit",
             "Mode",
-            "Sector",
+            "Origin",
+            "Dest.",
             "Consignee",
-            "Commodity",
             "Qty",
             "Weight",
         ]],
@@ -814,12 +816,13 @@ async function drawShipmentTable_int_Annexure(
             0: { cellWidth: 8, halign: "center" }, // Sl
             1: { cellWidth: 17 }, // Date
             2: { cellWidth: 25 }, // AWB No
-            3: { cellWidth: 25 }, // Mode
-            4: { cellWidth: 25 }, // Sector
-            5: { cellWidth: 40 }, // Consignee
-            6: { cellWidth: 20, halign: "right" }, // Commodity / Charge
-            7: { cellWidth: 15, halign: "right" }, // Qty,
-            8: { cellWidth: 15, halign: "right" } // Weight
+            3: { cellWidth: 20 }, // Transit
+            4: { cellWidth: 20 }, // Mode
+            5: { cellWidth: 20 }, // Origin
+            6: { cellWidth: 20 }, // Dest.
+            7: { cellWidth: 40 }, // Consignee
+            8: { cellWidth: 10, halign: "right" }, // Qty,
+            9: { cellWidth: 10, halign: "right" } // Weight
         }
     });
 
