@@ -43,7 +43,7 @@
             box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
         }
 
-        #bookingTable thead th {
+        #paymentTable thead th {
             position: sticky;
             top: 0;
             background-color: #343a40;
@@ -56,30 +56,30 @@
             box-shadow: 0 2px 2px rgba(0, 0, 0, 0.05);
         }
 
-        #bookingTable tbody td {
+        #paymentTable tbody td {
             vertical-align: middle;
             white-space: nowrap;
             font-size: 0.8rem;
             padding: 8px 10px;
         }
 
-        #bookingTable tbody tr:hover {
+        #paymentTable tbody tr:hover {
             background-color: #f1f1f1;
         }
 
-        #bookingTable tbody tr:nth-child(even) {
+        #paymentTable tbody tr:nth-child(even) {
             background-color: #f9f9f9;
         }
 
-        #bookingTable th,
-        #bookingTable td {
+        #paymentTable th,
+        #paymentTable td {
             text-align: center;
         }
 
         @media (max-width: 768px) {
 
-            #bookingTable thead th,
-            #bookingTable tbody td {
+            #paymentTable thead th,
+            #paymentTable tbody td {
                 font-size: 0.75rem;
                 padding: 6px 8px;
             }
@@ -98,6 +98,56 @@
             display: flex;
             flex-wrap: wrap;
             gap: 4px;
+        }
+
+        #paymentTable {
+            table-layout: fixed;
+            width: 100%;
+        }
+
+        /* Common alignment */
+        #paymentTable th,
+        #paymentTable td {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* Column widths */
+        #paymentTable th:nth-child(1),
+        #paymentTable td:nth-child(1) {
+            width: 70px;
+            text-align: center;
+        }
+
+        #paymentTable th:nth-child(2),
+        #paymentTable td:nth-child(2) {
+            width: 120px;
+        }
+
+        #paymentTable th:nth-child(3),
+        #paymentTable td:nth-child(3) {
+            width: 110px;
+        }
+
+        #paymentTable th:nth-child(4),
+        #paymentTable td:nth-child(4) {
+            width: 180px;
+        }
+
+        #paymentTable th:nth-child(5),
+        #paymentTable td:nth-child(5) {
+            width: 130px;
+        }
+
+        #paymentTable th:nth-child(6),
+        #paymentTable td:nth-child(6),
+        #paymentTable th:nth-child(7),
+        #paymentTable td:nth-child(7),
+        #paymentTable th:nth-child(8),
+        #paymentTable td:nth-child(8) {
+            width: 120px;
+            text-align: right;
         }
     </style>
 </head>
@@ -176,7 +226,7 @@
                     <!-- Table -->
                     <!-- Table with outer border -->
                     <div class="table-responsive border border-secondary rounded shadow-sm">
-                        <table class="table table-bordered table-hover table-sm mb-0" id="bookingTable">
+                        <table class="table table-bordered table-hover table-sm mb-0" id="paymentTable">
                             <thead class="table-dark text-center">
                                 <tr>
                                     <th data-key="RowID">Sr No</th>
