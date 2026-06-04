@@ -384,7 +384,7 @@ async function d_loadInvoiceBookings(invoiceNo) {
             row.setAttribute('data-ship-id', invoice.id);
             row.innerHTML = `
                 <td>${invoice.DocketNo || ''}</td>
-                <td>${invoice.BookingDate || ''}</td>
+                <td>${formatDate(invoice.BookingDate) || ''}</td>
                 <td>${invoice.TransitType || ''}</td>
                 <td>${invoice.ModeType || ''}</td>
                 <td>${invoice.OriginCity || ''}</td>
@@ -491,7 +491,7 @@ async function d_addSingleShipmentToInvoice(shipmentNo, invoiceNo) {
 
         row.innerHTML = `
             <td>${data.DocketNo || ''}</td>
-            <td>${data.BookingDate || ''}</td>
+            <td>${formatDate(data.BookingDate) || ''}</td>
             <td>${data.TransitType || ''}</td>
             <td>${data.ModeType || ''}</td>
             <td>${data.OriginCity || ''}</td>

@@ -608,11 +608,11 @@ async function addSingleShipmentToInvoice_cc(shipmentNo, invoiceNo) {
         row.innerHTML = `
             <td>${tableBody.children.length + 1}</td>
             <td>${data.JobID || ''}</td>
-            <td>${data.JobDate || ''}</td>
+            <td>${formatDate(data.JobDate) || ''}</td>
             <td>${data.BLAWBNo || ''}</td>
-            <td>${data.BLAWBDate || ''}</td>
+            <td>${formatDate(data.BLAWBDate) || ''}</td>
             <td>${data.BENo || ''}</td>
-            <td>${data.BEDate || ''}</td>
+            <td>${formatDate(data.BEDate) || ''}</td>
             <td>${data.MovementType || ''}</td>
             <td>${data.TransitType || ''}</td>
             <td>${data.ModeType || ''}</td>
