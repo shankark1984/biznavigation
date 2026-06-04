@@ -651,7 +651,8 @@ function drawTaxSection_Clear_Main(
         {
             label: "Total GST",
             nonTax: 0,
-            tax: totals.totalGST
+            tax: totals.totalGST,
+            bold: true
         },
         {
             label: "Grand Total",
@@ -688,9 +689,7 @@ function drawTaxSection_Clear_Main(
         const rowTopY =
             y +
             CONFIG.headerH +
-            (
-                i * rowHeight
-            );
+            (i * rowHeight);
 
         const rowBottomY =
             rowTopY +
@@ -715,9 +714,47 @@ function drawTaxSection_Clear_Main(
         }
 
         // ==========================================
-        // MERGED ROWS
+        // MERGED ROWS WITH BACKGROUND
         // ==========================================
         if (row.merged) {
+
+            let fillColor = [240, 240, 240];
+
+            if (row.label === "Grand Total") {
+                fillColor = [220, 220, 220];
+            }
+
+            if (row.label === "Balance Amount") {
+                fillColor = [210, 210, 210];
+            }
+
+            // Background
+            doc.setFillColor(
+                fillColor[0],
+                fillColor[1],
+                fillColor[2]
+            );
+
+            doc.rect(
+                X.desc,
+                rowTopY,
+                X.end - X.desc,
+                rowHeight,
+                "F"
+            );
+
+            // Border around merged row
+            doc.rect(
+                X.desc,
+                rowTopY,
+                X.end - X.desc,
+                rowHeight
+            );
+
+            PDF_FONT.bold(
+                doc,
+                FONT.body
+            );
 
             doc.text(
                 row.label,
@@ -727,15 +764,12 @@ function drawTaxSection_Clear_Main(
 
             doc.text(
                 formatAmount(row.tax),
-                X.tax +
-                COL.tax -
-                2,
+                X.tax + COL.tax - 2,
                 rowTopY + textOffset,
                 {
                     align: "right"
                 }
             );
-
         } else {
 
             // ==========================================
@@ -751,7 +785,9 @@ function drawTaxSection_Clear_Main(
             // NON TAX
             // ==========================================
             doc.text(
-                formatAmount(row.nonTax),
+                formatAmount(
+                    row.nonTax || 0
+                ),
                 X.nonTax +
                 COL.nonTax -
                 2,
@@ -765,7 +801,9 @@ function drawTaxSection_Clear_Main(
             // TAX
             // ==========================================
             doc.text(
-                formatAmount(row.tax),
+                formatAmount(
+                    row.tax || 0
+                ),
                 X.tax +
                 COL.tax -
                 2,
@@ -787,12 +825,16 @@ function drawTaxSection_Clear_Main(
         );
     }
 
-    // Return actual height
+    // ==========================================
+    // RETURN
+    // ==========================================
     return {
         height:
             CONFIG.headerH +
             (rows.length * rowHeight),
-        rowCount: rows.length
+
+        rowCount:
+            rows.length
     };
 }
 // ==========================================
