@@ -585,11 +585,7 @@ function drawTaxSection_int_Annexure(
     // ==========================================
     // TOTALS
     // ==========================================
-    const totalGST = Math.ceil(
-        cgst +
-        sgst +
-        igst
-    );
+    const totalGST = cgst + sgst + igst;
 
     const grandTotal = Math.ceil(
         nonTaxable +
