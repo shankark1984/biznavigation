@@ -1209,25 +1209,68 @@ function drawPartySection_Clearance(
     const LEFT_WIDTH = PAGE.w * 0.60;
     const PADDING = 3;
     const LINE_H = 3.5;
+    const SECTION_GAP = 2; // mm
 
     // ==========================================
-    // SAFE HELPERS
+    // HELPERS
     // ==========================================
     const safe = (v, fallback = "-") =>
-        v?.toString().trim() || fallback;
+        v?.toString()?.trim() || fallback;
+
+    const drawText = (
+        text,
+        x,
+        y,
+        bold = false,
+        size = FONT.title
+    ) => {
+
+        doc.setFont(
+            "times",
+            bold ? "bold" : "normal"
+        );
+
+        doc.setFontSize(size);
+
+        doc.text(text, x, y);
+    };
+
+    const drawLines = (
+        lines,
+        x,
+        y,
+        fontFn
+    ) => {
+
+        fontFn();
+
+        doc.text(
+            lines,
+            x,
+            y
+        );
+
+        return (
+            y +
+            (lines.length * LINE_H)
+        );
+    };
 
     // ==========================================
     // SHIPMENT DATA
     // ==========================================
-    const firstShipment = shipments?.[0] || {};
+    const firstShipment =
+        shipments?.[0] || {};
 
-    const mawb = firstShipment?.BLAWBNo
-        ? `${safe(firstShipment.BLAWBNo)} / ${formatDate(firstShipment.BLAWBDate)}`
-        : "-";
+    const mawb =
+        firstShipment?.BLAWBNo
+            ? `${safe(firstShipment.BLAWBNo)} / ${formatDate(firstShipment.BLAWBDate)}`
+            : "-";
 
-    const beNo = firstShipment?.BENo
-        ? `${safe(firstShipment.BENo)} / ${formatDate(firstShipment.BEDate)}`
-        : "-";
+    const beNo =
+        firstShipment?.BENo
+            ? `${safe(firstShipment.BENo)} / ${formatDate(firstShipment.BEDate)}`
+            : "-";
 
     const weight =
         `${safeNumber(firstShipment?.CargoWeight)} Kgs / ${safe(firstShipment?.Quantity)} Pcs`;
@@ -1240,50 +1283,86 @@ function drawPartySection_Clearance(
     // ==========================================
     // LEFT SIDE DATA
     // ==========================================
-    const partyNameLines = doc.splitTextToSize(
-        `M/s ${safe(party?.name, "")}`,
-        LEFT_WIDTH - (PADDING * 2)
-    );
+    const leftTextWidth =
+        LEFT_WIDTH - (PADDING * 2);
 
-    const partyAddrLines = doc.splitTextToSize(
-        safe(party?.address, ""),
-        LEFT_WIDTH - (PADDING * 2)
-    );
+    const partyNameLines =
+        doc.splitTextToSize(
+            `M/s ${safe(party?.name, "")}`,
+            leftTextWidth
+        );
 
-    const gstNoLines = doc.splitTextToSize(
-        `GST No: ${safe(party?.gst, "")}`,
-        LEFT_WIDTH - (PADDING * 2)
-    );
+    const partyAddrLines =
+        doc.splitTextToSize(
+            safe(party?.address, ""),
+            leftTextWidth
+        );
+
+    const gstNoLines =
+        doc.splitTextToSize(
+            `GST No: ${safe(party?.gst, "")}`,
+            leftTextWidth
+        );
 
     // ==========================================
     // RIGHT SIDE DATA
     // ==========================================
     const rightData = [
-        ["Invoice No. :", safe(header?.InvoiceNo)],
-        ["Invoice Date :", formatDate(header?.InvoiceDate) || "-"],
-        ["MAWB / Dt. :", mawb],
-        ["BE No. / Dt. :", beNo],
-        ["Wt. / Qty. :", weight],
-        ["P.O No. :", poNo]
+        {
+            label: "Invoice No.",
+            value: safe(
+                header?.InvoiceNo
+            ),
+            bold: true
+        },
+        {
+            label: "Invoice Date",
+            value:
+                formatDate(
+                    header?.InvoiceDate
+                ) || "-",
+            bold: true
+        },
+        {
+            label: "MAWB / Dt.",
+            value: mawb
+        },
+        {
+            label: "BE No. / Dt.",
+            value: beNo
+        },
+        {
+            label: "Wt. / Qty.",
+            value: weight
+        },
+        {
+            label: "P.O No.",
+            value: poNo
+        }
     ];
 
     // ==========================================
     // HEIGHT CALCULATION
     // ==========================================
-    const leftLineCount =
-        partyNameLines.length +
-        partyAddrLines.length +
-        gstNoLines.length;
+    const leftHeight =
+        (
+            partyNameLines.length +
+            partyAddrLines.length +
+            gstNoLines.length
+        ) * LINE_H;
 
-    const rightLineCount =
-        rightData.length;
+    const rightHeight =
+        rightData.length * LINE_H;
 
     const rowHeight =
-        (Math.max(leftLineCount, rightLineCount) * LINE_H) +
+        Math.max(
+            leftHeight,
+            rightHeight
+        ) +
         (PADDING * 2);
 
     // ==========================================
-    // OUTER BOX
+    // OUTER BORDER
     // ==========================================
     doc.rect(
         PAGE.x,
@@ -1292,6 +1371,7 @@ function drawPartySection_Clearance(
         rowHeight
     );
 
+    // Divider
     doc.line(
         PAGE.x + LEFT_WIDTH,
         y,
@@ -1302,74 +1382,102 @@ function drawPartySection_Clearance(
     // ==========================================
     // LEFT SECTION
     // ==========================================
-    let leftY = y + PADDING + 1;
-    const leftX = PAGE.x + PADDING;
+    const leftX =
+        PAGE.x + PADDING;
 
-    PDF_FONT.bold(doc, FONT.header - 2);
+    let leftY =
+        y + PADDING + 1;
 
-    doc.text(
+    leftY = drawLines(
         partyNameLines,
         leftX,
-        leftY
+        leftY,
+        () =>
+            PDF_FONT.bold(
+                doc,
+                FONT.header - 2
+            )
     );
 
-    leftY += partyNameLines.length * LINE_H;
-
-    PDF_FONT.normal(doc, FONT.title - 1);
-
-    doc.text(
+    leftY = drawLines(
         partyAddrLines,
         leftX,
-        leftY
+        leftY,
+        () =>
+            PDF_FONT.normal(
+                doc,
+                FONT.title - 1
+            )
     );
 
-    leftY += partyAddrLines.length * LINE_H + 1;
+    leftY += 1;
 
-    PDF_FONT.bold(doc, FONT.title - 1);
-
-    doc.text(
+    drawLines(
         gstNoLines,
         leftX,
-        leftY
+        leftY,
+        () =>
+            PDF_FONT.bold(
+                doc,
+                FONT.title - 1
+            )
     );
 
     // ==========================================
     // RIGHT SECTION
     // ==========================================
-    let rightY = y + PADDING + 1;
-    const rightX =
-        PAGE.x + LEFT_WIDTH + PADDING;
+    let rightY =
+        y + PADDING + 1;
 
-    rightData.forEach(([label, value], index) => {
+    const labelX =
+        PAGE.x +
+        LEFT_WIDTH +
+        PADDING;
 
-        const isBold =
-            label === "Invoice No. :" ||
-            label === "Invoice Date :";
+    const colonX =
+        labelX + 25;
 
-        doc.setFont(
-            "times",
-            isBold ? "bold" : "normal"
+    const valueX =
+        colonX + 3;
+
+    rightData.forEach(row => {
+
+        drawText(
+            row.label,
+            labelX,
+            rightY,
+            row.bold
         );
 
-        doc.setFontSize(FONT.title);
-
-        doc.text(
-            `${label} ${value}`,
-            rightX,
-            rightY
+        drawText(
+            ":",
+            colonX,
+            rightY,
+            row.bold
         );
 
-        // Border below Invoice Date
-        if (label === "Invoice Date :") {
+        drawText(
+            row.value,
+            valueX,
+            rightY,
+            row.bold
+        );
 
-            const lineY = rightY + 0.8;
+        // Divider below Invoice Date
+        if (row.label === "Invoice Date") {
+
+            const lineY =
+                rightY +
+                (LINE_H * 0.50);
 
             doc.line(
-                PAGE.x + LEFT_WIDTH,      // start at divider
+                PAGE.x + LEFT_WIDTH,
                 lineY,
-                PAGE.x + PAGE.w,          // end at right border
+                PAGE.x + PAGE.w,
                 lineY
             );
+
+            rightY += SECTION_GAP;
         }
 
         rightY += LINE_H;
