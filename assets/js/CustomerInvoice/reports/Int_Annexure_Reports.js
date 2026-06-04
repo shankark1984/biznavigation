@@ -998,13 +998,14 @@ async function drawShipmentTable_int_Annexure(
     // =========================
     const chargeLabelStyle = {
         halign: "right",
+        font: "times",
         fontStyle: "normal",
         textColor: [0, 0, 0],
         valign: "middle",
         minCellHeight: 1,
         cellPadding: {
-            top: 0.2,
-            bottom: 0.2,
+            top: 1,
+            bottom: 1,
             left: 1,
             right: 1
         }
@@ -1012,13 +1013,14 @@ async function drawShipmentTable_int_Annexure(
 
     const chargeAmountStyle = {
         halign: "right",
+        font: "times",
         fontStyle: "normal",
         textColor: [0, 0, 0],
         valign: "middle",
         minCellHeight: 1,
         cellPadding: {
-            top: 0.2,
-            bottom: 0.2,
+            top: 1,
+            bottom: 1,
             left: 1,
             right: 1
         }
@@ -1027,8 +1029,8 @@ async function drawShipmentTable_int_Annexure(
     const subtotalStyle = {
         halign: "right",
         fontStyle: "bold",
-        fillColor: [0, 240, 240],
-        textColor: [0, 0, 0],
+        fillColor: [60, 60, 60],
+        textColor: [255, 255, 255],
         valign: "middle",
         minCellHeight: 2,
         cellPadding: {
@@ -1055,12 +1057,7 @@ async function drawShipmentTable_int_Annexure(
         }
 
         chargesMap[key].push(charge);
-        // GST totals once only
-        // if (safeNumber(charge.TotalGSTAmt) > 0) {
-        //     taxableAmount += safeNumber(charge.TotalAmount);
-        // } else {
-        //     nonTaxableAmount += safeNumber(charge.TotalAmount);
-        // }
+
         totalCGST += safeNumber(charge.CGSTAmt);
         totalSGST += safeNumber(charge.SGSTAmt);
         totalIGST += safeNumber(charge.IGSTAmt);
@@ -1138,7 +1135,7 @@ async function drawShipmentTable_int_Annexure(
             safe(row.Origin),
             safe(row.Destination),
             row.Consignee || "",
-            row.NoofUnit ?? "0",
+            String(Number(row.NoofUnit || 0)).padStart(2, '0'),
             `${safeNumber(row.ChargableWeight)} ${row.UOMType || ""}`
         ]);
 
@@ -1235,7 +1232,9 @@ async function drawShipmentTable_int_Annexure(
         body,
 
         styles: {
-            fontSize: FONT.small,
+            fontSize: FONT.body - 1,
+            font: "times",
+            fillColor: [224, 224, 224],
             cellPadding: 1.5,
             textColor: 0,
             lineWidth: 0.2,
@@ -1244,6 +1243,7 @@ async function drawShipmentTable_int_Annexure(
         },
 
         headStyles: {
+            font: "times",
             fillColor: [60, 60, 60],
             textColor: 255,
             fontStyle: "bold",
@@ -1251,23 +1251,6 @@ async function drawShipmentTable_int_Annexure(
             valign: "middle"
         },
 
-        didParseCell(data) {
-
-            if (data.section === "body") {
-
-                data.cell.styles.fillColor = [
-                    255,
-                    255,
-                    255
-                ];
-
-                data.cell.styles.textColor = [
-                    0,
-                    0,
-                    0
-                ];
-            }
-        },
 
         columnStyles: {
             0: { cellWidth: 8, halign: "center" }, // Sl No
