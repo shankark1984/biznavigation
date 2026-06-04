@@ -450,8 +450,7 @@ function drawHeaderRow_int_Annexure(
         bottomY
     );
 
-    PDF_FONT.set(doc, "bold");
-    doc.setFontSize(FONT.body);
+    PDF_FONT.bold(doc, FONT.body);
 
     const headers = [
         ["Terms & Conditions", X.terms, COL.terms],
@@ -555,19 +554,37 @@ function drawTaxSection_int_Annexure(
     y,
     CONFIG
 ) {
-    console.log("Totals:", totals);
-    const nonTaxable = safeNumber(totals?.nonTaxableAmount);
-    const taxable = safeNumber(totals?.taxableAmount);
-    const cgst = safeNumber(totals?.totalCGST);
-    const sgst = safeNumber(totals?.totalSGST);
-    const igst = safeNumber(totals?.totalIGST);
-    const totalGST = safeNumber(totals?.totalGST);
-    const advance = safeNumber(totalPaymentReceived);
 
+    // ==========================================
+    // VALUES
+    // ==========================================
+    const nonTaxable =
+        safeNumber(totals?.nonTaxableAmount);
+
+    const taxable =
+        safeNumber(totals?.taxableAmount);
+
+    const cgst =
+        safeNumber(totals?.totalCGST);
+
+    const sgst =
+        safeNumber(totals?.totalSGST);
+
+    const igst =
+        safeNumber(totals?.totalIGST);
+
+    const advance =
+        safeNumber(totalPaymentReceived);
 
     // ==========================================
     // TOTALS
     // ==========================================
+    const totalGST = Math.ceil(
+        cgst +
+        sgst +
+        igst
+    );
+
     const grandTotal = Math.ceil(
         nonTaxable +
         taxable +
@@ -575,7 +592,8 @@ function drawTaxSection_int_Annexure(
     );
 
     const balanceAmount = Math.ceil(
-        grandTotal - advance
+        grandTotal -
+        advance
     );
 
     // ==========================================
@@ -584,17 +602,42 @@ function drawTaxSection_int_Annexure(
     const rows = [
         { label: "Total Charges", nonTax: nonTaxable, tax: taxable },
         { label: "CGST 9%", nonTax: 0, tax: cgst },
-        { label: "SGST 9%", nonTax: 0, tax: sgst },
-        { label: "IGST 18%", nonTax: 0, tax: igst },
-        { label: "Total GST", nonTax: 0, tax: totalGST },
-        { label: "Grand Total", nonTax: 0, tax: grandTotal },
-        { label: "Advance Amount", nonTax: 0, tax: advance },
-        { label: "Balance Amount", nonTax: 0, tax: balanceAmount }
+        {
+            label: "SGST 9%",
+            nonTax: 0,
+            tax: sgst
+        },
+        {
+            label: "IGST 18%",
+            nonTax: 0,
+            tax: igst
+        },
+        {
+            label: "Total GST",
+            nonTax: 0,
+            tax: totalGST
+        },
+        {
+            label: "Grand Total",
+            nonTax: "",
+            tax: grandTotal
+        },
+        {
+            label: "Advance Amount",
+            nonTax: "",
+            tax: advance
+        },
+        {
+            label: "Balance Amount",
+            nonTax: "",
+            tax: balanceAmount
+        }
     ];
 
     const boldRows = new Set([
         "Total GST",
         "Grand Total",
+        "Advance Amount",
         "Balance Amount"
     ]);
 
@@ -602,6 +645,9 @@ function drawTaxSection_int_Annexure(
 
     PDF_FONT.normal(doc, FONT.body);
 
+    // ==========================================
+    // DRAW ROWS
+    // ==========================================
     for (let i = 0; i < rows.length; i++) {
 
         const row = rows[i];
@@ -611,7 +657,40 @@ function drawTaxSection_int_Annexure(
             CONFIG.headerH +
             (i * CONFIG.headerH);
 
-        // Horizontal Line
+        const isHighlight =
+            row.label === "Grand Total" ||
+            row.label === "Advance Amount" ||
+            row.label === "Balance Amount";
+
+        // ==========================================
+        // HIGHLIGHT SUMMARY ROWS
+        // ==========================================
+        if (isHighlight) {
+
+            doc.setFillColor(
+                230,
+                230,
+                230
+            );
+
+            doc.rect(
+                X.desc,
+                rowY,
+                X.end - X.desc,
+                CONFIG.headerH,
+                "F"
+            );
+
+            // Border around highlighted row
+            doc.rect(
+                X.desc,
+                rowY,
+                X.end - X.desc,
+                CONFIG.headerH
+            );
+        }
+
+        // Top Border
         doc.line(
             X.desc,
             rowY,
@@ -626,51 +705,67 @@ function drawTaxSection_int_Annexure(
                 : "normal"
         );
 
-        // Label
+        doc.setFontSize(FONT.body);
+
+        // ==========================================
+        // LABEL
+        // ==========================================
         doc.text(
             row.label,
             X.desc + 2,
             rowY + textYOffset
         );
 
-        // Non Tax
+        // ==========================================
+        // NON TAXABLE COLUMN
+        // ==========================================
+        if (!isHighlight) {
+            doc.text(
+                safeAmount(row.nonTax).toFixed(2),
+                X.nonTax + COL.nonTax - 2,
+                rowY + textYOffset,
+                {
+                    align: "right"
+                }
+            );
+        }
+
+        // ==========================================
+        // TAX COLUMN
+        // ==========================================
         doc.text(
-            safeAmount(row.nonTax).toFixed(2),
-            X.nonTax + COL.nonTax - 2,
+            safeAmount(row.tax).toFixed(2),
+            X.tax +
+            COL.tax -
+            2,
             rowY + textYOffset,
-            { align: "right" }
+            {
+                align: "right"
+            }
         );
 
-        // Tax Column
-        const value =
-            row.label === "Grand Total" ||
-                row.label === "Balance Amount"
-                ? row.tax.toLocaleString(
-                    "en-IN",
-                    {
-                        minimumFractionDigits: 0,
-                        maximumFractionDigits: 0
-                    }
-                )
-                : safeAmount(row.tax).toLocaleString(
-                    "en-IN",
-                    {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2
-                    }
-                );
-
-        doc.text(
-            value,
-            X.tax + COL.tax - 2,
-            rowY + textYOffset,
-            { align: "right" }
+        // Bottom Border
+        doc.line(
+            X.desc,
+            rowY + CONFIG.headerH,
+            X.end,
+            rowY + CONFIG.headerH
         );
     }
 
+    // ==========================================
+    // END POSITION
+    // ==========================================
+    const endY =
+        y +
+        CONFIG.headerH +
+        (rows.length * CONFIG.headerH);
+
     return {
+        totalGST,
         grandTotal,
-        balanceAmount
+        balanceAmount,
+        endY
     };
 }
 // ==========================================
@@ -1073,7 +1168,7 @@ async function drawShipmentTable_int_Annexure(
                 },
                 {
                     content:
-                        amount.toFixed(2),
+                        formatAmount(amount),
                     colSpan: 2,
                     styles: chargeAmountStyle
                 }
@@ -1093,7 +1188,7 @@ async function drawShipmentTable_int_Annexure(
                 },
                 {
                     content:
-                        shipmentTotal.toFixed(2),
+                        formatAmount(shipmentTotal),
                     colSpan: 2,
                     styles: subtotalStyle
                 }
@@ -1132,7 +1227,7 @@ async function drawShipmentTable_int_Annexure(
             "Mode",
             "Origin",
             "Dest.",
-            "Consignee",
+            "Consignee / Consignor",
             "Qty",
             "Weight"
         ]],

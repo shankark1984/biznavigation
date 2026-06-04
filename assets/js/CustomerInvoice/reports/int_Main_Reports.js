@@ -262,10 +262,8 @@ function drawHeaderRow(doc, FONT, X, COL, y, rowH) {
 
     doc.line(X.terms, y + rowH, X.end, y + rowH);
 
-    // PDF_FONT.set(doc, "bold");
-    PDF_FONT.bold(doc, FONT.body);
 
-    // doc.setFontSize(FONT.body);
+    PDF_FONT.bold(doc, FONT.body);
 
     drawCenteredText(doc, "Terms & Conditions", X.terms, COL.terms, y, rowH);
 
@@ -345,50 +343,24 @@ function drawTaxSection(
     CONFIG
 ) {
 
-    console.log(
-        "Totals for tax section:",
-        totals,
-        totalPaymentReceived
-    );
-
     // =========================
     // VALUES
     // =========================
-    const nonTaxable =
-        safeNumber(totals?.nonTaxableAmount);
-
-    const taxable =
-        safeNumber(totals?.taxableAmount);
-
-    const cgst =
-        safeNumber(totals?.totalCGST);
-
-    const sgst =
-        safeNumber(totals?.totalSGST);
-
-    const igst =
-        safeNumber(totals?.totalIGST);
-
-    const advance =
-        safeNumber(totalPaymentReceived);
+    const nonTaxable = safeNumber(totals?.nonTaxableAmount);
+    const taxable = safeNumber(totals?.taxableAmount);
+    const cgst = safeNumber(totals?.totalCGST);
+    const sgst = safeNumber(totals?.totalSGST);
+    const igst = safeNumber(totals?.totalIGST);
+    const advance = safeNumber(totalPaymentReceived);
 
     // =========================
     // TOTALS
     // =========================
-    const totalGST =
-        cgst +
-        sgst +
-        igst;
+    const totalGST = Math.ceil(cgst + sgst + igst);
 
-    const grandTotal = Math.ceil(
-        nonTaxable +
-        taxable +
-        totalGST
-    );
+    const grandTotal = Math.ceil(nonTaxable + taxable + totalGST);
 
-    const balanceAmount = Math.ceil(
-        grandTotal - advance
-    );
+    const balanceAmount = Math.ceil(grandTotal - advance);
 
     // =========================
     // TAX ROWS
@@ -406,35 +378,19 @@ function drawTaxSection(
     // =========================
     rows.forEach((row, i) => {
 
-        const rowY =
-            y +
-            CONFIG.headerH +
-            (i * CONFIG.headerH);
+        const rowY = y + CONFIG.headerH + (i * CONFIG.headerH);
 
         // Row separator
-        doc.line(
-            X.desc,
-            rowY,
-            X.end,
-            rowY
-        );
+        doc.line(X.desc, rowY, X.end, rowY);
 
-        const isBold =
-            row[0] === "Total GST";
+        const isBold = row[0] === "Total GST";
 
-        doc.setFont(
-            "times",
-            isBold ? "bold" : "normal"
-        );
+        doc.setFont("times", isBold ? "bold" : "normal");
 
         doc.setFontSize(FONT.body);
 
         // Description
-        doc.text(
-            row[0],
-            X.desc + 2,
-            rowY + 3.2
-        );
+        doc.text(row[0], X.desc + 2, rowY + 3.2);
 
         // Non Taxable
         doc.text(
@@ -464,18 +420,10 @@ function drawTaxSection(
     // =========================
     // SUMMARY SECTION
     // =========================
-    const summaryStartY =
-        y +
-        CONFIG.headerH +
-        (rows.length * CONFIG.headerH);
+    const summaryStartY = y + CONFIG.headerH + (rows.length * CONFIG.headerH);
 
     // Top separator
-    doc.line(
-        X.desc,
-        summaryStartY,
-        X.end,
-        summaryStartY
-    );
+    doc.line(X.desc, summaryStartY, X.end, summaryStartY);
 
     const summaryRows = [
         ["Grand Total", grandTotal],
