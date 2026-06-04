@@ -186,7 +186,7 @@ async function generate_Clear_InvoicePDF_Main(
         // SAVE
         // ==========================================
         const fileName =
-            `${party?.name || "NA"}_${header?.InvoiceNo || "NA"}.pdf`;
+            `${header?.InvoiceNo || "NA"}_${party?.name || "NA"}.pdf`;
 
         console.log(
             "PDF generated successfully",

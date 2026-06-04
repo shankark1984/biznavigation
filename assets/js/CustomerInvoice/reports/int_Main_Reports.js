@@ -86,9 +86,15 @@ async function generate_International_InvoicePDF_Main(header, lines = []) {
     // SAVE PDF
     // ==========================================
     drawInvoiceBorderAllPages(doc, PAGE);
-    doc.save(
-        `Invoice_${header?.InvoiceNo || "NA"}.pdf`
+    const fileName =
+        `${header?.InvoiceNo || "NA"}_${party?.name || "NA"}.pdf`;
+
+    console.log(
+        "PDF generated successfully",
+        fileName
     );
+
+    doc.save(fileName);
 }
 
 // ==========================================

@@ -176,9 +176,15 @@ async function generate_International_InvoicePDF_Annexure(
         // ==========================================
         // SAVE PDF
         // ==========================================
-        doc.save(
-            `Invoice_${invoiceNo || "NA"}.pdf`
+        const fileName =
+            `${header?.InvoiceNo || "NA"}_${party?.name || "NA"}.pdf`;
+
+        console.log(
+            "PDF generated successfully",
+            fileName
         );
+
+        doc.save(fileName);
 
     } catch (error) {
 
