@@ -675,8 +675,7 @@ function drawTaxSection_Clear_Main(
         }
     ];
 
-    const textOffset =
-        rowHeight * 0.68;
+    const textOffset = rowHeight * 0.68;
 
     for (
         let i = 0;
@@ -727,9 +726,7 @@ function drawTaxSection_Clear_Main(
             );
 
             doc.text(
-                safeAmount(
-                    row.tax
-                ).toFixed(2),
+                formatAmount(row.tax),
                 X.tax +
                 COL.tax -
                 2,
@@ -754,9 +751,7 @@ function drawTaxSection_Clear_Main(
             // NON TAX
             // ==========================================
             doc.text(
-                safeAmount(
-                    row.nonTax
-                ).toFixed(2),
+                formatAmount(row.nonTax),
                 X.nonTax +
                 COL.nonTax -
                 2,
@@ -770,9 +765,7 @@ function drawTaxSection_Clear_Main(
             // TAX
             // ==========================================
             doc.text(
-                safeAmount(
-                    row.tax
-                ).toFixed(2),
+                formatAmount(row.tax),
                 X.tax +
                 COL.tax -
                 2,
@@ -1008,8 +1001,8 @@ async function drawShipmentTable_Clear_Main(
             index + 1,
             c.ChargesType || "",
             c.HSNCode || "",
-            nonTaxable ? nonTaxable.toFixed(2) : "0.00",
-            taxable ? taxable.toFixed(2) : "0.00"
+            nonTaxable ? formatAmount(nonTaxable) : formatAmount(0),
+            taxable ? formatAmount(taxable) : formatAmount(0)
         ]);
     });
 
@@ -1038,7 +1031,7 @@ async function drawShipmentTable_Clear_Main(
             }
         },
         {
-            content: nonTaxableAmount.toFixed(2),
+            content: formatAmount(nonTaxableAmount),
             styles: {
                 halign: "right",
                 fontStyle: "bold",
@@ -1047,7 +1040,7 @@ async function drawShipmentTable_Clear_Main(
             }
         },
         {
-            content: taxableAmount.toFixed(2),
+            content: formatAmount(taxableAmount),
             styles: {
                 halign: "right",
                 fontStyle: "bold",
@@ -1327,7 +1320,7 @@ function drawPartySection_Clearance(
         // Border below Invoice Date
         if (label === "Invoice Date :") {
 
-            const lineY = rightY + 1.5;
+            const lineY = rightY + 0.8;
 
             doc.line(
                 PAGE.x + LEFT_WIDTH,      // start at divider
