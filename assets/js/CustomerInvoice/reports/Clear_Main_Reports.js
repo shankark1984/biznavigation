@@ -1158,7 +1158,7 @@ async function drawShipmentTable_Clear_Main(
 }
 
 // ==========================================
-// DRAW PARTY DETAILS SECTION
+// DRAW PARTY DETAILS SECTION - CLEARANCE
 // ==========================================
 function drawPartySection_Clearance(
     doc,
@@ -1171,22 +1171,18 @@ function drawPartySection_Clearance(
     y
 ) {
 
-    const left70 = PAGE.w * 0.62; // More space for right section
-    const lineHeight = 3.5;
-    const startX = PAGE.x + 3;
+    const LEFT_WIDTH = PAGE.w * 0.60;
+    const PADDING = 3;
+    const LINE_H = 3.5;
 
     // ==========================================
     // SAFE HELPERS
     // ==========================================
-    const safe = (v, d = "-") =>
-        (v !== null &&
-            v !== undefined &&
-            String(v).trim() !== "")
-            ? String(v)
-            : d;
+    const safe = (v, fallback = "-") =>
+        v?.toString().trim() || fallback;
 
     // ==========================================
-    // SHIPMENT DETAILS
+    // SHIPMENT DATA
     // ==========================================
     const firstShipment = shipments?.[0] || {};
 
@@ -1207,112 +1203,49 @@ function drawPartySection_Clearance(
         "-";
 
     // ==========================================
-    // LEFT SIDE CONTENT
+    // LEFT SIDE DATA
     // ==========================================
     const partyNameLines = doc.splitTextToSize(
-        `M / s ${safe(party?.name, "")}`,
-        left70 - 8
+        `M/s ${safe(party?.name, "")}`,
+        LEFT_WIDTH - (PADDING * 2)
     );
 
     const partyAddrLines = doc.splitTextToSize(
         safe(party?.address, ""),
-        left70 - 8
+        LEFT_WIDTH - (PADDING * 2)
+    );
+
+    const gstNoLines = doc.splitTextToSize(
+        `GST No: ${safe(party?.gst, "")}`,
+        LEFT_WIDTH - (PADDING * 2)
     );
 
     // ==========================================
     // RIGHT SIDE DATA
     // ==========================================
     const rightData = [
-        {
-            label: "Invoice No :",
-            value: safe(header?.InvoiceNo)
-        },
-        {
-            label: "Invoice Date :",
-            value: formatDate(header?.InvoiceDate) || "-"
-        },
-        {
-            label: "MAWB / Dt. :",
-            value: mawb
-        },
-        {
-            label: "BE No./ Dt. :",
-            value: beNo
-        },
-        {
-            label: "Wt. / Qty. :",
-            value: weight
-        },
-        {
-            label: "P. O No. :",
-            value: poNo
-        }
+        ["Invoice No. :", safe(header?.InvoiceNo)],
+        ["Invoice Date :", formatDate(header?.InvoiceDate) || "-"],
+        ["MAWB / Dt. :", mawb],
+        ["BE No. / Dt. :", beNo],
+        ["Wt. / Qty. :", weight],
+        ["P.O No. :", poNo]
     ];
-
-    // ==========================================
-    // LABEL WIDTH
-    // ==========================================
-    PDF_FONT.bold(doc, FONT.title);
-
-    const labelWidth = Math.max(
-        ...rightData.map(row =>
-            doc.getTextWidth(row.label)
-        )
-    );
-
-    // ==========================================
-    // RIGHT WIDTH
-    // ==========================================
-    const rightWidth =
-        PAGE.w - left70 - 6;
-
-    const valueWidth =
-        rightWidth - labelWidth - 4;
-
-    // ==========================================
-    // WRAP RIGHT VALUES
-    // ==========================================
-    const rightRows = rightData.map(row => {
-
-        const valueLines =
-            doc.splitTextToSize(
-                String(row.value || "-"),
-                valueWidth
-            );
-
-        return {
-            ...row,
-            valueLines,
-            lineCount: Math.max(
-                1,
-                valueLines.length
-            )
-        };
-    });
 
     // ==========================================
     // HEIGHT CALCULATION
     // ==========================================
-    const leftLines =
+    const leftLineCount =
         partyNameLines.length +
         partyAddrLines.length +
-        1;
+        gstNoLines.length;
 
-    const rightLines =
-        rightRows.reduce(
-            (sum, row) =>
-                sum + row.lineCount,
-            0
-        );
+    const rightLineCount =
+        rightData.length;
 
-    const totalLines =
-        Math.max(
-            leftLines,
-            rightLines
-        );
-
-    const infoH =
-        totalLines * lineHeight + 6;
+    const rowHeight =
+        (Math.max(leftLineCount, rightLineCount) * LINE_H) +
+        (PADDING * 2);
 
     // ==========================================
     // OUTER BOX
@@ -1321,86 +1254,91 @@ function drawPartySection_Clearance(
         PAGE.x,
         y,
         PAGE.w,
-        infoH
+        rowHeight
     );
 
     doc.line(
-        PAGE.x + left70,
+        PAGE.x + LEFT_WIDTH,
         y,
-        PAGE.x + left70,
-        y + infoH
+        PAGE.x + LEFT_WIDTH,
+        y + rowHeight
     );
 
     // ==========================================
-    // LEFT CONTENT
+    // LEFT SECTION
     // ==========================================
-    let currentY = y + 5;
+    let leftY = y + PADDING + 1;
+    const leftX = PAGE.x + PADDING;
 
-    PDF_FONT.bold(doc, FONT.title + 2);
+    PDF_FONT.bold(doc, FONT.header - 2);
 
     doc.text(
         partyNameLines,
-        startX,
-        currentY
+        leftX,
+        leftY
     );
 
-    currentY +=
-        partyNameLines.length *
-        lineHeight;
+    leftY += partyNameLines.length * LINE_H;
 
-    PDF_FONT.normal(doc, FONT.title);
+    PDF_FONT.normal(doc, FONT.title - 1);
 
     doc.text(
         partyAddrLines,
-        startX,
-        currentY
+        leftX,
+        leftY
     );
 
-    currentY +=
-        partyAddrLines.length *
-        lineHeight;
+    leftY += partyAddrLines.length * LINE_H + 1;
 
-    drawLabelValue(
-        doc,
-        "GST No :",
-        safe(party?.gst),
-        startX,
-        currentY,
-        FONT
+    PDF_FONT.bold(doc, FONT.title - 1);
+
+    doc.text(
+        gstNoLines,
+        leftX,
+        leftY
     );
 
     // ==========================================
-    // RIGHT CONTENT
+    // RIGHT SECTION
     // ==========================================
+    let rightY = y + PADDING + 1;
     const rightX =
-        PAGE.x + left70 + 2;
+        PAGE.x + LEFT_WIDTH + PADDING;
 
-    let rightY = y + 5;
+    rightData.forEach(([label, value], index) => {
 
-    rightRows.forEach(row => {
+        const isBold =
+            label === "Invoice No. :" ||
+            label === "Invoice Date :";
 
-        // Label
-        PDF_FONT.bold(doc, FONT.body);
+        doc.setFont(
+            "times",
+            isBold ? "bold" : "normal"
+        );
+
+        doc.setFontSize(FONT.title);
 
         doc.text(
-            row.label,
+            `${label} ${value}`,
             rightX,
             rightY
         );
 
-        // Value
-        doc.setFont("helvetica", "normal");
+        // Border below Invoice Date
+        if (label === "Invoice Date :") {
 
-        doc.text(
-            row.valueLines,
-            rightX + labelWidth + 2,
-            rightY
-        );
+            const lineY = rightY + 1.5;
 
-        rightY +=
-            row.lineCount *
-            lineHeight;
+            doc.line(
+                PAGE.x + LEFT_WIDTH,      // start at divider
+                lineY,
+                PAGE.x + PAGE.w,          // end at right border
+                lineY
+            );
+        }
+
+        rightY += LINE_H;
     });
 
-    return y + infoH;
+    return y + rowHeight;
 }

@@ -721,7 +721,7 @@ function drawTaxSection_int_Annexure(
         // ==========================================
         if (!isHighlight) {
             doc.text(
-                safeAmount(row.nonTax).toFixed(2),
+                formatAmount(row.nonTax),
                 X.nonTax + COL.nonTax - 2,
                 rowY + textYOffset,
                 {
@@ -734,7 +734,7 @@ function drawTaxSection_int_Annexure(
         // TAX COLUMN
         // ==========================================
         doc.text(
-            safeAmount(row.tax).toFixed(2),
+            formatAmount(row.tax),
             X.tax +
             COL.tax -
             2,
