@@ -658,33 +658,76 @@ document.getElementById('inputBankName').addEventListener('input', function () {
     }
 });
 
-document.getElementById('reportButton').addEventListener('click', async () => {
-    const invoiceNo = document.getElementById('invoiceNo').value.trim();
-    if (!invoiceNo) {
-        alert('Please enter/select an Invoice Number.');
-        return;
-    }
-    reportType = document.getElementById('reportType').value;
-    console.log('Generating report for Invoice No:', invoiceNo, 'with Report Type:', reportType);
-    const invoiceDetails = await getInvoiceDetails(invoiceNo);
-    if (!invoiceDetails) return;
-    if (FORWARDING_TYPES.includes(invoiceDetails.InvoiceType)) {
-        if (reportType === 'Main') {
-            await generate_International_InvoicePDF_Main(invoiceDetails); // Generate PDF for Forwarding/Import/Export
-        } else if (reportType === 'Print Annexure') {
-            await generate_International_InvoicePDF_Annexure(invoiceDetails); // Generate PDF for Forwarding/Import/Export
+document.getElementById('reportButton').addEventListener('click', async function () {
+
+    const btn = this;
+    const originalText = btn.innerHTML;
+
+    try {
+        const invoiceNo = document.getElementById('invoiceNo').value.trim();
+
+        if (!invoiceNo) {
+            alert('Please enter/select an Invoice Number.');
+            return;
         }
-        // await generate_International_InvoicePDF(invoiceDetails); // Generate PDF for Forwarding/Import/Export
-    } else if (invoiceDetails.InvoiceType === 'Customs Clearance') {
-        await generate_Clear_InvoicePDF_Main(invoiceDetails); // Generate PDF for Customs Clearance
-    } else if (invoiceDetails.InvoiceType === 'Domestic') {
-        await generate_DomesticReports_InvoicePDF(invoiceDetails); // Generate PDF for Domestic
-    } else if (invoiceDetails.InvoiceType === 'Full Truck Load') {
-        await generate_FullTruckReports_InvoicePDF(invoiceDetails);
-        // invoiceDetails.lineItems = await getInvoiceLineItems_export(invoiceNo);
-        console.log('FTL or FCL --- Coming Soon');
-    } else {
-        console.warn('Unknown movement type:', invoiceDetails.InvoiceType);
+
+        // Show processing state
+        btn.disabled = true;
+        btn.innerHTML = `
+            <span class="spinner-border spinner-border-sm me-2"></span>
+            Processing...
+        `;
+
+        reportType = document.getElementById('reportType').value;
+
+        console.log(
+            'Generating report for Invoice No:',
+            invoiceNo,
+            'with Report Type:',
+            reportType
+        );
+
+        const invoiceDetails = await getInvoiceDetails(invoiceNo);
+
+        if (!invoiceDetails) return;
+
+        if (FORWARDING_TYPES.includes(invoiceDetails.InvoiceType)) {
+
+            if (reportType === 'Main') {
+                await generate_International_InvoicePDF_Main(invoiceDetails);
+            } else if (reportType === 'Print Annexure') {
+                await generate_International_InvoicePDF_Annexure(invoiceDetails);
+            }
+
+        } else if (invoiceDetails.InvoiceType === 'Customs Clearance') {
+
+            await generate_Clear_InvoicePDF_Main(invoiceDetails);
+
+        } else if (invoiceDetails.InvoiceType === 'Domestic') {
+
+            await generate_DomesticReports_InvoicePDF(invoiceDetails);
+
+        } else if (invoiceDetails.InvoiceType === 'Full Truck Load') {
+
+            await generate_FullTruckReports_InvoicePDF(invoiceDetails);
+
+        } else {
+
+            console.warn('Unknown movement type:', invoiceDetails.InvoiceType);
+
+        }
+
+    } catch (error) {
+
+        console.error('Report generation failed:', error);
+        alert('Failed to generate report.');
+
+    } finally {
+
+        // Restore button
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+
     }
 });
 

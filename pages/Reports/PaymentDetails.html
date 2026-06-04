@@ -14,9 +14,9 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 
     <!-- SheetJS, jsPDF, jsPDF AutoTable -->
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"
+        defer></script>
 
     <!-- jQuery, Bootstrap JS, Flatpickr, Supabase -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js" defer></script>
@@ -24,100 +24,105 @@
     <script src="https://cdn.jsdelivr.net/npm/flatpickr" defer></script>
     <script src="https://unpkg.com/@supabase/supabase-js" defer></script>
 
-
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <link rel="preconnect" href="https://code.jquery.com">
+    <link rel="preconnect" href="https://unpkg.com">
     <!-- Sidebar CSS -->
     <link rel="stylesheet" href="../../assets/css/navbar.css" />
 
     <!-- UI Enhancements -->
     <style>
+        :root {
+            --table-header-bg: #343a40;
+            --table-header-color: #fff;
+            --table-hover-bg: #f1f1f1;
+            --table-even-bg: #f9f9f9;
+        }
+
         #root {
             flex: 1;
         }
 
+        .hidden {
+            display: none !important;
+        }
+
         .table-responsive {
             max-height: 500px;
-            overflow-y: auto;
-            overflow-x: auto;
             background: #fff;
-            border-radius: 0.5rem;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+            overflow: auto;
         }
 
-        #paymentTable thead th {
-            position: sticky;
-            top: 0;
-            background-color: #343a40;
-            color: white;
-            z-index: 10;
-            cursor: pointer;
-            white-space: nowrap;
-            font-size: 0.85rem;
-            padding: 10px;
-            box-shadow: 0 2px 2px rgba(0, 0, 0, 0.05);
-        }
-
-        #paymentTable tbody td {
-            vertical-align: middle;
-            white-space: nowrap;
-            font-size: 0.8rem;
-            padding: 8px 10px;
-        }
-
-        #paymentTable tbody tr:hover {
-            background-color: #f1f1f1;
-        }
-
-        #paymentTable tbody tr:nth-child(even) {
-            background-color: #f9f9f9;
+        #paymentTable {
+            width: 100%;
+            table-layout: fixed;
         }
 
         #paymentTable th,
         #paymentTable td {
             text-align: center;
-        }
-
-        @media (max-width: 768px) {
-
-            #paymentTable thead th,
-            #paymentTable tbody td {
-                font-size: 0.75rem;
-                padding: 6px 8px;
-            }
-        }
-
-        .table-wrapper {
-            border: 2px solid #6c757d;
-            /* Bootstrap secondary */
-            border-radius: 8px;
-            padding: 0;
-            overflow: hidden;
-            box-shadow: 0 0 5px rgba(0, 0, 0, 0.05);
-        }
-
-        #paginationControls {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 4px;
-        }
-
-        #paymentTable {
-            table-layout: fixed;
-            width: 100%;
-        }
-
-        /* Common alignment */
-        #paymentTable th,
-        #paymentTable td {
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
 
+        #paymentTable th:nth-child(1),
+        #paymentTable td:nth-child(1),
+        #paymentTable th:nth-child(3),
+        #paymentTable td:nth-child(3) {
+            text-align: center;
+        }
+
+        #paymentTable th:nth-child(2),
+        #paymentTable td:nth-child(2),
+        #paymentTable th:nth-child(4),
+        #paymentTable td:nth-child(4),
+        #paymentTable th:nth-child(5),
+        #paymentTable td:nth-child(5) {
+            text-align: left;
+        }
+
+        #paymentTable th:nth-child(n+6),
+        #paymentTable td:nth-child(n+6) {
+            text-align: right;
+        }
+
+        .container-fluid {
+            min-width: 0;
+        }
+
+        #paymentTable thead th {
+            position: sticky;
+            top: 0;
+            z-index: 11;
+            box-shadow: 0 2px 2px rgba(0, 0, 0, .1);
+            background: var(--table-header-bg);
+            color: var(--table-header-color);
+            cursor: pointer;
+            font-size: 0.85rem;
+            padding: 10px;
+        }
+
+        #paymentTable tbody td {
+            vertical-align: middle;
+            font-size: 0.8rem;
+            padding: 8px 10px;
+        }
+
+        #paymentTable tbody tr:hover {
+            background: var(--table-hover-bg);
+        }
+
+        #paymentTable tbody tr:nth-child(even) {
+            background: var(--table-even-bg);
+        }
+
         /* Column widths */
+
         #paymentTable th:nth-child(1),
         #paymentTable td:nth-child(1) {
             width: 70px;
-            text-align: center;
         }
 
         #paymentTable th:nth-child(2),
@@ -140,14 +145,25 @@
             width: 130px;
         }
 
-        #paymentTable th:nth-child(6),
-        #paymentTable td:nth-child(6),
-        #paymentTable th:nth-child(7),
-        #paymentTable td:nth-child(7),
-        #paymentTable th:nth-child(8),
-        #paymentTable td:nth-child(8) {
+        #paymentTable th:nth-child(n+6),
+        #paymentTable td:nth-child(n+6) {
             width: 120px;
             text-align: right;
+        }
+
+        #paginationControls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+
+        @media (max-width: 768px) {
+
+            #paymentTable thead th,
+            #paymentTable tbody td {
+                font-size: 0.75rem;
+                padding: 6px 8px;
+            }
         }
     </style>
 </head>
@@ -183,28 +199,40 @@
                     <!-- Filters Section -->
                     <div class="collapse" id="filterSection">
                         <div class="row g-3 mb-4" id="searchFilters">
-                            <!-- Inputs: Customer Name, Docket No, Date Range, Movement, Mode, Provider, Month, Year, Fin Year, Invoice Status -->
                             <div class="col-12 col-md-6 col-lg-3">
                                 <label for="customerName" class="form-label">Customer Name</label>
                                 <input id="customerName" class="form-control" list="customerNameList"
                                     placeholder="Enter Customer Name">
                                 <datalist id="customerNameList"></datalist>
                             </div>
+                            <div class="col-12 col-md-6 col-lg-3">
+                                <label for="paymentNo" class="form-label">Payment No</label>
+                                <input id="paymentNo" class="form-control" list="paymentNoList"
+                                    placeholder="Enter Payment No">
+                                <datalist id="paymentNoList"></datalist>
+                            </div>
+
+                            <div class="col-12 col-md-6 col-lg-3">
+                                <label for="invoiceNo" class="form-label">Invoice No</label>
+                                <input id="invoiceNo" class="form-control" list="invoiceNoList"
+                                    placeholder="Enter Invoice No">
+                                <datalist id="invoiceNoList"></datalist>
+                            </div>
 
                             <div class="col-6 col-md-6 col-lg-3">
                                 <label for="dateRange" class="form-label">Payment Date Range</label>
                                 <input id="dateRange" class="form-control" placeholder="Select Date Range" readonly>
                             </div>
-                            <div class="col-6 col-md-2 col-lg-2">
+                            <div class="col-6 col-md-2">
                                 <label for="bookedMonth" class="form-label">Payment Month</label>
                                 <input type="month" id="bookedMonth" class="form-control">
                             </div>
-                            <div class="col-6 col-md-4 col-lg-2">
+                            <div class="col-6 col-md-4">
                                 <label for="bookedYear" class="form-label">Payment Year</label>
                                 <input type="number" id="bookedYear" class="form-control" placeholder="YYYY" min="2000"
                                     max="2100">
                             </div>
-                            <div class="col-6 col-md-4 col-lg-2">
+                            <div class="col-6 col-md-4">
                                 <label for="financialYear" class="form-label">Financial Year</label>
                                 <input id="financialYear" class="form-control" placeholder="YYYY-YYYY"
                                     list="financialYearList">
@@ -218,14 +246,14 @@
                     </div>
 
                     <!-- Spinner -->
-                    <div id="loadingSpinner" class="text-center my-4" style="display: none;">
+                    <div id="loadingSpinner" class="text-center my-4 hidden">
                         <div class="spinner-border text-primary" role="status"><span
                                 class="visually-hidden">Loading...</span></div>
                     </div>
 
                     <!-- Table -->
                     <!-- Table with outer border -->
-                    <div class="table-responsive border border-secondary rounded shadow-sm">
+                    <div class="table-responsive bg-white border border-secondary rounded shadow-sm">
                         <table class="table table-bordered table-hover table-sm mb-0" id="paymentTable">
                             <thead class="table-dark text-center">
                                 <tr>
@@ -236,7 +264,7 @@
                                     <th data-key="ActualWeight">Narration</th>
                                     <th data-key="VolumeWeight">Credit</th>
                                     <th data-key="ChargeableWeight">Debit</th>
-                                    <th data-key="TotalAmount">Runing Total</th>
+                                    <th data-key="TotalAmount">Running Total</th>
                                 </tr>
                             </thead>
                             <tbody></tbody>
@@ -250,10 +278,11 @@
                             <ul class="pagination mb-0" id="paginationControls"></ul>
                         </nav>
                         <div class="d-flex flex-wrap gap-2">
-                            <button class="btn btn-success" id="exportExcelBtn"><i class="bi bi-file-earmark-excel"></i>
+                            <button class="btn btn-success px-3" id="exportExcelBtn"><i
+                                    class="bi bi-file-earmark-excel"></i>
                                 Export to
                                 Excel</button>
-                            <button class="btn btn-danger" id="exportPdfBtn"><i class="bi bi-file-earmark-pdf"></i>
+                            <button class="btn btn-danger px-3" id="exportPdfBtn"><i class="bi bi-file-earmark-pdf"></i>
                                 Export to
                                 PDF</button>
                         </div>

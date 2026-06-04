@@ -1,3 +1,11 @@
+async function loadExportLibraries() {
+    if (!window.XLSX) {
+        await import(
+            "https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"
+        );
+    }
+}
+
 async function fetchPayments() {
     const { data, error } = await supabaseClient
         .from("PaymentDetails")
