@@ -511,11 +511,11 @@ async function loadInvoiceLineItems_cc(invoiceNo) {
             row.innerHTML = `
                 <td>${tableBody.children.length + 1}</td>
                 <td>${invoice.JobID || ''}</td>
-                <td>${invoice.JobDate || ''}</td>
+                <td>${formatDate(invoice.JobDate) || ''}</td>
                 <td>${invoice.BLAWBNo || ''}</td>
-                <td>${invoice.BLAWBDate || ''}</td>
+                <td>${formatDate(invoice.BLAWBDate) || ''}</td>
                 <td>${invoice.BENo || ''}</td>
-                <td>${invoice.BEDate || ''}</td>
+                <td>${formatDate(invoice.BEDate) || ''}</td>
                 <td>${invoice.MovementType || ''}</td>
                 <td>${invoice.TransitType || ''}</td>
                 <td>${invoice.ModeType || ''}</td>

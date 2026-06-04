@@ -686,7 +686,8 @@ async function drawShipmentTable_int_Main(doc, PAGE, FONT, rows = [], y) {
 
         styles: {
             fontSize: FONT.small,
-            cellPadding: 1.5,
+            // fontFamily: "times",
+            cellPadding: 1,
             overflow: "linebreak",
             textColor: 0,
             minCellHeight: rowHeight,

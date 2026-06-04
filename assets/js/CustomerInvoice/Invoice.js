@@ -410,32 +410,62 @@ function updateTotals(totals) {
     setValue('totalGrand', Math.round(totals.totalGrand));
 
     // ✅ Still update invoiceData (guard with parseFloat defaults)
-    invoiceData.BasicAmount = parseFloat(totals.totalFreight) || 0;
-    invoiceData.OtherAmount = (parseFloat(totals.totalFSCAmt) || 0) + (parseFloat(totals.totalOtherAmt) || 0);
-    invoiceData.CGSTAmount = parseFloat(totals.totalCGST) || 0;
-    invoiceData.SGSTAmount = parseFloat(totals.totalSGST) || 0;
-    invoiceData.IGSTAmount = parseFloat(totals.totalIGST) || 0;
-    invoiceData.TotalGSTAmount = parseFloat(totals.totalGST) || 0;
-    invoiceData.GrandTotalAmount = Math.round(totals.totalGrand) || 0;
+    invoiceData.BasicAmount = formatAmount(totals.totalFreight) || 0;
+    invoiceData.OtherAmount = (formatAmount(totals.totalFSCAmt) || 0) + (formatAmount(totals.totalOtherAmt) || 0);
+    invoiceData.CGSTAmount = formatAmount(totals.totalCGST) || 0;
+    invoiceData.SGSTAmount = formatAmount(totals.totalSGST) || 0;
+    invoiceData.IGSTAmount = formatAmount(totals.totalIGST) || 0;
+    invoiceData.TotalGSTAmount = formatAmount(totals.totalGST) || 0;
+    invoiceData.GrandTotalAmount = formatAmount(Math.round(totals.totalGrand)) || 0;
 }
 
 function renderChargesTable(chargesMap) {
     const tbody = document.querySelector('#pendingShipmentCharges tbody');
     tbody.innerHTML = '';
-    // console.log('Rendering charges table with chargesMap:', chargesMap);
-    let totalAmount = 0, totalSGST = 0, totalCGST = 0, totalIGST = 0, totalGSTAmt = 0, totalGrandAmt = 0;
 
-    Object.entries(chargesMap).forEach(([type, amounts]) => {
+    let totalAmount = 0,
+        totalSGST = 0,
+        totalCGST = 0,
+        totalIGST = 0,
+        totalGSTAmt = 0,
+        totalGrandAmt = 0;
+
+    // Priority order
+    const chargeOrder = [
+        'Freight Amount',
+        'Custom Clearance Charges',
+        'Duty'
+    ];
+
+    // Sort entries based on the order above
+    const sortedEntries = Object.entries(chargesMap).sort(([a], [b]) => {
+        const indexA = chargeOrder.indexOf(a);
+        const indexB = chargeOrder.indexOf(b);
+
+        // Both found in priority list
+        if (indexA !== -1 && indexB !== -1) {
+            return indexA - indexB;
+        }
+
+        // One found, one not
+        if (indexA !== -1) return -1;
+        if (indexB !== -1) return 1;
+
+        // Remaining charge types keep alphabetical order
+        return a.localeCompare(b);
+    });
+
+    sortedEntries.forEach(([type, amounts]) => {
         const row = document.createElement('tr');
 
         row.innerHTML = `
             <td>${type}</td>
-            <td class="text-end">${amounts.TotalAmount}</td>
-            <td class="text-end">${amounts.SGSTAmt}</td>
-            <td class="text-end">${amounts.CGSTAmt}</td>
-            <td class="text-end">${amounts.IGSTAmt}</td>
-            <td class="text-end">${amounts.TotalGSTAmt}</td>
-            <td class="text-end">${amounts.GrandTotalAmt}</td>
+            <td class="text-end">${formatAmount(amounts.TotalAmount)}</td>
+            <td class="text-end">${formatAmount(amounts.SGSTAmt)}</td>
+            <td class="text-end">${formatAmount(amounts.CGSTAmt)}</td>
+            <td class="text-end">${formatAmount(amounts.IGSTAmt)}</td>
+            <td class="text-end">${formatAmount(amounts.TotalGSTAmt)}</td>
+            <td class="text-end">${formatAmount(amounts.GrandTotalAmt)}</td>
         `;
 
         tbody.appendChild(row);
@@ -448,12 +478,12 @@ function renderChargesTable(chargesMap) {
         totalGrandAmt += amounts.GrandTotalAmt;
     });
 
-    document.getElementById('totalFreightAmt').textContent = totalAmount.toFixed(2);
-    document.getElementById('totalSGSTAmt').textContent = totalSGST.toFixed(2);
-    document.getElementById('totalCGSTAmt').textContent = totalCGST.toFixed(2);
-    document.getElementById('totalIGSTAmt').textContent = totalIGST.toFixed(2);
-    document.getElementById('totalGSTAmt').textContent = totalGSTAmt.toFixed(2);
-    document.getElementById('totalGrandAmt').textContent = Math.round(totalGrandAmt).toFixed(2);
+    document.getElementById('totalFreightAmt').textContent = formatAmount(totalAmount);
+    document.getElementById('totalSGSTAmt').textContent = formatAmount(totalSGST);
+    document.getElementById('totalCGSTAmt').textContent = formatAmount(totalCGST);
+    document.getElementById('totalIGSTAmt').textContent = formatAmount(totalIGST);
+    document.getElementById('totalGSTAmt').textContent = formatAmount(totalGSTAmt);
+    document.getElementById('totalGrandAmt').textContent = formatAmount(Math.round(totalGrandAmt));
 }
 
 async function getInvoiceDetails(invoiceNo) {

@@ -253,13 +253,13 @@ function updateTotals_ib(totals) {
     setValue('totalGrand', Math.round(totals.totalGrand));
 
     // ✅ Still update invoiceData (guard with parseFloat defaults)
-    invoiceData.BasicAmount = parseFloat(totals.totalFreight) || 0;
-    invoiceData.OtherAmount = (parseFloat(totals.totalFSCAmt) || 0) + (parseFloat(totals.totalOtherAmt) || 0);
-    invoiceData.CGSTAmount = parseFloat(totals.totalCGST) || 0;
-    invoiceData.SGSTAmount = parseFloat(totals.totalSGST) || 0;
-    invoiceData.IGSTAmount = parseFloat(totals.totalIGST) || 0;
-    invoiceData.TotalGSTAmount = parseFloat(totals.totalGST) || 0;
-    invoiceData.GrandTotalAmount = Math.round(totals.totalGrand) || 0;
+    invoiceData.BasicAmount = formatAmount(totals.totalFreight) || 0;
+    invoiceData.OtherAmount = (formatAmount(totals.totalFSCAmt) || 0) + (formatAmount(totals.totalOtherAmt) || 0);
+    invoiceData.CGSTAmount = formatAmount(totals.totalCGST) || 0;
+    invoiceData.SGSTAmount = formatAmount(totals.totalSGST) || 0;
+    invoiceData.IGSTAmount = formatAmount(totals.totalIGST) || 0;
+    invoiceData.TotalGSTAmount = formatAmount(totals.totalGST) || 0;
+    invoiceData.GrandTotalAmount = formatAmount(Math.round(totals.totalGrand)) || 0;
 }
 
 async function updateInvoiceNumbers(invNo) {
@@ -398,7 +398,7 @@ async function loadInvoiceBookings(invoiceNo) {
             row.setAttribute('data-ship-id', invoice.id);
             row.innerHTML = `
                 <td>${invoice.DocketNo || ''}</td>
-                <td>${invoice.BookedDate || ''}</td>
+                <td>${formatDate(invoice.BookedDate) || ''}</td>
                 <td>${invoice.MovementType || ''}</td>
                 <td>${invoice.TransitType || ''}</td>
                 <td>${invoice.ModeType || ''}</td>
@@ -474,7 +474,7 @@ async function addSingleShipmentToInvoice(shipmentNo, invoiceNo) {
         row.setAttribute('data-ship-id', data.id);
         row.innerHTML = `
             <td>${data.DocketNo || ''}</td>
-            <td>${data.BookedDate || ''}</td>
+            <td>${formatDate(data.BookedDate) || ''}</td>
             <td>${data.MovementType || ''}</td>
             <td>${data.TransitType || ''}</td>
             <td>${data.ModeType || ''}</td>
@@ -483,14 +483,14 @@ async function addSingleShipmentToInvoice(shipmentNo, invoiceNo) {
             <td>${data.NoofUnit || ''} ${data.UOMType || ''}</td>
             <td>${data.AcutalWeight || ''}</td>
             <td>${data.ChargableWeight || ''}</td>
-            <td>${charges.BasicFrightAmt.toFixed(2)}</td>
-            <td>${charges.FSCAmt.toFixed(2)}</td>
-            <td>${charges.OtherAmt.toFixed(2)}</td>
-            <td>${charges.totalSGST.toFixed(2)}</td>
-            <td>${charges.totalCGST.toFixed(2)}</td>
-            <td>${charges.totalIGST.toFixed(2)}</td>
-            <td>${charges.totalGST.toFixed(2)}</td>
-            <td>${charges.grandTotal.toFixed(2)}</td>
+            <td>${formatAmount(charges.BasicFrightAmt)}</td>
+            <td>${formatAmount(charges.FSCAmt)}</td>
+            <td>${formatAmount(charges.OtherAmt)}</td>
+            <td>${formatAmount(charges.totalSGST)}</td>
+            <td>${formatAmount(charges.totalCGST)}</td>
+            <td>${formatAmount(charges.totalIGST)}</td>
+            <td>${formatAmount(charges.totalGST)}</td>
+            <td>${formatAmount(charges.grandTotal)}</td>
             <td><button class="btn btn-danger btn-sm delete-btn" onclick="removeRow(this)"><i class="bi bi-trash"></i></button></td>
         `;
         tableBody.appendChild(row);
