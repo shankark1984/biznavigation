@@ -578,7 +578,7 @@ async function drawHeader(
 }
 
 // ==========================================
-// PARTY SECTION contains party details and invoice info like invoice number, date, etc.
+// PARTY SECTION contains party details and invoice info
 // ==========================================
 function drawPartySection(
     doc,
@@ -609,17 +609,25 @@ function drawPartySection(
         safe(party?.address, ""),
         LEFT_WIDTH - (PADDING * 2)
     );
+    const gstNoLines = doc.splitTextToSize(
+        `GST No: ${safe(party?.gst, "")}`,
+        LEFT_WIDTH - (PADDING * 2)
+    );
 
     // ==========================
     // RIGHT SIDE DATA
     // ==========================
     const rightData = [
-        ["Invoice No :", safe(header?.InvoiceNo)],
+        ["Invoice No. :", safe(header?.InvoiceNo)],
         ["Invoice Date :", formatDate(header?.InvoiceDate) || "-"],
         ["SAC Code :", safe(header?.SACCode)]
     ];
 
-    PDF_FONT.bold(doc, FONT.body);
+    // 👉 bold only these rows
+    const boldLabels = new Set([
+        "Invoice No. :",
+        "Invoice Date :"
+    ]);
 
     const labelWidth = Math.max(
         ...rightData.map(([label]) =>
@@ -633,7 +641,7 @@ function drawPartySection(
     const leftLineCount =
         partyNameLines.length +
         partyAddrLines.length +
-        1; // GST row
+        gstNoLines.length;
 
     const rightLineCount =
         rightData.length;
@@ -665,7 +673,7 @@ function drawPartySection(
     let leftY = y + PADDING + 1;
     const leftX = PAGE.x + PADDING;
 
-    PDF_FONT.bold(doc, FONT.body);
+    PDF_FONT.bold(doc, FONT.header - 2);
 
     doc.text(
         partyNameLines,
@@ -675,7 +683,7 @@ function drawPartySection(
 
     leftY += partyNameLines.length * LINE_H;
 
-    PDF_FONT.normal(doc, FONT.small);
+    PDF_FONT.normal(doc, FONT.title - 1);
 
     doc.text(
         partyAddrLines,
@@ -683,37 +691,37 @@ function drawPartySection(
         leftY
     );
 
-    leftY += partyAddrLines.length * LINE_H;
+    leftY += partyAddrLines.length * LINE_H + 1;
 
-    drawLabelValue(
-        doc,
-        "GST No :",
-        safe(party?.gst),
+    PDF_FONT.bold(doc, FONT.title - 1);
+    doc.text(
+        gstNoLines,
         leftX,
-        leftY,
-        FONT
+        leftY
     );
+
+    leftY += gstNoLines.length * LINE_H;
 
     // ==========================
     // RIGHT SECTION
     // ==========================
     let rightY = y + PADDING + 1;
-    const rightX =
-        PAGE.x +
-        LEFT_WIDTH +
-        PADDING;
+    const rightX = PAGE.x + LEFT_WIDTH + PADDING;
 
     rightData.forEach(([label, value]) => {
 
-        drawLabelValueAligned(
-            doc,
-            label,
-            value,
-            rightX,
-            rightY,
-            labelWidth,
-            FONT
-        );
+        const isBold =
+            label.trim() === "Invoice No. :" ||
+            label.trim() === "Invoice Date :";
+
+        // 👉 set font once per row (IMPORTANT)
+
+        doc.setFont("times", isBold ? "bold" : "normal");
+        doc.setFontSize(FONT.title);
+
+        const text = `${label} ${value}`;
+
+        doc.text(text, rightX, rightY);
 
         rightY += LINE_H;
     });

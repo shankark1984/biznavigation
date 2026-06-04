@@ -53,56 +53,7 @@ async function fetchPartyDetails(header) {
         state: data?.State
     };
 }
-// Draw party details section Invoice no, invoice date, SAC code, GST no, PO no
-function drawPartySection(doc, PAGE, FONT, header, party, company, y) {
-    const left70 = PAGE.w * 0.7;
-    const left40 = PAGE.w * 0.4;
 
-    // Split text
-    const partyNameLines = doc.splitTextToSize(`M/s ${party.name}`, left70 - 6);
-    const partyAddrLines = doc.splitTextToSize(party.address, left70 - 6);
-
-    const rightLines = doc.splitTextToSize([
-        `Invoice No : ${header?.InvoiceNo || "-"}`,
-        `Invoice Date : ${formatDate(header?.InvoiceDate) || "-"}`,
-        `SAC Code : ${header?.SACCode || "-"}`
-    ].join("\n"), PAGE.w - left70 - 6);
-
-    // Dynamic height
-    const row1H = Math.max(
-        partyNameLines.length + partyAddrLines.length,
-        rightLines.length
-    ) * 4 + 4;
-
-    const row2H = 6;
-    const infoH = row1H + row2H;
-
-    // Draw box
-    doc.rect(PAGE.x, y, PAGE.w, infoH);
-
-    // Vertical + horizontal lines
-    doc.line(PAGE.x + left70, y, PAGE.x + left70, y + row1H);
-    doc.line(PAGE.x + left40, y + row1H, PAGE.x + left40, y + infoH);
-    doc.line(PAGE.x, y + row1H, PAGE.x + PAGE.w, y + row1H);
-
-    // Left side
-    doc.setFont("helvetica", "bold");
-    doc.text(partyNameLines, PAGE.x + 3, y + 4);
-
-    doc.setFont("helvetica", "normal");
-    doc.text(partyAddrLines, PAGE.x + 3, y + 4 + partyNameLines.length * 4);
-
-    // Right side
-    doc.text(rightLines, PAGE.x + left70 + 3, y + 4, {
-        maxWidth: PAGE.w - left70 - 6
-    });
-
-    // Bottom row
-    doc.text(`GST No : ${party.gst}`, PAGE.x + 3, y + row1H + 4);
-    doc.text(`P.O. No : ${header?.PONumber || "-"}`, PAGE.x + left40 + 3, y + row1H + 4);
-
-    return y + infoH;
-}
 // Utility function to fetch shipment details
 async function drawShipmentTable(doc, PAGE, FONT, rows = [], y) {
 

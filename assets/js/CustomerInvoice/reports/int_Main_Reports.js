@@ -156,8 +156,7 @@ async function drawTermsAndTaxSection_int(doc, PAGE, FONT, company, header, tota
     // ==========================================
     // POSITION AT BOTTOM OF LAST PAGE
     // ==========================================
-    const pageHeight =
-        doc.internal.pageSize.getHeight();
+    const pageHeight = doc.internal.pageSize.getHeight();
 
     const bottomY = pageHeight - CONFIG.bottomMargin - tableH;
 
@@ -263,9 +262,10 @@ function drawHeaderRow(doc, FONT, X, COL, y, rowH) {
 
     doc.line(X.terms, y + rowH, X.end, y + rowH);
 
-    PDF_FONT.set(doc, "bold");
+    // PDF_FONT.set(doc, "bold");
+    PDF_FONT.bold(doc, FONT.body);
 
-    doc.setFontSize(FONT.body);
+    // doc.setFontSize(FONT.body);
 
     drawCenteredText(doc, "Terms & Conditions", X.terms, COL.terms, y, rowH);
 
@@ -288,9 +288,7 @@ function drawTermsContent(
     y,
     CONFIG
 ) {
-    PDF_FONT.set(doc, "normal");
-
-    doc.setFontSize(6);
+    PDF_FONT.normal(doc, FONT.body);
 
     let currentY = y + CONFIG.headerH + 4;
 
@@ -347,7 +345,12 @@ function drawTaxSection(
     CONFIG
 ) {
 
-    console.log("Totals for tax section:", totals, totalPaymentReceived);
+    console.log(
+        "Totals for tax section:",
+        totals,
+        totalPaymentReceived
+    );
+
     // =========================
     // VALUES
     // =========================
@@ -388,56 +391,19 @@ function drawTaxSection(
     );
 
     // =========================
-    // TABLE ROWS
+    // TAX ROWS
     // =========================
     const rows = [
-        [
-            "Total Charges",
-            nonTaxable,
-            taxable
-        ],
-        [
-            "CGST 9%",
-            0,
-            cgst
-        ],
-        [
-            "SGST 9%",
-            0,
-            sgst
-        ],
-        [
-            "IGST 18%",
-            0,
-            igst
-        ],
-        [
-            "Total GST",
-            0,
-            totalGST
-        ],
-        [
-            "Grand Total",
-            0,
-            grandTotal
-        ],
-        [
-            "Advance Amount",
-            0,
-            advance
-        ],
-        [
-            "Balance Amount",
-            0,
-            balanceAmount
-        ]
+        ["Total Charges", nonTaxable, taxable],
+        ["CGST 9%", 0, cgst],
+        ["SGST 9%", 0, sgst],
+        ["IGST 18%", 0, igst],
+        ["Total GST", 0, totalGST]
     ];
 
     // =========================
-    // DRAW ROWS
+    // DRAW TAX ROWS
     // =========================
-    doc.setFontSize(FONT.small);
-
     rows.forEach((row, i) => {
 
         const rowY =
@@ -453,16 +419,15 @@ function drawTaxSection(
             rowY
         );
 
-        // Bold important rows
         const isBold =
-            row[0] === "Total GST" ||
-            row[0] === "Grand Total" ||
-            row[0] === "Balance Amount";
+            row[0] === "Total GST";
 
         doc.setFont(
             "times",
             isBold ? "bold" : "normal"
         );
+
+        doc.setFontSize(FONT.body);
 
         // Description
         doc.text(
@@ -471,7 +436,7 @@ function drawTaxSection(
             rowY + 3.2
         );
 
-        // Non Tax
+        // Non Taxable
         doc.text(
             safeAmount(row[1]).toFixed(2),
             X.nonTax +
@@ -483,7 +448,7 @@ function drawTaxSection(
             }
         );
 
-        // Tax Amount
+        // Taxable / Tax Column
         doc.text(
             safeAmount(row[2]).toFixed(2),
             X.tax +
@@ -496,19 +461,112 @@ function drawTaxSection(
         );
     });
 
-    // Bottom Border
-    const endY =
+    // =========================
+    // SUMMARY SECTION
+    // =========================
+    const summaryStartY =
         y +
         CONFIG.headerH +
-        rows.length *
-        CONFIG.headerH;
+        (rows.length * CONFIG.headerH);
 
+    // Top separator
     doc.line(
         X.desc,
-        endY,
+        summaryStartY,
         X.end,
-        endY
+        summaryStartY
     );
+
+    const summaryRows = [
+        ["Grand Total", grandTotal],
+        ["Advance Amount", advance],
+        ["Balance Amount", balanceAmount]
+    ];
+
+    summaryRows.forEach((row, i) => {
+
+        const rowY =
+            summaryStartY +
+            (i * CONFIG.headerH);
+
+        const isHighlight =
+            row[0] === "Grand Total" ||
+            row[0] === "Balance Amount" ||
+            row[0] === "Advance Amount";
+
+        // =========================
+        // BACKGROUND COLOR
+        // =========================
+        if (isHighlight) {
+            doc.setFillColor(230, 230, 230); // Light Gray
+
+
+            doc.rect(
+                X.desc,
+                rowY,
+                X.end - X.desc,
+                CONFIG.headerH,
+                "F"
+            );
+            // Draw border
+            doc.rect(
+                X.desc,
+                rowY,
+                X.end - X.desc,
+                CONFIG.headerH
+            );
+        }
+
+        // Row border
+        doc.line(
+            X.desc,
+            rowY,
+            X.end,
+            rowY
+        );
+
+        doc.setFont(
+            "times",
+            isHighlight ? "bold" : "normal"
+        );
+
+        doc.setFontSize(FONT.body);
+
+        // Label
+        doc.text(
+            row[0],
+            X.desc + 2,
+            rowY + 3.2
+        );
+
+        // Amount
+        doc.text(
+            safeAmount(row[1]).toFixed(2),
+            X.tax +
+            COL.tax -
+            2,
+            rowY + 3.2,
+            {
+                align: "right"
+            }
+        );
+
+        // Bottom border
+        doc.line(
+            X.desc,
+            rowY + CONFIG.headerH,
+            X.end,
+            rowY + CONFIG.headerH
+        );
+
+    });
+
+    // =========================
+    // FINAL END POSITION
+    // =========================
+    const endY =
+        summaryStartY +
+        (summaryRows.length * CONFIG.headerH);
 
     return {
         grandTotal,
