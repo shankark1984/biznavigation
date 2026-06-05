@@ -363,10 +363,10 @@ function drawTaxSection(
     // TOTALS
     // =========================
     const totalGST = cgst + sgst + igst;
+    console.log("Total Cal : ", totalGST + nonTaxable + taxable);
+    const grandTotal = Math.round(nonTaxable + taxable + totalGST);
 
-    const grandTotal = Math.ceil(nonTaxable + taxable + totalGST);
-
-    const balanceAmount = Math.ceil(grandTotal - advance);
+    const balanceAmount = Math.round(grandTotal - advance);
 
     // =========================
     // TAX ROWS

@@ -188,7 +188,6 @@ document.getElementById('saveButton').addEventListener('click', async () => {
         grand: getTextValue('totalGrandAmt')
     };
 
-    console.log('Calculated Totals:', totals);
     invoiceData = {
         InvoiceNo: invoiceNo,
         InvoiceDate: invoiceDate,
@@ -775,7 +774,10 @@ function showAddressSelectionModal(addresses) {
     modal.show();
 }
 
-const getTextValue = (id) => {
-    const el = document.getElementById(id);
-    return el ? parseFloat(el.textContent) || 0 : 0;
-};
+function getTextValue(id) {
+    const text = document.getElementById(id)?.textContent || '0';
+
+    return parseFloat(
+        text.replace(/,/g, '')
+    ) || 0;
+}

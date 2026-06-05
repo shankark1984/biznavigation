@@ -107,15 +107,15 @@ async function initChargeableWeightCalculator(actualSelector, volumetricSelector
         uom = uom?.trim().toLowerCase();
         switch (uom) {
             case 'kgs':
-                return Math.ceil(chargeable);
+                return Math.round(chargeable);
             case 'tons':
-                return Math.ceil(chargeable);
+                return Math.round(chargeable);
             case 'gms':
                 if (Number.isInteger(chargeable)) {
                     return chargeable;
                 } else {
                     const decimal = chargeable - Math.floor(chargeable);
-                    return (decimal <= 0.5) ? Math.floor(chargeable) + 0.5 : Math.ceil(chargeable);
+                    return (decimal <= 0.5) ? Math.floor(chargeable) + 0.5 : Math.round(chargeable);
                 }
             case 'fixed':
                 return actual;

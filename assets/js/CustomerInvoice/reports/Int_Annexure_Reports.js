@@ -587,13 +587,13 @@ function drawTaxSection_int_Annexure(
     // ==========================================
     const totalGST = cgst + sgst + igst;
 
-    const grandTotal = Math.ceil(
+    const grandTotal = Math.round(
         nonTaxable +
         taxable +
         totalGST
     );
 
-    const balanceAmount = Math.ceil(
+    const balanceAmount = Math.round(
         grandTotal -
         advance
     );
