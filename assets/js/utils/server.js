@@ -32,7 +32,7 @@ class SupabaseService {
                     .limit(1);
 
                 if (error) throw error;
-
+             
                 // console.log("Supabase connection successful");
                 return true;
             } catch (error) {

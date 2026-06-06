@@ -61,7 +61,9 @@ async function fetchCompanyData(selectedCompanyID) {
             .single();
 
         if (error) throw error;
+
         if (data) populateCompanyForm(data);
+
     } catch (err) {
         console.error("Error fetching company data:", err.message);
         alert("Failed to load company data.");
@@ -86,13 +88,15 @@ function populateCompanyForm(data) {
         panNumber: data.pan_number,
         cinNo: data.cin_no,
         uaNo: data.Udyog_aadhaar_no,
-        website: data.web_site
+        website: data.web_site,
+        LogoUrl: data.LogoUrl
     };
     Object.entries(fieldMap).forEach(([id, value]) => {
         const el = document.getElementById(id);
         // console.log(`Setting ${id} to ${value}`);
         if (el) el.value = value || '';
     });
+    showLogo(data.LogoUrl);
     const logo = document.getElementById('companylogo');
     if (logo) logo.src = data.logo_path || '../../assets/img/logo/default.png';
 }
@@ -175,12 +179,17 @@ function onModifyClick() {
     document.getElementById('selectCompany').disabled = true;
 
     setButtonState(['branchAddDetails', 'bankAddDetails'], true);
+    document.getElementById("chooseLogoBtn").disabled = false;
+    document.getElementById("saveLogoBtn").disabled = false;
+    document.getElementById("companyLogo").disabled = false;
 }
 
 
 function onNewClick() {
     setFormState(true);
     clearForm();
+    document.getElementById('modifyButton').disabled = true;
+
     const saveBtn = document.getElementById('saveButton');
     if (saveBtn) {
         saveBtn.disabled = false;
@@ -194,6 +203,8 @@ function onNewClick() {
         .innerHTML = "";
     document.getElementById("subscriptionTable")
         .innerHTML = "";
+    clearLogo();
+
 
 }
 
@@ -248,6 +259,7 @@ async function onSaveClick(e) {
             if (adminError) throw adminError;
         }
         await saveCompanyTandCs();
+        await uploadCompanyLogo(); // upload company logo
 
         alert(`Company ${isInsert ? 'saved' : 'updated'} successfully!`);
         saveBtn.innerHTML = '<i class="bi bi-pencil-square"></i> Update';
@@ -468,6 +480,7 @@ $("#selectCompany").on("change", async function () {
         await loadSubscriptions(selectedCompanyID);
         if (typeof loadBranches === "function") await loadBranches();
         await loadCompanyTandCs(selectedCompanyID);
+        document.getElementById("modifyButton").disabled = false;
     }
 });
 
