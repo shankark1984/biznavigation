@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Payment Report - Credit & Debit</title>
+    <title>Tax Report</title>
 
     <!-- Bootstrap & Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -199,40 +199,17 @@
                     <!-- Filters Section -->
                     <div class="collapse" id="filterSection">
                         <div class="row g-3 mb-4" id="searchFilters">
-                            <div class="col-12 col-md-6 col-lg-3">
-                                <label for="customerName" class="form-label">Customer Name</label>
-                                <input id="customerName" class="form-control" list="customerNameList"
-                                    placeholder="Enter Customer Name">
-                                <datalist id="customerNameList"></datalist>
-                            </div>
-                            <div class="col-12 col-md-6 col-lg-3">
-                                <label for="paymentNo" class="form-label">Payment No</label>
-                                <input id="paymentNo" class="form-control" list="paymentNoList"
-                                    placeholder="Enter Payment No">
-                                <datalist id="paymentNoList"></datalist>
-                            </div>
 
-                            <div class="col-12 col-md-6 col-lg-3">
-                                <label for="invoiceNo" class="form-label">Invoice No</label>
-                                <input id="invoiceNo" class="form-control" list="invoiceNoList"
-                                    placeholder="Enter Invoice No">
-                                <datalist id="invoiceNoList"></datalist>
-                            </div>
-
-                            <div class="col-6 col-md-6 col-lg-3">
-                                <label for="dateRange" class="form-label">Payment Date Range</label>
-                                <input id="dateRange" class="form-control" placeholder="Select Date Range" readonly>
-                            </div>
                             <div class="col-6 col-md-2">
                                 <label for="paymentMonth" class="form-label">Payment Month</label>
                                 <input type="month" id="paymentMonth" class="form-control">
                             </div>
-                            <div class="col-6 col-md-4">
+                            <div class="col-4 col-md-4">
                                 <label for="paymentYear" class="form-label">Payment Year</label>
                                 <input type="number" id="paymentYear" class="form-control" placeholder="YYYY" min="2000"
                                     max="2100">
                             </div>
-                            <div class="col-6 col-md-4">
+                            <div class="col-4 col-md-4">
                                 <label for="financialYear" class="form-label">Financial Year</label>
                                 <input id="financialYear" class="form-control" placeholder="YYYY-YYYY"
                                     list="financialYearList">
@@ -240,7 +217,7 @@
                             </div>
                             <div class="col-6 col-md-2 col-lg-2 d-grid align-self-end">
                                 <button class="btn btn-primary" id="searchBtn"><i class="bi bi-search"></i>
-                                    Search</button>
+                                    Search Tax Report</button>
                             </div>
                         </div>
                     </div>
@@ -254,20 +231,31 @@
                     <!-- Table -->
                     <!-- Table with outer border -->
                     <div class="table-responsive bg-white border border-secondary rounded shadow-sm">
-                        <table class="table table-bordered table-hover table-sm mb-0" id="paymentTable">
+                        <table class="table table-bordered table-hover table-sm mb-0" id="taxDetailsTable"
+                            aria-label="Tax Report Table">
                             <thead class="table-dark text-center">
                                 <tr>
                                     <th data-key="RowID">Sr No</th>
-                                    <th data-key="DocketNo">Payment No</th>
-                                    <th data-key="BookedDate">Payment Date</th>
+                                    <th data-key="InvoiceDate">Invoice Date</th>
+                                    <th data-key="InvoiceNo">Invoice No</th>
                                     <th data-key="CustomerName">Customer Name</th>
-                                    <th data-key="ActualWeight">Narration</th>
-                                    <th data-key="VolumeWeight">Credit</th>
-                                    <th data-key="ChargeableWeight">Debit</th>
-                                    <th data-key="TotalAmount">Running Total</th>
+                                    <th data-key="State">State</th>
+                                    <th data-key="GSTNo">GST No</th>
+                                    <th data-key="TotalInvoiceAmount">Total Invoice Amount</th>
+                                    <th data-key="NonTaxableAmount">Non-Taxable Amount</th>
+                                    <th data-key="TaxableAmount">Taxable Amount</th>
+                                    <th data-key="SGST">SGST @9%</th>
+                                    <th data-key="CGST">CGST @9%</th>
+                                    <th data-key="IGST">IGST @18%</th>
                                 </tr>
                             </thead>
-                            <tbody></tbody>
+                            <tbody id="tableBody">
+                                <tr id="emptyRow">
+                                    <td colspan="12" class="text-center text-muted">
+                                        No records found
+                                    </td>
+                                </tr>
+                            </tbody>
                         </table>
                     </div>
 
@@ -297,8 +285,7 @@
     <script src="../../assets/js/utils/server.js"></script>
     <script src="../../assets/js/utils/navbar.js"></script>
     <script src="../../assets/js/utils/utils.js"></script>
-    <script src="../../assets/js/Report/rep_PaymentDetails.js"></script>
-    <!-- <script src="../../assets/js/Report/reportPaymentDetails.js"></script> -->
+    <script src="../../assets/js/Report/taxDetails.js"></script>
     <script src="../../assets/js/utils/logout.js"></script>
 </body>
 

@@ -52,6 +52,7 @@ const Navbar = (() => {
                 { label: "Vendor Billing Report", icon: "bi-receipt", href: "#" },
                 { label: "Payment Receivable", icon: "bi-wallet", href: "#" },
                 { label: "Payment Payable", icon: "bi-wallet", href: "#" },
+                { label: "Tax Details", icon: "bi-receipt", href: "/pages/Reports/reportGSTDetails.html" },
                 { label: "Accounting Ledger", icon: "bi-receipt", href: "#" }
             ]
         },
