@@ -1253,7 +1253,6 @@ async function drawShipmentTable_int_Annexure(
             valign: "middle"
         },
 
-
         columnStyles: {
             0: { cellWidth: 8, halign: "center" }, // Sl No
             1: { cellWidth: 17 }, // Date
