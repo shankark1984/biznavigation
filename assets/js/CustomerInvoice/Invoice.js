@@ -631,8 +631,8 @@ document.getElementById('modifyButton').addEventListener('click', () => {
     document.getElementById('reportButton').disabled = true; // Enable report button
     enableForm(); // Enable form for modification
     document.getElementById('invoiceNo').disabled = true; // Disable invoice number field
-    document.getElementById('movementType').disabled = true; // Disable invoice date field
-    document.getElementById('partyName').disabled = true; // Disable party code field
+    document.getElementById('movementType').disabled = false; // Disable invoice date field
+    document.getElementById('partyName').disabled = false; // Disable party code field
     document.getElementById('fetchPendingInvoices').disabled = true; // Disable party code field
     document.querySelectorAll('.delete-btn').forEach(button => {
         button.disabled = false;
