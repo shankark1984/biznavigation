@@ -1031,7 +1031,7 @@ async function drawShipmentTable_int_Annexure(
     const subtotalStyle = {
         halign: "right",
         fontStyle: "bold",
-        fillColor: [60, 60, 60],
+        fillColor: [128, 128, 128],
         textColor: [255, 255, 255],
         valign: "middle",
         minCellHeight: 2,
@@ -1232,11 +1232,11 @@ async function drawShipmentTable_int_Annexure(
         ]],
 
         body,
-
+        theme: "grid",
         styles: {
             fontSize: FONT.body - 1,
             font: "times",
-            fillColor: [224, 224, 224],
+            fillColor: [255, 255, 255],
             cellPadding: 1.5,
             textColor: 0,
             lineWidth: 0.2,

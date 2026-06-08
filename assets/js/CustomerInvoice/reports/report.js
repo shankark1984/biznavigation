@@ -1,8 +1,10 @@
+const footerY = 272;
 const PDF_CONFIG = {
     PAGE: {
-        x: 15,
-        w: 190,
-        h: 297
+        x: 5,
+        y: 5,
+        w: 200, // 210 - 10 margin
+        h: 287  // 297 - 10 margin
     },
 
     FONT: {
@@ -736,37 +738,32 @@ function drawInvoiceBorder(
     PAGE,
     {
         top = 9,
-        bottom = 35,
+        bottom = 12,
+        left = 0,
+        right = 0,
         lineWidth = 0.1
     } = {}
 ) {
-
-    doc.setDrawColor(0);
+    doc.setDrawColor(0, 0, 0);
     doc.setLineWidth(lineWidth);
 
-    doc.rect(
-        PAGE.x,
-        top,
-        PAGE.w,
-        PAGE.h - top - bottom
-    );
-}
+    const x = PAGE.x + left;
+    const y = top;
+    const width = PAGE.w - left - right;
+    const height = PAGE.h - top - bottom;
 
+    doc.rect(x, y, width, height);
+}
 // =========================
 // INVOICE BORDER ALL PAGES
 // =========================
-function drawInvoiceBorderAllPages(doc, PAGE) {
+function drawInvoiceBorderAllPages(doc, PAGE, footerY = 272) {
+    const currentPage = doc.getCurrentPageInfo().pageNumber;
 
-    const currentPage =
-        doc.getCurrentPageInfo().pageNumber;
-
-    Array.from(
-        { length: doc.getNumberOfPages() },
-        (_, i) => i + 1
-    ).forEach(page => {
+    for (let page = 1; page <= doc.getNumberOfPages(); page++) {
         doc.setPage(page);
-        drawInvoiceBorder(doc, PAGE);
-    });
+        drawInvoiceBorder(doc, PAGE, footerY);
+    }
 
     doc.setPage(currentPage);
 }

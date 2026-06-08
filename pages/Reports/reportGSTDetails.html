@@ -54,37 +54,37 @@
             overflow: auto;
         }
 
-        #paymentTable {
+        #taxDetailsTable {
             width: 100%;
             table-layout: fixed;
         }
 
-        #paymentTable th,
-        #paymentTable td {
+        #taxDetailsTable th,
+        #taxDetailsTable td {
             text-align: center;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
 
-        #paymentTable th:nth-child(1),
-        #paymentTable td:nth-child(1),
-        #paymentTable th:nth-child(3),
-        #paymentTable td:nth-child(3) {
+        #taxDetailsTable th:nth-child(1),
+        #taxDetailsTable td:nth-child(1),
+        #taxDetailsTable th:nth-child(3),
+        #taxDetailsTable td:nth-child(3) {
             text-align: center;
         }
 
-        #paymentTable th:nth-child(2),
-        #paymentTable td:nth-child(2),
-        #paymentTable th:nth-child(4),
-        #paymentTable td:nth-child(4),
-        #paymentTable th:nth-child(5),
-        #paymentTable td:nth-child(5) {
+        #taxDetailsTable th:nth-child(2),
+        #taxDetailsTable td:nth-child(2),
+        #taxDetailsTable th:nth-child(4),
+        #taxDetailsTable td:nth-child(4),
+        #taxDetailsTable th:nth-child(5),
+        #taxDetailsTable td:nth-child(5) {
             text-align: left;
         }
 
-        #paymentTable th:nth-child(n+6),
-        #paymentTable td:nth-child(n+6) {
+        #taxDetailsTable th:nth-child(n+6),
+        #taxDetailsTable td:nth-child(n+6) {
             text-align: right;
         }
 
@@ -92,7 +92,7 @@
             min-width: 0;
         }
 
-        #paymentTable thead th {
+        #taxDetailsTable thead th {
             position: sticky;
             top: 0;
             z-index: 11;
@@ -104,50 +104,55 @@
             padding: 10px;
         }
 
-        #paymentTable tbody td {
+        #taxDetailsTable tbody td {
             vertical-align: middle;
             font-size: 0.8rem;
             padding: 8px 10px;
         }
 
-        #paymentTable tbody tr:hover {
+        #taxDetailsTable tbody tr:hover {
             background: var(--table-hover-bg);
         }
 
-        #paymentTable tbody tr:nth-child(even) {
+        #taxDetailsTable tbody tr:nth-child(even) {
             background: var(--table-even-bg);
         }
 
         /* Column widths */
 
-        #paymentTable th:nth-child(1),
-        #paymentTable td:nth-child(1) {
+        #taxDetailsTable th:nth-child(1),
+        #taxDetailsTable td:nth-child(1) {
             width: 70px;
         }
 
-        #paymentTable th:nth-child(2),
-        #paymentTable td:nth-child(2) {
-            width: 120px;
+        #taxDetailsTable th:nth-child(2),
+        #taxDetailsTable td:nth-child(2) {
+            width: 90px;
         }
 
-        #paymentTable th:nth-child(3),
-        #paymentTable td:nth-child(3) {
+        #taxDetailsTable th:nth-child(3),
+        #taxDetailsTable td:nth-child(3) {
             width: 110px;
         }
 
-        #paymentTable th:nth-child(4),
-        #paymentTable td:nth-child(4) {
+        #taxDetailsTable th:nth-child(4),
+        #taxDetailsTable td:nth-child(4) {
             width: 180px;
         }
 
-        #paymentTable th:nth-child(5),
-        #paymentTable td:nth-child(5) {
-            width: 130px;
+        #taxDetailsTable th:nth-child(5),
+        #taxDetailsTable td:nth-child(5) {
+            width: 90px;
         }
 
-        #paymentTable th:nth-child(n+6),
-        #paymentTable td:nth-child(n+6) {
-            width: 120px;
+        #taxDetailsTable th:nth-child(6),
+        #taxDetailsTable td:nth-child(6) {
+            width: 145px;
+        }
+
+        #taxDetailsTable th:nth-child(n+7),
+        #taxDetailsTable td:nth-child(n+7) {
+            width: 90px;
             text-align: right;
         }
 
@@ -159,8 +164,8 @@
 
         @media (max-width: 768px) {
 
-            #paymentTable thead th,
-            #paymentTable tbody td {
+            #taxDetailsTable thead th,
+            #taxDetailsTable tbody td {
                 font-size: 0.75rem;
                 padding: 6px 8px;
             }
@@ -201,12 +206,12 @@
                         <div class="row g-3 mb-4" id="searchFilters">
 
                             <div class="col-6 col-md-2">
-                                <label for="paymentMonth" class="form-label">Payment Month</label>
-                                <input type="month" id="paymentMonth" class="form-control">
+                                <label for="invoiceMonth" class="form-label">Invoice Month</label>
+                                <input type="month" id="invoiceMonth" class="form-control">
                             </div>
                             <div class="col-4 col-md-4">
-                                <label for="paymentYear" class="form-label">Payment Year</label>
-                                <input type="number" id="paymentYear" class="form-control" placeholder="YYYY" min="2000"
+                                <label for="invoiceYear" class="form-label">Invoice Year</label>
+                                <input type="number" id="invoiceYear" class="form-control" placeholder="YYYY" min="2000"
                                     max="2100">
                             </div>
                             <div class="col-4 col-md-4">
@@ -223,7 +228,7 @@
                     </div>
 
                     <!-- Spinner -->
-                    <div id="loadingSpinner" class="text-center my-4 hidden">
+                    <div id="loadingSpinner" class="text-center my-4 d-none">
                         <div class="spinner-border text-primary" role="status"><span
                                 class="visually-hidden">Loading...</span></div>
                     </div>
@@ -235,18 +240,19 @@
                             aria-label="Tax Report Table">
                             <thead class="table-dark text-center">
                                 <tr>
-                                    <th data-key="RowID">Sr No</th>
-                                    <th data-key="InvoiceDate">Invoice Date</th>
-                                    <th data-key="InvoiceNo">Invoice No</th>
-                                    <th data-key="CustomerName">Customer Name</th>
+                                    <th data-key="RowID">Sr<br>No</th>
+                                    <th data-key="InvoiceDate">Invoice<br>Date</th>
+                                    <th data-key="InvoiceNo">Invoice<br>No</th>
+                                    <th data-key="CustomerName">Customer<br>Name</th>
                                     <th data-key="State">State</th>
-                                    <th data-key="GSTNo">GST No</th>
-                                    <th data-key="TotalInvoiceAmount">Total Invoice Amount</th>
-                                    <th data-key="NonTaxableAmount">Non-Taxable Amount</th>
-                                    <th data-key="TaxableAmount">Taxable Amount</th>
-                                    <th data-key="SGST">SGST @9%</th>
-                                    <th data-key="CGST">CGST @9%</th>
-                                    <th data-key="IGST">IGST @18%</th>
+                                    <th data-key="GSTNo">GST<br>No</th>
+                                    <th data-key="TotalInvoiceAmount">Total Invoice<br>Amount</th>
+                                    <th data-key="NonTaxableAmount">Non-Taxable<br>Amount</th>
+                                    <th data-key="TaxableAmount">Taxable<br>Amount</th>
+                                    <th data-key="SGST">SGST<br>@9%</th>
+                                    <th data-key="CGST">CGST<br>@9%</th>
+                                    <th data-key="IGST">IGST<br>@18%</th>
+                                    <th data-key="TotalGST">Total GST<br>Amount</th>
                                 </tr>
                             </thead>
                             <tbody id="tableBody">
