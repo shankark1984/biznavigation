@@ -32,7 +32,7 @@ async function loadTaxReport() {
         let query = supabaseClient
             .from("TaxReportView")
             .select("*")
-            .eq("CompanyID", CompanyID);
+            .eq("company_id", CompanyID);
 
         const invoiceMonth =
             document.getElementById("invoiceMonth").value;
@@ -292,7 +292,7 @@ async function fetchAllFilteredData(filters = {}) {
         let query = supabaseClient
             .from('TaxReportView')
             .select('*')
-            .eq("CompanyID", CompanyID)
+            .eq("company_id", CompanyID)
             .order('InvoiceDate', { ascending: true });
 
 
@@ -348,7 +348,7 @@ async function fetchAllFilteredData(filters = {}) {
 async function exportToExcel() {
     const filters = getFilters();
     const allData = await fetchAllFilteredData(filters);
-    loadExportLibraries();
+    await loadExportLibraries();
     if (allData.length === 0) return alert('No data to export.');
 
     let tableHtml = `<table><thead><tr>
@@ -359,23 +359,13 @@ async function exportToExcel() {
 
     for (let i = 0; i < allData.length; i++) {
         const row = allData[i];
-        let partyName = '';
-        if (row.PartyCode) {
-            if (partyNameCache[row.PartyCode]) {
-                partyName = partyNameCache[row.PartyCode];
-            } else {
-                const details = await getPartyDetailsByCode(row.PartyCode);
-                partyName = details?.PartyName || '';
-                partyNameCache[row.PartyCode] = partyName;
-            }
-        }
 
         tableHtml += `<tr>
             <td>${i + 1}</td>
             <td>${row.InvoiceDate || ''}</td>
             <td>${row.InvoiceNo || ''}</td>
             <td>${row.CustomerName || ''}</td>
-            <td>${State}</td>
+            <td>${row.State}</td>
             <td>${row.GSTNo || '0'}</td>
             <td>${row.TotalInvoiceAmount || '0'}</td>
             <td>${row.NonTaxableAmount || '0'}</td>
@@ -394,73 +384,186 @@ async function exportToExcel() {
     XLSX.writeFile(wb, 'InternationalBookings.xlsx');
 }
 
-// PDF Export Function with PartyName
+// PDF Export Function
 async function exportToPdf() {
     const filters = getFilters();
     const allData = await fetchAllFilteredData(filters);
-    loadPdfLibs();
-    if (!allData.length) return alert('No data to export.');
 
-    const doc = new window.jspdf.jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+    await loadPdfLibs();
 
-    const headers = [
-        'Sr No', 'Invoice No', 'Invoice Date', 'Invoice Type', 'Customer Name', 'Basic Amount', 'Other Amount',
-        'CGST Amount', 'SGST Amount', 'IGST Amount', 'Total GST Amount', 'Grand Total Amount', 'Collected Amount',
-        'Other Deduction Amount', 'TDS Deduction Amount', 'Total Payment Amount', 'Balance Amount', 'Payment Status'
-    ];
-
-    const formatNumber = (value) => typeof value === 'number' ? value.toFixed(2) : (parseFloat(value) || 0).toFixed(2);
-    const formatDate = (dateStr) => {
-        const date = new Date(dateStr);
-        return isNaN(date) ? '' : date.toLocaleDateString();
-    };
-
-    // Step 1: Get unique PartyCodes
-    const uniqueCodes = [...new Set(allData.map(r => r.PartyCode).filter(Boolean))];
-
-    // Step 2: Build PartyCode -> PartyName map
-    const partyNameMap = {};
-    for (const code of uniqueCodes) {
-        const details = await getPartyDetailsByCode(code);
-        partyNameMap[code] = details?.PartyName || code;
+    if (!allData.length) {
+        alert('No data to export.');
+        return;
     }
 
-    // Step 3: Prepare rows
+    const doc = new window.jspdf.jsPDF({
+        orientation: 'landscape',
+        unit: 'mm',
+        format: 'a4'
+    });
+
+    const headers = [
+        'Sr No',
+        'Invoice Date',
+        'Invoice No',
+        'Customer Name',
+        'State',
+        'GST No',
+        'Total Invoice Amount',
+        'Non-Taxable Amount',
+        'Taxable Amount',
+        'CGST Amount',
+        'SGST Amount',
+        'IGST Amount',
+        'Total GST Amount'
+    ];
+
+    const formatNumber = (value) => {
+        return (parseFloat(value) || 0).toFixed(2);
+    };
+
+    const formatDate = (dateStr) => {
+        if (!dateStr) return '';
+        const date = new Date(dateStr);
+        return isNaN(date.getTime())
+            ? ''
+            : date.toLocaleDateString('en-GB');
+    };
+
+    // ==========================
+    // GRAND TOTALS
+    // ==========================
+    const totals = {
+        TotalInvoiceAmount: 0,
+        NonTaxableAmount: 0,
+        TaxableAmount: 0,
+        CGST: 0,
+        SGST: 0,
+        IGST: 0,
+        TotalGST: 0
+    };
+
+    allData.forEach(row => {
+        totals.TotalInvoiceAmount += Number(row.TotalInvoiceAmount || 0);
+        totals.NonTaxableAmount += Number(row.NonTaxableAmount || 0);
+        totals.TaxableAmount += Number(row.TaxableAmount || 0);
+        totals.CGST += Number(row.CGST || 0);
+        totals.SGST += Number(row.SGST || 0);
+        totals.IGST += Number(row.IGST || 0);
+        totals.TotalGST += Number(row.TotalGST || 0);
+    });
+
+    // ==========================
+    // DATA ROWS
+    // ==========================
     const rows = allData.map((row, i) => [
         i + 1,
-        row.InvoiceNo || '',
         formatDate(row.InvoiceDate),
-        row.InvoiceType || '',
-        partyNameMap[row.PartyCode] || row.PartyCode || '',
-        formatNumber(row.BasicAmount),
-        formatNumber(row.OtherAmount),
-        formatNumber(row.CGSTAmount),
-        formatNumber(row.SGSTAmount),
-        formatNumber(row.IGSTAmount),
-        formatNumber(row.TotalGSTAmount),
-        formatNumber(row.GrandTotalAmount),
-        formatNumber(row.PaymentAmount),
-        formatNumber(row.OtherDeductionAmount),
-        formatNumber(row.TDSDeductionAmount),
-        formatNumber(row.PaymentTotalAmount),
-        formatNumber(row.BalanceAmount),
-        row.PaymentStatus || ''
+        row.InvoiceNo || '',
+        row.CustomerName || '',
+        row.State || '',
+        row.GSTNo || '',
+        formatNumber(row.TotalInvoiceAmount),
+        formatNumber(row.NonTaxableAmount),
+        formatNumber(row.TaxableAmount),
+        formatNumber(row.CGST),
+        formatNumber(row.SGST),
+        formatNumber(row.IGST),
+        formatNumber(row.TotalGST)
     ]);
 
-    // Step 4: Export
+    // ==========================
+    // GRAND TOTAL ROW
+    // ==========================
+    rows.push([
+        '',
+        '',
+        '',
+        'GRAND TOTAL',
+        '',
+        '',
+        formatNumber(totals.TotalInvoiceAmount),
+        formatNumber(totals.NonTaxableAmount),
+        formatNumber(totals.TaxableAmount),
+        formatNumber(totals.CGST),
+        formatNumber(totals.SGST),
+        formatNumber(totals.IGST),
+        formatNumber(totals.TotalGST)
+    ]);
+
+    // ==========================
+    // PDF TABLE
+    // ==========================
     doc.autoTable({
         head: [headers],
         body: rows,
-        startY: 20,
-        margin: { left: 10, right: 10 },
-        styles: { fontSize: 6.5, overflow: 'linebreak', cellPadding: 1.2 },
-        headStyles: { fillColor: [0, 123, 255] },
-        didDrawPage: function (data) {
-            doc.setFontSize(10);
-            doc.text("Customer Invoice Report", data.settings.margin.left, 10);
+
+        startY: 18,
+        margin: {
+            left: 5,
+            right: 5
         },
-        pageBreak: 'auto'
+
+        theme: 'grid',
+
+        styles: {
+            fontSize: 6.5,
+            cellPadding: 1.2,
+            overflow: 'linebreak',
+            lineWidth: 0.2,
+            lineColor: [0, 0, 0],
+            textColor: [0, 0, 0]
+        },
+
+        headStyles: {
+            fillColor: [0, 123, 255],
+            textColor: [255, 255, 255],
+            fontStyle: 'bold',
+            halign: 'center'
+        },
+
+        columnStyles: {
+            0: { halign: 'center' }, // Sr No
+            6: { halign: 'right' },  // Total Invoice Amount
+            7: { halign: 'right' },  // Non-Taxable Amount
+            8: { halign: 'right' },  // Taxable Amount
+            9: { halign: 'right' },  // CGST Amount
+            10: { halign: 'right' }, // SGST Amount
+            11: { halign: 'right' }, // IGST Amount
+            12: { halign: 'right' }  // Total GST Amount
+        },
+
+        didParseCell: function (data) {
+            if (
+                data.section === 'body' &&
+                data.row.index === rows.length - 1
+            ) {
+                data.cell.styles.fillColor = [230, 230, 230];
+                data.cell.styles.fontStyle = 'bold';
+            }
+        },
+
+        didDrawPage: function (data) {
+            doc.setFontSize(12);
+            doc.setFont(undefined, 'bold');
+            doc.text(
+                'Customer Invoice Report',
+                data.settings.margin.left,
+                10
+            );
+
+            doc.setFontSize(8);
+            doc.setFont(undefined, 'normal');
+            doc.text(
+                `Generated On : ${new Date().toLocaleString()}`,
+                data.settings.margin.left,
+                15
+            );
+        }
     });
 
+    // ==========================
+    // SAVE PDF
+    // ==========================
     doc.save('CustomerInvoiceReport.pdf');
 }
