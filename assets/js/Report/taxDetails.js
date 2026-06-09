@@ -286,55 +286,109 @@ async function loadExportLibraries() {
 }
 
 async function fetchAllFilteredData(filters = {}) {
-    let allData = [], batchSize = 1000, from = 0, to = batchSize - 1, hasMore = true;
+    let allData = [];
+    let batchSize = 1000;
+    let from = 0;
+    let to = batchSize - 1;
+    let hasMore = true;
 
     while (hasMore) {
+
         let query = supabaseClient
             .from('TaxReportView')
             .select('*')
-            .eq("company_id", CompanyID)
+            .eq('company_id', CompanyID)
             .order('InvoiceDate', { ascending: true });
 
-
-        //Month filters
+        // ==========================
+        // MONTH FILTER
+        // ==========================
         if (filters.invoiceMonth) {
-            let [monthStr, yearStr] = filters.invoiceMonth.split('-');
-            // Fallback if format is "YYYY-MM"
-            if (parseInt(monthStr) > 12) [yearStr, monthStr] = [monthStr, yearStr];
 
-            const month = parseInt(monthStr);
-            const year = parseInt(yearStr);
+            let [part1, part2] = filters.invoiceMonth.split('-');
 
-            if (!isNaN(year) && !isNaN(month)) {
-                const start = new Date(year, month - 1, 1).toISOString().split('T')[0];
-                const end = new Date(year, month, 0).toISOString().split('T')[0];
-                query = query.gte('InvoiceDate', start).lte('InvoiceDate', end);
+            let month, year;
+
+            // Handle both MM-YYYY and YYYY-MM
+            if (parseInt(part1) > 12) {
+                year = parseInt(part1);
+                month = parseInt(part2);
+            } else {
+                month = parseInt(part1);
+                year = parseInt(part2);
+            }
+
+            if (!isNaN(month) && !isNaN(year)) {
+
+                const startDate =
+                    `${year}-${String(month).padStart(2, '0')}-01`;
+
+                const lastDay =
+                    new Date(year, month, 0).getDate();
+
+                const endDate =
+                    `${year}-${String(month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+
+                query = query
+                    .gte('InvoiceDate', startDate)
+                    .lte('InvoiceDate', endDate);
+
+                console.log('Month Filter:', filters.invoiceMonth);
+                console.log('Start Date:', startDate);
+                console.log('End Date:', endDate);
             }
         }
-        //Year filters
-        // Else fallback to full year range if only invoiceYear is set
-        if (!filters.invoiceMonth && filters.invoiceYear) {
+
+        // ==========================
+        // YEAR FILTER
+        // ==========================
+        else if (filters.invoiceYear) {
+
             const year = parseInt(filters.invoiceYear);
+
             if (!isNaN(year)) {
-                const start = new Date(year, 0, 1).toISOString().split('T')[0];   // Jan 1
-                const end = new Date(year, 11, 31).toISOString().split('T')[0];  // Dec 31
-                query = query.gte('InvoiceDate', start).lte('InvoiceDate', end);
+
+                const startDate = `${year}-01-01`;
+                const endDate = `${year}-12-31`;
+
+                query = query
+                    .gte('InvoiceDate', startDate)
+                    .lte('InvoiceDate', endDate);
+
+                console.log('Year Filter:', year);
+                console.log('Start Date:', startDate);
+                console.log('End Date:', endDate);
             }
         }
 
+        // ==========================
+        // FINANCIAL YEAR FILTER
+        // ==========================
         if (filters.financialYear) {
-            const [startYear, endYear] = filters.financialYear.split('-').map(Number);
-            query = query.gte('InvoiceDate', `${startYear}-04-01`).lte('InvoiceDate', `${endYear}-03-31`);
+
+            const [startYear, endYear] =
+                filters.financialYear.split('-').map(Number);
+
+            query = query
+                .gte('InvoiceDate', `${startYear}-04-01`)
+                .lte('InvoiceDate', `${endYear}-03-31`);
+
+            console.log(
+                'Financial Year:',
+                `${startYear}-04-01`,
+                `${endYear}-03-31`
+            );
         }
 
         const { data, error } = await query.range(from, to);
+
         if (error) {
             console.error('Error fetching data for export:', error);
             break;
         }
 
-        if (data.length > 0) {
-            allData = allData.concat(data);
+        if (data && data.length > 0) {
+            allData = [...allData, ...data];
             from += batchSize;
             to += batchSize;
         } else {
@@ -344,7 +398,6 @@ async function fetchAllFilteredData(filters = {}) {
 
     return allData;
 }
-
 async function exportToExcel() {
     const filters = getFilters();
     const allData = await fetchAllFilteredData(filters);

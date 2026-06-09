@@ -326,7 +326,9 @@ async function newInvoice() {
         'movementType',
         'transitType',
         'department',
-        'modeType'
+        'modeType',
+        'shipmentNo',
+        'reportType'
     ].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.value = '';

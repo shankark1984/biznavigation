@@ -508,10 +508,10 @@ async function addSingleShipmentToInvoice(shipmentNo, invoiceNo) {
         };
 
         // ✅ Now pass totals to updateTotals_ib
-        updateTotals_ib(totals);
+        await updateTotals_ib(totals);
 
         // Optionally refresh merged charges table
-        renderChargesTable(charges.chargesMap);
+        await renderChargesTable(charges.chargesMap);
 
 
         alert('Shipment added successfully!');
