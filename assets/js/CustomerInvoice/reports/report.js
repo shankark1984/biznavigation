@@ -730,20 +730,28 @@ function drawPartySection(
 
     return y + rowHeight;
 }
+
 // =========================
 // INVOICE BORDER
 // =========================
 function drawInvoiceBorder(
     doc,
     PAGE,
+    movementType,
+    footerY = 272,
     {
         top = 9,
-        bottom = 12,
+        bottom,
         left = 0,
         right = 0,
         lineWidth = 0.1
     } = {}
 ) {
+    // Set default bottom based on movement type
+    if (bottom === undefined) {
+        bottom = movementType === "Customs Clearance" ? 2 : 12;
+    }
+
     doc.setDrawColor(0, 0, 0);
     doc.setLineWidth(lineWidth);
 
@@ -757,12 +765,12 @@ function drawInvoiceBorder(
 // =========================
 // INVOICE BORDER ALL PAGES
 // =========================
-function drawInvoiceBorderAllPages(doc, PAGE, footerY = 272) {
+function drawInvoiceBorderAllPages(doc, PAGE, movementType, footerY = 272) {
     const currentPage = doc.getCurrentPageInfo().pageNumber;
 
     for (let page = 1; page <= doc.getNumberOfPages(); page++) {
         doc.setPage(page);
-        drawInvoiceBorder(doc, PAGE, footerY);
+        drawInvoiceBorder(doc, PAGE, movementType, footerY);
     }
 
     doc.setPage(currentPage);

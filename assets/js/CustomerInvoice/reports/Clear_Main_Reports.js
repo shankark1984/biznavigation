@@ -177,10 +177,7 @@ async function generate_Clear_InvoicePDF_Main(
             PAGE
         );
 
-        drawInvoiceBorderAllPages(
-            doc,
-            PAGE
-        );
+        drawInvoiceBorderAllPages(doc, PAGE, "Customs Clearance");
 
         // ==========================================
         // SAVE
@@ -1156,7 +1153,7 @@ async function drawShipmentTable_Clear_Main(
             3: { cellWidth: 30, halign: "right" },
 
             // Taxable
-            4: { cellWidth: 30, halign: "right" }
+            4: { cellWidth: 40, halign: "right" }
         },
 
         didParseCell(data) {
