@@ -5,7 +5,7 @@ const Navbar = (() => {
     // ==========================
     const MENU = [
         {
-            title: "Master",
+            title: " Master",
             icon: "bi-database",
             children: [
                 { label: "Company", icon: "bi-building", href: "/pages/master/companyProfile.html" },
@@ -16,7 +16,7 @@ const Navbar = (() => {
             ]
         },
         {
-            title: "Operations",
+            title: " Operations",
             icon: "bi-gear",
             children: [
                 { label: "Enquiry", icon: "bi-search", href: "/pages/Functions/Enquiry.html" },
@@ -29,8 +29,8 @@ const Navbar = (() => {
             ]
         },
         {
-            title: "Accounts",
-            icon: "bi-cash-stack",
+            title: " Accounts",
+            icon: "bi-cash-stack ",
             children: [
                 { label: "Customer Invoice", icon: "bi-receipt", href: "/pages/Accounting/CustomerInvoice.html" },
                 { label: "Vendor Billing", icon: "bi-receipt", href: "/pages/Accounting/VendorBilling.html" },
@@ -40,7 +40,7 @@ const Navbar = (() => {
             ]
         },
         {
-            title: "Reports",
+            title: " Reports",
             icon: "bi-cash-stack",
             children: [
                 { label: "International Report", icon: "bi-globe", href: "/pages/Reports/reportInternationalShipmentDetails.html" },
@@ -57,7 +57,7 @@ const Navbar = (() => {
             ]
         },
         {
-            title: "Tools",
+            title: " Tools",
             icon: "bi-tools",
             children: [
                 { label: "Settings", icon: "bi-gear", href: "/pages/Tools/setting.html" },
@@ -84,6 +84,7 @@ const Navbar = (() => {
         }
 
         renderSidebar();
+        setupMobileSidebarActions();
         createTopNavbar();
         mobileToggle();
         setupMenuToggle();
@@ -116,37 +117,80 @@ const Navbar = (() => {
     // SIDEBAR RENDER
     // ==========================
     function renderSidebar() {
+
+        const userName = localStorage.getItem("UserName") || "User";
+
         document.getElementById("sidebar").innerHTML = `
-        <div class="sidebar" id="sidebarMenu">
-           <div class="logo">
-                <a href="/pages/Tools/home.html" class="logo-box" onclick="event.preventDefault(); navigateWithAnimation('/pages/Tools/home.html')">
-                    <img src="../../assets/img/applogo.png" alt="Logo" class="logo-img" />
-                    <span class="logo-text">BizNavigation</span>
-                </a>
+    <div class="sidebar" id="sidebarMenu">
+
+        <div class="logo">
+            <a href="/pages/Tools/home.html"
+               class="logo-box"
+               onclick="event.preventDefault(); navigateWithAnimation('/pages/Tools/home.html')">
+
+                <img src="../../assets/img/applogo.png"
+                     alt="Logo"
+                     class="logo-img" />
+
+                <span class="logo-text">BizNavigation</span>
+            </a>
+        </div>
+
+        <ul class="menu">
+            ${MENU.map(section => `
+                <li class="menu-group">
+
+                    <div class="menu-title">
+                        <i class="bi ${section.icon}"></i>
+                        <span>${section.title}</span>
+                        <i class="bi bi-chevron-down arrow"></i>
+                    </div>
+
+                    <ul class="submenu">
+                        ${section.children.map(item => `
+                            <li class="menu-item"
+                                data-href="${item.href}"
+                                data-label="${item.label}">
+                                <i class="bi ${item.icon}"></i>
+                                <span>${item.label}</span>
+                            </li>
+                        `).join("")}
+                    </ul>
+
+                </li>
+            `).join("")}
+        </ul>
+
+        <!-- Mobile User Panel -->
+        <div class="sidebar-user-panel d-md-none">
+
+            <div class="user-box">
+                <div class="avatar">
+                    ${userName.charAt(0).toUpperCase()}
+                </div>
+                <span class="username">${userName}</span>
             </div>
-            <ul class="menu">
-                ${MENU.map(section => `
-                    <li class="menu-group">
-                        <div class="menu-title">
-                            <i class="bi ${section.icon}"></i>
-                            <span>${section.title}</span>
-                            <i class="bi bi-chevron-down arrow"></i>
-                        </div>
 
-                        <ul class="submenu">
-                           ${section.children.map(item => `
-    <li class="menu-item" data-href="${item.href}" data-label="${item.label}">
-        <i class="bi ${item.icon}"></i>
-        <span>${item.label}</span>
-    </li>
-`).join("")}
-                        </ul>
-                    </li>
-                `).join("")}
-            </ul>
-        </div>`;
+            <div class="sidebar-actions">
+
+                <button id="mobileThemeToggle"
+                        class="theme-btn"
+                        title="Theme">
+                    <i class="bi bi-moon"></i>
+                </button>
+
+                <button id="mobileLogoutBtn"
+                        class="logout-btn"
+                        title="Logout">
+                    <i class="bi bi-box-arrow-right"></i>
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>`;
     }
-
     // ==========================
     // MENU TOGGLE
     // ==========================
@@ -221,21 +265,21 @@ const Navbar = (() => {
     // MOBILE TOGGLE
     // ==========================
     function mobileToggle() {
-        const navbarRight = document.querySelector(".navbar-right");
+        const navbarLeft = document.querySelector(".navbar-left");
         const sidebar = document.getElementById("sidebarMenu");
 
-        if (!navbarRight || !sidebar) return;
+        if (!navbarLeft || !sidebar) return;
 
         const btn = document.createElement("button");
         btn.id = "toggleSidebar";
-        btn.className = "btn btn-sm btn-dark d-md-none ms-2";
+        btn.className = "btn btn-sm btn-primary d-md-none me-2";
 
         let isOpen = false;
 
         const updateIcon = () => {
             btn.innerHTML = isOpen
-                ? '<i class="bi bi-chevron-up"></i>'
-                : '<i class="bi bi-chevron-down"></i>';
+                ? '<i class="bi bi-x-lg"></i>'
+                : '<i class="bi bi-list"></i>';
         };
 
         const openSidebar = () => {
@@ -250,23 +294,39 @@ const Navbar = (() => {
             updateIcon();
         };
 
-        btn.onclick = (e) => {
-            e.stopPropagation(); // prevent outside click trigger
+        btn.addEventListener("click", (e) => {
+            e.stopPropagation();
             isOpen ? closeSidebar() : openSidebar();
-        };
+        });
 
-        // ✅ CLICK OUTSIDE TO CLOSE
         document.addEventListener("click", (e) => {
-            const isClickInsideSidebar = sidebar.contains(e.target);
-            const isClickOnButton = btn.contains(e.target);
-
-            if (!isClickInsideSidebar && !isClickOnButton && isOpen) {
+            if (
+                isOpen &&
+                !sidebar.contains(e.target) &&
+                !btn.contains(e.target)
+            ) {
                 closeSidebar();
             }
         });
 
         updateIcon();
-        navbarRight.appendChild(btn);
+
+        // Insert menu button before page title
+        navbarLeft.prepend(btn);
+    }
+    function setupMobileSidebarActions() {
+
+        document
+            .getElementById("mobileThemeToggle")
+            ?.addEventListener("click", () => {
+                document.getElementById("themeToggle")?.click();
+            });
+
+        document
+            .getElementById("mobileLogoutBtn")
+            ?.addEventListener("click", () => {
+                document.getElementById("logoutBtn")?.click();
+            });
     }
     // ==========================
     // 🔥 PAGE ANIMATION
@@ -328,18 +388,11 @@ const Navbar = (() => {
 
         btn.onclick = () => {
             sidebar.classList.toggle("collapsed");
+            document.body.classList.toggle("sidebar-collapsed");
 
-            const mainContent = document.querySelector(".main-content");
-
-            if (sidebar.classList.contains("collapsed")) {
-                mainContent.style.marginLeft = "70px";
-                mainContent.style.width = "calc(100% - 70px)";
-                btn.innerHTML = '<i class="bi bi-chevron-right"></i>';
-            } else {
-                mainContent.style.marginLeft = "260px";
-                mainContent.style.width = "calc(100% - 260px)";
-                btn.innerHTML = '<i class="bi bi-chevron-left"></i>';
-            }
+            btn.innerHTML = sidebar.classList.contains("collapsed")
+                ? '<i class="bi bi-chevron-right"></i>'
+                : '<i class="bi bi-chevron-left"></i>';
         };
     }
 
