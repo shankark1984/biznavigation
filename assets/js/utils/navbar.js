@@ -6,13 +6,13 @@ const Navbar = (() => {
     const MENU = [
         {
             title: " Master",
-            icon: "bi-database",
+            icon: "bi-folder2-open",
             children: [
-                { label: "Company", icon: "bi-building", href: "/pages/master/companyProfile.html" },
-                { label: "Party", icon: "bi-people", href: "/pages/master/PartyRegistration.html" },
-                { label: "Courier", icon: "bi-truck", href: "/pages/master/CourierRegistration.html" },
-                { label: "Employee", icon: "bi-person-badge", href: "/pages/master/EmployeeMaster.html" },
-                { label: "User Rules", icon: "bi-shield", href: "/pages/master/UserAccessRules.html" }
+                { label: "Company", icon: "bi-buildings", href: "/pages/master/companyProfile.html" },
+                { label: "Party", icon: "bi-people-fill", href: "/pages/master/PartyRegistration.html" },
+                { label: "Courier", icon: "bi-truck-flatbed", href: "/pages/master/CourierRegistration.html" },
+                { label: "Employee", icon: "bi-person-badge-fill", href: "/pages/master/EmployeeMaster.html" },
+                { label: "User Rules", icon: "bi-shield-lock", href: "/pages/master/UserAccessRules.html" }
             ]
         },
         {
@@ -21,11 +21,11 @@ const Navbar = (() => {
             children: [
                 { label: "Enquiry", icon: "bi-search", href: "/pages/Functions/Enquiry.html" },
                 { label: "Quotation", icon: "bi-file-earmark-text", href: "/pages/Functions/Quotation.html" },
-                { label: "International", icon: "bi-globe", href: "/pages/Functions/InternationalBooking.html" },
+                { label: "International", icon: "bi-globe-central-south-asia", href: "/pages/Functions/InternationalBooking.html" },
                 { label: "Domestic", icon: "bi-truck", href: "/pages/Functions/DomesticBooking.html" },
                 { label: "Customs Clearance", icon: "bi-box-seam", href: "/pages/Functions/CustomsClearance.html" },
-                { label: "Full Truck Load", icon: "bi-truck", href: "/pages/Functions/fulltruckload.html" },
-                { label: "Upload Data", icon: "bi-upload", href: "#" }
+                { label: "Full Truck Load", icon: "bi-truck-front", href: "/pages/Functions/fulltruckload.html" },
+                { label: "Upload Data", icon: "bi-cloud-upload", href: "#" }
             ]
         },
         {
@@ -33,10 +33,10 @@ const Navbar = (() => {
             icon: "bi-cash-stack ",
             children: [
                 { label: "Customer Invoice", icon: "bi-receipt", href: "/pages/Accounting/CustomerInvoice.html" },
-                { label: "Vendor Billing", icon: "bi-receipt", href: "/pages/Accounting/VendorBilling.html" },
-                { label: "Payments Credit", icon: "bi-wallet", href: "/pages/Accounting/PaymentDetails.html?type=Credit" },
-                { label: "Payment Debit", icon: "bi-wallet", href: "/pages/Accounting/PaymentDetails.html?type=Debit" },
-                { label: "Tax Details", icon: "bi-receipt", href: "/pages/Accounting/TaxDetails.html" }
+                { label: "Vendor Billing", icon: "bi-file-earmark-spreadsheet", href: "/pages/Accounting/VendorBilling.html" },
+                { label: "Payments Credit", icon: "bi-arrow-down-circle", href: "/pages/Accounting/PaymentDetails.html?type=Credit" },
+                { label: "Payment Debit", icon: "bi-arrow-up-circle", href: "/pages/Accounting/PaymentDetails.html?type=Debit" },
+                { label: "Tax Details", icon: "bi-percent", href: "/pages/Accounting/TaxDetails.html" }
             ]
         },
         {
@@ -46,26 +46,26 @@ const Navbar = (() => {
                 { label: "International Report", icon: "bi-globe", href: "/pages/Reports/reportInternationalShipmentDetails.html" },
                 { label: "Domestic Report", icon: "bi-truck", href: "/pages/Reports/reportDomesticDetails.html" },
                 { label: "Customs Clearance Report", icon: "bi-box-seam", href: "/pages/Reports/reportCustomsClearance.html" },
-                { label: "Full Truck Load Report", icon: "bi-truck", href: "/pages/Reports/reportFulltruckDetails.html" },
-                { label: "Customer Invoice Report", icon: "bi-receipt", href: "/pages/Reports/reportCustomerInvoiceDetails.html" },
-                { label: "Payment Details", icon: "bi-wallet", href: "/pages/Reports/PaymentDetails.html" },
-                { label: "Vendor Billing Report", icon: "bi-receipt", href: "#" },
-                { label: "Payment Receivable", icon: "bi-wallet", href: "#" },
-                { label: "Payment Payable", icon: "bi-wallet", href: "#" },
-                { label: "Tax Details", icon: "bi-receipt", href: "/pages/Reports/reportGSTDetails.html" },
-                { label: "Accounting Ledger", icon: "bi-receipt", href: "#" }
+                { label: "Full Truck Load Report", icon: "bi-truck-front", href: "/pages/Reports/reportFulltruckDetails.html" },
+                { label: "Customer Invoice Report", icon: "bi-receipt-cutoff", href: "/pages/Reports/reportCustomerInvoiceDetails.html" },
+                { label: "Payment Details", icon: "bi-wallet2", href: "/pages/Reports/PaymentDetails.html" },
+                { label: "Vendor Billing Report", icon: "bi-file-bar-graph", href: "#" },
+                { label: "Payment Receivable", icon: "bi-cash-coin", href: "#" },
+                { label: "Payment Payable", icon: "bi-currency-rupee", href: "#" },
+                { label: "Tax Details", icon: "bi-percent", href: "/pages/Reports/reportGSTDetails.html" },
+                { label: "Accounting Ledger", icon: "bi-journal-bookmark", href: "#" }
             ]
         },
         {
             title: " Tools",
             icon: "bi-tools",
             children: [
-                { label: "Settings", icon: "bi-gear", href: "/pages/Tools/setting.html" },
-                { label: "Error Log", icon: "bi-exclamation-triangle", href: "#" },
-                { label: "Docket Master", icon: "bi-file-earmark-text", href: "#" },
-                { label: "Reset Database", icon: "bi-trash", href: "#" },
-                { label: "Route Master", icon: "bi-truck", href: "/pages/Tools/routemaster.html" },
-                { label: "Application Settings", icon: "bi-gear", href: "/pages/Tools/ApplicationSettings.html" },
+                { label: "Settings", icon: "bi-gear-fill", href: "/pages/Tools/setting.html" },
+                { label: "Error Log", icon: "bi-bug", href: "#" },
+                { label: "Docket Master", icon: "bi-file-earmark-richtext", href: "#" },
+                { label: "Reset Database", icon: "bi-database-x", href: "#" },
+                { label: "Route Master", icon: "bi-sign-turn-right", href: "/pages/Tools/routemaster.html" },
+                { label: "Application Settings", icon: "bi-sliders", href: " / pages / Tools / ApplicationSettings.html" },
             ]
         }
 

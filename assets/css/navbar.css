@@ -275,7 +275,7 @@ body {
 }
 
 /* =========================
-   MAIN CONTENT
+   MAIN CONTENT - LIGHT MODE
 ========================= */
 .main-content {
     margin-left: 250px;
@@ -286,6 +286,9 @@ body {
     flex-direction: column;
 
     transition: all .25s ease;
+
+    /* Professional light background */
+    background: #f8fafc;
 }
 
 body.sidebar-collapsed .main-content {
@@ -404,15 +407,134 @@ footer {
 }
 
 /* =========================
+   DARK MODE - ENTIRE PAGE
+========================= */
+
+/* =========================
    DARK MODE
 ========================= */
+
 .dark-mode {
-    background: #0f172a;
+    background: #0f172a !important;
     color: #e2e8f0;
 }
 
+/* Main Content */
+.dark-mode .main-content {
+    background: #0f172a !important;
+}
+
+/* Page Content */
+.dark-mode .page-content {
+    background: #111827 !important;
+}
+
+/* Navbar */
 .dark-mode .top-navbar {
-    background: #1e293b;
+    background: linear-gradient(135deg, #1e293b, #0f172a) !important;
+    color: #ffffff;
+}
+
+/* Sidebar */
+.dark-mode .sidebar {
+    background: #111827 !important;
+}
+
+/* Cards */
+.dark-mode .card {
+    background: #1e293b !important;
+    color: #e2e8f0 !important;
+    border: 1px solid #334155 !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, .25);
+}
+
+/* Form Controls */
+.dark-mode .form-control,
+.dark-mode .form-select,
+.dark-mode textarea {
+    background: #334155 !important;
+    color: #ffffff !important;
+    border: 1px solid #475569 !important;
+}
+
+.dark-mode .form-control:focus,
+.dark-mode .form-select:focus,
+.dark-mode textarea:focus {
+    background: #334155 !important;
+    color: #ffffff !important;
+    border-color: #3b82f6 !important;
+    box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, .25);
+}
+
+/* Labels */
+.dark-mode label {
+    color: #cbd5e1 !important;
+}
+
+/* Tables */
+.dark-mode .table {
+    color: #e2e8f0 !important;
+}
+
+.dark-mode .table thead,
+.dark-mode .table-light {
+    background: #1e293b !important;
+    color: #ffffff !important;
+}
+
+.dark-mode .table-bordered td,
+.dark-mode .table-bordered th {
+    border-color: #334155 !important;
+}
+
+/* Tabs */
+.dark-mode .nav-tabs {
+    border-color: #334155;
+}
+
+.dark-mode .nav-tabs .nav-link {
+    color: #94a3b8;
+}
+
+.dark-mode .nav-tabs .nav-link:hover {
+    color: #60a5fa;
+}
+
+.dark-mode .nav-tabs .nav-link.active {
+    background: #1e293b !important;
+    color: #60a5fa !important;
+    border-color: #334155 !important;
+}
+
+/* Buttons */
+.dark-mode .btn-primary {
+    background: #2563eb;
+    border-color: #2563eb;
+}
+
+.dark-mode .btn-primary:hover {
+    background: #1d4ed8;
+    border-color: #1d4ed8;
+}
+
+/* Footer */
+.dark-mode footer {
+    background: #111827 !important;
+    color: #cbd5e1 !important;
+}
+
+/* Modal */
+.dark-mode .modal-content {
+    background: #1e293b !important;
+    color: #ffffff !important;
+    border-color: #334155 !important;
+}
+
+/* Container */
+.dark-mode .container-fluid,
+.dark-mode .bg-light,
+.dark-mode .bg-white {
+    background: transparent !important;
 }
 
 /* =========================
@@ -519,12 +641,7 @@ body.page-enter {
     transition: width 0.3s ease;
 }
 
-/* Main Content */
-.main-content {
-    margin-left: 260px;
-    width: calc(100% - 260px);
-    transition: all 0.3s ease;
-}
+
 
 /* Collapsed Sidebar */
 .sidebar.collapsed {
@@ -657,3 +774,44 @@ body.page-enter {
         gap: 12px;
     }
 }
+
+
+.menu-title i {
+    font-size: 18px;
+    margin-right: 10px;
+    color: #60a5fa;
+}
+
+.menu-item i {
+    color: #cbd5e1;
+}
+
+.menu-item.active i {
+    color: #ffffff;
+}
+
+.menu-group:nth-child(1) .menu-title i {
+    color: #10b981;
+}
+
+/* Master */
+.menu-group:nth-child(2) .menu-title i {
+    color: #3b82f6;
+}
+
+/* Operations */
+.menu-group:nth-child(3) .menu-title i {
+    color: #f59e0b;
+}
+
+/* Accounts */
+.menu-group:nth-child(4) .menu-title i {
+    color: #8b5cf6;
+}
+
+/* Reports */
+.menu-group:nth-child(5) .menu-title i {
+    color: #ef4444;
+}
+
+/* Tools */
