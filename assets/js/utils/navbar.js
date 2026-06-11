@@ -90,14 +90,28 @@ const Navbar = (() => {
         setActiveMenu();
         await applyPermissions(userLoginID);
 
-
         // Features
         setupPageAnimation();
         setupPageTransition();
         createCollapseButton();
+        setupSidebarHoverExpand();
         createFooter(); // ✅ NEW
     }
+    function setupSidebarHoverExpand() {
+        const sidebar = document.getElementById("sidebarMenu");
 
+        if (!sidebar) return;
+
+        sidebar.addEventListener("mouseenter", () => {
+            if (sidebar.classList.contains("collapsed")) {
+                sidebar.classList.add("hover-expanded");
+            }
+        });
+
+        sidebar.addEventListener("mouseleave", () => {
+            sidebar.classList.remove("hover-expanded");
+        });
+    }
     // ==========================
     // SIDEBAR RENDER
     // ==========================
@@ -315,10 +329,17 @@ const Navbar = (() => {
         btn.onclick = () => {
             sidebar.classList.toggle("collapsed");
 
-            // Toggle icon direction
-            btn.innerHTML = sidebar.classList.contains("collapsed")
-                ? '<i class="bi bi-chevron-right"></i>'
-                : '<i class="bi bi-chevron-left"></i>';
+            const mainContent = document.querySelector(".main-content");
+
+            if (sidebar.classList.contains("collapsed")) {
+                mainContent.style.marginLeft = "70px";
+                mainContent.style.width = "calc(100% - 70px)";
+                btn.innerHTML = '<i class="bi bi-chevron-right"></i>';
+            } else {
+                mainContent.style.marginLeft = "260px";
+                mainContent.style.width = "calc(100% - 260px)";
+                btn.innerHTML = '<i class="bi bi-chevron-left"></i>';
+            }
         };
     }
 

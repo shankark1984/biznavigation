@@ -35,78 +35,111 @@ body {
 
     display: flex;
     flex-direction: column;
-    overflow: visible;
-    /* instead of hidden */
 
-    background: rgba(30, 41, 59, 0.85);
+    background: rgba(30, 41, 59, 0.92);
     backdrop-filter: blur(12px);
-    color: #fff;
 
-    transition: width 0.3s ease;
+    color: #fff;
+    overflow-x: hidden;
+    overflow-y: auto;
+
+    transition: all 0.25s ease;
 
     z-index: 1000;
     box-shadow: 4px 0 20px rgba(0, 0, 0, 0.15);
 }
 
-/* COLLAPSED */
+/* =========================
+   COLLAPSED
+========================= */
 .sidebar.collapsed {
     width: 70px;
 }
 
-.sidebar span,
-.logo-text {
-    transition: opacity 0.2s ease;
-}
-
-.logo-text {
-    font-size: 18px;
-    font-weight: 600;
-    color: #ffffff;
-    text-decoration: none;
-    /* ✅ correct */
-}
-
-.sidebar.collapsed span,
-.sidebar.collapsed .logo-text {
-    opacity: 0;
-    width: 0;
-    overflow: hidden;
-}
-
-/* Tooltip */
-.sidebar.collapsed .menu-item:hover::after {
-    content: attr(data-label);
-    position: absolute;
-    left: 70px;
-    top: 50%;
-    transform: translateY(-50%);
-    background: #111827;
-    color: #fff;
-    padding: 6px 10px;
-    border-radius: 6px;
-    font-size: 12px;
-    white-space: nowrap;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+/* Hover Expand */
+.sidebar.collapsed.hover-expanded {
+    width: 250px;
     z-index: 9999;
 }
 
+/* Hide Text */
+.sidebar.collapsed .logo-text,
+.sidebar.collapsed .menu-title span,
+.sidebar.collapsed .menu-item span,
+.sidebar.collapsed .arrow {
+    opacity: 0;
+    width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+/* Show labels when sidebar expands on hover */
+.sidebar.collapsed.hover-expanded .menu-title span,
+.sidebar.collapsed.hover-expanded .menu-item span,
+.sidebar.collapsed.hover-expanded .logo-text,
+.sidebar.collapsed.hover-expanded .arrow {
+    opacity: 1 !important;
+    width: auto !important;
+    overflow: visible !important;
+    display: inline-block !important;
+}
+
+/* Center Icons */
+.sidebar.collapsed .menu-title,
 .sidebar.collapsed .menu-item {
     justify-content: center;
+}
+
+/* Restore Layout */
+.sidebar.collapsed.hover-expanded .menu-title {
+    justify-content: space-between;
+}
+
+.sidebar.collapsed.hover-expanded .menu-item {
+    justify-content: flex-start;
+}
+
+/* =========================
+   TOOLTIP
+========================= */
+.sidebar.collapsed .menu-item:hover::after {
+    content: attr(data-label);
+
+    position: absolute;
+    left: 70px;
+    top: 50%;
+
+    transform: translateY(-50%);
+
+    background: #111827;
+    color: white;
+
+    padding: 6px 10px;
+    border-radius: 6px;
+
+    font-size: 12px;
+    white-space: nowrap;
+
+    z-index: 9999;
+}
+
+.sidebar.collapsed.hover-expanded .menu-item:hover::after {
+    display: none;
 }
 
 /* =========================
    LOGO
 ========================= */
 .logo {
-    padding: 10px 20px;
-    background: rgba(30, 41, 59, 0.85);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    padding: 12px 18px;
+    border-bottom: 1px solid rgba(255, 255, 255, .08);
 }
 
 .logo-box {
     display: flex;
     align-items: center;
     gap: 10px;
+
     text-decoration: none;
     color: inherit;
 }
@@ -114,10 +147,18 @@ body {
 .logo-img {
     width: 40px;
     height: 40px;
+
     object-fit: contain;
+
+    background: white;
     border-radius: 8px;
-    background: #fff;
     padding: 4px;
+}
+
+.logo-text {
+    font-size: 18px;
+    font-weight: 600;
+    color: white;
 }
 
 .sidebar.collapsed .logo-box {
@@ -129,65 +170,100 @@ body {
 ========================= */
 .menu {
     flex: 1;
-    overflow-y: auto;
     list-style: none;
-    padding: 5px 0;
+
     margin: 0;
+    padding: 8px 0;
+
+    overflow-y: auto;
+}
+
+.menu-group {
+    position: relative;
 }
 
 .menu-title {
     padding: 12px 18px;
     margin: 4px 8px;
+
     border-radius: 8px;
 
     display: flex;
-    justify-content: space-between;
+    align-items: center;
     cursor: pointer;
+
+    transition: .2s;
 }
 
 .menu-title:hover {
-    background: rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, .08);
 }
 
+.arrow {
+    margin-left: auto;
+    transition: .25s;
+}
+
+.menu-group.open .arrow {
+    transform: rotate(180deg);
+}
+
+/* =========================
+   SUB MENU
+========================= */
 .submenu {
     max-height: 0;
     overflow: hidden;
-    transition: max-height 0.3s ease;
+
+    transition: max-height .3s ease;
 }
 
 .menu-group.open .submenu {
-    max-height: 500px;
+    max-height: 600px;
 }
 
+.sidebar.collapsed .submenu {
+    display: none;
+}
+
+.sidebar.collapsed.hover-expanded .submenu {
+    display: block;
+}
+
+/* =========================
+   MENU ITEMS
+========================= */
 .menu-item {
     position: relative;
+
     padding: 10px 16px;
     margin: 4px 8px;
+
     border-radius: 8px;
 
     display: flex;
+    align-items: center;
     gap: 10px;
+
     cursor: pointer;
-    transition: 0.2s;
+    transition: .2s;
 }
 
 .menu-item i {
     width: 22px;
-    flex-shrink: 0;
+    min-width: 22px;
+    text-align: center;
 }
 
 .menu-item:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, .1);
     transform: translateX(3px);
 }
 
 .menu-item.active {
-    background: linear-gradient(135deg, #2563eb, #3b82f6);
-}
-
-.sidebar i {
-    min-width: 22px;
-    text-align: center;
+    background: linear-gradient(135deg,
+            #2563eb,
+            #3b82f6);
 }
 
 /* =========================
@@ -196,22 +272,23 @@ body {
 .main-content {
     margin-left: 250px;
     width: calc(100% - 250px);
+
     min-height: 100vh;
-    overflow: visible;
+
     display: flex;
     flex-direction: column;
 
-    transition: all 0.3s ease;
+    transition: all .25s ease;
+}
+
+/* When Collapsed */
+.sidebar.collapsed+.main-content {
+    margin-left: 70px;
+    width: calc(100% - 70px);
 }
 
 .page-content {
     flex: 1;
-}
-
-/* COLLAPSE FIX */
-.sidebar.collapsed+.main-content {
-    margin-left: 70px;
-    width: calc(100% - 70px);
 }
 
 /* =========================
@@ -220,20 +297,23 @@ body {
 .top-navbar {
     position: sticky;
     top: 0;
+
     z-index: 999;
 
     height: 60px;
     padding: 0 20px;
 
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    justify-content: space-between;
 
-    background: linear-gradient(135deg, #2563eb, #1e40af);
-    color: #fff;
+    color: white;
 
-    border-radius: 0 0 10px 0;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    background: linear-gradient(135deg,
+            #2563eb,
+            #1e40af);
+
+    box-shadow: 0 4px 12px rgba(0, 0, 0, .08);
 }
 
 .navbar-right {
@@ -243,7 +323,7 @@ body {
 }
 
 /* =========================
-   USER / ACTIONS
+   USER
 ========================= */
 .user-box {
     display: flex;
@@ -254,9 +334,11 @@ body {
 .avatar {
     width: 35px;
     height: 35px;
+
     border-radius: 50%;
+
     background: #2563eb;
-    color: #fff;
+    color: white;
 
     display: flex;
     align-items: center;
@@ -267,47 +349,50 @@ body {
 .theme-btn {
     background: none;
     border: none;
+    color: inherit;
     cursor: pointer;
     font-size: 18px;
 }
 
-/* 🔥 Hover effect (icon turns red) */
 .logout-btn:hover {
     color: #ef4444;
     transform: scale(1.1);
 }
 
 /* =========================
-   SIDEBAR FOOTER
+   COLLAPSE BUTTON
 ========================= */
-.sidebar-footer {
-    margin-top: auto;
-    padding: 12px;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+.collapse-btn {
+    position: absolute;
+    top: 50%;
+    right: -14px;
+
+    width: 28px;
+    height: 28px;
+
+    border: none;
+    border-radius: 50%;
+
+    background: #2563eb;
+    color: white;
+
+    cursor: pointer;
+
+    transform: translateY(-50%);
+    z-index: 1100;
 }
 
-.footer-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-
-.sidebar.collapsed .username {
-    display: none;
-}
-
-.sidebar.collapsed .footer-row {
-    justify-content: center;
-    gap: 15px;
-}
-
+/* =========================
+   FOOTER
+========================= */
 footer {
     margin-top: auto;
-    padding: 5px;
+    padding: 8px;
+
     text-align: center;
+
     font-size: 14px;
     color: #64748b;
-    background: #f9fafb;
 }
 
 /* =========================
@@ -320,15 +405,16 @@ footer {
 
 .dark-mode .top-navbar {
     background: #1e293b;
-    color: #fff;
 }
 
 /* =========================
    MOBILE
 ========================= */
 @media (max-width: 768px) {
+
     .sidebar {
         transform: translateX(-100%);
+        width: 250px !important;
     }
 
     .sidebar.show {
@@ -339,6 +425,10 @@ footer {
         margin-left: 0;
         width: 100%;
     }
+
+    .collapse-btn {
+        display: none;
+    }
 }
 
 /* =========================
@@ -346,7 +436,7 @@ footer {
 ========================= */
 body {
     opacity: 1;
-    transition: opacity 0.25s ease;
+    transition: opacity .25s ease;
 }
 
 body.page-exit {
@@ -357,22 +447,20 @@ body.page-enter {
     opacity: 1;
 }
 
-#toggleSidebar {
-    border-radius: 8px;
-    padding: 6px 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+/* Normal Sidebar */
+.sidebar {
+    width: 260px;
+    transition: width 0.3s ease;
 }
 
-.menu-item,
-.menu-title {
-    cursor: pointer;
-    user-select: none;
+/* Main Content */
+.main-content {
+    margin-left: 260px;
+    width: calc(100% - 260px);
+    transition: all 0.3s ease;
 }
 
-.menu-item:hover,
-.menu-title:hover {
-    background: rgba(0, 0, 0, 0.05);
+/* Collapsed Sidebar */
+.sidebar.collapsed {
+    width: 70px;
 }
-
