@@ -65,7 +65,7 @@ const Navbar = (() => {
                 { label: "Docket Master", icon: "bi-file-earmark-richtext", href: "#" },
                 { label: "Reset Database", icon: "bi-database-x", href: "#" },
                 { label: "Route Master", icon: "bi-sign-turn-right", href: "/pages/Tools/routemaster.html" },
-                { label: "Application Settings", icon: "bi-sliders", href: " / pages / Tools / ApplicationSettings.html" },
+                { label: "Application Settings", icon: "bi-sliders", href: " /pages/Tools/ApplicationSettings.html" },
             ]
         }
 
