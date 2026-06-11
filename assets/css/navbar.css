@@ -464,3 +464,67 @@ body.page-enter {
 .sidebar.collapsed {
     width: 70px;
 }
+
+/* Mobile */
+@media (max-width: 768px) {
+
+    .main-content {
+        margin-left: 0 !important;
+        width: 100% !important;
+        padding: 10px;
+    }
+
+    .top-navbar {
+        flex-wrap: wrap;
+        gap: 10px;
+        padding: 10px;
+    }
+
+    .navbar-left {
+        width: 100%;
+    }
+
+    .navbar-left h5 {
+        font-size: 16px;
+        margin: 0;
+    }
+
+    .navbar-right {
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .user-box {
+        max-width: 150px;
+        overflow: hidden;
+    }
+
+    .username {
+        max-width: 90px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .sidebar {
+        position: fixed;
+        left: -280px;
+        top: 0;
+        height: 100vh;
+        width: 260px;
+        z-index: 1050;
+        transition: left 0.3s ease;
+    }
+
+    .sidebar.show {
+        left: 0;
+    }
+
+    .collapse-btn {
+        display: none;
+    }
+}
