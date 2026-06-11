@@ -104,7 +104,7 @@ async function loadTable(filters = {}) {
     }
 
     const { data, error, count } = await query.range((currentPage - 1) * pageSize, currentPage * pageSize - 1);
-
+    console.log("Data", data);
     spinner.style.display = 'none';
     if (error) return console.error('Error loading table:', error);
 
@@ -119,7 +119,7 @@ function buildQuery(filters = {}) {
         .select('*', { count: 'exact' })
         .eq('company_id', CompanyID)
         .order('InvoiceNo', { ascending: false });
-
+    console.log("filters data", query);
     if (filters.invoiceNo) query = query.ilike('InvoiceNo', `%${filters.invoiceNo}%`);
     if (filters.customerName) query = query.ilike('PartyName', filters.customerName);
     if (filters.invoiceType) query = query.ilike('InvoiceType', filters.invoiceType);
@@ -156,6 +156,8 @@ function buildQuery(filters = {}) {
         const [startYear, endYear] = filters.financialYear.split('-').map(Number);
         query = query.gte('InvoiceDate', `${startYear}-04-01`).lte('InvoiceDate', `${endYear}-03-31`);
     }
+
+    console.log('Query:', query);
 
     return query;
 }

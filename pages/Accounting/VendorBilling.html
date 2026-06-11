@@ -16,10 +16,178 @@
     <!-- Sidebar CSS -->
     <link rel="stylesheet" href="../../assets/css/navbar.css" />
     <style>
-        .invoice-bg {
-            background-color: #d8e26b !important;
+        :root {
+            --primary: #0d6efd;
+            --success: #198754;
+            --warning: #ffc107;
+            --danger: #dc3545;
+            --bg: #f4f7fc;
+            --card-bg: #ffffff;
+            --border: #e5e7eb;
+            --text: #334155;
         }
 
+        body {
+            background: var(--bg);
+            font-size: 14px;
+            color: var(--text);
+        }
+
+        .main-content {
+            padding: 15px;
+        }
+
+        /* Cards */
+        .card {
+            border: none;
+            border-radius: 14px;
+            overflow: hidden;
+            box-shadow: 0 3px 12px rgba(0, 0, 0, .06);
+        }
+
+        .card-header {
+            background: #fff;
+            font-weight: 600;
+            border-bottom: 1px solid var(--border);
+        }
+
+        /* Form Controls */
+        .form-control,
+        .form-select {
+            border-radius: 8px;
+            border: 1px solid #d0d7de;
+            min-height: 40px;
+        }
+
+        .form-control:focus,
+        .form-select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 .15rem rgba(13, 110, 253, .15);
+        }
+
+        /* Labels */
+        .form-label {
+            font-weight: 600;
+            color: #475569;
+            margin-bottom: 4px;
+        }
+
+        /* Important Fields */
+        .invoice-bg {
+            background: #fff8db !important;
+            border: 2px solid #ffc107 !important;
+            font-weight: 600;
+        }
+
+        /* Buttons */
+        .btn {
+            border-radius: 8px;
+            font-weight: 500;
+        }
+
+        .btn-sm {
+            min-width: 90px;
+        }
+
+        /* Toolbar */
+        .action-toolbar {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        /* Dashboard Cards */
+        .summary-card {
+            border-radius: 12px;
+            background: white;
+            padding: 15px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, .05);
+        }
+
+        .summary-card h6 {
+            color: #64748b;
+            margin-bottom: 5px;
+        }
+
+        .summary-card h4 {
+            font-weight: 700;
+            margin: 0;
+        }
+
+        /* Nav Tabs */
+        .nav-tabs {
+            border-bottom: none;
+        }
+
+        .nav-tabs .nav-link {
+            border-radius: 10px 10px 0 0;
+            font-weight: 600;
+        }
+
+        .nav-tabs .nav-link.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* Charges Section */
+        .charges-box {
+            background: white;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, .05);
+        }
+
+        /* Table */
+        .table {
+            margin-bottom: 0;
+        }
+
+        .table thead th {
+            background: #0d6efd;
+            color: white;
+            border: none;
+            font-size: 13px;
+            font-weight: 600;
+            vertical-align: middle;
+        }
+
+        .table tbody tr:hover {
+            background: #f8fafc;
+        }
+
+        .table td,
+        .table th {
+            padding: .65rem;
+        }
+
+        /* Sticky Header */
+        .sticky-header thead th {
+            position: sticky;
+            top: 0;
+            z-index: 5;
+        }
+
+        /* Sticky Footer */
+        tfoot {
+            position: sticky;
+            bottom: 0;
+            z-index: 4;
+        }
+
+        tfoot th {
+            background: #fff8db !important;
+            font-weight: 700;
+        }
+
+        /* Totals Row */
+        #totalsRow {
+            font-size: 14px;
+        }
+
+        /* Loading Spinner */
         #saveSpinnerOverlay {
             position: fixed;
             top: 50%;
@@ -27,10 +195,20 @@
             z-index: 9999;
         }
 
-        .sticky-header thead th {
-            position: sticky;
-            top: 0;
-            z-index: 2;
+        /* Responsive */
+        @media (max-width: 768px) {
+
+            .btn-sm {
+                width: 100%;
+            }
+
+            .table-responsive {
+                font-size: 12px;
+            }
+
+            .summary-card {
+                margin-bottom: 10px;
+            }
         }
     </style>
 </head>
@@ -103,10 +281,10 @@
                                 </div>
 
                                 <div class="col-md-2">
-                                    <label for="referenceNo" class="form-label">Reference No</label>
-                                    <input list="referenceNoSuggestions" class="form-control invoice-bg"
-                                        id="referenceNo" required autocomplete="off">
-                                    <datalist id="referenceNoSuggestions"></datalist>
+                                    <label for="billReferenceNo" class="form-label">Reference No</label>
+                                    <input list="billReferenceNoSuggestions" class="form-control invoice-bg"
+                                        id="billReferenceNo" required autocomplete="off">
+                                    <datalist id="billReferenceNoSuggestions"></datalist>
                                 </div>
 
                                 <div class="col-md-2">
@@ -114,7 +292,7 @@
                                     <input type="date" class="form-control" id="accountedDate" required>
                                 </div>
                                 <div class="col-lg-4">
-                                    <label for="partyName" class="form-label">Customer Name</label>
+                                    <label for="partyName" class="form-label">Vendor Name</label>
                                     <input list="partySuggestions" class="form-control mb-2" id="partyName" required
                                         placeholder="Choose..." autocomplete="off">
                                     <datalist id="partySuggestions"></datalist>
@@ -132,8 +310,9 @@
                                 </div>
 
                                 <div class="col-md-2">
-                                    <label for="amount" class="form-label">Amount</label>
-                                    <input type="number" class="form-control" id="amount" required>
+                                    <label for="billedAmount" class="form-label">Billed Amount</label>
+                                    <input type="number" class="form-control text-end" id="billedAmount" required
+                                        min="0" placeholder="0.00">
                                 </div>
 
                                 <div class="col-md-2">
@@ -166,15 +345,50 @@
             <!-- Tab Content -->
             <div class="tab-content p-3 border border-top-0 bg-white">
 
-                <div class="col-lg-3 mt-2">
-                    <label for="narration" class="form-label">Narration</label>
-                    <input type="text" class="form-control" id="narration" list="narrationList" autocomplete="off"
-                        placeholder="Select Narration">
-                    <datalist id="narrationList"></datalist>
-                </div>
+                <div class="row g-2 align-items-end">
 
+                    <div class="col-lg-2 col-md-4 col-sm-6">
+                        <label for="chargesType" class="form-label">Charges Type</label>
+                        <input type="text" class="form-control" id="chargesType" list="chargesTypeList"
+                            autocomplete="off" placeholder="Select Charges Type">
+                        <datalist id="chargesTypeList"></datalist>
+                    </div>
+
+                    <div class="col-lg-2 col-md-4 col-sm-6">
+                        <label for="shipmentNo" class="form-label">Shipment No</label>
+                        <input type="text" class="form-control" id="shipmentNo" list="shipmentNoList" autocomplete="off"
+                            placeholder="Select Shipment No">
+                        <datalist id="shipmentNoList"></datalist>
+                    </div>
+
+                    <div class="col-lg-2 col-md-4 col-sm-6">
+                        <label for="nonTaxableAmount" class="form-label">Non-Taxable Amount</label>
+                        <input type="number" class="form-control  text-end" id="nonTaxableAmount" autocomplete="off"
+                            placeholder="0.00">
+                    </div>
+
+                    <div class="col-lg-2 col-md-4 col-sm-6">
+                        <label for="taxableAmount" class="form-label">Taxable Amount</label>
+                        <input type="number" class="form-control  text-end" id="taxableAmount" autocomplete="off"
+                            placeholder="0.00">
+                    </div>
+
+                    <div class="col-lg-2 col-md-4 col-sm-6">
+                        <label for="taxType" class="form-label">Tax Type</label>
+                        <input type="text" class="form-control" id="taxType" list="taxTypeList" autocomplete="off"
+                            placeholder="Select Tax Type">
+                        <datalist id="taxTypeList"></datalist>
+                    </div>
+
+                    <div class="col-lg-2 col-md-4 col-sm-6">
+                        <button type="button" class="btn btn-sm btn-primary w-100" id="addChargesDetails">
+                            Add
+                        </button>
+                    </div>
+
+                </div>
                 <!-- Shipment Details Table -->
-                <div class="tab-pane fade show active" id="shipmentDetails" role="tabpanel"
+                <div class=" tab-pane fade show active" id="shipmentDetails" role="tabpanel"
                     aria-labelledby="shipmentDetails-tab">
                     <div class="table-responsive mt-4">
                         <table class="table table-sm table-bordered text-center align-middle small sticky-header"
@@ -182,10 +396,8 @@
                             <thead class="table-light">
                                 <tr>
                                     <th>Sl.No</th>
-                                    <th>Narration</th>
+                                    <th>Charges Type</th>
                                     <th>Reference No</th>
-                                    <th>Description</th>
-                                    <th>HSN Code</th>
                                     <th>GST %</th>
                                     <th>Non-Taxable Amt</th>
                                     <th>Taxable Amt</th>
@@ -200,12 +412,12 @@
                             <tbody></tbody>
                             <tfoot class="table-light">
                                 <tr id="totalsRow">
-                                    <th colspan="6" class="text-end">Totals:</th>
-                                    <th class="text-end" id="nonTaxableAmount">0.00</th>
-                                    <th class="text-end" id="taxableAmount">0.00</th>
-                                    <th class="text-end" id="sgstAmount">0.00</th>
-                                    <th class="text-end" id="cgstAmount">0.00</th>
-                                    <th class="text-end" id="igstAmount">0.00</th>
+                                    <th colspan="4" class="text-end">Totals:</th>
+                                    <th class="text-end" id="totalNonTaxableAmount">0.00</th>
+                                    <th class="text-end" id="totalTaxableAmount">0.00</th>
+                                    <th class="text-end" id="totalSGSTAmount">0.00</th>
+                                    <th class="text-end" id="totalCGSTAmount">0.00</th>
+                                    <th class="text-end" id="totalIGSTAmount">0.00</th>
                                     <th class="text-end" id="totalGSTAmount">0.00</th>
                                     <th class="text-end" id="grandTotalAmount">0.00</th>
                                 </tr>
@@ -239,10 +451,7 @@
             </div>
         </div>
     </div>
-    </div>
-    </div>
-    </div>
-    </div>
+
     <!-- Toast Container -->
     <div class="position-fixed top-0 end-0 p-3" style="z-index: 9999">
         <div id="errorToast" class="toast align-items-center text-white bg-danger border-0" role="alert">
@@ -268,7 +477,10 @@
     <script src="../../assets/js/utils/GlobalShortcut.js" defer></script>
     <script src="../../assets/js/utils/api.js" defer></script>
     <script src="../../assets/js/utils/logout.js" defer></script>
+    <script src="../../assets/js/utils/dropdownLoader.js" defer></script>
+
     <script src="../../assets/js/VendorBilling/billing.js" defer></script>
+
 
 
 </body>

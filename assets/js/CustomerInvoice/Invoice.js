@@ -150,7 +150,7 @@ document.getElementById('saveButton').addEventListener('click', async () => {
     const invoiceType = document.getElementById('movementType').value;
     const invoiceAddress = document.getElementById('invoiceAddress').value.trim();
     const isInsert = saveBtn.dataset.mode === 'insert';
-
+    let basicfreight = 0;
     if (!partyCode || !invoiceDate || !invoiceType || !invoiceAddress) {
         showToast('Fill all required fields');
         return;
@@ -174,9 +174,20 @@ document.getElementById('saveButton').addEventListener('click', async () => {
         return el ? parseFloat(el.textContent) || 0 : 0;
     };
     const isCustoms = invoiceType === 'Customs Clearance';
+    if (invoiceType === 'Customs Clearance') {
+        basicfreight = getValue('totalFreight_sc');
+    } else if (invoiceType === 'Domestic') {
+        basicfreight = getValue('totalFreight_d');
+    } else if (invoiceType === 'Full Truck Load') {
+        basicfreight = getValue('totalFreight_ftl');
+    } else if (invoiceType === 'Import' || invoiceType === 'Export' || invoiceType === 'Forwarding') {
+        basicfreight = getValue('totalFreight');
+    } else {
+        basicfreight = getValue('totalFreight');
+    }
 
     const totals = {
-        freight: getTextValue('totalFreightAmt'),
+        freight: basicfreight,
 
         fsc: isCustoms ? 0 : getTextValue('totalFSCAmt'),
         other: isCustoms ? 0 : getTextValue('totalOtherAmt'),
@@ -187,6 +198,7 @@ document.getElementById('saveButton').addEventListener('click', async () => {
         gst: getTextValue('totalGSTAmt'),
         grand: getTextValue('totalGrandAmt')
     };
+    console.log(totals);
 
     invoiceData = {
         InvoiceNo: invoiceNo,

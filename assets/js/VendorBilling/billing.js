@@ -92,9 +92,8 @@ document.getElementById('expenseFor').addEventListener('blur', () => {
     validateDatalist('expenseFor', 'expenseForList');
 });
 
-
 document.addEventListener('DOMContentLoaded', async () => {
     await loadExpenseTypeDropdown();
     await loadSuggestions('partySuggestions', 'PartyDetails', CompanyID);
-
+    
 })
