@@ -814,4 +814,9 @@ body.page-enter {
     color: #ef4444;
 }
 
-/* Tools */
+.sticky-header thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: #f8f9fa;
+}

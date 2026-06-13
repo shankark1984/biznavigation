@@ -1,0 +1,682 @@
+document.addEventListener('DOMContentLoaded', async () => {
+    try {
+        const accountedDate = document.getElementById('accountedDate');
+        if (accountedDate) {
+            accountedDate.value = new Date().toISOString().split('T')[0];
+        }
+
+        if (typeof CompanyID !== 'undefined') {
+            await loadSuggestions(
+                'partySuggestions',
+                'PartyDetails',
+                CompanyID
+            );
+        }
+
+        const chargesType = document.getElementById('chargesType');
+        if (chargesType) {
+            chargesType.addEventListener(
+                'change',
+                onChargeTypeOrPartyChange
+            );
+        }
+
+
+        await loadTaxData();
+
+        loadDatalistSuggestions({
+            inputId: "billReferenceNo",
+            datalistId: "billReferenceNoSuggestions",
+            tableName: "VendorBillingDetails",
+            columnName: "BillReferenceNo"
+        });
+
+        loadDatalistSuggestions({
+            inputId: "vendorBillNo",
+            datalistId: "vendorBillNoSuggestions",
+            tableName: "VendorBillingDetails",
+            columnName: "BillNo"
+        });
+    } catch (error) {
+        console.error('Initialization Error:', error);
+    }
+});
+
+saveButton.addEventListener('click', saveAndUpdateVendorBills);
+// Save & Update Vendor Bill
+async function saveAndUpdateVendorBills() {
+    if (saveButton.disabled) return;
+
+    saveButton.disabled = true;
+    try {
+
+        const mode = document.getElementById('mode').value;
+        const billReferenceNo = document.getElementById('billReferenceNo').value;
+        const billedAmount =
+            Number(document.getElementById("vendorBilledAmount").value || 0);
+
+        if (billedAmount <= 0) {
+            alert("Vendor Bill Amount must be greater than zero.");
+            saveButton.disabled = false;
+            return;
+        }
+        if (!validateBillTotal()) {
+            saveButton.disabled = false;
+            return;
+        }
+        const $ = id => document.getElementById(id);
+
+        const vBillsDetails = {
+            ExpenseType: $("expenseType").value,
+            ExpenseFor: $("expenseFor").value,
+            AccountedDate: $("accountedDate").value,
+            PartyCode: $("partyCode").value,
+            PartyName: $("partyName").value,
+            BillNo: $("vendorBillNo").value,
+            BillDate: $("vendorBillDate").value,
+            BilledAmount: Number($("vendorBilledAmount").value || 0),
+            DueDate: $("vendorDueDate").value,
+            Information: $("vendorBillInformation").value
+        };
+
+        let error;
+
+        if (mode === 'insert') {
+
+            Object.assign(vBillsDetails, {
+                BillReferenceNo: billReferenceNo,
+                company_id: CompanyID,
+                created_by: UserLoginID,
+                created_at: localtimeStamp,
+                status: 'Pending'
+            });
+
+            ({ error } = await supabaseClient
+                .from('VendorBillingDetails')
+                .insert([vBillsDetails]));
+
+        } else {
+
+            Object.assign(vBillsDetails, {
+                updated_by: UserLoginID,
+                updated_at: localtimeStamp
+            });
+
+            ({ error } = await supabaseClient
+                .from('VendorBillingDetails')
+                .update(vBillsDetails)
+                .eq('BillReferenceNo', billReferenceNo));
+        }
+
+        if (error) throw error;
+        await saveVendorBillingCharges();
+        disableForm();
+        modifyButton.disabled = false;
+        document.getElementById("addChargesDetails").disabled = true;
+        document.querySelectorAll(".delete-row").forEach(btn => {
+            btn.disabled = true;
+        });
+
+
+        showToast(
+            mode === 'insert'
+                ? 'Vendor Bill Saved Successfully'
+                : 'Vendor Bill Updated Successfully'
+        );
+
+    } catch (error) {
+        console.error('Vendor Bill Save Error:', error);
+        showToast(error.message || 'Failed to save Vendor Bill');
+        saveButton.disabled = false;
+        throw error;
+    }
+}
+
+// Generic datalist loader
+async function loadDatalistSuggestions({
+    inputId,
+    datalistId,
+    tableName,
+    columnName,
+    minLength = 2
+}) {
+    const input = document.getElementById(inputId);
+    const datalist = document.getElementById(datalistId);
+
+    input.addEventListener(
+        "input",
+        debounce(async function (e) {
+
+            const keyword = e.target.value.trim();
+
+            if (keyword.length < minLength) {
+                datalist.innerHTML = "";
+                return;
+            }
+
+            const { data, error } = await supabaseClient
+                .from(tableName)
+                .select(columnName)
+                .eq("company_id", CompanyID)
+                .ilike(columnName, `%${keyword}%`)
+                .limit(10);
+
+            if (error) {
+                console.error(error);
+                return;
+            }
+
+            const uniqueValues = [...new Set(data.map(row => row[columnName]))];
+
+            datalist.innerHTML = uniqueValues
+                .map(value => `<option value="${value}"></option>`)
+                .join("");
+        }));
+}
+function debounce(fn, delay = 300) {
+
+    let timer;
+
+    return (...args) => {
+
+        clearTimeout(timer);
+
+        timer = setTimeout(
+            () => fn(...args),
+            delay
+        );
+    };
+}
+// Populate form fields
+function populateVendorBillingForm(data) {
+    const fields = {
+        expenseType: data.ExpenseType,
+        expenseFor: data.ExpenseFor,
+        billReferenceNo: data.BillReferenceNo,
+        accountedDate: data.AccountedDate,
+        partyCode: data.PartyCode,
+        partyName: data.PartyName,
+        vendorBillNo: data.BillNo,
+        vendorBillDate: data.BillDate,
+        vendorBilledAmount: data.BilledAmount,
+        vendorDueDate: data.DueDate,
+        vendorBillInformation: data.Information
+    };
+
+    Object.entries(fields).forEach(([id, value]) => {
+        const element = document.getElementById(id);
+        if (element) {
+            element.value = value ?? "";
+        }
+    });
+}
+
+// Get billing details by column/value
+async function getVendorBillingDetails(column, value) {
+    try {
+        const { data, error } = await supabaseClient
+            .from("VendorBillingDetails")
+            .select("*")
+            .eq("company_id", CompanyID)
+            .eq(column, value)
+            .single();
+
+        if (error) throw error;
+        saveButton.disabled = true;
+        populateVendorBillingForm(data);
+        await loadVendorBillingCharges(data.BillReferenceNo);
+        disableForm(); // Disable fields after loading
+        modifyButton.disabled = false;
+        saveButton.innerHTML = '<i class="bi bi-save"></i> Update';
+        document.getElementById("addChargesDetails").disabled = true;
+
+    } catch (err) {
+        console.error(`Error loading billing details by ${column}:`, err);
+    }
+}
+
+// Search by Reference No
+document.getElementById("billReferenceNo")
+    .addEventListener("change", function () {
+
+        const refNo = this.value.trim();
+
+        if (!refNo) return;
+
+        getVendorBillingDetails("BillReferenceNo", refNo);
+    });
+
+// Search by Bill No
+document.getElementById("vendorBillNo")
+    .addEventListener("change", function () {
+
+        const billNo = this.value.trim();
+
+        if (!billNo) return;
+
+        getVendorBillingDetails("BillNo", billNo);
+    });
+
+modifyButton.addEventListener('click', () => {
+    enableForm();
+    document.getElementById('billReferenceNo').disabled = true;
+    saveButton.disabled = false;
+    modifyButton.disabled = true;
+    document.getElementById("mode").value = "update";
+    saveButton.dataset.mode = 'update';
+    document.getElementById("addChargesDetails").disabled = false;
+    document.querySelectorAll(".delete-row").forEach(btn => {
+        btn.disabled = false;
+    });
+})
+
+newButton.addEventListener("click", () => {
+
+    // Clear form fields
+    clearForm();
+
+    // Enable form controls
+    enableForm();
+
+    // Set current date
+    const accountedDate = document.getElementById("accountedDate");
+    if (accountedDate) {
+        accountedDate.value = new Date().toISOString().split("T")[0];
+    }
+
+    // Clear shipment table
+    if (pendingShipmentTable?.tBodies?.[0]) {
+        pendingShipmentTable.tBodies[0].innerHTML = "";
+    }
+
+    // Reset totals
+    [
+        "totalNonTaxableAmount",
+        "totalTaxableAmount",
+        "totalSGSTAmount",
+        "totalCGSTAmount",
+        "totalIGSTAmount",
+        "totalGSTAmount",
+        "grandTotalAmount"
+    ].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.innerText = "0.00";
+        }
+    });
+
+    // Reset Save button
+    if (saveButton) {
+        saveButton.disabled = false;
+        saveButton.innerHTML = '<i class="bi bi-save"></i> Save';
+        saveButton.dataset.mode = "insert";
+    }
+
+    // Reset Modify button
+    if (modifyButton) {
+        modifyButton.disabled = true;
+    }
+
+    // Focus first field
+    document.getElementById("billReferenceNo")?.focus();
+});
+
+document.getElementById("addChargesDetails").addEventListener("click", addChargesDetails);
+
+async function addChargesDetails() {
+
+    const chargesType = document.getElementById("chargesType").value.trim();
+    const shipmentNo = document.getElementById("shipmentNo").value.trim();
+
+    const nonTaxable = parseFloat(document.getElementById("nonTaxableAmount").value || 0);
+    const taxableAmt = parseFloat(document.getElementById("taxableAmount").value || 0);
+    const taxID = parseInt(document.getElementById("partyDefaultTax").value || 0);
+
+    if (!chargesType || !shipmentNo) {
+        alert("Please select Charges Type and Shipment No");
+        return false;
+    }
+
+    // Check duplicate Charges Type + Shipment No
+    const tableBody = document.querySelector("#pendingShipmentTable tbody");
+
+    const exists = [...tableBody.rows].some(row => {
+
+        const status =
+            row.querySelector(".status")?.innerText?.trim() || "";
+
+        const rowChargesType =
+            row.cells[1]?.textContent?.trim() || "";
+
+        const rowShipmentNo =
+            row.cells[2]?.textContent?.trim() || "";
+
+        return status !== "Deleted" &&
+            rowChargesType === chargesType &&
+            rowShipmentNo === shipmentNo;
+    });
+
+    if (exists) {
+        alert("This Charges Type and Shipment No already exists.");
+        return false;
+    }
+
+    try {
+
+        // Get Tax Configuration
+        const taxes = await getTaxRatesById(taxID);
+
+        if (!taxes) {
+            alert("Tax configuration not found.");
+            return false;
+        }
+
+        // Calculate GST
+        const {
+            sgstAmt,
+            cgstAmt,
+            igstAmt,
+            totalGstAmt,
+            totalRate
+        } = calculateTaxes(taxableAmt, taxes);
+
+        // Current Charge Total
+        const totalAmount = nonTaxable + taxableAmt + totalGstAmt;
+
+        // Vendor Bill Amount
+        const vendorBilledAmount = parseFloat(
+            document.getElementById("vendorBilledAmount").value || 0
+        );
+
+        // Current Grand Total
+        const currentGrandTotal = parseFloat(
+            document.getElementById("grandTotalAmount").innerText || 0
+        );
+
+        // New Grand Total after adding row
+        const newGrandTotal = currentGrandTotal + totalAmount;
+        const excessAmount = newGrandTotal - vendorBilledAmount;
+
+        // Validation
+        if (newGrandTotal > vendorBilledAmount) {
+
+            alert(`
+                    Total amount cannot exceed Vendor Bill Amount.
+
+                    Vendor Bill Amount : ${vendorBilledAmount.toFixed(2)}
+                    Current Total      : ${currentGrandTotal.toFixed(2)}
+                    Adding Amount      : ${totalAmount.toFixed(2)}
+                    New Total          : ${newGrandTotal.toFixed(2)}
+                    Excess Amount      : ${excessAmount.toFixed(2)}
+                    `);
+            return false;
+        }
+
+        // Add Row
+        const row = tableBody.insertRow();
+
+        row.dataset.chargeId = "";
+
+        row.innerHTML = `
+            <td>${tableBody.rows.length}</td>
+            <td>${chargesType}</td>
+            <td>${shipmentNo}</td>
+            <td>${totalRate}%</td>
+            <td class="text-end">${nonTaxable.toFixed(2)}</td>
+            <td class="text-end">${taxableAmt.toFixed(2)}</td>
+            <td class="text-end">${sgstAmt.toFixed(2)}</td>
+            <td class="text-end">${cgstAmt.toFixed(2)}</td>
+            <td class="text-end">${igstAmt.toFixed(2)}</td>
+            <td class="text-end">${totalGstAmt.toFixed(2)}</td>
+            <td class="text-end fw-bold">${totalAmount.toFixed(2)}</td>
+
+            <td>
+                <button type="button" class="btn btn-danger btn-sm delete-row">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </td>
+
+            <td class="tax-id d-none">${taxID}</td>
+            <td class="status text-center text-success d-none">New</td>
+        `;
+
+        // Update Totals
+        reindexRows();
+        updateTotals();
+
+        // Clear Input Controls
+        clearChargesInputs();
+
+        return true;
+
+    } catch (error) {
+
+        console.error("Error adding charges:", error);
+        alert("Failed to add charges.");
+
+        return false;
+    }
+}
+
+function updateTotals() {
+
+    let totalNonTaxable = 0;
+    let totalTaxable = 0;
+    let totalSGST = 0;
+    let totalCGST = 0;
+    let totalIGST = 0;
+    let totalGST = 0;
+    let grandTotal = 0;
+
+    document.querySelectorAll("#pendingShipmentTable tbody tr").forEach(row => {
+
+        // Ignore hidden/deleted rows
+        if (row.style.display === "none") return;
+
+        totalNonTaxable += parseFloat(row.cells[4].innerText || 0);
+        totalTaxable += parseFloat(row.cells[5].innerText || 0);
+        totalSGST += parseFloat(row.cells[6].innerText || 0);
+        totalCGST += parseFloat(row.cells[7].innerText || 0);
+        totalIGST += parseFloat(row.cells[8].innerText || 0);
+        totalGST += parseFloat(row.cells[9].innerText || 0);
+        grandTotal += parseFloat(row.cells[10].innerText || 0);
+    });
+
+    document.getElementById("totalNonTaxableAmount").innerText = totalNonTaxable.toFixed(2);
+    document.getElementById("totalTaxableAmount").innerText = totalTaxable.toFixed(2);
+    document.getElementById("totalSGSTAmount").innerText = totalSGST.toFixed(2);
+    document.getElementById("totalCGSTAmount").innerText = totalCGST.toFixed(2);
+    document.getElementById("totalIGSTAmount").innerText = totalIGST.toFixed(2);
+    document.getElementById("totalGSTAmount").innerText = totalGST.toFixed(2);
+    document.getElementById("grandTotalAmount").innerText = grandTotal.toFixed(2);
+}
+function clearChargesInputs() {
+    document.getElementById("chargesType").value = "";
+    document.getElementById("shipmentNo").value = "";
+    document.getElementById("nonTaxableAmount").value = "";
+    document.getElementById("taxableAmount").value = "";
+    document.getElementById("partyDefaultTax").value = "";
+}
+
+async function loadVendorBillingCharges(billReferenceNo) {
+
+    const tbody =
+        document.querySelector("#pendingShipmentTable tbody");
+
+    tbody.innerHTML = "";
+
+    const { data, error } = await supabaseClient
+        .from("VendorBillingCharges")
+        .select("*")
+        .eq("company_id", CompanyID)
+        .eq("BillReferenceNo", billReferenceNo);
+
+    if (error) {
+        console.error(error);
+        return;
+    }
+
+    data.forEach((item, index) => {
+
+        const row = tbody.insertRow();
+
+        row.dataset.chargeId = item.id;
+
+        row.innerHTML = `
+<td>${index + 1}</td>
+<td>${item.ChargesType}</td>
+<td>${item.ShipmentNo}</td>
+<td>${item.TaxPercent}</td>
+<td class="text-end">${item.NonTaxableAmount}</td>
+<td class="text-end">${item.TaxableAmount}</td>
+<td class="text-end">${item.SGSTAmount}</td>
+<td class="text-end">${item.CGSTAmount}</td>
+<td class="text-end">${item.IGSTAmount}</td>
+<td class="text-end">${item.TotalGSTAmount}</td>
+<td class="text-end">${item.TotalAmount}</td>
+
+<td>
+    <button class="btn btn-danger btn-sm delete-row" disabled>
+        <i class="bi bi-trash"></i>
+    </button>
+</td>
+
+<td class="tax-id d-none">${item.TaxID}</td>
+<td class="status text-center d-none">Old</td>
+`;
+    });
+
+    updateTotals();
+}
+async function saveVendorBillingCharges() {
+
+    try {
+        const billReferenceNo = document.getElementById("billReferenceNo").value.trim();
+        const rows =
+            document.querySelectorAll("#pendingShipmentTable tbody tr");
+
+        const insertRows = [];
+        const deleteIds = [];
+
+        rows.forEach(row => {
+
+            const status = row.querySelector(".status")?.innerText?.trim();
+
+            const chargeId = row.dataset.chargeId || null;
+
+            // INSERT NEW ROWS
+            if (status === "New") {
+
+                insertRows.push({
+
+                    BillReferenceNo: billReferenceNo,
+
+                    ChargesType: row.cells[1].innerText.trim(),
+                    ShipmentNo: row.cells[2].innerText.trim(),
+                    TaxPercent: parseFloat(row.cells[3].innerText.replace("%", "")) || 0,
+                    NonTaxableAmount: parseFloat(row.cells[4].innerText) || 0,
+                    TaxableAmount: parseFloat(row.cells[5].innerText) || 0,
+                    SGSTAmount: parseFloat(row.cells[6].innerText) || 0,
+                    CGSTAmount: parseFloat(row.cells[7].innerText) || 0,
+                    IGSTAmount: parseFloat(row.cells[8].innerText) || 0,
+                    TotalGSTAmount: parseFloat(row.cells[9].innerText) || 0,
+                    TotalAmount: parseFloat(row.cells[10].innerText) || 0,
+                    TaxID: row.querySelector(".tax-id")?.innerText || null,
+                    company_id: CompanyID,
+                    created_by: UserLoginID,
+                    created_at: localtimeStamp
+                });
+            }
+
+            // DELETE OLD ROWS
+            if (status === "Deleted" && chargeId) {
+                deleteIds.push(Number(chargeId));
+            }
+
+        });
+
+        // INSERT
+        if (insertRows.length > 0) {
+
+            const { error } = await supabaseClient
+                .from("VendorBillingCharges")
+                .insert(insertRows);
+
+            if (error) throw error;
+        }
+
+        // DELETE
+        if (deleteIds.length > 0) {
+
+            const { error } = await supabaseClient
+                .from("VendorBillingCharges")
+                .delete()
+                .in("id", deleteIds);
+
+            if (error) throw error;
+        }
+
+    } catch (err) {
+
+        console.error("saveVendorBillingCharges Error:", err);
+        throw err;
+    }
+}
+
+// Delete row
+document.addEventListener("click", function (e) {
+
+    const btn = e.target.closest(".delete-row");
+
+    if (!btn) return;
+
+    const row = btn.closest("tr");
+    const statusCell = row.querySelector(".status");
+
+    if (statusCell.innerText.trim() === "Old") {
+
+        statusCell.innerText = "Deleted";
+
+        row.style.display = "none";
+    }
+    else {
+        row.remove();
+        reindexRows();
+    }
+
+    updateTotals();
+});
+
+function validateBillTotal() {
+
+    const vendorBilledAmount = parseFloat(
+        document.getElementById("vendorBilledAmount").value || 0
+    );
+
+    const grandTotal = parseFloat(
+        document.getElementById("grandTotalAmount").innerText || 0
+    );
+
+    if (grandTotal !== vendorBilledAmount) {
+
+        alert(
+            `Grand Total (${grandTotal.toFixed(2)}) must match Vendor Bill Amount (${vendorBilledAmount.toFixed(2)}).`
+        );
+
+        return false;
+    }
+
+    return true;
+}
+
+function reindexRows() {
+
+    document
+        .querySelectorAll(
+            "#pendingShipmentTable tbody tr:not([style*='display: none'])"
+        )
+        .forEach((row, index) => {
+
+            row.cells[0].innerText = index + 1;
+        });
+}

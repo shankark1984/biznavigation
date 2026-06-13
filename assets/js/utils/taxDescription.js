@@ -79,11 +79,6 @@ async function onChargeTypeOrPartyChange() {
     }
 }
 
-// Run on page load
-// document.addEventListener("DOMContentLoaded", loadTaxData);
-
-
-
 async function loadGSTDropdown(selectId, {
     placeholder = "Select Default Tax",
     showRate = false,

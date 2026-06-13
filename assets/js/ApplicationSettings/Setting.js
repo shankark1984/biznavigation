@@ -25,7 +25,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     break;
 
                 case "#countryDetails":
-                    await loadCountryDetails();
+                    await fetchCountryData();
                     break;
 
                 case "#cityDetails":

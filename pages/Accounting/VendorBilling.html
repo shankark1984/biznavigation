@@ -22,7 +22,6 @@
     </style>
 </head>
 
-
 <body class="bg-light">
     <!-- 🔥 APP LAYOUT -->
     <div class="app-wrapper">
@@ -71,6 +70,8 @@
                             <input type="hidden" id="tempFormID">
                             <input type="hidden" id="partyCode">
                             <input type="hidden" id="bankIDs">
+                            <input type="hidden" id="vendorBillingID">
+                            <input type="hidden" id="mode" value="insert">
 
                             <!-- Form Inputs -->
                             <div class="row g-2">
@@ -78,7 +79,7 @@
                                 <div class="col-lg-4">
                                     <label for="expenseType" class="form-label">Expense Type</label>
                                     <input type="text" class="form-control" id="expenseType" list="expenseTypeList"
-                                        autocomplete="off" placeholder="Select Expense Type">
+                                        autocomplete="off" placeholder="Select Expense Type" autofocus>
                                     <datalist id="expenseTypeList"></datalist>
                                 </div>
 
@@ -107,31 +108,31 @@
                                     <datalist id="partySuggestions"></datalist>
                                 </div>
                                 <div class="col-md-2">
-                                    <label for="billNo" class="form-label">Bill No</label>
-                                    <input list="billNoSuggestions" class="form-control invoice-bg" id="billNo" required
-                                        autocomplete="off">
-                                    <datalist id="billNoSuggestions"></datalist>
+                                    <label for="vendorBillNo" class="form-label">Bill No</label>
+                                    <input list="vendorBillNoSuggestions" class="form-control invoice-bg"
+                                        id="vendorBillNo" required autocomplete="off">
+                                    <datalist id="vendorBillNoSuggestions"></datalist>
                                 </div>
 
                                 <div class="col-md-2">
-                                    <label for="billDate" class="form-label">Bill Date</label>
-                                    <input type="date" class="form-control" id="billDate" required>
+                                    <label for="vendorBillDate" class="form-label">Bill Date</label>
+                                    <input type="date" class="form-control" id="vendorBillDate" required>
                                 </div>
 
                                 <div class="col-md-2">
-                                    <label for="billedAmount" class="form-label">Billed Amount</label>
-                                    <input type="number" class="form-control text-end" id="billedAmount" required
-                                        min="0" placeholder="0.00">
+                                    <label for="vendorBilledAmount" class="form-label">Billed Amount</label>
+                                    <input type="number" class="form-control text-end" id="vendorBilledAmount" required
+                                        min="0" placeholder="0.00" step="0.01">
                                 </div>
 
                                 <div class="col-md-2">
-                                    <label for="dueDate" class="form-label">Due Date</label>
-                                    <input type="date" class="form-control" id="dueDate" required>
+                                    <label for="vendorDueDate" class="form-label">Due Date</label>
+                                    <input type="date" class="form-control" id="vendorDueDate" required>
                                 </div>
 
                                 <div class="col-md-12">
-                                    <label for="invoiceInformation" class="form-label">Information</label>
-                                    <input type="text" class="form-control" id="invoiceInformation">
+                                    <label for="vendorBillInformation" class="form-label">Information</label>
+                                    <input type="text" class="form-control" id="vendorBillInformation">
                                 </div>
 
                             </div>
@@ -173,25 +174,26 @@
                     <div class="col-lg-2 col-md-4 col-sm-6">
                         <label for="nonTaxableAmount" class="form-label">Non-Taxable Amount</label>
                         <input type="number" class="form-control  text-end" id="nonTaxableAmount" autocomplete="off"
-                            placeholder="0.00">
+                            placeholder="0.00" min="0" step="0.01">
                     </div>
 
                     <div class="col-lg-2 col-md-4 col-sm-6">
                         <label for="taxableAmount" class="form-label">Taxable Amount</label>
                         <input type="number" class="form-control  text-end" id="taxableAmount" autocomplete="off"
-                            placeholder="0.00">
+                            placeholder="0.00" min="0" step="0.01">
                     </div>
 
                     <div class="col-lg-2 col-md-4 col-sm-6">
-                        <label for="taxType" class="form-label">Tax Type</label>
-                        <input type="text" class="form-control" id="taxType" list="taxTypeList" autocomplete="off"
-                            placeholder="Select Tax Type">
-                        <datalist id="taxTypeList"></datalist>
+                        <label for="partyDefaultTax" class="form-label small">Tax
+                            Rate</label>
+                        <select id="partyDefaultTax" class="form-control form-control-sm">
+                            <option value="" disabled selected>Select Tax</option>
+                        </select>
                     </div>
 
                     <div class="col-lg-2 col-md-4 col-sm-6">
-                        <button type="button" class="btn btn-sm btn-primary w-100" id="addChargesDetails">
-                            Add
+                        <button type="button" class="btn btn-success btn-sm w-100" id="addChargesDetails">
+                            <i class="bi bi-plus-circle"></i> Add
                         </button>
                     </div>
 
@@ -199,14 +201,14 @@
                 <!-- Shipment Details Table -->
                 <div class=" tab-pane fade show active" id="shipmentDetails" role="tabpanel"
                     aria-labelledby="shipmentDetails-tab">
-                    <div class="table-responsive mt-4">
+                    <div class="table-responsive mt-4" style="max-height:500px;">
                         <table class="table table-sm table-bordered text-center align-middle small sticky-header"
                             id="pendingShipmentTable">
                             <thead class="table-light">
                                 <tr>
                                     <th>Sl.No</th>
                                     <th>Charges Type</th>
-                                    <th>Reference No</th>
+                                    <th>Shipment No</th>
                                     <th>GST %</th>
                                     <th>Non-Taxable Amt</th>
                                     <th>Taxable Amt</th>
@@ -216,6 +218,8 @@
                                     <th>Total GST<br>Amount</th>
                                     <th>Total<br>Amount</th>
                                     <th>Action</th>
+                                    <th class="d-none">Tax ID</th>
+                                    <th class="d-none">Status</th>
                                 </tr>
                             </thead>
                             <tbody></tbody>
@@ -287,9 +291,10 @@
     <script src="../../assets/js/utils/api.js" defer></script>
     <script src="../../assets/js/utils/logout.js" defer></script>
     <script src="../../assets/js/utils/dropdownLoader.js" defer></script>
+    <script src="../../assets/js/utils/taxDescription.js" defer></script>
 
-    <script src="../../assets/js/VendorBilling/billing.js" defer></script>
-
+    <!-- <script src="../../assets/js/VendorBilling/billing.js" defer></script> -->
+    <script src="../../assets/js/VendorBilling/VendorBilling.js" defer></script>
 
 
 </body>
