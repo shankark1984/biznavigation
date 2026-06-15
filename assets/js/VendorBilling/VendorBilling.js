@@ -20,28 +20,17 @@ document.addEventListener('DOMContentLoaded', async () => {
                 onChargeTypeOrPartyChange
             );
         }
+        await loadExpenseTypeDropdown();
 
 
         await loadTaxData();
 
-        loadDatalistSuggestions({
-            inputId: "billReferenceNo",
-            datalistId: "billReferenceNoSuggestions",
-            tableName: "VendorBillingDetails",
-            columnName: "BillReferenceNo"
-        });
-
-        loadDatalistSuggestions({
-            inputId: "vendorBillNo",
-            datalistId: "vendorBillNoSuggestions",
-            tableName: "VendorBillingDetails",
-            columnName: "BillNo"
-        });
     } catch (error) {
         console.error('Initialization Error:', error);
     }
 });
 
+document.getElementById('expenseType').addEventListener('change', loadExpenseForDropdown);
 saveButton.addEventListener('click', saveAndUpdateVendorBills);
 // Save & Update Vendor Bill
 async function saveAndUpdateVendorBills() {
@@ -132,47 +121,72 @@ async function saveAndUpdateVendorBills() {
     }
 }
 
-// Generic datalist loader
-async function loadDatalistSuggestions({
-    inputId,
-    datalistId,
-    tableName,
-    columnName,
-    minLength = 2
-}) {
-    const input = document.getElementById(inputId);
-    const datalist = document.getElementById(datalistId);
+async function loadExpenseTypeDropdown() {
+    const expenseTypeList = document.getElementById('expenseTypeList');
 
-    input.addEventListener(
-        "input",
-        debounce(async function (e) {
+    expenseTypeList.innerHTML = '';
 
-            const keyword = e.target.value.trim();
+    const { data, error } = await supabaseClient
+        .from('dropdown_list')
+        .select('description')
+        .eq('type_of_value', 'expenseType')
+        .order('description', { ascending: true });
 
-            if (keyword.length < minLength) {
-                datalist.innerHTML = "";
-                return;
-            }
+    if (error) {
+        console.error('Error loading expense types:', error);
+        return;
+    }
 
-            const { data, error } = await supabaseClient
-                .from(tableName)
-                .select(columnName)
-                .eq("company_id", CompanyID)
-                .ilike(columnName, `%${keyword}%`)
-                .limit(10);
-
-            if (error) {
-                console.error(error);
-                return;
-            }
-
-            const uniqueValues = [...new Set(data.map(row => row[columnName]))];
-
-            datalist.innerHTML = uniqueValues
-                .map(value => `<option value="${value}"></option>`)
-                .join("");
-        }));
+    data.forEach(item => {
+        const option = document.createElement('option');
+        option.value = item.description;
+        expenseTypeList.appendChild(option);
+    });
 }
+
+// Expense For Load
+async function loadExpenseForDropdown() {
+
+    const expenseType = document.getElementById('expenseType').value.trim();
+
+    const expenseForList = document.getElementById('expenseForList');
+    const expenseForInput = document.getElementById('expenseFor');
+
+    expenseForList.innerHTML = '';
+    expenseForInput.value = '';
+
+    if (!expenseType) return;
+
+    // Convert:
+    // "Administrative Expenses" => "administrativeExpenses"
+    const typeOfValue = expenseType
+        .split(/\s+/)
+        .map((word, index) =>
+            index === 0
+                ? word.toLowerCase()
+                : word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+        )
+        .join('');
+
+    const { data, error } = await supabaseClient
+        .from('dropdown_list')
+        .select('description')
+        .eq('type_of_value', typeOfValue)
+        .order('description', { ascending: true });
+
+    if (error) {
+        console.error('Error loading expense for list:', error);
+        return;
+    }
+
+    data.forEach(item => {
+        const option = document.createElement('option');
+        option.value = item.description;
+        expenseForList.appendChild(option);
+    });
+}
+
+
 function debounce(fn, delay = 300) {
 
     let timer;
