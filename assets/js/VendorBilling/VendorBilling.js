@@ -813,3 +813,7 @@ document.getElementById('vendorBillDate').addEventListener('change', function ()
         dueDate.toISOString().split('T')[0];
 
 });
+document.getElementById("vendorBillNo")
+    .addEventListener("input", function () {
+        this.value = this.value.toUpperCase();
+    });

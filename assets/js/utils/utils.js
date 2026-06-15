@@ -1996,3 +1996,27 @@ function escapeHtml(str = "") {
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;");
 }
+
+document.querySelectorAll('input[type="date"]').forEach(input => {
+
+    input.addEventListener("keydown", function (e) {
+
+        if (e.key === "Tab") {
+
+            e.preventDefault();
+
+            const fields = Array.from(
+                document.querySelectorAll(
+                    "input, select, textarea, button"
+                )
+            ).filter(el => !el.disabled);
+
+            const index = fields.indexOf(this);
+
+            if (fields[index + 1]) {
+                fields[index + 1].focus();
+            }
+        }
+    });
+
+});
