@@ -113,15 +113,14 @@ async function saveAndUpdateVendorBills() {
                 .eq('BillReferenceNo', billReferenceNo));
         }
 
-        if (error) throw error;
-        await saveVendorBillingCharges();
+        await lockVendorBill();
+
         disableForm();
         modifyButton.disabled = false;
         document.getElementById("addChargesDetails").disabled = true;
         document.querySelectorAll(".delete-row").forEach(btn => {
             btn.disabled = true;
         });
-
 
         showToast(
             mode === 'insert'
@@ -202,7 +201,6 @@ async function loadExpenseForDropdown() {
     });
 }
 
-
 function debounce(fn, delay = 300) {
 
     let timer;
@@ -244,7 +242,7 @@ function populateVendorBillingForm(data) {
 // Get billing details by column/value
 async function getVendorBillingDetails(column, value) {
     try {
-
+        console.log(column, value);
         const { data, error } = await supabaseClient
             .from("VendorBillingDetails")
             .select("*")
@@ -254,10 +252,32 @@ async function getVendorBillingDetails(column, value) {
 
         if (error) throw error;
 
-        if (!data) {
-            // console.warn(`No record found for ${column}: ${value}`);
+        if (!data) return;
+
+        // Check lock status
+        if (
+            data.IsLocked &&
+            data.LockedBy &&
+            data.LockedBy !== UserLoginID
+        ) {
+            alert(
+                `This Vendor Bill is currently being edited by ${data.LockedBy}.\nPlease try again later.`
+            );
             return;
         }
+
+        // Lock record for current user
+        const { error: lockError } = await supabaseClient
+            .from("VendorBillingDetails")
+            .update({
+                IsLocked: true,
+                LockedBy: UserLoginID,
+                LockedAt: new Date().toISOString()
+            })
+            .eq("BillReferenceNo", data.BillReferenceNo)
+            .eq("company_id", CompanyID);
+
+        if (lockError) throw lockError;
 
         saveButton.disabled = true;
 
@@ -279,7 +299,6 @@ async function getVendorBillingDetails(column, value) {
         ).disabled = true;
 
     } catch (err) {
-
         console.error(
             `Error loading billing details by ${column}:`,
             err
@@ -308,7 +327,7 @@ document.getElementById("vendorBillNo")
         getVendorBillingDetails("BillNo", billNo);
     });
 
-modifyButton.addEventListener('click', () => {
+modifyButton.addEventListener('click', async () => {
     enableForm();
     document.getElementById('billReferenceNo').disabled = true;
     saveButton.disabled = false;
@@ -319,10 +338,12 @@ modifyButton.addEventListener('click', () => {
     document.querySelectorAll(".delete-row").forEach(btn => {
         btn.disabled = false;
     });
+    await modifyVendorBill();
 })
 
-newButton.addEventListener("click", () => {
-
+newButton.addEventListener("click", async () => {
+    const billReferenceNo = document.getElementById("billReferenceNo").value;
+    await unlockVendorBill(billReferenceNo);
     // Clear form fields
     clearForm();
 
@@ -867,4 +888,67 @@ async function generateBillReferenceNo() {
 
     document.getElementById('billReferenceNo').value =
         billReferenceNo;
+}
+
+// Unlock Vendor Bill
+async function unlockVendorBill() {
+    try {
+        const billReferenceNo =
+            document.getElementById("billReferenceNo").value;
+        if (!billReferenceNo) return;
+
+        const { error } = await supabaseClient
+            .from("VendorBillingDetails")
+            .update({
+                IsLocked: false,
+                LockedBy: null,
+                LockedAt: null
+            })
+            .eq("BillReferenceNo", billReferenceNo)
+            .eq("LockedBy", UserLoginID);
+
+        if (error) throw error;
+
+    } catch (err) {
+        console.error(
+            "Error unlocking Vendor Bill:",
+            err
+        );
+    }
+}
+
+async function lockVendorBill() {
+
+    const billReferenceNo =
+        document.getElementById("billReferenceNo").value;
+
+    const { data, error } = await supabaseClient
+        .from("VendorBillingDetails")
+        .select("IsLocked, LockedBy")
+        .eq("BillReferenceNo", billReferenceNo)
+        .single();
+
+    if (error) throw error;
+
+    if (
+        data.IsLocked &&
+        data.LockedBy &&
+        data.LockedBy !== UserLoginID
+    ) {
+        alert(
+            `This bill is currently being modified by ${data.LockedBy}`
+        );
+        return;
+    }
+
+    await supabaseClient
+        .from("VendorBillingDetails")
+        .update({
+            IsLocked: true,
+            LockedBy: UserLoginID,
+            LockedAt: new Date().toISOString()
+        })
+        .eq("BillReferenceNo", billReferenceNo);
+
+    enableForm();
 }

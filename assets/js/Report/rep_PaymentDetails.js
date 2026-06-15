@@ -450,16 +450,22 @@ function applyFilters() {
             new Date(p.ReceiptOn) <= endDate
         );
     }
-
     // Payment Month
     if (filters.paymentMonth) {
-        const month = Number(filters.paymentMonth);
+
+        const [year, month] = filters.paymentMonth
+            .split('-')
+            .map(Number);
 
         filtered = filtered.filter(p => {
+
             if (!p.ReceiptOn) return false;
 
+            const receiptDate = new Date(p.ReceiptOn);
+
             return (
-                new Date(p.ReceiptOn).getMonth() + 1 === month
+                receiptDate.getFullYear() === year &&
+                receiptDate.getMonth() + 1 === month
             );
         });
     }

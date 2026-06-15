@@ -105,23 +105,6 @@
 
                 <div class="container-fluid py-3" id="root">
 
-                    <!-- Header -->
-                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
-
-                        <h4 class="mb-0">
-                            <i class="bi bi-journal-text"></i>
-                            Accounting Ledger
-                        </h4>
-
-                        <button type="button" class="btn btn-outline-secondary" data-bs-toggle="collapse"
-                            data-bs-target="#filterSection">
-
-                            <i class="bi bi-funnel"></i>
-                            Filters
-                        </button>
-
-                    </div>
-
                     <!-- Filters -->
                     <div class="collapse show mb-4" id="filterSection">
 
@@ -173,18 +156,6 @@
 
                                             <i class="bi bi-search"></i>
                                             Search
-
-                                        </button>
-
-                                    </div>
-
-                                    <!-- Clear Button -->
-                                    <div class="col-md-2 col-lg-2 d-grid align-self-end">
-
-                                        <button type="button" class="btn btn-outline-secondary" id="clearFiltersBtn">
-
-                                            <i class="bi bi-x-circle"></i>
-                                            Clear
 
                                         </button>
 
@@ -244,21 +215,10 @@
                             </tbody>
 
                             <tfoot>
-
                                 <tr class="table-secondary fw-bold">
-
-                                    <td colspan="4" class="text-end">
-                                        Grand Total
-                                    </td>
-
-                                    <td id="totalDebit">
-                                        0.00
-                                    </td>
-
-                                    <td id="totalCredit">
-                                        0.00
-                                    </td>
-
+                                    <td colspan="4" class="text-end"> Grand Total </td>
+                                    <td id="totalDebit"> 0.00 </td>
+                                    <td id="totalCredit"> 0.00 </td>
                                 </tr>
 
                             </tfoot>
@@ -269,30 +229,21 @@
 
                     <!-- Footer Actions -->
                     <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mt-4">
-
                         <!-- Pagination -->
                         <nav aria-label="Ledger Pagination">
-
                             <ul id="paginationControls" class="pagination mb-0 d-flex flex-wrap">
                             </ul>
-
                         </nav>
 
                         <!-- Export Buttons -->
                         <div class="d-flex gap-2">
-
                             <button type="button" id="exportExcelBtn" class="btn btn-success">
-
                                 <i class="bi bi-file-earmark-excel"></i>
                                 Export Excel
-
                             </button>
-
                             <button type="button" id="exportPdfBtn" class="btn btn-danger">
-
                                 <i class="bi bi-file-earmark-pdf"></i>
                                 Export PDF
-
                             </button>
 
                         </div>
