@@ -797,3 +797,19 @@ async function loadDatalistSuggestions({
 
     }, 300));
 }
+
+document.getElementById('vendorBillDate').addEventListener('change', function () {
+
+    const billDateValue = this.value;
+
+    if (!billDateValue) return;
+
+    const dueDate = new Date(billDateValue);
+
+    // Add 30 days
+    dueDate.setDate(dueDate.getDate() + 30);
+
+    document.getElementById('vendorDueDate').value =
+        dueDate.toISOString().split('T')[0];
+
+});
