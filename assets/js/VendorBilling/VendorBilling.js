@@ -53,7 +53,7 @@ async function saveAndUpdateVendorBills() {
     try {
 
         const mode = document.getElementById('mode').value;
-        const billReferenceNo = document.getElementById('billReferenceNo').value;
+        let billReferenceNo = document.getElementById('billReferenceNo').value;
         const billedAmount =
             Number(document.getElementById("vendorBilledAmount").value || 0);
 
@@ -84,13 +84,16 @@ async function saveAndUpdateVendorBills() {
         let error;
 
         if (mode === 'insert') {
+            await generateBillReferenceNo();
+
+            billReferenceNo = document.getElementById("billReferenceNo").value.trim();
 
             Object.assign(vBillsDetails, {
                 BillReferenceNo: billReferenceNo,
                 company_id: CompanyID,
                 created_by: UserLoginID,
                 created_at: localtimeStamp,
-                status: 'Pending'
+                Status: 'Pending'
             });
 
             ({ error } = await supabaseClient
@@ -659,6 +662,7 @@ async function saveVendorBillingCharges() {
             const { error } = await supabaseClient
                 .from("VendorBillingCharges")
                 .delete()
+                .eq("company_id", CompanyID)
                 .in("id", deleteIds);
 
             if (error) throw error;
@@ -817,3 +821,50 @@ document.getElementById("vendorBillNo")
     .addEventListener("input", function () {
         this.value = this.value.toUpperCase();
     });
+
+// New Generate Bill Reference No
+async function generateBillReferenceNo() {
+    const accountedDate = document.getElementById('accountedDate').value;
+    // Financial Year
+    const today = accountedDate ? new Date(accountedDate) : new Date();
+    const year = today.getFullYear();
+    const month = today.getMonth() + 1;
+
+    const startYear = month >= 4 ? year : year - 1;
+    const endYear = (startYear + 1).toString().slice(-2);
+
+    const fy = `${startYear.toString().slice(-2)}-${endYear}`;
+
+    // Get last bill reference for this company
+    const { data, error } = await supabaseClient
+        .from('VendorBillingDetails')
+        .select('BillReferenceNo')
+        .eq('company_id', CompanyID)
+        .like('BillReferenceNo', `BRN/${fy}/%`)
+        .order('BillReferenceNo', { ascending: false })
+        .limit(1);
+
+    if (error) {
+        console.error(error);
+        return;
+    }
+
+    let nextNumber = 1;
+
+    if (data && data.length > 0) {
+        const lastRef = data[0].BillReferenceNo;
+
+        const lastSequence = parseInt(
+            lastRef.split('/').pop(),
+            10
+        );
+
+        nextNumber = lastSequence + 1;
+    }
+
+    const billReferenceNo =
+        `BRN/${fy}/${String(nextNumber).padStart(4, '0')}`;
+
+    document.getElementById('billReferenceNo').value =
+        billReferenceNo;
+}
