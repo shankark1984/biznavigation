@@ -24,6 +24,19 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 
         await loadTaxData();
+        loadDatalistSuggestions({
+            inputId: "billReferenceNo",
+            datalistId: "billReferenceNoSuggestions",
+            tableName: "VendorBillingDetails",
+            columnName: "BillReferenceNo"
+        });
+
+        loadDatalistSuggestions({
+            inputId: "vendorBillNo",
+            datalistId: "vendorBillNoSuggestions",
+            tableName: "VendorBillingDetails",
+            columnName: "BillNo"
+        });
 
     } catch (error) {
         console.error('Initialization Error:', error);
@@ -228,27 +241,48 @@ function populateVendorBillingForm(data) {
 // Get billing details by column/value
 async function getVendorBillingDetails(column, value) {
     try {
+
         const { data, error } = await supabaseClient
             .from("VendorBillingDetails")
             .select("*")
             .eq("company_id", CompanyID)
             .eq(column, value)
-            .single();
+            .maybeSingle();
 
         if (error) throw error;
+
+        if (!data) {
+            // console.warn(`No record found for ${column}: ${value}`);
+            return;
+        }
+
         saveButton.disabled = true;
+
         populateVendorBillingForm(data);
-        await loadVendorBillingCharges(data.BillReferenceNo);
-        disableForm(); // Disable fields after loading
+
+        await loadVendorBillingCharges(
+            data.BillReferenceNo
+        );
+
+        disableForm();
+
         modifyButton.disabled = false;
-        saveButton.innerHTML = '<i class="bi bi-save"></i> Update';
-        document.getElementById("addChargesDetails").disabled = true;
+
+        saveButton.innerHTML =
+            '<i class="bi bi-save"></i> Update';
+
+        document.getElementById(
+            "addChargesDetails"
+        ).disabled = true;
 
     } catch (err) {
-        console.error(`Error loading billing details by ${column}:`, err);
+
+        console.error(
+            `Error loading billing details by ${column}:`,
+            err
+        );
     }
 }
-
 // Search by Reference No
 document.getElementById("billReferenceNo")
     .addEventListener("change", function () {
@@ -693,4 +727,73 @@ function reindexRows() {
 
             row.cells[0].innerText = index + 1;
         });
+}
+
+function enforceDatalistSelection(inputId, datalistId) {
+
+    const input = document.getElementById(inputId);
+
+    input.addEventListener("change", function () {
+
+        const value = this.value.trim();
+
+        const validOptions = [
+            ...document.querySelectorAll(`#${datalistId} option`)
+        ].map(option => option.value);
+
+        if (!validOptions.includes(value)) {
+            alert(`Please select a valid value from the list.`);
+            this.value = "";
+            this.focus();
+        }
+    });
+}
+
+enforceDatalistSelection("expenseType", "expenseTypeList");
+enforceDatalistSelection("expenseFor", "expenseForList");
+enforceDatalistSelection("partyName", "partySuggestions");
+enforceDatalistSelection("billReferenceNo", "billReferenceNoSuggestions");
+
+
+async function loadDatalistSuggestions({
+    inputId,
+    datalistId,
+    tableName,
+    columnName,
+    minLength = 2
+}) {
+
+    const input = document.getElementById(inputId);
+    const datalist = document.getElementById(datalistId);
+
+    input.addEventListener("input", debounce(async function (e) {
+
+        const keyword = e.target.value.trim();
+
+        if (keyword.length < minLength) {
+            datalist.innerHTML = "";
+            return;
+        }
+
+        const { data, error } = await supabaseClient
+            .from(tableName)
+            .select(columnName)
+            .eq("company_id", CompanyID)
+            .ilike(columnName, `%${keyword}%`)
+            .limit(20);
+
+        if (error) {
+            console.error(error);
+            return;
+        }
+
+        const uniqueValues = [...new Set(
+            data.map(row => row[columnName])
+        )];
+
+        datalist.innerHTML = uniqueValues
+            .map(v => `<option value="${v}"></option>`)
+            .join("");
+
+    }, 300));
 }

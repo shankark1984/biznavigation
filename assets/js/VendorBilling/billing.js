@@ -742,3 +742,4 @@ modifyButton.addEventListener('click', () => {
     saveButton.innerHTML = '<i class="bi bi-save"></i> Update';
     saveButton.dataset.mode = 'update';
 })
+
