@@ -524,6 +524,30 @@ async function loadDefaultBank() {
     }
 }
 
+async function loadAllBanks() {
+    const datalist = document.getElementById('bankNameSuggestions');
+
+    datalist.innerHTML = '';
+    bankMap = {};
+
+    const { data, error } = await supabaseClient
+        .from('CompanyBankDetails')
+        .select('id, BankName, AccountNo')
+        .eq('CompanyID', CompanyID);
+
+    if (error) return;
+
+    data.forEach(bank => {
+        const displayName = `${bank.BankName} - ${bank.AccountNo.slice(-4)}`;
+
+        bankMap[displayName] = bank.id;
+
+        const option = document.createElement('option');
+        option.value = displayName;
+        datalist.appendChild(option);
+    });
+}
+
 // Create hidden input if not present
 function getOrCreateHiddenBankInput() {
     let hiddenInput = document.getElementById('inputBankName');
@@ -2004,7 +2028,7 @@ document.querySelectorAll('input[type="date"]').forEach(input => {
     input.addEventListener("keydown", function (e) {
 
         if (e.key === "Tab") {
-
+            document.title = `Payment Details - ${type}`;
             e.preventDefault();
 
             const fields = Array.from(

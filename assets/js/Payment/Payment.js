@@ -18,8 +18,6 @@ const paymentFormElements = {
     invoiceNumberInput: document.getElementById("invoiceNumberInput")
 };
 
-
-
 const accountedAmountInput = document.getElementById("accountedAmount");
 const invoiceBalanceInput = document.getElementById("invoiceBalance");
 const paymentAmountInput = document.getElementById("paymentAmount");
@@ -180,7 +178,7 @@ async function fetchPaymentDetails(e) {
     modifyButton.disabled = false;
     reportButton.disabled = false;
     paymentFormElements.paymentID.disabled = true;
-    addInvoiceDetailsButton.disabled = true;
+
     disableForm();
 }
 
@@ -369,7 +367,6 @@ function updateTotals() {
     calculateSuspenseAmount();
 }
 
-
 // ------------------------------------------
 // VALIDATION
 // ------------------------------------------
@@ -497,7 +494,6 @@ async function generatePaymentID(companyID) {
     return data; // e.g. COMP1_P000123
 }
 
-
 // ------------------------------------------
 // SAVE / UPDATE PAYMENT
 // ------------------------------------------
@@ -584,7 +580,8 @@ saveButton.addEventListener("click", async function () {
             const { error: delError } = await supabaseClient
                 .from("PaymentLineItems")
                 .delete()
-                .eq("PaymentID", PaymentID);
+                .eq("PaymentID", PaymentID)
+                .eq("company_id", CompanyID);
 
             if (delError) {
                 console.error(delError);
@@ -1146,6 +1143,3 @@ async function generateReceiptPDF(header, lines) {
     ============================== */
     doc.save(`Payment_Receipt_${header?.PaymentID || "NA"}.pdf`);
 }
-
-
-

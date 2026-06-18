@@ -329,7 +329,7 @@ modifyButton.addEventListener('click', async () => {
 
 newButton.addEventListener("click", async () => {
     const billReferenceNo = document.getElementById("billReferenceNo").value;
-    console.log("New button clicked. Bill Reference No:", billReferenceNo);
+
     await unlockVendorBill();
     // Clear form fields
     clearForm();
@@ -798,7 +798,7 @@ async function loadDatalistSuggestions({
             console.error(error);
             return;
         }
-        console.log(data);
+
         const uniqueValues = [...new Set(
             data.map(row => row[columnName])
         )];
