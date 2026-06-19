@@ -330,6 +330,8 @@ newButton.addEventListener("click", () => {
         '<i class="bi bi-save"></i> Save';
     saveButton.disabled = false;
     modifyButton.disabled = true;
+    document.querySelector("#paymentDetails tbody").innerHTML = "";
+    calculateTotals();
     calculateSuspenseAmount();
     deletedPaymentLines = [];
 })
@@ -340,6 +342,7 @@ modifyButton.addEventListener("click", () => {
     creditPayInput.transactionType.disabled = true;
     creditPayInput.paymentID.disabled = true;
     saveButton.disabled = false;
+    addInvoiceDetailsButton.disabled = false;
 
 })
 
@@ -662,7 +665,7 @@ async function savePaymentLineItems(paymentID) {
             PaymentAmount: parseFloat(row.cells[3].textContent) || 0,
             OtherDeductionAmount: parseFloat(row.cells[4].textContent) || 0,
             TDSDeductionAmount: parseFloat(row.cells[5].textContent) || 0,
-            TotalPaymentAmount: parseFloat(row.cells[6].textContent) || 0,
+            // TotalPaymentAmount: parseFloat(row.cells[6].textContent) || 0,
             company_id: CompanyID,
             created_by: UserLoginID,
             created_at: localtimeStamp
@@ -822,7 +825,6 @@ function updateSuspenseUI() {
     calculateSuspenseAmount(); // already updates UI
 }
 
-
 async function checkSuspensePayments(partyCode) {
     if (!partyCode) return;
 
@@ -875,10 +877,18 @@ function closeSuspenseModal() {
 
     if (modal) {
         modal.hide();
-
-        // 🔥 After hidden, move focus to PaymentID
-        modalEl.addEventListener("hidden.bs.modal", () => {
-            creditPayInput.paymentID.focus();
-        }, { once: true });
     }
 }
+
+const suspenseModalEl = document.getElementById("suspenseModal");
+
+suspenseModalEl.addEventListener("hidden.bs.modal", () => {
+
+    if (suspensePaymentSelected) {
+        disableNewEntry();
+    } else {
+        enableNewEntry();
+    }
+
+    creditPayInput.paymentID.focus();
+});

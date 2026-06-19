@@ -2023,26 +2023,27 @@ function escapeHtml(str = "") {
 // ================
 // Tabbing Date
 // ================
-document.querySelectorAll('input[type="date"]').forEach(input => {
+function enableCustomTab(selector) {
+    document.querySelectorAll(selector).forEach(el => {
+        el.addEventListener("keydown", function (e) {
+            if (e.key === "Tab") {
+                e.preventDefault();
 
-    input.addEventListener("keydown", function (e) {
+                const fields = Array.from(
+                    document.querySelectorAll(
+                        'input:not([disabled]), select:not([disabled]), textarea:not([disabled]), button:not([disabled])'
+                    )
+                ).filter(x => x.offsetParent !== null);
 
-        if (e.key === "Tab") {
-            document.title = `Payment Details - ${type}`;
-            e.preventDefault();
+                const index = fields.indexOf(this);
 
-            const fields = Array.from(
-                document.querySelectorAll(
-                    "input, select, textarea, button"
-                )
-            ).filter(el => !el.disabled);
-
-            const index = fields.indexOf(this);
-
-            if (fields[index + 1]) {
-                fields[index + 1].focus();
+                if (index > -1 && fields[index + 1]) {
+                    fields[index + 1].focus();
+                }
             }
-        }
+        });
     });
+}
 
-});
+// Usage
+enableCustomTab('input[type="date"]');

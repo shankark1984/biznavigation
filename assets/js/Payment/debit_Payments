@@ -317,11 +317,13 @@ newButton.addEventListener("click", () => {
         receiptOn.value = new Date().toISOString().split("T")[0];
     }
     loadDefaultBank();
-    document.getElementById('transactionType').value = "Credit";
+    document.getElementById('transactionType').value = "Debit";
     saveButton.dataset.mode = "insert";
     saveButton.innerHTML = '<i class="bi bi-save"></i> Save';
     saveButton.disabled = false;
     modifyButton.disabled = true;
+    document.querySelector("#paymentDetails tbody").innerHTML = "";
+    calculateTotals();
     calculateSuspenseAmount();
     deletedPaymentLines = [];
 })
@@ -332,6 +334,7 @@ modifyButton.addEventListener("click", () => {
     creditPayInput.transactionType.disabled = true;
     creditPayInput.paymentID.disabled = true;
     saveButton.disabled = false;
+    addBillDetailsButton.disabled = false;
 
 })
 
@@ -791,7 +794,6 @@ function updateSuspenseUI() {
     calculateSuspenseAmount(); // already updates UI
 }
 
-
 async function checkSuspensePayments(partyCode) {
     if (!partyCode) return;
 
@@ -830,12 +832,12 @@ async function checkSuspensePayments(partyCode) {
 
 function disableNewEntry() {
     saveButton.disabled = true;
-    addInvoiceDetailsButton.disabled = true;
+    addBillDetailsButton.disabled = true;
 }
 
 function enableNewEntry() {
     saveButton.disabled = false;
-    addInvoiceDetailsButton.disabled = false;
+    addBillDetailsButton.disabled = false;
 }
 
 function closeSuspenseModal() {
@@ -844,10 +846,18 @@ function closeSuspenseModal() {
 
     if (modal) {
         modal.hide();
-
-        // 🔥 After hidden, move focus to PaymentID
-        modalEl.addEventListener("hidden.bs.modal", () => {
-            creditPayInput.paymentID.focus();
-        }, { once: true });
     }
 }
+
+const suspenseModalEl = document.getElementById("suspenseModal");
+
+suspenseModalEl.addEventListener("hidden.bs.modal", () => {
+
+    if (suspensePaymentSelected) {
+        disableNewEntry();
+    } else {
+        enableNewEntry();
+    }
+
+    creditPayInput.paymentID.focus();
+});
