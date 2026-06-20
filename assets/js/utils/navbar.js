@@ -52,7 +52,7 @@ const Navbar = (() => {
                     { label: "Full Truck Load Report", icon: "bi-truck-front", href: "/pages/Reports/reportFulltruckDetails.html" },
                     { label: "Customer Invoice Report", icon: "bi-receipt-cutoff", href: "/pages/Reports/reportCustomerInvoiceDetails.html" },
                     { label: "Payment Details", icon: "bi-wallet2", href: "/pages/Reports/PaymentDetails.html" },
-                    { label: "Vendor Billing Report", icon: "bi-file-bar-graph", href: "#" },
+                    { label: "Vendor Billing", icon: "bi-file-bar-graph", href: "/pages/Reports/reportVendorBillingDetails.html" },
                     { label: "Payment Receivable", icon: "bi-cash-coin", href: "#" },
                     { label: "Payment Payable", icon: "bi-currency-rupee", href: "#" },
                     { label: "Tax Details", icon: "bi-percent", href: "/pages/Reports/reportGSTDetails.html" },
