@@ -16,26 +16,33 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     document.getElementById('exportExcelBtn').addEventListener('click', exportToExcel);
     document.getElementById('exportPdfBtn').addEventListener('click', exportToPdf);
+    setDefaultDateRange();
 
     await loadReportSuggestions();
-    await loadTable();
+    await loadTable(getFilters());
 
     enableSortableHeaders();
 });
 
 function getFilters() {
-    let dateRange = document.getElementById('dateRange').value.split(' to ');
-    return {
-        invoiceNo: document.getElementById('invoiceNo').value.trim(),
-        startDate: dateRange[0]?.trim() || null,
-        endDate: dateRange[1]?.trim() || null,
-        customerName: document.getElementById('customerName').value.trim(),
-        invoiceType: document.getElementById('invoiceType').value.trim(),
-        invoiceMonth: document.getElementById('invoiceMonth').value.trim(),
-        invoiceYear: document.getElementById('invoiceYear').value.trim(),
-        financialYear: document.getElementById('financialYear').value.trim(),
-        paymentStatus: document.getElementById('paymentStatus').value.trim(),
+    const filters = {
+        customerName: document.getElementById("customerName")?.value.trim(),
+        invoiceNo: document.getElementById("invoiceNo")?.value.trim(),
+        invoiceType: document.getElementById("invoiceType")?.value.trim(),
+        invoiceMonth: document.getElementById("invoiceMonth")?.value,
+        invoiceYear: document.getElementById("invoiceYear")?.value.trim(),
+        financialYear: document.getElementById("financialYear")?.value.trim(),
+        paymentStatus: document.getElementById("paymentStatus")?.value.trim()
     };
+
+    const dateRange = document.getElementById("dateRange")?.value.trim();
+    if (dateRange) {
+        const [startDate, endDate] = dateRange.split(" to ");
+        filters.startDate = startDate || "";
+        filters.endDate = endDate || startDate || "";
+    }
+
+    return filters;
 }
 
 function enableSortableHeaders() {
@@ -95,22 +102,75 @@ function populateArrayDatalist(array, datalistId) {
 
 async function loadTable(filters = {}) {
     const spinner = document.getElementById('loadingSpinner');
+    const tbody = document.querySelector('#bookingTable tbody');
+
     spinner.style.display = 'block';
 
-    let query = buildQuery(filters);
+    // Show processing message in table
+    tbody.innerHTML = `
+        <tr>
+            <td colspan="18" class="text-center text-primary fw-bold py-4">
+                <span class="spinner-border spinner-border-sm me-2"></span>
+                Processing data, please wait...
+            </td>
+        </tr>
+    `;
 
-    if (sortColumn) {
-        query = query.order(sortColumn, { ascending: sortOrder === 'asc' });
+    try {
+        let pageQuery = buildQuery(filters);
+
+        if (sortColumn) {
+            pageQuery = pageQuery.order(sortColumn, { ascending: sortOrder === 'asc' });
+        }
+
+        const from = (currentPage - 1) * pageSize;
+        const to = currentPage * pageSize - 1;
+
+        const { data: pageData, error: pageError, count } = await pageQuery.range(from, to);
+
+        if (pageError) {
+            console.error('Error loading table:', pageError);
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="18" class="text-center text-danger py-4">
+                        Failed to load data
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        let totalQuery = buildQuery(filters);
+
+        if (sortColumn) {
+            totalQuery = totalQuery.order(sortColumn, { ascending: sortOrder === 'asc' });
+        }
+
+        const cumulativeTo = currentPage * pageSize - 1;
+
+        const { data: cumulativeData, error: totalError } = await totalQuery.range(0, cumulativeTo);
+
+        if (totalError) {
+            console.error('Error loading cumulative totals:', totalError);
+        }
+
+        await renderTable(pageData || []);
+        updateCumulativeTotals(cumulativeData || []);
+        renderPagination(count || 0, loadTable);
+        updateHeaderSortIndicators();
+
+    } catch (err) {
+        console.error("Unexpected loadTable error:", err);
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="18" class="text-center text-danger py-4">
+                    Something went wrong while loading data
+                </td>
+            </tr>
+        `;
+    } finally {
+        spinner.style.display = 'none';
     }
-
-    const { data, error, count } = await query.range((currentPage - 1) * pageSize, currentPage * pageSize - 1);
-    console.log("Data", data);
-    spinner.style.display = 'none';
-    if (error) return console.error('Error loading table:', error);
-
-    renderTable(data);
-    renderPagination(count, loadTable);
-    updateHeaderSortIndicators();
 }
 
 function buildQuery(filters = {}) {
@@ -119,45 +179,152 @@ function buildQuery(filters = {}) {
         .select('*', { count: 'exact' })
         .eq('company_id', CompanyID)
         .order('InvoiceNo', { ascending: false });
-    console.log("filters data", query);
-    if (filters.invoiceNo) query = query.ilike('InvoiceNo', `%${filters.invoiceNo}%`);
-    if (filters.customerName) query = query.ilike('PartyName', filters.customerName);
-    if (filters.invoiceType) query = query.ilike('InvoiceType', filters.invoiceType);
-    if (filters.paymentStatus) query = query.ilike('PaymentStatus', filters.paymentStatus);
-    if (filters.startDate) query = query.gte('InvoiceDate', filters.startDate);
-    if (filters.endDate) query = query.lte('InvoiceDate', filters.endDate);
-    //Month filters
-    if (filters.invoiceMonth) {
-        let [monthStr, yearStr] = filters.invoiceMonth.split('-');
-        // Fallback if format is "YYYY-MM"
-        if (parseInt(monthStr) > 12) [yearStr, monthStr] = [monthStr, yearStr];
 
-        const month = parseInt(monthStr);
-        const year = parseInt(yearStr);
+    // -----------------------------
+    // Non-date filters
+    // -----------------------------
+    if (filters.invoiceNo) {
+        query = query.ilike('InvoiceNo', `%${filters.invoiceNo}%`);
+    }
+
+    if (filters.customerName) {
+        query = query.ilike('PartyName', `%${filters.customerName}%`);
+    }
+
+    if (filters.invoiceType) {
+        query = query.ilike('InvoiceType', `%${filters.invoiceType}%`);
+    }
+
+    if (filters.paymentStatus) {
+        query = query.ilike('PaymentStatus', `%${filters.paymentStatus}%`);
+    }
+
+    // -----------------------------
+    // Check date-related filters
+    // -----------------------------
+    const hasExplicitDateFilter =
+        !!filters.startDate ||
+        !!filters.endDate ||
+        !!filters.invoiceMonth ||
+        !!filters.invoiceYear ||
+        !!filters.financialYear;
+
+    // only customer name selected (no explicit date filters)
+    const onlyCustomerNameSelected =
+        !!filters.customerName &&
+        !filters.invoiceNo &&
+        !filters.invoiceType &&
+        !filters.paymentStatus &&
+        !hasExplicitDateFilter;
+
+    // ---------------------------------------------------------
+    // CASE 1: Only customer name selected -> current FY
+    // ---------------------------------------------------------
+    if (onlyCustomerNameSelected) {
+        const today = new Date();
+        const currentYear = today.getFullYear();
+        const currentMonth = today.getMonth() + 1; // 1 to 12
+
+        let fyStartYear, fyEndYear;
+
+        if (currentMonth >= 4) {
+            // Apr to Dec -> current FY starts this year
+            fyStartYear = currentYear;
+            fyEndYear = currentYear + 1;
+        } else {
+            // Jan to Mar -> current FY started last year
+            fyStartYear = currentYear - 1;
+            fyEndYear = currentYear;
+        }
+
+        query = query
+            .gte('InvoiceDate', `${fyStartYear}-04-01`)
+            .lte('InvoiceDate', `${fyEndYear}-03-31`);
+
+        return query;
+    }
+
+    // ---------------------------------------------------------
+    // CASE 2: Explicit date filters given -> use them
+    // Priority:
+    // financialYear > invoiceYear > invoiceMonth > dateRange
+    // ---------------------------------------------------------
+
+    if (filters.financialYear) {
+        const [startYear, endYear] = filters.financialYear.split('-').map(Number);
+
+        if (!isNaN(startYear) && !isNaN(endYear)) {
+            query = query
+                .gte('InvoiceDate', `${startYear}-04-01`)
+                .lte('InvoiceDate', `${endYear}-03-31`);
+        }
+
+        return query;
+    }
+
+    if (filters.invoiceYear) {
+        const year = parseInt(filters.invoiceYear, 10);
+
+        if (!isNaN(year)) {
+            query = query
+                .gte('InvoiceDate', `${year}-01-01`)
+                .lte('InvoiceDate', `${year}-12-31`);
+        }
+
+        return query;
+    }
+
+    if (filters.invoiceMonth) {
+        const [yearStr, monthStr] = filters.invoiceMonth.split('-'); // YYYY-MM
+        const year = parseInt(yearStr, 10);
+        const month = parseInt(monthStr, 10);
 
         if (!isNaN(year) && !isNaN(month)) {
             const start = new Date(year, month - 1, 1).toISOString().split('T')[0];
             const end = new Date(year, month, 0).toISOString().split('T')[0];
-            query = query.gte('InvoiceDate', start).lte('InvoiceDate', end);
+
+            query = query
+                .gte('InvoiceDate', start)
+                .lte('InvoiceDate', end);
         }
-    }
-    //Year filters
-    // Else fallback to full year range if only invoiceYear is set
-    if (!filters.invoiceMonth && filters.invoiceYear) {
-        const year = parseInt(filters.invoiceYear);
-        if (!isNaN(year)) {
-            const start = new Date(year, 0, 1).toISOString().split('T')[0];   // Jan 1
-            const end = new Date(year, 11, 31).toISOString().split('T')[0];  // Dec 31
-            query = query.gte('InvoiceDate', start).lte('InvoiceDate', end);
-        }
+
+        return query;
     }
 
-    if (filters.financialYear) {
-        const [startYear, endYear] = filters.financialYear.split('-').map(Number);
-        query = query.gte('InvoiceDate', `${startYear}-04-01`).lte('InvoiceDate', `${endYear}-03-31`);
+    if (filters.startDate || filters.endDate) {
+        if (filters.startDate) {
+            query = query.gte('InvoiceDate', filters.startDate);
+        }
+
+        if (filters.endDate) {
+            query = query.lte('InvoiceDate', filters.endDate);
+        }
+
+        return query;
     }
 
-    console.log('Query:', query);
+    // ---------------------------------------------------------
+    // CASE 3: No date filters selected
+    // default -> last 2 months
+    // applies to:
+    // - no filters at all
+    // - invoiceType only
+    // - paymentStatus only
+    // - invoiceType + paymentStatus
+    // - invoiceNo only
+    // - customerName + invoiceType
+    // etc.
+    // ---------------------------------------------------------
+    const today = new Date();
+    const twoMonthsAgo = new Date();
+    twoMonthsAgo.setMonth(today.getMonth() - 2);
+
+    const start = twoMonthsAgo.toISOString().split('T')[0];
+    const end = today.toISOString().split('T')[0];
+
+    query = query
+        .gte('InvoiceDate', start)
+        .lte('InvoiceDate', end);
 
     return query;
 }
@@ -175,6 +342,15 @@ function updateHeaderSortIndicators() {
 async function renderTable(data) {
     const tbody = document.querySelector('#bookingTable tbody');
     tbody.innerHTML = '';
+
+    if (!data || data.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="18" class="text-center text-muted">No records found</td>
+            </tr>
+        `;
+        return;
+    }
 
     for (let idx = 0; idx < data.length; idx++) {
         const row = data[idx];
@@ -503,4 +679,87 @@ async function fetchAllFilteredData(filters = {}) {
     }
 
     return allData;
+}
+
+function toNumber(value) {
+    if (value === null || value === undefined || value === "") return 0;
+    return parseFloat(String(value).replace(/,/g, "")) || 0;
+}
+
+function formatAmount(value) {
+    return toNumber(value).toLocaleString("en-IN", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
+}
+
+function updateCumulativeTotals(allData) {
+    const totals = {
+        BasicAmount: 0,
+        OtherAmount: 0,
+        CGSTAmount: 0,
+        SGSTAmount: 0,
+        IGSTAmount: 0,
+        TotalGSTAmount: 0,
+        GrandTotalAmount: 0,
+        PaymentAmount: 0,
+        OtherDeductionAmount: 0,
+        TDSDeductionAmount: 0,
+        PaymentTotalAmount: 0,
+        BalanceAmount: 0
+    };
+
+    const toNumber = (val) => parseFloat(val || 0) || 0;
+
+    // page 1 to current page rows count
+    const endIndex = currentPage * pageSize;
+
+    const cumulativeRows = allData.slice(0, endIndex);
+
+    cumulativeRows.forEach(row => {
+        totals.BasicAmount += toNumber(row.BasicAmount);
+        totals.OtherAmount += toNumber(row.OtherAmount);
+        totals.CGSTAmount += toNumber(row.CGSTAmount);
+        totals.SGSTAmount += toNumber(row.SGSTAmount);
+        totals.IGSTAmount += toNumber(row.IGSTAmount);
+        totals.TotalGSTAmount += toNumber(row.TotalGSTAmount);
+        totals.GrandTotalAmount += toNumber(row.GrandTotalAmount);
+        totals.PaymentAmount += toNumber(row.PaymentAmount);
+        totals.OtherDeductionAmount += toNumber(row.OtherDeductionAmount);
+        totals.TDSDeductionAmount += toNumber(row.TDSDeductionAmount);
+        totals.PaymentTotalAmount += toNumber(row.PaymentTotalAmount);
+        totals.BalanceAmount += toNumber(row.BalanceAmount);
+    });
+
+    document.getElementById("totalBasicAmount").textContent = formatAmount(totals.BasicAmount);
+    document.getElementById("totalOtherAmount").textContent = formatAmount(totals.OtherAmount);
+    document.getElementById("totalCGSTAmount").textContent = formatAmount(totals.CGSTAmount);
+    document.getElementById("totalSGSTAmount").textContent = formatAmount(totals.SGSTAmount);
+    document.getElementById("totalIGSTAmount").textContent = formatAmount(totals.IGSTAmount);
+    document.getElementById("totalGSTAmount").textContent = formatAmount(totals.TotalGSTAmount);
+    document.getElementById("totalGrandTotal").textContent = formatAmount(totals.GrandTotalAmount);
+    document.getElementById("totalCollected").textContent = formatAmount(totals.PaymentAmount);
+    document.getElementById("totalOtherDeduction").textContent = formatAmount(totals.OtherDeductionAmount);
+    document.getElementById("totalTDSDeduction").textContent = formatAmount(totals.TDSDeductionAmount);
+    document.getElementById("totalPayment").textContent = formatAmount(totals.PaymentTotalAmount);
+    document.getElementById("totalBalance").textContent = formatAmount(totals.BalanceAmount);
+}
+
+function setDefaultDateRange() {
+    const dateRangeInput = document.getElementById("dateRange");
+    if (!dateRangeInput) return;
+
+    const today = new Date();
+    const twoMonthsAgo = new Date();
+    twoMonthsAgo.setMonth(today.getMonth() - 2);
+
+    const formatDate = (date) => {
+        return date.toISOString().split("T")[0]; // YYYY-MM-DD
+    };
+
+    const startDate = formatDate(twoMonthsAgo);
+    const endDate = formatDate(today);
+
+    // Set flatpickr input value
+    dateRangeInput.value = `${startDate} to ${endDate}`;
 }

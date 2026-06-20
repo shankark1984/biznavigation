@@ -22,6 +22,29 @@
             flex: 1;
         }
 
+        /* Sticky table footer at bottom of scroll area */
+        #bookingTable tfoot th,
+        #bookingTable tfoot td {
+            position: sticky;
+            bottom: 0;
+            background-color: #fff3cd;
+            font-weight: 700;
+            z-index: 9;
+            white-space: nowrap;
+            padding: 10px;
+            border-top: 2px solid #000;
+        }
+
+        /* keep total label left aligned if needed */
+        #bookingTable tfoot th:first-child {
+            text-align: right;
+        }
+
+        /* optional: highlight total row */
+        #totalsRow {
+            box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.08);
+        }
+
         .table-responsive {
             max-height: 500px;
             overflow: auto;
@@ -124,7 +147,7 @@
                                 <datalist id="invoiceNoList"></datalist>
                             </div>
                             <div class="col-md-6 col-lg-3">
-                                <label for="dateRange" class="form-label">Booked Date Range</label>
+                                <label for="dateRange" class="form-label">Invoice Date Range</label>
                                 <input id="dateRange" class="form-control" placeholder="Select Date Range" readonly>
                             </div>
                             <div class="col-md-6 col-lg-2">
@@ -193,6 +216,25 @@
                                 </tr>
                             </thead>
                             <tbody></tbody>
+                            <!-- TOTAL FOOTER -->
+                            <tfoot>
+                                <tr id="totalsRow">
+                                    <th colspan="5" class="text-end">Total</th>
+                                    <th id="totalBasicAmount" class="text-end">0.00</th>
+                                    <th id="totalOtherAmount" class="text-end">0.00</th>
+                                    <th id="totalCGSTAmount" class="text-end">0.00</th>
+                                    <th id="totalSGSTAmount" class="text-end">0.00</th>
+                                    <th id="totalIGSTAmount" class="text-end">0.00</th>
+                                    <th id="totalGSTAmount" class="text-end">0.00</th>
+                                    <th id="totalGrandTotal" class="text-end">0.00</th>
+                                    <th id="totalCollected" class="text-end">0.00</th>
+                                    <th id="totalOtherDeduction" class="text-end">0.00</th>
+                                    <th id="totalTDSDeduction" class="text-end">0.00</th>
+                                    <th id="totalPayment" class="text-end">0.00</th>
+                                    <th id="totalBalance" class="text-end">0.00</th>
+                                    <th>-</th>
+                                </tr>
+                            </tfoot>
                         </table>
                     </div>
 
