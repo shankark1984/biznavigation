@@ -39,7 +39,7 @@ const Navbar = (() => {
                     { label: "Vendor Billing", icon: "bi-file-earmark-spreadsheet", href: "/pages/Accounting/VendorBilling.html" },
                     { label: "Payments Credit", icon: "bi-arrow-down-circle", href: "/pages/Accounting/PaymentDetails_Credit.html?type=Credit" },
                     { label: "Payment Debit", icon: "bi-arrow-up-circle", href: "/pages/Accounting/PaymentDetails_Debit.html?type=Debit" },
-                    // { label: "Tax Details", icon: "bi-percent", href: "/pages/Accounting/TaxDetails.html" }
+                    { label: "Credit or Debit Note", icon: "bi-journal-text", href: "/pages/Accounting/CreditDebitNote.html" }
                 ]
             },
             {
