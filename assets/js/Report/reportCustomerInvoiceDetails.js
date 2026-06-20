@@ -9,9 +9,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     flatpickr("#dateRange", { mode: "range", dateFormat: "Y-m-d" });
 
-    document.getElementById('searchBtn').addEventListener('click', () => {
+    document.getElementById("searchBtn").addEventListener("click", async () => {
         currentPage = 1;
-        loadTable(getFilters());
+        await loadTable(getFilters());
+
+        const filterSection = document.getElementById("filterSection");
+        bootstrap.Collapse.getOrCreateInstance(filterSection).hide();
     });
 
     document.getElementById('exportExcelBtn').addEventListener('click', exportToExcel);
@@ -61,6 +64,8 @@ function enableSortableHeaders() {
     });
 }
 
+let reportSuggestionData = [];
+
 async function loadReportSuggestions() {
     const { data, error } = await supabaseClient
         .from('InvoicePaymentView')
@@ -68,17 +73,27 @@ async function loadReportSuggestions() {
 
     if (error) return console.error('Error fetching suggestions:', error);
 
-    populateDatalists(data, 'InvoiceNo', 'invoiceNoList');
-    populateDatalists(data, 'PartyName', 'customerNameList');
-    populateDatalists(data, 'InvoiceType', 'invoiceTypeList');
-    populateDatalists(data, 'PaymentStatus', 'paymentStatusList');
+    reportSuggestionData = data || [];
 
-    const financialYears = [...new Set(data.map(item => {
-        const year = new Date(item.InvoiceDate).getFullYear();
-        return `${year}-${year + 1}`;
-    }))];
+    populateDatalists(reportSuggestionData, 'InvoiceNo', 'invoiceNoList');
+    populateDatalists(reportSuggestionData, 'PartyName', 'customerNameList');
+    populateDatalists(reportSuggestionData, 'InvoiceType', 'invoiceTypeList');
+    populateDatalists(reportSuggestionData, 'PaymentStatus', 'paymentStatusList');
+
+    const financialYears = [...new Set(reportSuggestionData
+        .map(item => item.InvoiceDate)
+        .filter(Boolean)
+        .map(date => {
+            const d = new Date(date);
+            const year = d.getFullYear();
+            const month = d.getMonth() + 1;
+            return month >= 4 ? `${year}-${year + 1}` : `${year - 1}-${year}`;
+        })
+    )].sort();
 
     populateArrayDatalist(financialYears, 'financialYearList');
+
+    attachSuggestionFilters();
 }
 
 function populateDatalists(data, field, datalistId) {
@@ -93,6 +108,39 @@ function populateDatalists(data, field, datalistId) {
     datalist.innerHTML = uniqueValues
         .map(value => `<option value="${value}">`)
         .join('');
+}
+
+function attachSuggestionFilters() {
+    attachDatalistFilter('invoiceNo', 'invoiceNoList', 'InvoiceNo');
+    attachDatalistFilter('customerName', 'customerNameList', 'PartyName');
+    attachDatalistFilter('invoiceType', 'invoiceTypeList', 'InvoiceType');
+    attachDatalistFilter('paymentStatus', 'paymentStatusList', 'PaymentStatus');
+}
+
+function attachDatalistFilter(inputId, datalistId, field) {
+    const input = document.getElementById(inputId);
+    const datalist = document.getElementById(datalistId);
+
+    if (!input || !datalist) return;
+
+    input.addEventListener('input', function () {
+        let searchText = this.value.trim().toLowerCase();
+
+        // optional: remove % if user types Shar%
+        searchText = searchText.replace(/%/g, '');
+
+        const matchedValues = [...new Set(
+            reportSuggestionData
+                .map(item => item[field])
+                .filter(Boolean)
+                .filter(value => value.toLowerCase().startsWith(searchText))
+        )].sort((a, b) => a.localeCompare(b));
+
+        datalist.innerHTML = matchedValues
+            .slice(0, 50) // limit suggestions
+            .map(value => `<option value="${value}">`)
+            .join('');
+    });
 }
 
 function populateArrayDatalist(array, datalistId) {
