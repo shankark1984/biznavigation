@@ -406,9 +406,9 @@ async function exportToExcel() {
 
     let tableHtml = `<table><thead><tr>
         <th>Sr No</th><th>Invoice Date</th><th>Invoice No</th><th>Customer Name</th>
-        <th>State</th><th>GST No</th><th>Total InvoiceAmount</th><th>Non-Taxable Amount</th><th>Taxable Amount</th>
+        <th>State</th><th>GST No</th><th>Non-Taxable Amount</th><th>Taxable Amount</th>
         <th>CGST Amount</th><th>SGST Amount</th><th>IGST Amount</th>
-        <th>Total GST Amount</th></thead><tbody>`;
+        <th>Total GST Amount</th><th>Total InvoiceAmount</th></thead><tbody>`;
 
     for (let i = 0; i < allData.length; i++) {
         const row = allData[i];
@@ -420,13 +420,13 @@ async function exportToExcel() {
             <td>${row.CustomerName || ''}</td>
             <td>${row.State}</td>
             <td>${row.GSTNo || '0'}</td>
-            <td>${row.TotalInvoiceAmount || '0'}</td>
             <td>${row.NonTaxableAmount || '0'}</td>
             <td>${row.TaxableAmount || '0'}</td>
             <td>${row.SGST || '0'}</td>
             <td>${row.CGST || '0'}</td>
             <td>${row.IGST || '0'}</td>
             <td>${row.TotalGST || '0'}</td>
+              <td>${row.TotalInvoiceAmount || '0'}</td> 
         </tr>`;
     }
 
@@ -462,13 +462,13 @@ async function exportToPdf() {
         'Customer Name',
         'State',
         'GST No',
-        'Total Invoice Amount',
         'Non-Taxable Amount',
         'Taxable Amount',
         'CGST Amount',
         'SGST Amount',
         'IGST Amount',
-        'Total GST Amount'
+        'Total GST Amount',
+        'Total Invoice Amount'
     ];
 
     const formatNumber = (value) => {
@@ -516,13 +516,13 @@ async function exportToPdf() {
         row.CustomerName || '',
         row.State || '',
         row.GSTNo || '',
-        formatNumber(row.TotalInvoiceAmount),
         formatNumber(row.NonTaxableAmount),
         formatNumber(row.TaxableAmount),
         formatNumber(row.CGST),
         formatNumber(row.SGST),
         formatNumber(row.IGST),
-        formatNumber(row.TotalGST)
+        formatNumber(row.TotalGST),
+        formatNumber(row.TotalInvoiceAmount)
     ]);
 
     // ==========================
