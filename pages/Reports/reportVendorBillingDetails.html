@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Customer Invoice Report</title>
+    <title>Vendor Billing Report</title>
 
     <!-- Bootstrap & Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
@@ -135,34 +135,46 @@
                         <div class="row g-3" id="searchFilters">
                             <!-- Common Filters -->
                             <div class="col-md-6 col-lg-3">
-                                <label for="customerName" class="form-label">Customer Name</label>
-                                <input id="customerName" class="form-control" list="customerNameList"
-                                    placeholder="Enter Customer Name">
-                                <datalist id="customerNameList"></datalist>
+                                <label for="vendorName" class="form-label">Vendor Name</label>
+                                <input id="vendorName" class="form-control" list="vendorNameList"
+                                    placeholder="Select Vendor Name">
+                                <datalist id="vendorNameList"></datalist>
                             </div>
                             <div class="col-md-6 col-lg-2">
-                                <label for="invoiceNo" class="form-label">Invoice No</label>
-                                <input id="invoiceNo" class="form-control" list="invoiceNoList"
-                                    placeholder="Enter Invoice No">
-                                <datalist id="invoiceNoList"></datalist>
+                                <label for="billReferenceNo" class="form-label">Bill Reference No</label>
+                                <input id="billReferenceNo" class="form-control" list="billReferenceNoList"
+                                    placeholder="Enter Bill Reference No">
+                                <datalist id="billReferenceNoList"></datalist>
+                            </div>
+                            <div class="col-md-6 col-lg-2">
+                                <label for="billNo" class="form-label">Bill No</label>
+                                <input id="billNo" class="form-control" list="billNoList" placeholder="Enter Bill No">
+                                <datalist id="billNoList"></datalist>
+                            </div>
+
+                            <div class="col-md-6 col-lg-2">
+                                <label for="expenseType" class="form-label">Expense Type</label>
+                                <input id="expenseType" class="form-control" list="expenseTypeList"
+                                    placeholder="Select Expense Type">
+                                <datalist id="expenseTypeList"></datalist>
+                            </div>
+                            <div class="col-md-6 col-lg-2">
+                                <label for="expenseFor" class="form-label">Expense For</label>
+                                <input id="expenseFor" class="form-control" list="expenseForList"
+                                    placeholder="Select Expense For">
+                                <datalist id="expenseForList"></datalist>
                             </div>
                             <div class="col-md-6 col-lg-3">
-                                <label for="dateRange" class="form-label">Invoice Date Range</label>
+                                <label for="dateRange" class="form-label">Accounted Date Range</label>
                                 <input id="dateRange" class="form-control" placeholder="Select Date Range" readonly>
                             </div>
-                            <div class="col-md-6 col-lg-2">
-                                <label for="invoiceType" class="form-label">Invoice Type</label>
-                                <input id="invoiceType" class="form-control" list="invoiceTypeList"
-                                    placeholder="Enter Invoice Type">
-                                <datalist id="invoiceTypeList"></datalist>
+                            <div class="col-md-4 col-lg-2">
+                                <label for="billingMonth" class="form-label">Billing Month</label>
+                                <input type="month" id="billingMonth" class="form-control">
                             </div>
                             <div class="col-md-4 col-lg-2">
-                                <label for="invoiceMonth" class="form-label">Invoice Month</label>
-                                <input type="month" id="invoiceMonth" class="form-control">
-                            </div>
-                            <div class="col-md-4 col-lg-2">
-                                <label for="invoiceYear" class="form-label">Invoice Year</label>
-                                <input type="number" id="invoiceYear" class="form-control" placeholder="YYYY" min="2000"
+                                <label for="billingYear" class="form-label">Billing Year</label>
+                                <input type="number" id="billingYear" class="form-control" placeholder="YYYY" min="2000"
                                     max="2200">
                             </div>
                             <div class="col-md-4 col-lg-2">
@@ -196,12 +208,15 @@
                             <thead class="table-dark">
                                 <tr>
                                     <th>Sr No</th>
-                                    <th>Invoice No</th>
-                                    <th>Invoice Date</th>
-                                    <th>Invoice Type</th>
-                                    <th>Party Code</th>
-                                    <th>Basic Amount</th>
-                                    <th>Other Amount</th>
+                                    <th>Bill Reference No</th>
+                                    <th>Accounted Date</th>
+                                    <th>Expense Type</th>
+                                    <th>Expense For</th>
+                                    <th>Vendor Name</th>
+                                    <th>Bill No</th>
+                                    <th>Bill Date</th>
+                                    <th>Non-Taxable Amount</th>
+                                    <th>Taxable Amount</th>
                                     <th>CGST Amount</th>
                                     <th>SGST Amount</th>
                                     <th>IGST Amount</th>
@@ -219,9 +234,9 @@
                             <!-- TOTAL FOOTER -->
                             <tfoot>
                                 <tr id="totalsRow">
-                                    <th colspan="5" class="text-end">Total</th>
-                                    <th id="totalBasicAmount" class="text-end">0.00</th>
-                                    <th id="totalOtherAmount" class="text-end">0.00</th>
+                                    <th colspan="8" class="text-end">Total</th>
+                                    <th id="totalNonTaxableAmount" class="text-end">0.00</th>
+                                    <th id="totalTaxableAmount" class="text-end">0.00</th>
                                     <th id="totalCGSTAmount" class="text-end">0.00</th>
                                     <th id="totalSGSTAmount" class="text-end">0.00</th>
                                     <th id="totalIGSTAmount" class="text-end">0.00</th>

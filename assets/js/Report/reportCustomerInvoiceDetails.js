@@ -69,7 +69,8 @@ let reportSuggestionData = [];
 async function loadReportSuggestions() {
     const { data, error } = await supabaseClient
         .from('InvoicePaymentView')
-        .select('InvoiceNo, PartyCode, PartyName, InvoiceType, PaymentStatus, InvoiceDate');
+        .select('InvoiceNo, PartyCode, PartyName, InvoiceType, PaymentStatus, InvoiceDate')
+        .eq('company_id', CompanyID);
 
     if (error) return console.error('Error fetching suggestions:', error);
 

@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     document.getElementById("searchBtn").addEventListener("click", async () => {
         currentPage = 1;
+
         await loadTable(getFilters());
 
         const filterSection = document.getElementById("filterSection");
@@ -27,15 +28,36 @@ document.addEventListener('DOMContentLoaded', async () => {
     enableSortableHeaders();
 });
 
+function setDefaultDateRange() {
+    const dateRangeInput = document.getElementById("dateRange");
+    if (!dateRangeInput) return;
+
+    const today = new Date();
+    const twoMonthsAgo = new Date();
+    twoMonthsAgo.setMonth(today.getMonth() - 2);
+
+    const formatDate = (date) => {
+        return date.toISOString().split("T")[0]; // YYYY-MM-DD
+    };
+
+    const startDate = formatDate(twoMonthsAgo);
+    const endDate = formatDate(today);
+
+    // Set flatpickr input value
+    dateRangeInput.value = `${startDate} to ${endDate}`;
+}
+
 function getFilters() {
     const filters = {
-        customerName: document.getElementById("customerName")?.value.trim(),
-        invoiceNo: document.getElementById("invoiceNo")?.value.trim(),
-        invoiceType: document.getElementById("invoiceType")?.value.trim(),
-        invoiceMonth: document.getElementById("invoiceMonth")?.value,
-        invoiceYear: document.getElementById("invoiceYear")?.value.trim(),
-        financialYear: document.getElementById("financialYear")?.value.trim(),
-        paymentStatus: document.getElementById("paymentStatus")?.value.trim()
+        billReferenceNo: document.getElementById("billReferenceNo")?.value.trim() || "",
+        vendorName: document.getElementById("vendorName")?.value.trim() || "",
+        expenseType: document.getElementById("expenseType")?.value.trim() || "",
+        expenseFor: document.getElementById("expenseFor")?.value.trim() || "",
+        billNo: document.getElementById("billNo")?.value.trim() || "",
+        billingMonth: document.getElementById("billingMonth")?.value || "",
+        billingYear: document.getElementById("billingYear")?.value.trim() || "",
+        financialYear: document.getElementById("financialYear")?.value.trim() || "",
+        paymentStatus: document.getElementById("paymentStatus")?.value.trim() || ""
     };
 
     const dateRange = document.getElementById("dateRange")?.value.trim();
@@ -43,6 +65,9 @@ function getFilters() {
         const [startDate, endDate] = dateRange.split(" to ");
         filters.startDate = startDate || "";
         filters.endDate = endDate || startDate || "";
+    } else {
+        filters.startDate = "";
+        filters.endDate = "";
     }
 
     return filters;
@@ -68,20 +93,23 @@ let reportSuggestionData = [];
 
 async function loadReportSuggestions() {
     const { data, error } = await supabaseClient
-        .from('InvoicePaymentView')
-        .select('InvoiceNo, PartyCode, PartyName, InvoiceType, PaymentStatus, InvoiceDate');
+        .from('VendorBillPaymentView')
+        .select('BillReferenceNo,AccountedDate,ExpenseType,ExpenseFor, PartyCode, PartyName,BillNo, PaymentStatus')
+        .eq('company_id', CompanyID);
 
     if (error) return console.error('Error fetching suggestions:', error);
 
     reportSuggestionData = data || [];
 
-    populateDatalists(reportSuggestionData, 'InvoiceNo', 'invoiceNoList');
-    populateDatalists(reportSuggestionData, 'PartyName', 'customerNameList');
-    populateDatalists(reportSuggestionData, 'InvoiceType', 'invoiceTypeList');
+    populateDatalists(reportSuggestionData, 'BillReferenceNo', 'billReferenceNoList');
+    populateDatalists(reportSuggestionData, 'BillNo', 'billNoList');
+    populateDatalists(reportSuggestionData, 'ExpenseType', 'expenseTypeList');
+    populateDatalists(reportSuggestionData, 'ExpenseFor', 'expenseForList');
+    populateDatalists(reportSuggestionData, 'PartyName', 'vendorNameList');
     populateDatalists(reportSuggestionData, 'PaymentStatus', 'paymentStatusList');
 
     const financialYears = [...new Set(reportSuggestionData
-        .map(item => item.InvoiceDate)
+        .map(item => item.AccountedDate)
         .filter(Boolean)
         .map(date => {
             const d = new Date(date);
@@ -111,9 +139,11 @@ function populateDatalists(data, field, datalistId) {
 }
 
 function attachSuggestionFilters() {
-    attachDatalistFilter('invoiceNo', 'invoiceNoList', 'InvoiceNo');
-    attachDatalistFilter('customerName', 'customerNameList', 'PartyName');
-    attachDatalistFilter('invoiceType', 'invoiceTypeList', 'InvoiceType');
+    attachDatalistFilter('billReferenceNo', 'billReferenceNoList', 'BillReferenceNo');
+    attachDatalistFilter('vendorName', 'vendorNameList', 'PartyName');
+    attachDatalistFilter('expenseType', 'expenseTypeList', 'ExpenseType');
+    attachDatalistFilter('expenseFor', 'expenseForList', 'ExpenseFor');
+    attachDatalistFilter('billNo', 'billNoList', 'BillNo');
     attachDatalistFilter('paymentStatus', 'paymentStatusList', 'PaymentStatus');
 }
 
@@ -223,107 +253,102 @@ async function loadTable(filters = {}) {
 
 function buildQuery(filters = {}) {
     let query = supabaseClient
-        .from('InvoicePaymentView')
+        .from('VendorBillPaymentView')
         .select('*', { count: 'exact' })
         .eq('company_id', CompanyID)
-        .order('InvoiceNo', { ascending: false });
+        .order('BillReferenceNo', { ascending: false });
 
-    // -----------------------------
-    // Non-date filters
-    // -----------------------------
-    if (filters.invoiceNo) {
-        query = query.ilike('InvoiceNo', `%${filters.invoiceNo}%`);
+    // text filters
+    if (filters.billReferenceNo) {
+        query = query.ilike('BillReferenceNo', `%${filters.billReferenceNo}%`);
     }
 
-    if (filters.customerName) {
-        query = query.ilike('PartyName', `%${filters.customerName}%`);
+    if (filters.vendorName) {
+        query = query.ilike('PartyName', `%${filters.vendorName}%`);
     }
 
-    if (filters.invoiceType) {
-        query = query.ilike('InvoiceType', `%${filters.invoiceType}%`);
+    if (filters.billNo) {
+        query = query.ilike('BillNo', `%${filters.billNo}%`);
+    }
+
+    if (filters.expenseType) {
+        query = query.ilike('ExpenseType', `%${filters.expenseType}%`);
+    }
+
+    if (filters.expenseFor) {
+        query = query.ilike('ExpenseFor', `%${filters.expenseFor}%`);
     }
 
     if (filters.paymentStatus) {
         query = query.ilike('PaymentStatus', `%${filters.paymentStatus}%`);
     }
 
-    // -----------------------------
-    // Check date-related filters
-    // -----------------------------
     const hasExplicitDateFilter =
         !!filters.startDate ||
         !!filters.endDate ||
-        !!filters.invoiceMonth ||
-        !!filters.invoiceYear ||
+        !!filters.billingMonth ||
+        !!filters.billingYear ||
         !!filters.financialYear;
 
-    // only customer name selected (no explicit date filters)
-    const onlyCustomerNameSelected =
-        !!filters.customerName &&
-        !filters.invoiceNo &&
-        !filters.invoiceType &&
+    const onlyVendorNameSelected =
+        !!filters.vendorName &&
+        !filters.billReferenceNo &&
+        !filters.billNo &&
+        !filters.expenseType &&
+        !filters.expenseFor &&
         !filters.paymentStatus &&
         !hasExplicitDateFilter;
 
-    // ---------------------------------------------------------
-    // CASE 1: Only customer name selected -> current FY
-    // ---------------------------------------------------------
-    if (onlyCustomerNameSelected) {
+    // only vendor selected => current FY
+    if (onlyVendorNameSelected) {
         const today = new Date();
         const currentYear = today.getFullYear();
-        const currentMonth = today.getMonth() + 1; // 1 to 12
+        const currentMonth = today.getMonth() + 1;
 
         let fyStartYear, fyEndYear;
 
         if (currentMonth >= 4) {
-            // Apr to Dec -> current FY starts this year
             fyStartYear = currentYear;
             fyEndYear = currentYear + 1;
         } else {
-            // Jan to Mar -> current FY started last year
             fyStartYear = currentYear - 1;
             fyEndYear = currentYear;
         }
 
         query = query
-            .gte('InvoiceDate', `${fyStartYear}-04-01`)
-            .lte('InvoiceDate', `${fyEndYear}-03-31`);
+            .gte('AccountedDate', `${fyStartYear}-04-01`)
+            .lte('AccountedDate', `${fyEndYear}-03-31`);
 
         return query;
     }
 
-    // ---------------------------------------------------------
-    // CASE 2: Explicit date filters given -> use them
-    // Priority:
-    // financialYear > invoiceYear > invoiceMonth > dateRange
-    // ---------------------------------------------------------
-
+    // financial year
     if (filters.financialYear) {
         const [startYear, endYear] = filters.financialYear.split('-').map(Number);
 
         if (!isNaN(startYear) && !isNaN(endYear)) {
             query = query
-                .gte('InvoiceDate', `${startYear}-04-01`)
-                .lte('InvoiceDate', `${endYear}-03-31`);
+                .gte('AccountedDate', `${startYear}-04-01`)
+                .lte('AccountedDate', `${endYear}-03-31`);
         }
-
         return query;
     }
 
-    if (filters.invoiceYear) {
-        const year = parseInt(filters.invoiceYear, 10);
+    // year
+    if (filters.billingYear) {
+        const year = parseInt(filters.billingYear, 10);
 
         if (!isNaN(year)) {
             query = query
-                .gte('InvoiceDate', `${year}-01-01`)
-                .lte('InvoiceDate', `${year}-12-31`);
+                .gte('AccountedDate', `${year}-01-01`)
+                .lte('AccountedDate', `${year}-12-31`);
         }
-
         return query;
     }
 
-    if (filters.invoiceMonth) {
-        const [yearStr, monthStr] = filters.invoiceMonth.split('-'); // YYYY-MM
+    // month
+    if (filters.billingMonth) {
+        const [yearStr, monthStr] = filters.billingMonth.split('-');
         const year = parseInt(yearStr, 10);
         const month = parseInt(monthStr, 10);
 
@@ -332,47 +357,33 @@ function buildQuery(filters = {}) {
             const end = new Date(year, month, 0).toISOString().split('T')[0];
 
             query = query
-                .gte('InvoiceDate', start)
-                .lte('InvoiceDate', end);
+                .gte('AccountedDate', start)
+                .lte('AccountedDate', end);
         }
-
         return query;
     }
 
+    // date range
     if (filters.startDate || filters.endDate) {
         if (filters.startDate) {
-            query = query.gte('InvoiceDate', filters.startDate);
+            query = query.gte('AccountedDate', filters.startDate);
         }
 
         if (filters.endDate) {
-            query = query.lte('InvoiceDate', filters.endDate);
+            query = query.lte('AccountedDate', filters.endDate);
         }
 
         return query;
     }
 
-    // ---------------------------------------------------------
-    // CASE 3: No date filters selected
-    // default -> last 2 months
-    // applies to:
-    // - no filters at all
-    // - invoiceType only
-    // - paymentStatus only
-    // - invoiceType + paymentStatus
-    // - invoiceNo only
-    // - customerName + invoiceType
-    // etc.
-    // ---------------------------------------------------------
+    // default last 2 months
     const today = new Date();
     const twoMonthsAgo = new Date();
     twoMonthsAgo.setMonth(today.getMonth() - 2);
 
-    const start = twoMonthsAgo.toISOString().split('T')[0];
-    const end = today.toISOString().split('T')[0];
-
     query = query
-        .gte('InvoiceDate', start)
-        .lte('InvoiceDate', end);
+        .gte('AccountedDate', twoMonthsAgo.toISOString().split('T')[0])
+        .lte('AccountedDate', today.toISOString().split('T')[0]);
 
     return query;
 }
@@ -416,20 +427,22 @@ async function renderTable(data) {
                 }
             }
         }
-
         tr.innerHTML = `
             <td>${(currentPage - 1) * pageSize + idx + 1}</td>
-            <td>${row.InvoiceNo || ''}</td>
-            <td>${formatDate(row.InvoiceDate) || ''}</td>
-            <td>${row.InvoiceType || ''}</td>
-            <td>${partyName || ''}</td>
-            <td class="text-end">${formatAmount(row.BasicAmount || '0')}</td>
-            <td class="text-end">${formatAmount(row.OtherAmount || '0')}</td>
+            <td>${row.BillReferenceNo || ''}</td>
+            <td>${formatDate(row.AccountedDate) || ''}</td>
+            <td>${row.ExpenseType || ''}</td>
+            <td>${row.ExpenseFor || ''}</td>
+            <td>${row.PartyName || ''}</td>
+            <td>${row.BillNo || ''}</td>
+            <td>${row.BillDate || ''}</td>
+            <td class="text-end">${formatAmount(row.NonTaxableAmount || '0')}</td>
+            <td class="text-end">${formatAmount(row.TaxableAmount || '0')}</td>
             <td class="text-end">${formatAmount(row.CGSTAmount || '0')}</td>
             <td class="text-end">${formatAmount(row.SGSTAmount || '0')}</td>
             <td class="text-end">${formatAmount(row.IGSTAmount || '0')}</td>
             <td class="text-end">${formatAmount(row.TotalGSTAmount || '0')}</td>
-            <td class="text-end">${formatAmount(row.GrandTotalAmount || '0')}</td>
+            <td class="text-end">${formatAmount(row.TotalAmount || '0')}</td>
             <td class="text-end">${formatAmount(row.PaymentAmount || '0')}</td>
             <td class="text-end">${formatAmount(row.OtherDeductionAmount || '0')}</td>
             <td class="text-end">${formatAmount(row.TDSDeductionAmount || '0')}</td>
@@ -437,7 +450,6 @@ async function renderTable(data) {
             <td class="text-end">${formatAmount(row.BalanceAmount || '0')}</td>
             <td>${row.PaymentStatus || ''}</td>
         `;
-
         tbody.appendChild(tr);
     }
 }
@@ -547,37 +559,32 @@ async function exportToExcel() {
     if (allData.length === 0) return alert('No data to export.');
 
     let tableHtml = `<table><thead><tr>
-        <th>Sr No</th><th>Invoice No</th><th>Invoice Date</th><th>Invoice Type</th><th>Customer Name</th>
-        <th>Basic Amount</th><th>Other Amount</th><th>CGST Amount</th><th>SGST Amount</th><th>IGST Amount</th>
-        <th>Total GST Amount</th><th>Grand Total Amount</th><th>Collected Amount</th><th>Other Deduction Amount</th>
-        <th>TDS Deduction Amount</th><th>Total Payment Amount</th><th>Balance Amount</th><th>Payment Status</th></tr></thead><tbody>`;
+        <th>Sr No</th><th>Bill Reference No</th><th>Accounted Date</th><th>Expense Type</th><th>Expense For</th>
+        <th>Vendor Name</th><th>Non-Taxable Amount/th><th>Taxable Amount</th><th>CGST Amount</th><th>SGST Amount</th>
+        <th>IGST Amount</th><th>Total GST Amount</th><th>Grand Total Amount</th><th>Collected Amount</th>
+        <th>Other Deduction Amount</th><th>TDS Deduction Amount</th><th>Total Payment Amount</th>
+        <th>Balance Amount</th><th>Payment Status</th></tr></thead><tbody>`;
 
     for (let i = 0; i < allData.length; i++) {
         const row = allData[i];
-        let partyName = '';
-        if (row.PartyCode) {
-            if (partyNameCache[row.PartyCode]) {
-                partyName = partyNameCache[row.PartyCode];
-            } else {
-                const details = await getPartyDetailsByCode(row.PartyCode);
-                partyName = details?.PartyName || '';
-                partyNameCache[row.PartyCode] = partyName;
-            }
-        }
 
         tableHtml += `<tr>
             <td>${i + 1}</td>
-            <td>${row.InvoiceNo || ''}</td>
-            <td>${row.InvoiceDate || ''}</td>
-            <td>${row.InvoiceType || ''}</td>
-            <td>${partyName}</td>
-            <td>${row.BasicAmount || '0'}</td>
-            <td>${row.OtherAmount || '0'}</td>
+            <td>${row.BillReferenceNo || ''}</td>
+            <td>${row.AccountedDate || ''}</td>
+            <td>${row.ExpenseType || ''}</td>
+            <td>${row.ExpenseFor}</td>
+            <td>${row.PartyName}</td>
+            td>${row.BillNo || ''}</td>
+            <td>${row.BillDate || ''}</td>
+            td>${row.DueDate || '0'}</td>
+            <td>${row.NonTaxableAmount || '0'}</td>
+            <td>${row.TaxableAmount || '0'}</td>
             <td>${row.CGSTAmount || '0'}</td>
             <td>${row.SGSTAmount || '0'}</td>
             <td>${row.IGSTAmount || '0'}</td>
             <td>${row.TotalGSTAmount || '0'}</td>
-            <td>${row.GrandTotalAmount || '0'}</td>
+            <td>${row.TotalAmount || '0'}</td>
             <td>${row.PaymentAmount || '0'}</td>
             <td>${row.OtherDeductionAmount || '0'}</td>
             <td>${row.TDSDeductionAmount || '0'}</td>
@@ -590,8 +597,8 @@ async function exportToExcel() {
     tableHtml += `</tbody></table>`;
     const tempDiv = document.createElement('div');
     tempDiv.innerHTML = tableHtml;
-    const wb = XLSX.utils.table_to_book(tempDiv.querySelector('table'), { sheet: "Bookings" });
-    XLSX.writeFile(wb, 'InternationalBookings.xlsx');
+    const wb = XLSX.utils.table_to_book(tempDiv.querySelector('table'), { sheet: "Vendor Billing" });
+    XLSX.writeFile(wb, 'vendorBilling.xlsx');
 }
 
 // PDF Export Function with PartyName
@@ -669,20 +676,22 @@ async function fetchAllFilteredData(filters = {}) {
 
     while (hasMore) {
         let query = supabaseClient
-            .from('InvoicePaymentView')
+            .from('VendorBillPaymentView')
             .select('*')
             .eq('company_id', CompanyID)
-            .order('InvoiceNo', { ascending: true });
+            .order('BillReferenceNo', { ascending: true });
 
-        if (filters.invoiceNo) query = query.ilike('InvoiceNo', `%${filters.invoiceNo}%`);
-        if (filters.customerName) query = query.ilike('PartyName', filters.customerName);
-        if (filters.invoiceType) query = query.ilike('InvoiceType', filters.invoiceType);
+        if (filters.billReferenceNo) query = query.ilike('BillReferenceNo', `%${filters.billReferenceNo}%`);
+        if (filters.vendorName) query = query.ilike('PartyName', filters.vendorName);
+        if (filters.billNo) query = query.ilike('BillNo', filters.billNo);
+        if (filters.expenseType) query = query.ilike('ExpenseType', filters.expenseType);
+        if (filters.expenseFor) query = query.ilike('ExpenseFor', filters.expenseFor);
         if (filters.paymentStatus) query = query.ilike('PaymentStatus', filters.paymentStatus);
-        if (filters.startDate) query = query.gte('InvoiceDate', filters.startDate);
-        if (filters.endDate) query = query.lte('InvoiceDate', filters.endDate);
+        if (filters.startDate) query = query.gte('AccountedDate', filters.startDate);
+        if (filters.endDate) query = query.lte('AccountedDate', filters.endDate);
         //Month filters
-        if (filters.invoiceMonth) {
-            let [monthStr, yearStr] = filters.invoiceMonth.split('-');
+        if (filters.billingMonth) {
+            let [monthStr, yearStr] = filters.billingMonth.split('-');
             // Fallback if format is "YYYY-MM"
             if (parseInt(monthStr) > 12) [yearStr, monthStr] = [monthStr, yearStr];
 
@@ -692,23 +701,23 @@ async function fetchAllFilteredData(filters = {}) {
             if (!isNaN(year) && !isNaN(month)) {
                 const start = new Date(year, month - 1, 1).toISOString().split('T')[0];
                 const end = new Date(year, month, 0).toISOString().split('T')[0];
-                query = query.gte('InvoiceDate', start).lte('InvoiceDate', end);
+                query = query.gte('AccountedDate', start).lte('AccountedDate', end);
             }
         }
         //Year filters
         // Else fallback to full year range if only invoiceYear is set
-        if (!filters.invoiceMonth && filters.invoiceYear) {
-            const year = parseInt(filters.invoiceYear);
+        if (!filters.billingMonth && filters.billingYear) {
+            const year = parseInt(filters.billingYear);
             if (!isNaN(year)) {
                 const start = new Date(year, 0, 1).toISOString().split('T')[0];   // Jan 1
                 const end = new Date(year, 11, 31).toISOString().split('T')[0];  // Dec 31
-                query = query.gte('InvoiceDate', start).lte('InvoiceDate', end);
+                query = query.gte('AccountedDate', start).lte('AccountedDate', end);
             }
         }
 
         if (filters.financialYear) {
             const [startYear, endYear] = filters.financialYear.split('-').map(Number);
-            query = query.gte('InvoiceDate', `${startYear}-04-01`).lte('InvoiceDate', `${endYear}-03-31`);
+            query = query.gte('AccountedDate', `${startYear}-04-01`).lte('AccountedDate', `${endYear}-03-31`);
         }
 
         const { data, error } = await query.range(from, to);
@@ -743,13 +752,13 @@ function formatAmount(value) {
 
 function updateCumulativeTotals(allData) {
     const totals = {
-        BasicAmount: 0,
-        OtherAmount: 0,
+        NonTaxableAmount: 0,
+        TaxableAmount: 0,
         CGSTAmount: 0,
         SGSTAmount: 0,
         IGSTAmount: 0,
         TotalGSTAmount: 0,
-        GrandTotalAmount: 0,
+        TotalAmount: 0,
         PaymentAmount: 0,
         OtherDeductionAmount: 0,
         TDSDeductionAmount: 0,
@@ -765,13 +774,13 @@ function updateCumulativeTotals(allData) {
     const cumulativeRows = allData.slice(0, endIndex);
 
     cumulativeRows.forEach(row => {
-        totals.BasicAmount += toNumber(row.BasicAmount);
-        totals.OtherAmount += toNumber(row.OtherAmount);
+        totals.NonTaxableAmount += toNumber(row.NonTaxableAmount);
+        totals.TaxableAmount += toNumber(row.TaxableAmount);
         totals.CGSTAmount += toNumber(row.CGSTAmount);
         totals.SGSTAmount += toNumber(row.SGSTAmount);
         totals.IGSTAmount += toNumber(row.IGSTAmount);
         totals.TotalGSTAmount += toNumber(row.TotalGSTAmount);
-        totals.GrandTotalAmount += toNumber(row.GrandTotalAmount);
+        totals.TotalAmount += toNumber(row.TotalAmount);
         totals.PaymentAmount += toNumber(row.PaymentAmount);
         totals.OtherDeductionAmount += toNumber(row.OtherDeductionAmount);
         totals.TDSDeductionAmount += toNumber(row.TDSDeductionAmount);
@@ -779,13 +788,13 @@ function updateCumulativeTotals(allData) {
         totals.BalanceAmount += toNumber(row.BalanceAmount);
     });
 
-    document.getElementById("totalBasicAmount").textContent = formatAmount(totals.BasicAmount);
-    document.getElementById("totalOtherAmount").textContent = formatAmount(totals.OtherAmount);
+    document.getElementById("totalNonTaxableAmount").textContent = formatAmount(totals.NonTaxableAmount);
+    document.getElementById("totalTaxableAmount").textContent = formatAmount(totals.TaxableAmount);
     document.getElementById("totalCGSTAmount").textContent = formatAmount(totals.CGSTAmount);
     document.getElementById("totalSGSTAmount").textContent = formatAmount(totals.SGSTAmount);
     document.getElementById("totalIGSTAmount").textContent = formatAmount(totals.IGSTAmount);
     document.getElementById("totalGSTAmount").textContent = formatAmount(totals.TotalGSTAmount);
-    document.getElementById("totalGrandTotal").textContent = formatAmount(totals.GrandTotalAmount);
+    document.getElementById("totalGrandTotal").textContent = formatAmount(totals.TotalAmount);
     document.getElementById("totalCollected").textContent = formatAmount(totals.PaymentAmount);
     document.getElementById("totalOtherDeduction").textContent = formatAmount(totals.OtherDeductionAmount);
     document.getElementById("totalTDSDeduction").textContent = formatAmount(totals.TDSDeductionAmount);
@@ -793,21 +802,3 @@ function updateCumulativeTotals(allData) {
     document.getElementById("totalBalance").textContent = formatAmount(totals.BalanceAmount);
 }
 
-function setDefaultDateRange() {
-    const dateRangeInput = document.getElementById("dateRange");
-    if (!dateRangeInput) return;
-
-    const today = new Date();
-    const twoMonthsAgo = new Date();
-    twoMonthsAgo.setMonth(today.getMonth() - 2);
-
-    const formatDate = (date) => {
-        return date.toISOString().split("T")[0]; // YYYY-MM-DD
-    };
-
-    const startDate = formatDate(twoMonthsAgo);
-    const endDate = formatDate(today);
-
-    // Set flatpickr input value
-    dateRangeInput.value = `${startDate} to ${endDate}`;
-}
