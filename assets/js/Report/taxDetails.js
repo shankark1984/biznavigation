@@ -131,13 +131,13 @@ function renderTable(data) {
             <td>${row.CustomerName || ""}</td>
             <td>${row.State || ""}</td>
             <td>${row.GSTNo || ""}</td>
-            <td>${formatAmount(row.TotalInvoiceAmount)}</td>
             <td>${formatAmount(row.NonTaxableAmount)}</td>
             <td>${formatAmount(row.TaxableAmount)}</td>
             <td>${formatAmount(row.SGST)}</td>
             <td>${formatAmount(row.CGST)}</td>
             <td>${formatAmount(row.IGST)}</td>
             <td>${formatAmount(row.TotalGST)}</td>
+            <td>${formatAmount(row.TotalInvoiceAmount)}</td>
         </tr>
     `).join("");
 
