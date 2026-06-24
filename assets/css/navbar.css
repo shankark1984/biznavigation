@@ -665,3 +665,12 @@ body.page-exit {
 .dark-mode .sticky-header thead th {
     background: #1e293b;
 }
+
+body {
+    opacity: 1;
+    transition: opacity 0.15s ease;
+}
+
+body.page-exit {
+    opacity: 0;
+}

@@ -37,8 +37,8 @@ const Navbar = (() => {
                 children: [
                     { label: "Customer Invoice", icon: "bi-receipt", href: "/pages/Accounting/CustomerInvoice.html" },
                     { label: "Vendor Billing", icon: "bi-file-earmark-spreadsheet", href: "/pages/Accounting/VendorBilling.html" },
-                    { label: "Payments Credit", icon: "bi-arrow-down-circle", href: "/pages/Accounting/PaymentDetails_Credit.html?type=Credit" },
-                    { label: "Payment Debit", icon: "bi-arrow-up-circle", href: "/pages/Accounting/PaymentDetails_Debit.html?type=Debit" },
+                    { label: "Payments Credit", icon: "bi-arrow-down-circle", href: "/pages/Accounting/PaymentDetails_Credit.html" },
+                    { label: "Payment Debit", icon: "bi-arrow-up-circle", href: "/pages/Accounting/PaymentDetails_Debit.html" },
                     { label: "Credit or Debit Note", icon: "bi-journal-text", href: "/pages/Accounting/CreditDebitNote.html" }
                 ]
             },
@@ -151,6 +151,7 @@ const Navbar = (() => {
     // SIDEBAR RENDER
     // ==========================
     function renderSidebar() {
+        if (document.getElementById("sidebarMenu")) return; // ✅ STOP REBUILD
         const userName = localStorage.getItem(CONFIG.STORAGE_KEYS.USER_NAME) || "User";
 
         // Create sidebar container if it doesn't exist
@@ -210,6 +211,7 @@ const Navbar = (() => {
     // TOP NAVBAR
     // ==========================
     function createTopNavbar() {
+        if (document.getElementById("topNavbar")) return; // ✅ STOP REBUILD
         const userName = localStorage.getItem(CONFIG.STORAGE_KEYS.USER_NAME) || "User";
         const pageTitle = document.title || "Dashboard";
 
