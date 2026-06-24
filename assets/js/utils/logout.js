@@ -1,22 +1,20 @@
 const maxIdleTime = 5 * 60 * 1000; // 5 minutes
 let idleInterval = null;
 let sessionInterval = null;
+let isLoggingOut = false;
 
 /* ------------------ Activity Tracking ------------------ */
 
-// Update last activity time
 function updateLastActivityTime() {
     localStorage.setItem('lastActivityTime', Date.now());
 }
 
-// Check idle logout
 function checkIdleTime() {
+    if (isLoggingOut) return;
+
     const lastActivityTime = Number(localStorage.getItem('lastActivityTime') || 0);
     const currentTime = Date.now();
-    // console.log("Checking idle time:", {
-    //     lastActivityTime: new Date(lastActivityTime).toLocaleTimeString(),
-    //     currentTime: new Date(currentTime).toLocaleTimeString()
-    // });
+
     if (lastActivityTime && (currentTime - lastActivityTime >= maxIdleTime)) {
         logoutUser();
     }
@@ -24,14 +22,18 @@ function checkIdleTime() {
 
 /* ------------------ Session Validation ------------------ */
 
-// Run session validation every 30 seconds
 function startSessionValidation() {
     if (sessionInterval) clearInterval(sessionInterval);
 
-    sessionInterval = setInterval(() => {
-        checkSessionToken().catch(err =>
-            console.error("Session token check failed:", err)
-        );
+    sessionInterval = setInterval(async () => {
+        if (isLoggingOut) return;
+
+        try {
+            await checkSessionToken();
+        } catch (err) {
+            console.error("Session token check failed:", err);
+            // optional: logoutUser();
+        }
     }, 30000);
 }
 
@@ -39,36 +41,62 @@ function startSessionValidation() {
 
 function startIdleMonitor() {
     if (idleInterval) clearInterval(idleInterval);
-
     idleInterval = setInterval(checkIdleTime, 30000);
+}
+
+function stopSessionWatchers() {
+    if (idleInterval) {
+        clearInterval(idleInterval);
+        idleInterval = null;
+    }
+
+    if (sessionInterval) {
+        clearInterval(sessionInterval);
+        sessionInterval = null;
+    }
 }
 
 /* ------------------ Logout ------------------ */
 
 async function logoutUser() {
-    await logoutlocalstorage();
+    if (isLoggingOut) return;
+    isLoggingOut = true;
 
-    // notify other tabs
+    stopSessionWatchers();
+
+    // notify other tabs first
     localStorage.setItem('logout-event', Date.now());
+
+    await logoutlocalstorage();
 }
 
 async function logoutlocalstorage() {
+    const userLoginID = localStorage.getItem('UserLoginID');
 
-    await logoutOtherSessions(UserLoginID);
+    try {
+        if (userLoginID) {
+            await logoutOtherSessions(userLoginID);
+        }
+    } catch (error) {
+        console.error("Logout session cleanup failed:", error);
+    } finally {
+        if (userLoginID) {
+            clearPermissionCache(userLoginID);
+        }
 
-    clearPermissionCache(localStorage.getItem('UserLoginID'));
+        localStorage.removeItem('EmpCode');
+        localStorage.removeItem('UserName');
+        localStorage.removeItem('UserLoginID');
+        localStorage.removeItem('UserType');
+        localStorage.removeItem('CompanyID');
+        localStorage.removeItem('WorkingBranch');
+        localStorage.removeItem('CompanyShortCode');
+        localStorage.removeItem('lastActivityTime');
 
-    localStorage.removeItem('EmpCode');
-    localStorage.removeItem('UserName');
-    localStorage.removeItem('UserLoginID');
-    localStorage.removeItem('UserType');
-    localStorage.removeItem('CompanyID');
-    localStorage.removeItem('WorkingBranch');
-    localStorage.removeItem('CompanyShortCode');
+        sessionStorage.removeItem('session_token');
 
-    sessionStorage.removeItem('session_token');
-
-    window.location.href = '../../index.html';
+        window.location.href = '../../index.html';
+    }
 }
 
 function clearPermissionCache(userLoginID) {
@@ -82,7 +110,7 @@ function clearPermissionCache(userLoginID) {
 /* ------------------ Multi-Tab Logout Sync ------------------ */
 
 window.addEventListener('storage', function (event) {
-    if (event.key === 'logout-event') {
+    if (event.key === 'logout-event' && localStorage.getItem('UserLoginID')) {
         window.location.href = '../../index.html';
     }
 });
@@ -90,8 +118,6 @@ window.addEventListener('storage', function (event) {
 /* ------------------ Initialize ------------------ */
 
 document.addEventListener("DOMContentLoaded", async () => {
-
-    // activity listeners
     ['mousemove', 'keydown', 'mousedown', 'touchstart', 'scroll']
         .forEach(evt =>
             window.addEventListener(evt, updateLastActivityTime, { passive: true })
@@ -99,7 +125,10 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     updateLastActivityTime();
 
-    startIdleMonitor();        // idle logout checker
-    startSessionValidation();  // session token checker
-    await autoUnlockMultipleTables(); // Unlock any records that might be locked from previous sessions
+    startIdleMonitor();
+    startSessionValidation();
+
+    if (localStorage.getItem('UserLoginID')) {
+        await autoUnlockMultipleTables();
+    }
 });

@@ -81,13 +81,14 @@ const Navbar = (() => {
     };
 
     function getPermissionStorageKey(userLoginID) {
-        return `permissions_${userLoginID}`;
+        return `permissions_${userLoginID}_menu`;
     }
     // ==========================
     // STATE
     // ==========================
-    let permissionsCache = null;
     let isSidebarOpen = false;
+    let mobileSidebarBound = false;
+    let globalNavigationBound = false;
 
     // ==========================
     // DOM REFS
@@ -109,8 +110,19 @@ const Navbar = (() => {
         ensureMainContent();
 
         renderSidebar();
+        setupLogoNavigation();
         createTopNavbar();
+        const lastPermissionUser = localStorage.getItem("LastPermissionUser");
 
+        if (lastPermissionUser && lastPermissionUser !== userLoginID) {
+            Object.keys(localStorage).forEach(key => {
+                if (key.startsWith("permissions_")) {
+                    localStorage.removeItem(key);
+                }
+            });
+        }
+
+        localStorage.setItem("LastPermissionUser", userLoginID);
         await applyPermissions(userLoginID); // apply permissions first
 
         setupMobileSidebar();
@@ -250,90 +262,88 @@ const Navbar = (() => {
             return;
         }
 
-        // Remove any existing event listeners by cloning
         const newToggleBtn = toggleBtn.cloneNode(true);
         toggleBtn.parentNode.replaceChild(newToggleBtn, toggleBtn);
 
-        // Toggle sidebar on button click
         newToggleBtn.addEventListener("click", (e) => {
             e.stopPropagation();
             isSidebarOpen = !isSidebarOpen;
-            sidebar.classList.toggle("show");
+            sidebar.classList.toggle("show", isSidebarOpen);
 
-            // Update button icon
             const icon = newToggleBtn.querySelector("i");
             if (icon) {
                 icon.className = isSidebarOpen ? "bi bi-x-lg" : "bi bi-list";
             }
         });
 
-        // Close sidebar when clicking outside
-        document.addEventListener("click", (e) => {
-            if (isSidebarOpen &&
-                !sidebar.contains(e.target) &&
-                !newToggleBtn.contains(e.target)) {
-                sidebar.classList.remove("show");
-                isSidebarOpen = false;
-                const icon = newToggleBtn.querySelector("i");
-                if (icon) {
-                    icon.className = "bi bi-list";
-                }
-            }
-        });
-
-        // Mobile theme toggle
         const mobileThemeToggle = document.getElementById("mobileThemeToggle");
         if (mobileThemeToggle) {
-            mobileThemeToggle.addEventListener("click", () => {
+            mobileThemeToggle.onclick = () => {
                 document.getElementById("themeToggle")?.click();
-            });
+            };
         }
 
-        // Mobile logout
         const mobileLogoutBtn = document.getElementById("mobileLogoutBtn");
         if (mobileLogoutBtn) {
-            mobileLogoutBtn.addEventListener("click", () => {
+            mobileLogoutBtn.onclick = () => {
                 document.getElementById("logoutBtn")?.click();
-            });
+            };
         }
 
-        // Close sidebar on window resize (if switching to desktop)
-        window.addEventListener("resize", () => {
-            if (window.innerWidth >= 768 && isSidebarOpen) {
-                sidebar.classList.remove("show");
-                isSidebarOpen = false;
-                const icon = newToggleBtn.querySelector("i");
-                if (icon) {
-                    icon.className = "bi bi-list";
-                }
-            }
-        });
-    }
+        if (!mobileSidebarBound) {
+            document.addEventListener("click", (e) => {
+                const currentSidebar = document.getElementById("sidebarMenu");
+                const currentToggleBtn = document.getElementById("toggleSidebar");
 
+                if (
+                    isSidebarOpen &&
+                    currentSidebar &&
+                    !currentSidebar.contains(e.target) &&
+                    !currentToggleBtn?.contains(e.target)
+                ) {
+                    currentSidebar.classList.remove("show");
+                    isSidebarOpen = false;
+
+                    const icon = currentToggleBtn?.querySelector("i");
+                    if (icon) icon.className = "bi bi-list";
+                }
+            });
+
+            window.addEventListener("resize", () => {
+                const currentSidebar = document.getElementById("sidebarMenu");
+                const currentToggleBtn = document.getElementById("toggleSidebar");
+
+                if (window.innerWidth >= 768 && isSidebarOpen) {
+                    currentSidebar?.classList.remove("show");
+                    isSidebarOpen = false;
+
+                    const icon = currentToggleBtn?.querySelector("i");
+                    if (icon) icon.className = "bi bi-list";
+                }
+            });
+
+            mobileSidebarBound = true;
+        }
+    }
     // ==========================
     // MENU TOGGLE
     // ==========================
     function setupMenuToggle() {
-        const menuGroups = getElements(".menu-group");
+        const menuGroups = [...getElements(".menu-group")]
+            .filter(group => group.style.display !== "none");
 
-        getElements(".menu-title").forEach(el => {
-            el.onclick = () => {
-                const parent = el.parentElement;
-                const isOpen = parent.classList.contains("open");
+        menuGroups.forEach(group => {
+            const title = group.querySelector(".menu-title");
+            if (!title) return;
 
-                // Close all other menus
-                menuGroups.forEach(group => {
-                    if (group !== parent) {
-                        group.classList.remove("open");
-                    }
+            title.onclick = () => {
+                const isOpen = group.classList.contains("open");
+
+                menuGroups.forEach(other => {
+                    if (other !== group) other.classList.remove("open");
                 });
 
-                // Toggle current
-                if (!isOpen) {
-                    parent.classList.add("open");
-                } else {
-                    parent.classList.remove("open");
-                }
+                group.classList.toggle("open", !isOpen);
             };
         });
     }
@@ -342,58 +352,69 @@ const Navbar = (() => {
     // ACTIVE MENU
     // ==========================
     function setActiveMenu() {
-        const currentPath = window.location.pathname.toLowerCase();
+        const currentUrl = new URL(window.location.href);
+        const currentPath = currentUrl.pathname.toLowerCase();
+        const currentType = (currentUrl.searchParams.get("type") || "").toLowerCase();
 
         getElements(".menu-item").forEach(item => {
-            const href = item.dataset.href.toLowerCase();
+            const href = item.dataset.href;
 
-            if (currentPath === href) {
+            item.onclick = (e) => {
+                e.preventDefault();
+                navigateWithAnimation(href);
+            };
+
+            if (!href || href === "#") return;
+
+            const itemUrl = new URL(href, window.location.origin);
+            const itemPath = itemUrl.pathname.toLowerCase();
+            const itemType = (itemUrl.searchParams.get("type") || "").toLowerCase();
+
+            const isMatch = currentPath === itemPath && currentType === itemType;
+
+            if (isMatch) {
                 item.classList.add("active");
                 const group = item.closest(".menu-group");
                 if (group) group.classList.add("open");
 
-                // Update breadcrumb
                 const breadcrumb = document.getElementById("breadcrumb");
                 if (breadcrumb) {
-                    breadcrumb.innerHTML = `<div class="breadcrumb-box">Home / ${item.innerText}</div>`;
+                    breadcrumb.innerHTML = `<div class="breadcrumb-box">Home / ${item.dataset.label}</div>`;
                 }
             }
-
-            item.onclick = (e) => {
-                e.preventDefault();
-                navigateWithAnimation(item.dataset.href);
-            };
         });
     }
-
     // ==========================
     // PERMISSIONS
     // ==========================
     async function applyPermissions(userLoginID) {
-        const permissionKey = getPermissionStorageKey(userLoginID);
-        let permissions = JSON.parse(localStorage.getItem(permissionKey));
+        const permissions = await fetchPermissions(userLoginID);
 
-        if (!permissions) {
-            permissions = await fetchPermissions(userLoginID);
-            localStorage.setItem(permissionKey, JSON.stringify(permissions));
-        }
+        localStorage.setItem(getPermissionStorageKey(userLoginID), JSON.stringify(permissions));
 
         getElements(".menu-item").forEach(item => {
-            const id = generateFormID(item.dataset.href);
+            const href = (item.dataset.href || "").trim();
 
-            if (!permissions[id]?.CanRead) {
+            // Hide if no usable page link
+            if (!href || href === "#") {
                 item.style.display = "none";
-            } else {
-                item.style.display = "";
+                return;
             }
+
+            const formID = generateFormID(href);
+            const permission = permissions?.[formID];
+
+            // Show only if permission exists AND CanRead is true
+            const canRead = permission && permission.CanRead === true;
+            item.style.display = canRead ? "" : "none";
         });
 
-        // Hide empty menu groups
+        // Hide full menu group if all child items are hidden
         getElements(".menu-group").forEach(group => {
             const visibleItems = [...group.querySelectorAll(".menu-item")]
                 .filter(item => item.style.display !== "none");
 
-            group.style.display = visibleItems.length ? "" : "none";
+            group.style.display = visibleItems.length > 0 ? "" : "none";
         });
     }
 
@@ -454,12 +475,24 @@ const Navbar = (() => {
     function navigateWithAnimation(href) {
         if (!href || href === "#") return;
 
+        const targetUrl = new URL(href, window.location.origin);
+        const currentUrl = new URL(window.location.href);
+
+        if (
+            targetUrl.pathname === currentUrl.pathname &&
+            targetUrl.search === currentUrl.search
+        ) {
+            document.getElementById("sidebarMenu")?.classList.remove("show");
+            isSidebarOpen = false;
+            return;
+        }
+
         document.getElementById("sidebarMenu")?.classList.remove("show");
         document.body.classList.remove("page-enter");
         document.body.classList.add("page-exit");
 
         setTimeout(() => {
-            window.location.href = href;
+            window.location.href = targetUrl.pathname + targetUrl.search;
         }, CONFIG.TRANSITION_DURATION);
     }
 
@@ -467,22 +500,26 @@ const Navbar = (() => {
     // GLOBAL NAVIGATION
     // ==========================
     function setupGlobalNavigation() {
+        if (globalNavigationBound) return;
+
         document.addEventListener("click", (e) => {
             const link = e.target.closest("a[href]");
-            const menuItem = e.target.closest(".menu-item");
-            let href = null;
+            if (!link) return;
 
-            if (link?.href && link.href.startsWith(window.location.origin)) {
-                href = link.href;
-            } else if (menuItem?.dataset.href) {
-                href = menuItem.dataset.href;
-            }
+            if (link.closest(".logo-box")) return;
 
-            if (href && href !== "#" && !e.target.closest("#toggleSidebar")) {
-                e.preventDefault();
-                navigateWithAnimation(href);
-            }
+            const href = link.getAttribute("href");
+            if (!href || href === "#" || href.startsWith("javascript:")) return;
+
+            const url = new URL(link.href, window.location.origin);
+
+            if (url.origin !== window.location.origin) return;
+
+            e.preventDefault();
+            navigateWithAnimation(url.pathname + url.search);
         });
+
+        globalNavigationBound = true;
     }
 
     // ==========================
@@ -496,38 +533,34 @@ const Navbar = (() => {
             document.body.classList.toggle("dark-mode");
             const isDark = document.body.classList.contains("dark-mode");
             localStorage.setItem(CONFIG.STORAGE_KEYS.THEME, isDark ? "dark" : "light");
+            syncThemeIcons();
         };
     }
 
     function applySavedTheme() {
         const theme = localStorage.getItem(CONFIG.STORAGE_KEYS.THEME);
-        if (theme === "dark") {
-            document.body.classList.add("dark-mode");
-        }
+        document.body.classList.toggle("dark-mode", theme === "dark");
+        syncThemeIcons();
     }
 
+    function syncThemeIcons() {
+        const isDark = document.body.classList.contains("dark-mode");
+        const iconClass = isDark ? "bi bi-sun" : "bi bi-moon";
+
+        document.querySelectorAll("#themeToggle i, #mobileThemeToggle i").forEach(icon => {
+            icon.className = iconClass;
+        });
+    }
     // ==========================
     // LOGOUT
     // ==========================
     function setupLogout() {
-        document.getElementById("logoutBtn")?.addEventListener("click", async () => {
-            const user = JSON.parse(localStorage.getItem("user"));
-            const userLoginID = localStorage.getItem(CONFIG.STORAGE_KEYS.USER_ID);
+        const btn = document.getElementById("logoutBtn");
+        if (!btn) return;
 
-            if (user?.id) {
-                await logoutOtherSessions(user.id);
-            }
-
-            if (userLoginID) {
-                localStorage.removeItem(getPermissionStorageKey(userLoginID));
-            }
-
-            localStorage.removeItem(CONFIG.STORAGE_KEYS.USER_ID);
-            localStorage.removeItem(CONFIG.STORAGE_KEYS.USER_NAME);
-            localStorage.removeItem("user");
-
-            logoutUser();
-        });
+        btn.onclick = async () => {
+            await logoutUser();
+        };
     }
 
     // ==========================
@@ -578,6 +611,15 @@ const Navbar = (() => {
         return href.split("/").pop().replace(".html", "");
     }
 
+    function setupLogoNavigation() {
+        const logoLink = document.getElementById("homeLogoLink");
+        if (!logoLink) return;
+
+        logoLink.onclick = (e) => {
+            e.preventDefault();
+            navigateWithAnimation("/pages/Tools/home.html");
+        };
+    }
     async function fetchPermissions(userLoginID) {
         try {
             const { data, error } = await supabaseClient
@@ -608,23 +650,3 @@ const Navbar = (() => {
 document.addEventListener("DOMContentLoaded", () => {
     Navbar.init();
 });
-
-
-async function handleLogout() {
-    const user = JSON.parse(localStorage.getItem("user"));
-    const userLoginID = localStorage.getItem(CONFIG.STORAGE_KEYS.USER_ID);
-
-    if (user?.id) {
-        await logoutOtherSessions(user.id);
-    }
-
-    if (userLoginID) {
-        localStorage.removeItem(getPermissionStorageKey(userLoginID));
-    }
-
-    localStorage.removeItem(CONFIG.STORAGE_KEYS.USER_ID);
-    localStorage.removeItem(CONFIG.STORAGE_KEYS.USER_NAME);
-    localStorage.removeItem("user");
-
-    logoutUser();
-}
