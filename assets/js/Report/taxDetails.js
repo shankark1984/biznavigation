@@ -332,10 +332,6 @@ async function fetchAllFilteredData(filters = {}) {
                 query = query
                     .gte('InvoiceDate', startDate)
                     .lte('InvoiceDate', endDate);
-
-                console.log('Month Filter:', filters.invoiceMonth);
-                console.log('Start Date:', startDate);
-                console.log('End Date:', endDate);
             }
         }
 
@@ -434,7 +430,7 @@ async function exportToExcel() {
     const tempDiv = document.createElement('div');
     tempDiv.innerHTML = tableHtml;
     const wb = XLSX.utils.table_to_book(tempDiv.querySelector('table'), { sheet: "Bookings" });
-    XLSX.writeFile(wb, 'InternationalBookings.xlsx');
+    XLSX.writeFile(wb, 'GSTReport.xlsx');
 }
 
 // PDF Export Function
@@ -600,7 +596,7 @@ async function exportToPdf() {
             doc.setFontSize(12);
             doc.setFont(undefined, 'bold');
             doc.text(
-                'Customer Invoice Report',
+                'GST Invoice Report',
                 data.settings.margin.left,
                 10
             );
@@ -618,5 +614,5 @@ async function exportToPdf() {
     // ==========================
     // SAVE PDF
     // ==========================
-    doc.save('CustomerInvoiceReport.pdf');
+    doc.save('GST Invoice Report.pdf');
 }
