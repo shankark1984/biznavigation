@@ -76,11 +76,13 @@ const Navbar = (() => {
         STORAGE_KEYS: {
             USER_ID: "UserLoginID",
             USER_NAME: "UserName",
-            PERMISSIONS: "permissions",
             THEME: "theme"
         }
     };
 
+    function getPermissionStorageKey(userLoginID) {
+        return `permissions_${userLoginID}`;
+    }
     // ==========================
     // STATE
     // ==========================
@@ -104,24 +106,21 @@ const Navbar = (() => {
             return;
         }
 
-        // Ensure main-content exists
         ensureMainContent();
 
         renderSidebar();
         createTopNavbar();
-        setupMobileSidebar(); // MUST be called AFTER top navbar is created
+
+        await applyPermissions(userLoginID); // apply permissions first
+
+        setupMobileSidebar();
         setupMenuToggle();
         setActiveMenu();
-        await applyPermissions(userLoginID);
-
-        // Initialize all features
         setupPageTransitions();
         createCollapseButton();
         setupSidebarHoverExpand();
         createFooter();
         setupGlobalNavigation();
-
-        // Apply saved theme
         applySavedTheme();
     }
 
@@ -371,18 +370,30 @@ const Navbar = (() => {
     // PERMISSIONS
     // ==========================
     async function applyPermissions(userLoginID) {
-        let permissions = JSON.parse(localStorage.getItem(CONFIG.STORAGE_KEYS.PERMISSIONS));
+        const permissionKey = getPermissionStorageKey(userLoginID);
+        let permissions = JSON.parse(localStorage.getItem(permissionKey));
 
         if (!permissions) {
             permissions = await fetchPermissions(userLoginID);
-            localStorage.setItem(CONFIG.STORAGE_KEYS.PERMISSIONS, JSON.stringify(permissions));
+            localStorage.setItem(permissionKey, JSON.stringify(permissions));
         }
 
         getElements(".menu-item").forEach(item => {
             const id = generateFormID(item.dataset.href);
+
             if (!permissions[id]?.CanRead) {
                 item.style.display = "none";
+            } else {
+                item.style.display = "";
             }
+        });
+
+        // Hide empty menu groups
+        getElements(".menu-group").forEach(group => {
+            const visibleItems = [...group.querySelectorAll(".menu-item")]
+                .filter(item => item.style.display !== "none");
+
+            group.style.display = visibleItems.length ? "" : "none";
         });
     }
 
@@ -501,12 +512,20 @@ const Navbar = (() => {
     function setupLogout() {
         document.getElementById("logoutBtn")?.addEventListener("click", async () => {
             const user = JSON.parse(localStorage.getItem("user"));
+            const userLoginID = localStorage.getItem(CONFIG.STORAGE_KEYS.USER_ID);
 
             if (user?.id) {
                 await logoutOtherSessions(user.id);
             }
 
-            localStorage.clear();
+            if (userLoginID) {
+                localStorage.removeItem(getPermissionStorageKey(userLoginID));
+            }
+
+            localStorage.removeItem(CONFIG.STORAGE_KEYS.USER_ID);
+            localStorage.removeItem(CONFIG.STORAGE_KEYS.USER_NAME);
+            localStorage.removeItem("user");
+
             logoutUser();
         });
     }
@@ -586,4 +605,26 @@ const Navbar = (() => {
 // ==========================
 // BOOTSTRAP
 // ==========================
-document.addEventListener("DOMContentLoaded", Navbar.init);
+document.addEventListener("DOMContentLoaded", () => {
+    Navbar.init();
+});
+
+
+async function handleLogout() {
+    const user = JSON.parse(localStorage.getItem("user"));
+    const userLoginID = localStorage.getItem(CONFIG.STORAGE_KEYS.USER_ID);
+
+    if (user?.id) {
+        await logoutOtherSessions(user.id);
+    }
+
+    if (userLoginID) {
+        localStorage.removeItem(getPermissionStorageKey(userLoginID));
+    }
+
+    localStorage.removeItem(CONFIG.STORAGE_KEYS.USER_ID);
+    localStorage.removeItem(CONFIG.STORAGE_KEYS.USER_NAME);
+    localStorage.removeItem("user");
+
+    logoutUser();
+}
