@@ -32,7 +32,7 @@ class SupabaseService {
                     .limit(1);
 
                 if (error) throw error;
-             
+
                 // console.log("Supabase connection successful");
                 return true;
             } catch (error) {
@@ -166,7 +166,7 @@ async function logoutOtherSessions(userId) {
             .eq('user_id', userId);
 
         if (error) throw error;
-
+        // alert('Logout other sessions successful');
         return { success: true };
     } catch (err) {
         console.error('Logout other sessions failed:', err);
