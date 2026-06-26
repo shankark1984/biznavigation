@@ -32,6 +32,7 @@ async function loadCustomerInvoices() {
         .from("InvoicePaymentView")
         .select("InvoiceNo")
         .eq("company_id", CompanyID)
+        .neq("PaymentStatus", 'Paid') // not paid    
         .order("InvoiceNo");
 
     if (error) {
@@ -45,6 +46,7 @@ async function loadCustomerInvoices() {
         datalist.innerHTML += `
             <option value="${row.InvoiceNo}">
         `;
+        console.log(row.InvoiceNo);
     });
 }
 
@@ -54,6 +56,7 @@ async function loadVendorBills() {
         .from("VendorBillPaymentView")
         .select("BillReferenceNo")
         .eq("company_id", CompanyID)
+        .neq("PaymentStatus", 'Paid') // not paid   
         .order("BillReferenceNo");
 
     if (error) {
@@ -67,5 +70,6 @@ async function loadVendorBills() {
         datalist.innerHTML += `
             <option value="${row.BillReferenceNo}">
         `;
+        console.log(row.BillReferenceNo);
     });
 }
