@@ -633,7 +633,7 @@ async function savePaymentLineItems(paymentID) {
             PaymentAmount: parseFloat(row.cells[3].textContent) || 0,
             OtherDeductionAmount: parseFloat(row.cells[4].textContent) || 0,
             TDSDeductionAmount: parseFloat(row.cells[5].textContent) || 0,
-            TotalPaymentAmount: parseFloat(row.cells[6].textContent) || 0,
+            // TotalPaymentAmount: parseFloat(row.cells[6].textContent) || 0,
             company_id: CompanyID,
             created_by: UserLoginID,
             created_at: localtimeStamp
