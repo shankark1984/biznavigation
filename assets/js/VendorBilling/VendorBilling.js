@@ -375,6 +375,7 @@ newButton.addEventListener("click", async () => {
     if (modifyButton) {
         modifyButton.disabled = true;
     }
+    document.getElementById("addChargesDetails").disabled = false;
     document.getElementById("billReferenceNo").value = "";
     // Focus first field
     document.getElementById("billReferenceNo")?.focus();
@@ -558,10 +559,7 @@ function clearChargesInputs() {
 }
 
 async function loadVendorBillingCharges(billReferenceNo) {
-
-    const tbody =
-        document.querySelector("#pendingShipmentTable tbody");
-
+    const tbody = document.querySelector("#pendingShipmentTable tbody");
     tbody.innerHTML = "";
 
     const { data, error } = await supabaseClient
@@ -575,35 +573,35 @@ async function loadVendorBillingCharges(billReferenceNo) {
         return;
     }
 
-    data.forEach((item, index) => {
-
+    for (const [index, item] of data.entries()) {
         const row = tbody.insertRow();
-
         row.dataset.chargeId = item.id;
 
+        // Wait for tax details
+        const taxData = await getTaxRatesById(item.TaxID);
+        const taxPercent = parseFloat(taxData.tax_rate) || 0;
+
         row.innerHTML = `
-<td>${index + 1}</td>
-<td>${item.ChargesType}</td>
-<td>${item.ShipmentNo}</td>
-<td>${item.TaxPercent}</td>
-<td class="text-end">${item.NonTaxableAmount}</td>
-<td class="text-end">${item.TaxableAmount}</td>
-<td class="text-end">${item.SGSTAmount}</td>
-<td class="text-end">${item.CGSTAmount}</td>
-<td class="text-end">${item.IGSTAmount}</td>
-<td class="text-end">${item.TotalGSTAmount}</td>
-<td class="text-end">${item.TotalAmount}</td>
-
-<td>
-    <button class="btn btn-danger btn-sm delete-row" disabled>
-        <i class="bi bi-trash"></i>
-    </button>
-</td>
-
-<td class="tax-id d-none">${item.TaxID}</td>
-<td class="status text-center d-none">Old</td>
-`;
-    });
+            <td>${index + 1}</td>
+            <td>${item.ChargesType}</td>
+            <td>${item.ShipmentNo}</td>
+            <td>${taxPercent.toFixed(2)}%</td>
+            <td class="text-end">${item.NonTaxableAmount.toFixed(2)}</td>
+            <td class="text-end">${item.TaxableAmount.toFixed(2)}</td>
+            <td class="text-end">${item.SGSTAmount.toFixed(2)}</td>
+            <td class="text-end">${item.CGSTAmount.toFixed(2)}</td>
+            <td class="text-end">${item.IGSTAmount.toFixed(2)}</td>
+            <td class="text-end">${item.TotalGSTAmount.toFixed(2)}</td>
+            <td class="text-end">${item.TotalAmount.toFixed(2)}</td>
+            <td>
+                <button class="btn btn-danger btn-sm delete-row" disabled>
+                    <i class="bi bi-trash"></i>
+                </button>
+            </td>
+            <td class="tax-id d-none">${item.TaxID}</td>
+            <td class="status text-center d-none">Old</td>
+        `;
+    }
 
     updateTotals();
 }

@@ -4,7 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Coming Soon</title>
+    <title>Credit or Debit Note</title>
+
     <!-- Bootstrap CSS & Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
@@ -18,29 +19,285 @@
 </head>
 
 <body class="bg-light">
-    <!-- 🔥 APP LAYOUT -->
     <div class="app-wrapper">
 
         <!-- Sidebar -->
         <div id="sidebar">
-            <!-- fallback -->
             <div class="text-center text-white p-3">Loading...</div>
         </div>
 
         <!-- Main Content -->
         <div class="main-content">
-
-            <!-- 🔥 PAGE CONTENT -->
             <div class="page-content">
-
-                <!-- YOUR EXISTING UI (UNCHANGED) -->
                 <div class="container-fluid mt-2">
-                    <img src="https://img.icons8.com/ios-filled/100/ffffff/under-construction.png" alt="Coming Soon"
-                        class="mb-4">
-                    <h1 class="coming-title">Credit/Debit Note</h1>
-                    <p class="coming-subtitle">This feature is under development. Stay tuned!</p>
-                    <a href="../../pages/Tools/home.html" class="btn btn-light btn-lg">Back to Home</a>
+                    <div class="card shadow-lg rounded">
+                        <div class="card-body">
+                            <form class="invoiceForm">
+
+                                <!-- Action Buttons -->
+                                <div class="d-flex flex-wrap gap-1 mb-3">
+                                    <button type="button" class="btn btn-primary btn-sm" id="newButton"
+                                        title="Create new booking">
+                                        <i class="bi bi-file-earmark-plus"></i> New
+                                    </button>
+
+                                    <button type="button" class="btn btn-warning btn-sm" id="modifyButton" disabled
+                                        title="Modify booking">
+                                        <i class="bi bi-pencil"></i> Modify
+                                    </button>
+
+                                    <button type="button" class="btn btn-danger btn-sm" id="deleteButton" disabled
+                                        title="Delete booking">
+                                        <i class="bi bi-trash"></i> Delete
+                                    </button>
+
+                                    <button type="button" class="btn btn-info btn-sm" id="reportButton" disabled>
+                                        <i class="bi bi-printer"></i> Print
+                                    </button>
+
+                                    <button id="saveButton" class="btn btn-primary btn-sm" type="button"
+                                        data-mode="insert">
+                                        <span id="saveSpinnerBtn"
+                                            class="spinner-border spinner-border-sm me-2 d-none"></span>
+                                        <i class="bi bi-save"></i> Save
+                                    </button>
+
+                                    <div id="saveSpinnerOverlay" class="spinner-border text-primary d-none"></div>
+
+                                    <input type="text" class="form-control bg-light d-none" id="status" value="New"
+                                        readonly>
+
+                                    <!-- Hidden Fields -->
+                                    <input type="hidden" id="tempFormID">
+                                    <input type="hidden" id="partyCode">
+                                    <input type="hidden" id="bankIDs">
+                                </div>
+
+                                <!-- ===================== CREDIT / DEBIT NOTE DETAILS ===================== -->
+                                <div class="border rounded p-3 bg-white mb-3">
+                                    <h5 class="fw-bold text-primary border-bottom pb-2 mb-3">
+                                        Credit or Debit Note Details
+                                    </h5>
+
+                                    <div class="row g-2">
+                                        <!-- Note Type -->
+                                        <div class="col-md-2">
+                                            <label for="noteType" class="form-label">Note Type</label>
+                                            <select class="form-control" id="noteType" required>
+                                                <option value="">Choose...</option>
+                                                <option value="Credit Note">Credit Note</option>
+                                                <option value="Debit Note">Debit Note</option>
+                                            </select>
+                                        </div>
+
+                                        <!-- Note Number -->
+                                        <div class="col-md-2">
+                                            <label for="noteNo" class="form-label">Note No</label>
+                                            <input list="noteNoSuggestions" class="form-control" id="noteNo">
+                                            <datalist id="noteNoSuggestions"></datalist>
+                                        </div>
+
+                                        <!-- Note Date -->
+                                        <div class="col-md-2">
+                                            <label for="noteDate" class="form-label">Note Date</label>
+                                            <input type="date" class="form-control" id="noteDate" required>
+                                        </div>
+
+                                        <!-- Party -->
+                                        <div class="col-lg-4">
+                                            <label for="partyName" class="form-label">Party Name</label>
+                                            <input list="partySuggestions" class="form-control mb-2" id="partyName"
+                                                required placeholder="Choose..." autocomplete="off">
+                                            <datalist id="partySuggestions"></datalist>
+                                        </div>
+
+                                        <!-- Reference Type -->
+                                        <div class="col-md-2">
+                                            <label for="referenceType" class="form-label">Reference Type</label>
+                                            <select class="form-control" id="referenceType" required>
+                                                <option value="">Choose...</option>
+                                                <option value="Customer Invoice">Customer Invoice</option>
+                                                <option value="Vendor Bill">Vendor Bill</option>
+                                                <option value="Other">Other</option>
+                                            </select>
+                                        </div>
+
+                                        <!-- Reason -->
+                                        <div class="col-md-6">
+                                            <label for="reason" class="form-label">Reason</label>
+                                            <input type="text" class="form-control" id="reason" required>
+                                        </div>
+
+                                        <!-- Remarks -->
+                                        <div class="col-md-6">
+                                            <label for="remarks" class="form-label">Remarks</label>
+                                            <input type="text" class="form-control" id="remarks">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- ===================== ITEM DETAILS ===================== -->
+                                <div class="border rounded p-3 bg-white mb-3">
+                                    <h5 class="fw-bold text-primary border-bottom pb-2 mb-3">
+                                        Item Details
+                                    </h5>
+
+                                    <div class="row g-2">
+                                        <!-- Reference Invoice / Bill -->
+                                        <div class="col-md-2">
+                                            <label for="referenceInvoice" class="form-label">Reference Invoice /
+                                                Bill</label>
+                                            <input list="referenceInvoiceSuggestions" class="form-control"
+                                                id="referenceInvoice" required autocomplete="off">
+                                            <datalist id="referenceInvoiceSuggestions"></datalist>
+                                        </div>
+
+                                        <!-- Item -->
+                                        <div class="col-md-2">
+                                            <label for="item" class="form-label">Item</label>
+                                            <input list="itemSuggestions" class="form-control" id="item" required
+                                                autocomplete="off">
+                                            <datalist id="itemSuggestions"></datalist>
+                                        </div>
+
+                                        <!-- Description -->
+                                        <div class="col-md-4">
+                                            <label for="description" class="form-label">Description</label>
+                                            <input type="text" class="form-control" id="description" required>
+                                        </div>
+
+                                        <!-- Quantity -->
+                                        <div class="col-md-2">
+                                            <label for="quantity" class="form-label">Quantity</label>
+                                            <input type="number" class="form-control" id="quantity" required>
+                                        </div>
+
+                                        <!-- Full Amount -->
+                                        <div class="col-md-2">
+                                            <label for="fullAmount" class="form-label">Full Amount</label>
+                                            <input type="number" class="form-control" id="fullAmount" required>
+                                        </div>
+
+                                        <!-- Tax Rate -->
+                                        <div class="col-md-3 col-sm-4 text-start">
+                                            <label for="partyDefaultTax" class="form-label small">Tax Rate</label>
+                                            <select id="partyDefaultTax" class="form-control form-control-sm">
+                                                <option value="" disabled selected>Select Tax</option>
+                                            </select>
+                                        </div>
+
+                                        <!-- Total Amount -->
+                                        <div class="col-md-3 col-sm-4 text-start">
+                                            <label for="totalAmount" class="form-label small">Total Amount</label>
+                                            <input type="number" id="totalAmount" class="form-control form-control-sm"
+                                                readonly>
+                                        </div>
+
+                                        <!-- Add Row Button -->
+                                        <div class="col-md-2 col-sm-4 d-flex align-items-end">
+                                            <button type="button" id="addCreditDebitRow"
+                                                class="btn btn-sm btn-primary w-100">
+                                                Add Item
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- ===================== CREDIT / DEBIT DETAILS TABLE ===================== -->
+                                <div class="border rounded p-3 bg-white mt-4">
+                                    <h5 class="fw-bold text-primary border-bottom pb-2 mb-3">
+                                        Credit / Debit Details
+                                    </h5>
+
+                                    <div class="table-responsive">
+                                        <table
+                                            class="table table-sm table-bordered text-center align-middle small sticky-header"
+                                            id="pendingShipmentTable">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th>Sr No</th>
+                                                    <th>Item No</th>
+                                                    <th>Item Name</th>
+                                                    <th>Description</th>
+                                                    <th>HSN / SAC</th>
+                                                    <th>GST %</th>
+                                                    <th>CESS %</th>
+                                                    <th>No.<br>of Units</th>
+                                                    <th>Non-Taxable Amount</th>
+                                                    <th>Taxable Amount</th>
+                                                    <th>SGST<br>Amount</th>
+                                                    <th>CGST<br>Amount</th>
+                                                    <th>IGST<br>Amount</th>
+                                                    <th>CESS<br>Amount</th>
+                                                    <th>Total GST<br>Amount</th>
+                                                    <th>Total<br>Amount</th>
+                                                    <th>Action</th>
+                                                    <th class="d-none">cgst_percent</th>
+                                                    <th class="d-none">sgst_percent</th>
+                                                    <th class="d-none">igst_percent</th>
+                                                    <th class="d-none">Tax ID</th>
+                                                </tr>
+                                            </thead>
+
+                                            <tbody></tbody>
+
+                                            <tfoot class="table-light">
+                                                <tr id="totalsRow">
+                                                    <th colspan="8" class="text-end">Totals:</th>
+                                                    <th class="text-end" id="totalNonTaxAmt">0.00</th>
+                                                    <th class="text-end" id="totalTaxAmt">0.00</th>
+                                                    <th class="text-end" id="totalSGST">0.00</th>
+                                                    <th class="text-end" id="totalCGST">0.00</th>
+                                                    <th class="text-end" id="totalIGST">0.00</th>
+                                                    <th class="text-end" id="totalCESSAmt">0.00</th>
+                                                    <th class="text-end" id="totalGST">0.00</th>
+                                                    <th class="text-end" id="totalGrand">0.00</th>
+                                                </tr>
+                                            </tfoot>
+                                        </table>
+                                    </div>
+                                </div>
+
+                            </form>
+
+                            <!-- Loading Spinner -->
+                            <div id="loadingSpinner"
+                                class="d-none position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center bg-dark bg-opacity-50">
+                                <div class="spinner-border text-light" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                            </div>
+
+                            <!-- Address Selection Modal -->
+                            <div class="modal fade" id="addressSelectionModal" tabindex="-1"
+                                aria-labelledby="addressModalLabel" aria-hidden="true">
+                                <div class="modal-dialog modal-dialog-centered">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="addressModalLabel">Select Invoice Address</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                                aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body" id="addressListContainer"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="position-fixed top-0 end-0 p-3" style="z-index: 9999">
+        <div id="errorToast" class="toast align-items-center text-white bg-danger border-0" role="alert">
+            <div class="d-flex">
+                <div class="toast-body" id="errorToastMessage">
+                    Error message here...
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
             </div>
         </div>
     </div>

@@ -171,12 +171,56 @@
                                     placeholder="YYYY-YYYY">
                                 <datalist id="financialYearList"></datalist>
                             </div>
-                            <div class="col-md-4 col-lg-2">
+                            <!-- <div class="col-md-4 col-lg-2">
                                 <label for="paymentStatus" class="form-label">Payment Status</label>
                                 <input id="paymentStatus" class="form-control" list="paymentStatusList"
                                     placeholder="Enter Status">
                                 <datalist id="paymentStatusList"></datalist>
+                            </div> -->
+
+
+                            <div class="col-md-4 col-lg-2">
+                                <label class="form-label">Payment Status</label>
+
+                                <div class="dropdown w-100">
+                                    <button class="btn btn-outline-secondary dropdown-toggle w-100 text-start"
+                                        type="button" id="paymentStatusBtn" data-bs-toggle="dropdown"
+                                        data-bs-auto-close="outside">
+
+                                        All Status
+                                    </button>
+
+                                    <div class="dropdown-menu w-100 p-2">
+
+                                        <div class="form-check">
+                                            <input class="form-check-input paymentStatus" type="checkbox" value="Paid"
+                                                id="statusPaid">
+                                            <label class="form-check-label" for="statusPaid">
+                                                Paid
+                                            </label>
+                                        </div>
+
+                                        <div class="form-check">
+                                            <input class="form-check-input paymentStatus" type="checkbox"
+                                                value="ShortPaid" id="statusShortPaid">
+                                            <label class="form-check-label" for="statusShortPaid">
+                                                Short Paid
+                                            </label>
+                                        </div>
+
+                                        <div class="form-check">
+                                            <input class="form-check-input paymentStatus" type="checkbox" value="UnPaid"
+                                                id="statusUnPaid">
+                                            <label class="form-check-label" for="statusUnPaid">
+                                                Unpaid
+                                            </label>
+                                        </div>
+
+                                    </div>
+                                </div>
                             </div>
+
+
                             <div class="col-md-2 col-lg-2 d-grid align-self-end">
                                 <button class="btn btn-primary" id="searchBtn"><i class="bi bi-search"></i>
                                     Search</button>

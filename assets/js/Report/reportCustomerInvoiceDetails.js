@@ -35,7 +35,7 @@ function getFilters() {
         invoiceMonth: document.getElementById("invoiceMonth")?.value,
         invoiceYear: document.getElementById("invoiceYear")?.value.trim(),
         financialYear: document.getElementById("financialYear")?.value.trim(),
-        paymentStatus: document.getElementById("paymentStatus")?.value.trim()
+        paymentStatus: getSelectedPaymentStatus()
     };
 
     const dateRange = document.getElementById("dateRange")?.value.trim();
@@ -244,8 +244,8 @@ function buildQuery(filters = {}) {
         query = query.ilike('InvoiceType', `%${filters.invoiceType}%`);
     }
 
-    if (filters.paymentStatus) {
-        query = query.ilike('PaymentStatus', `%${filters.paymentStatus}%`);
+    if (filters.paymentStatus.length > 0) {
+        query = query.in("PaymentStatus", filters.paymentStatus);
     }
 
     // -----------------------------
@@ -678,7 +678,9 @@ async function fetchAllFilteredData(filters = {}) {
         if (filters.invoiceNo) query = query.ilike('InvoiceNo', `%${filters.invoiceNo}%`);
         if (filters.customerName) query = query.ilike('PartyName', filters.customerName);
         if (filters.invoiceType) query = query.ilike('InvoiceType', filters.invoiceType);
-        if (filters.paymentStatus) query = query.ilike('PaymentStatus', filters.paymentStatus);
+        if (filters.paymentStatus.length > 0) {
+            query = query.in("PaymentStatus", filters.paymentStatus);
+        }
         if (filters.startDate) query = query.gte('InvoiceDate', filters.startDate);
         if (filters.endDate) query = query.lte('InvoiceDate', filters.endDate);
         //Month filters
@@ -811,4 +813,27 @@ function setDefaultDateRange() {
 
     // Set flatpickr input value
     dateRangeInput.value = `${startDate} to ${endDate}`;
+}
+
+const paymentStatusBtn = document.getElementById("paymentStatusBtn");
+const paymentStatusCheckboxes = document.querySelectorAll(".paymentStatus");
+
+paymentStatusCheckboxes.forEach(cb => {
+    cb.addEventListener("change", updatePaymentStatus);
+});
+
+function updatePaymentStatus() {
+    const selected = [...paymentStatusCheckboxes]
+        .filter(cb => cb.checked)
+        .map(cb => cb.nextElementSibling.textContent.trim());
+
+    paymentStatusBtn.textContent = selected.length
+        ? selected.join(", ")
+        : "All Status";
+}
+
+function getSelectedPaymentStatus() {
+    return [...paymentStatusCheckboxes]
+        .filter(cb => cb.checked)
+        .map(cb => cb.value);
 }

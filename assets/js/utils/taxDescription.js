@@ -129,13 +129,13 @@ async function loadGSTDropdown(selectId, {
 async function getTaxRatesById(taxId) {
     const { data, error } = await supabaseClient
         .from('tax_details') // your table name
-        .select('cgst, sgst, igst')
+        .select('cgst, sgst, igst, tax_rate')
         .eq('id', taxId)
         .single();
 
     if (error) {
         console.error('Error fetching tax:', error);
-        return { cgst: 0, sgst: 0, igst: 0 };
+        return { cgst: 0, sgst: 0, igst: 0, tax_rate: 1 };
     }
 
     return data;
