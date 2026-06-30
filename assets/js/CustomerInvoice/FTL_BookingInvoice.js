@@ -389,7 +389,7 @@ async function ftl_loadInvoiceBookings(invoiceNo) {
         }
 
         const lrNumbers = data.map(d => d.LRNumber);
-        console.log("LR Number " + lrNumbers);
+        // console.log("LR Number " + lrNumbers);
 
         // ========================
         // STEP 2: BULK FETCH CHARGES

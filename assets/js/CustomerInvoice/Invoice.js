@@ -142,30 +142,66 @@ document.getElementById('fetchPendingInvoices').addEventListener('click', async 
    SAVE INVOICE
 ========================================================= */
 document.getElementById('saveButton').addEventListener('click', async () => {
+
     const saveBtn = document.getElementById('saveButton');
     const spinner = document.getElementById('saveSpinnerBtn');
+
+    // Prevent double click
+    if (saveBtn.disabled) return;
+
+    // Disable button and show processing
+    saveBtn.disabled = true;
+
+    if (spinner) {
+        spinner.classList.remove('d-none');
+    }
+
+    saveBtn.innerHTML = `
+        <span id="saveSpinnerBtn" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+        Processing...
+    `;
+
     const bankID = document.getElementById('bankIDs').value.trim();
     const partyCode = document.getElementById('partyCode').value.trim();
     const invoiceDate = document.getElementById('invoiceDate').value;
     const invoiceType = document.getElementById('movementType').value;
     const invoiceAddress = document.getElementById('invoiceAddress').value.trim();
     const isInsert = saveBtn.dataset.mode === 'insert';
+
     let basicfreight = 0;
+
+    // Validation
     if (!partyCode || !invoiceDate || !invoiceType || !invoiceAddress) {
         showToast('Fill all required fields');
+
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = '<i class="bi bi-save"></i> Save';
         return;
     }
+
     console.log('Bank ID on Save:', bankID);
 
     if (!bankID) {
         showToast('Select valid Bank Name');
+
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = '<i class="bi bi-save"></i> Save';
         return;
     }
 
     let invoiceNo = document.getElementById('invoiceNo').value.trim();
+
     if (isInsert) {
         invoiceNo = await generateInvoiceNumber(invoiceDate);
-        if (!invoiceNo) return showToast('Invoice number generation failed');
+
+        if (!invoiceNo) {
+            showToast('Invoice number generation failed');
+
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = '<i class="bi bi-save"></i> Save';
+            return;
+        }
+
         document.getElementById('invoiceNo').value = invoiceNo;
     }
 
@@ -173,14 +209,20 @@ document.getElementById('saveButton').addEventListener('click', async () => {
         const el = document.getElementById(id);
         return el ? parseFloat(el.textContent) || 0 : 0;
     };
+
     const isCustoms = invoiceType === 'Customs Clearance';
+
     if (invoiceType === 'Customs Clearance') {
         basicfreight = getValue('totalFreight_sc');
     } else if (invoiceType === 'Domestic') {
         basicfreight = getValue('totalFreight_d');
     } else if (invoiceType === 'Full Truck Load') {
-        basicfreight = getValue('totalFreight_ftl');
-    } else if (invoiceType === 'Import' || invoiceType === 'Export' || invoiceType === 'Forwarding') {
+        basicfreight = getValue('totalFreight');
+    } else if (
+        invoiceType === 'Import' ||
+        invoiceType === 'Export' ||
+        invoiceType === 'Forwarding'
+    ) {
         basicfreight = getValue('totalFreight');
     } else {
         basicfreight = getValue('totalFreight');
@@ -188,19 +230,18 @@ document.getElementById('saveButton').addEventListener('click', async () => {
 
     const totals = {
         freight: basicfreight,
-
         fsc: isCustoms ? 0 : getTextValue('totalFSCAmt'),
         other: isCustoms ? 0 : getTextValue('totalOtherAmt'),
-
         sgst: getTextValue('totalSGSTAmt'),
         cgst: getTextValue('totalCGSTAmt'),
         igst: getTextValue('totalIGSTAmt'),
         gst: getTextValue('totalGSTAmt'),
         grand: getTextValue('totalGrandAmt')
     };
+
     console.log(totals);
 
-    invoiceData = {
+    const invoiceData = {
         InvoiceNo: invoiceNo,
         InvoiceDate: invoiceDate,
         InvoiceType: invoiceType,
@@ -210,7 +251,6 @@ document.getElementById('saveButton').addEventListener('click', async () => {
         company_id: CompanyID,
 
         BasicAmount: totals.freight,
-
         OtherAmount: totals.fsc + totals.other,
 
         SGSTAmount: totals.sgst,
@@ -219,24 +259,34 @@ document.getElementById('saveButton').addEventListener('click', async () => {
         TotalGSTAmount: totals.gst,
         GrandTotalAmount: Math.round(totals.grand),
 
-        Remarks: document.getElementById('invoiceInformation').value.trim(),
+        Remarks: document.getElementById('invoiceInformation').value.trim()
     };
 
-    // spinner.classList.remove('d-none');
-    saveBtn.disabled = true;
-
     try {
+
         if (isInsert) {
+
             invoiceData.created_by = UserLoginID;
             invoiceData.created_at = localtimeStamp;
-            await supabaseClient.from('InvoiceDetails').insert([invoiceData]);
+
+            const { error } = await supabaseClient
+                .from('InvoiceDetails')
+                .insert([invoiceData]);
+
+            if (error) throw error;
+
         } else {
+
             invoiceData.updated_by = UserLoginID;
             invoiceData.updated_at = localtimeStamp;
-            await supabaseClient.from('InvoiceDetails')
+
+            const { error } = await supabaseClient
+                .from('InvoiceDetails')
                 .update(invoiceData)
                 .eq('InvoiceNo', invoiceNo)
                 .eq('company_id', CompanyID);
+
+            if (error) throw error;
         }
 
         showToast(`Invoice ${isInsert ? 'Saved' : 'Updated'} Successfully`);
@@ -256,12 +306,18 @@ document.getElementById('saveButton').addEventListener('click', async () => {
         reportButton.disabled = false;
         fetchPendingInvoices.disabled = true;
 
-        saveButton.innerHTML = '<i class="bi bi-save"></i> Save';
     } catch (e) {
+
+        console.error(e);
         showToast(e.message || 'Save failed');
+
     } finally {
-        // spinner.classList.add('d-none');
+
+        // Restore button
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = '<i class="bi bi-save"></i> Save';
     }
+
 });
 
 /* =========================================================
@@ -528,6 +584,29 @@ async function getInvoiceDetails(invoiceNo) {
         hideSpinner();
     }
 }
+document.getElementById('movementType').addEventListener('change', async (e) => {
+
+    const movementType = e.target.value.trim();
+    if (
+        movementType === 'Forwarding' ||
+        movementType === 'Import' ||
+        movementType === 'Export'
+    ) {
+        await createPendingShipmentTableHeaderAndFooter_ib();
+
+    } else if (movementType === 'Customs Clearance') {
+        await createPendingShipmentTableHeaderAndFooter();
+
+    } else if (movementType === 'Domestic') {
+        await d_createPendingShipmentTableHeaderAndFooter_ib();
+
+    } else if (movementType === 'Full Truck Load') {
+        await FTL_FCL_createPendingShipmentTableHeaderAndFooter();
+
+    } else {
+        console.warn('Unknown movement type:', movementType);
+    }
+});
 
 document.getElementById('invoiceNo').addEventListener('change', async (e) => {
     const invoiceNo = e.target.value.trim();
