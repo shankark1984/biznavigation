@@ -302,6 +302,10 @@ document.getElementById('saveButton').addEventListener('click', async () => {
         }
 
         disableForm();
+        // Keep Save disabled after successful save
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = '<i class="bi bi-check-circle"></i> Updated';
+
         modifyButton.disabled = false;
         reportButton.disabled = false;
         fetchPendingInvoices.disabled = true;
@@ -313,7 +317,12 @@ document.getElementById('saveButton').addEventListener('click', async () => {
 
     } finally {
 
-        // Restore button
+        // Only restore Save button if save/update failed
+        if (!modifyButton.disabled) {
+            // Save was successful, keep it disabled
+            return;
+        }
+
         saveBtn.disabled = false;
         saveBtn.innerHTML = '<i class="bi bi-save"></i> Save';
     }

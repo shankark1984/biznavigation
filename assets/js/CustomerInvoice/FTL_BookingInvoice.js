@@ -614,7 +614,10 @@ async function ftl_updateInvoiceNumbers(invoiceNo) {
                 .from('FullLoadBookingDetails')
                 .update({
                     InvoiceStatus: true,
-                    invoice_number: invoiceNo
+                    invoice_number: invoiceNo,
+                    IsLocked: false,
+                    LockedBy: null,
+                    LockedAt: null
                 })
                 .in('id', shipmentIds);
 
