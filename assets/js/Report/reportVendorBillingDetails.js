@@ -20,7 +20,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     document.getElementById('exportExcelBtn').addEventListener('click', exportToExcel);
     document.getElementById('exportPdfBtn').addEventListener('click', exportToPdf);
-    setDefaultDateRange();
 
     await loadReportSuggestions();
     await loadTable(getFilters());
@@ -28,24 +27,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     enableSortableHeaders();
 });
 
-function setDefaultDateRange() {
-    const dateRangeInput = document.getElementById("dateRange");
-    if (!dateRangeInput) return;
-
-    const today = new Date();
-    const twoMonthsAgo = new Date();
-    twoMonthsAgo.setMonth(today.getMonth() - 2);
-
-    const formatDate = (date) => {
-        return date.toISOString().split("T")[0]; // YYYY-MM-DD
-    };
-
-    const startDate = formatDate(twoMonthsAgo);
-    const endDate = formatDate(today);
-
-    // Set flatpickr input value
-    dateRangeInput.value = `${startDate} to ${endDate}`;
-}
 
 function getFilters() {
     const filters = {
@@ -57,7 +38,7 @@ function getFilters() {
         billingMonth: document.getElementById("billingMonth")?.value || "",
         billingYear: document.getElementById("billingYear")?.value.trim() || "",
         financialYear: document.getElementById("financialYear")?.value.trim() || "",
-        paymentStatus: document.getElementById("paymentStatus")?.value.trim() || ""
+        paymentStatus: getSelectedPaymentStatus()
     };
 
     const dateRange = document.getElementById("dateRange")?.value.trim();
@@ -279,8 +260,8 @@ function buildQuery(filters = {}) {
         query = query.ilike('ExpenseFor', `%${filters.expenseFor}%`);
     }
 
-    if (filters.paymentStatus) {
-        query = query.ilike('PaymentStatus', `%${filters.paymentStatus}%`);
+    if (filters.paymentStatus.length > 0) {
+        query = query.in("PaymentStatus", filters.paymentStatus);
     }
 
     const hasExplicitDateFilter =
@@ -375,15 +356,6 @@ function buildQuery(filters = {}) {
 
         return query;
     }
-
-    // default last 2 months
-    const today = new Date();
-    const twoMonthsAgo = new Date();
-    twoMonthsAgo.setMonth(today.getMonth() - 2);
-
-    query = query
-        .gte('AccountedDate', twoMonthsAgo.toISOString().split('T')[0])
-        .lte('AccountedDate', today.toISOString().split('T')[0]);
 
     return query;
 }
@@ -686,7 +658,9 @@ async function fetchAllFilteredData(filters = {}) {
         if (filters.billNo) query = query.ilike('BillNo', filters.billNo);
         if (filters.expenseType) query = query.ilike('ExpenseType', filters.expenseType);
         if (filters.expenseFor) query = query.ilike('ExpenseFor', filters.expenseFor);
-        if (filters.paymentStatus) query = query.ilike('PaymentStatus', filters.paymentStatus);
+        if (filters.paymentStatus.length > 0) {
+            query = query.in("PaymentStatus", filters.paymentStatus);
+        }
         if (filters.startDate) query = query.gte('AccountedDate', filters.startDate);
         if (filters.endDate) query = query.lte('AccountedDate', filters.endDate);
         //Month filters
@@ -802,3 +776,25 @@ function updateCumulativeTotals(allData) {
     document.getElementById("totalBalance").textContent = formatAmount(totals.BalanceAmount);
 }
 
+const paymentStatusBtn = document.getElementById("paymentStatusBtn");
+const paymentStatusCheckboxes = document.querySelectorAll(".paymentStatus");
+
+paymentStatusCheckboxes.forEach(cb => {
+    cb.addEventListener("change", updatePaymentStatus);
+});
+
+function updatePaymentStatus() {
+    const selected = [...paymentStatusCheckboxes]
+        .filter(cb => cb.checked)
+        .map(cb => cb.nextElementSibling.textContent.trim());
+
+    paymentStatusBtn.textContent = selected.length
+        ? selected.join(", ")
+        : "All Status";
+}
+
+function getSelectedPaymentStatus() {
+    return [...paymentStatusCheckboxes]
+        .filter(cb => cb.checked)
+        .map(cb => cb.value);
+}

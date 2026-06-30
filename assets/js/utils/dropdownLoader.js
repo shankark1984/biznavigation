@@ -100,15 +100,24 @@ function validateInput(inputId, datalistId = null) {
     if (!input) return;
 
     const enteredValue = input.value.trim();
+
+    // ✅ Allow free text for Commodity
+    if (inputId === "commodity") {
+        if (errorMessageElement) {
+            errorMessageElement.remove();
+        }
+        input.setCustomValidity?.("");
+        return;
+    }
+
     let isValid = false;
 
     if (input.tagName === 'SELECT') {
-        // For <select> elements
         isValid = Array.from(input.options).some(opt => opt.value === enteredValue);
     } else if (datalistId) {
-        // For <input> + <datalist>
         const datalist = document.getElementById(datalistId);
         if (!datalist) return;
+
         const options = Array.from(datalist.options).map(opt => opt.value);
         isValid = options.includes(enteredValue);
     }
@@ -117,12 +126,15 @@ function validateInput(inputId, datalistId = null) {
         if (!errorMessageElement) {
             errorMessageElement = document.createElement('span');
             errorMessageElement.id = errorElementId;
-            errorMessageElement.style.cssText = 'color:red; font-size:12px; margin-left:10px;';
+            errorMessageElement.style.cssText =
+                'color:red; font-size:12px; margin-left:10px;';
             input.parentNode.appendChild(errorMessageElement);
         }
+
         errorMessageElement.textContent = 'No valid entry';
         input.reportValidity?.();
         setTimeout(() => input.focus(), 1);
+
     } else {
         input.setCustomValidity?.('');
         if (errorMessageElement) errorMessageElement.remove();

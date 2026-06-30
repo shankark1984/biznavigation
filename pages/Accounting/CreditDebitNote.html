@@ -16,6 +16,21 @@
 
     <!-- Sidebar CSS -->
     <link rel="stylesheet" href="../../assets/css/navbar.css" />
+    <style>
+        #referenceSuggestions {
+            border: 1px solid #dee2e6;
+            border-top: none;
+            background: #fff;
+        }
+
+        #referenceSuggestions .list-group-item {
+            cursor: pointer;
+        }
+
+        #referenceSuggestions .list-group-item:hover {
+            background: #f8f9fa;
+        }
+    </style>
 </head>
 
 <body class="bg-light">
@@ -144,12 +159,18 @@
 
                                     <div class="row g-2">
                                         <!-- Reference Invoice / Bill -->
-                                        <div class="col-md-2">
-                                            <label for="referenceInvoice" class="form-label">Reference Invoice /
-                                                Bill</label>
-                                            <input list="referenceInvoiceSuggestions" class="form-control"
-                                                id="referenceInvoice" required autocomplete="off">
-                                            <datalist id="referenceInvoiceSuggestions"></datalist>
+                                        <div class="col-md-2 position-relative">
+                                            <label for="referenceInvoice" class="form-label">
+                                                Reference Invoice / Bill
+                                            </label>
+
+                                            <input type="text" class="form-control" id="referenceInvoice"
+                                                autocomplete="off" required placeholder="Type Invoice No...">
+
+                                            <div id="referenceSuggestions"
+                                                class="list-group position-absolute w-100 shadow" style="   
+                                                z-index:1055; max-height:250px; overflow-y:auto;display:none;">
+                                            </div>
                                         </div>
 
                                         <!-- Item -->
@@ -215,7 +236,7 @@
                                     <div class="table-responsive">
                                         <table
                                             class="table table-sm table-bordered text-center align-middle small sticky-header"
-                                            id="pendingShipmentTable">
+                                            id="creditDebitTable">
                                             <thead class="table-light">
                                                 <tr>
                                                     <th>Sr No</th>

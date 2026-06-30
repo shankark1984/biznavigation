@@ -10,8 +10,30 @@ document.addEventListener('DOMContentLoaded', async () => {
     flatpickr("#dateRange", { mode: "range", dateFormat: "Y-m-d" });
 
     document.getElementById("searchBtn").addEventListener("click", async () => {
+
+        const filters = getFilters();
+
+        const hasAnyFilter =
+            filters.customerName ||
+            filters.invoiceNo ||
+            filters.invoiceType ||
+            filters.paymentStatus.length > 0 ||
+            filters.startDate ||
+            filters.endDate ||
+            filters.invoiceMonth ||
+            filters.invoiceYear ||
+            filters.financialYear;
+
+        if (!hasAnyFilter) {
+            const ok = confirm(
+                "No filters selected.\n\nThis will load all company records.\n\nDo you want to continue?"
+            );
+
+            if (!ok) return;
+        }
+
         currentPage = 1;
-        await loadTable(getFilters());
+        await loadTable(filters);
 
         const filterSection = document.getElementById("filterSection");
         bootstrap.Collapse.getOrCreateInstance(filterSection).hide();
@@ -19,7 +41,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     document.getElementById('exportExcelBtn').addEventListener('click', exportToExcel);
     document.getElementById('exportPdfBtn').addEventListener('click', exportToPdf);
-    setDefaultDateRange();
 
     await loadReportSuggestions();
     await loadTable(getFilters());
@@ -364,16 +385,6 @@ function buildQuery(filters = {}) {
     // - customerName + invoiceType
     // etc.
     // ---------------------------------------------------------
-    const today = new Date();
-    const twoMonthsAgo = new Date();
-    twoMonthsAgo.setMonth(today.getMonth() - 2);
-
-    const start = twoMonthsAgo.toISOString().split('T')[0];
-    const end = today.toISOString().split('T')[0];
-
-    query = query
-        .gte('InvoiceDate', start)
-        .lte('InvoiceDate', end);
 
     return query;
 }
@@ -796,24 +807,6 @@ function updateCumulativeTotals(allData) {
     document.getElementById("totalBalance").textContent = formatAmount(totals.BalanceAmount);
 }
 
-function setDefaultDateRange() {
-    const dateRangeInput = document.getElementById("dateRange");
-    if (!dateRangeInput) return;
-
-    const today = new Date();
-    const twoMonthsAgo = new Date();
-    twoMonthsAgo.setMonth(today.getMonth() - 2);
-
-    const formatDate = (date) => {
-        return date.toISOString().split("T")[0]; // YYYY-MM-DD
-    };
-
-    const startDate = formatDate(twoMonthsAgo);
-    const endDate = formatDate(today);
-
-    // Set flatpickr input value
-    dateRangeInput.value = `${startDate} to ${endDate}`;
-}
 
 const paymentStatusBtn = document.getElementById("paymentStatusBtn");
 const paymentStatusCheckboxes = document.querySelectorAll(".paymentStatus");

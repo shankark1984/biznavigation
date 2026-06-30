@@ -38,7 +38,7 @@ branchAddBtn.addEventListener('click', async function () {
         alert('Please fill in required fields: Branch Code, GST No, and Address.');
         return;
     }
-
+    console.log(branchData);
     try {
         let response
         if (rowIDEdit) {

@@ -52,20 +52,27 @@ function setButtonState(buttonIDs, enabled) {
 }
 
 /* ---------------------- 🏢 Company Data Handling ---------------------- */
-async function fetchCompanyData(selectedCompanyID) {
+async function fetchCompanyData(companyID) {
+
+    // Keep the global variable in sync
+    selectedCompanyID = companyID;
+
     try {
-        const { data, error } = await SupabaseService.client
-            .from('company_profile')
-            .select('*')
-            .eq('company_id', selectedCompanyID)
+
+        const { data, error } = await supabaseClient
+            .from("company_profile")
+            .select("*")
+            .eq("company_id", companyID)
             .single();
 
         if (error) throw error;
 
-        if (data) populateCompanyForm(data);
+        if (data) {
+            populateCompanyForm(data);
+        }
 
     } catch (err) {
-        console.error("Error fetching company data:", err.message);
+        console.error("Error fetching company:", err);
         alert("Failed to load company data.");
     }
 }
@@ -89,7 +96,8 @@ function populateCompanyForm(data) {
         cinNo: data.cin_no,
         uaNo: data.Udyog_aadhaar_no,
         website: data.web_site,
-        LogoUrl: data.LogoUrl
+        LogoUrl: data.LogoUrl,
+        tempFormID: data.id
     };
     Object.entries(fieldMap).forEach(([id, value]) => {
         const el = document.getElementById(id);
@@ -209,95 +217,163 @@ function onNewClick() {
 }
 
 /* ---------------------- 💾 Save / Update ---------------------- */
+/* ---------------------- 💾 Save / Update ---------------------- */
 async function onSaveClick(e) {
     e.preventDefault();
+
     const saveBtn = e.currentTarget;
-    const mode = saveBtn.dataset.mode || 'insert';
-    const isInsert = mode === 'insert';
-
-    selectedCompanyID = document.getElementById('companyCode')?.value.trim();
-
-    const companyName = document.getElementById('companyName')?.value.trim() || '';
-    const adminUserName =
-        document.getElementById('userName')?.value?.trim() || '';
-
-    const adminUserId =
-        document.getElementById('userLogID')?.value?.trim() || '';
-
-    if (!companyName) return alert('Please enter a company name.');
-
-    if (isInsert && (!adminUserName || !adminUserId)) {
-        return alert('Please enter admin user details.');
-    }
-
-    const companyID = isInsert
-        ? await generateNewCompanyID(companyName)
-        : localStorage.getItem('CompanyID');
-
-    const formData = gatherFormData(selectedCompanyID);
+    const isInsert = saveBtn.dataset.mode !== "update";
 
     try {
-        const { error } = isInsert
-            ? await supabaseClient.from('company_profile').insert([formData])
-            : await supabaseClient.from('company_profile').update(formData).eq('company_id', selectedCompanyID);
+
+        const companyName = document.getElementById("companyName")?.value.trim() || "";
+        const adminUserName = document.getElementById("userName")?.value.trim() || "";
+        const adminUserId = document.getElementById("userLogID")?.value.trim() || "";
+
+        if (!companyName) {
+            alert("Please enter a company name.");
+            return;
+        }
+
+        // Generate Company ID only for new company
+        const companyID = isInsert
+            ? await generateNewCompanyID(companyName)
+            : selectedCompanyID;
+
+        if (!companyID) {
+            alert("Company ID not found.");
+            return;
+        }
+
+        selectedCompanyID = companyID;
+
+        if (isInsert) {
+            document.getElementById("companyCode").value = companyID;
+        }
+
+        // Build form data
+        const formData = gatherFormData(companyID, isInsert);
+
+        let error;
+
+        if (isInsert) {
+
+            ({ error } = await supabaseClient
+                .from("company_profile")
+                .insert([formData]));
+
+        } else {
+
+            const tempID = Number(document.getElementById("tempFormID").value);
+
+            ({ error } = await supabaseClient
+                .from("company_profile")
+                .update(formData)
+                .eq("id", tempID));
+
+        }
 
         if (error) throw error;
 
-        const adminData = {
-            emp_code: formData.company_id,
-            user_name: adminUserName,
-            user_login_id: adminUserId,
-            user_password: sha256(reSetPass),
-            user_type: 2,
-            company_id: companyID,
-            working_branch: companyID,
-            created_by: UserLoginID,
-            created_at: localtimeStamp,
-        }
+        // ---------------------------
+        // Create Admin User
+        // ---------------------------
         if (isInsert) {
-            const { error: adminError } = await supabaseClient.from('user_login').insert([adminData]);
+
+            const adminData = {
+                emp_code: companyID,
+                user_name: adminUserName,
+                user_login_id: adminUserId,
+                user_password: sha256(reSetPass),
+                user_type: 2,
+                company_id: companyID,
+                working_branch: companyID,
+                created_by: UserLoginID,
+                created_at: localtimeStamp
+            };
+
+            const { error: adminError } = await supabaseClient
+                .from("user_login")
+                .insert([adminData]);
+
             if (adminError) throw adminError;
         }
-        await saveCompanyTandCs();
-        await uploadCompanyLogo(); // upload company logo
 
-        alert(`Company ${isInsert ? 'saved' : 'updated'} successfully!`);
+        // Save Terms & Conditions
+        await saveCompanyTandCs();
+
+        // Upload Logo
+        await uploadCompanyLogo();
+
+        alert(`Company ${isInsert ? "saved" : "updated"} successfully!`);
+
         saveBtn.innerHTML = '<i class="bi bi-pencil-square"></i> Update';
-        saveBtn.dataset.mode = 'update';
+        saveBtn.dataset.mode = "update";
         saveBtn.disabled = true;
-        document.getElementById('modifyButton').disabled = false;
+
+        document.getElementById("modifyButton").disabled = false;
+
         setFormState(false);
-        setButtonState(['branchAddDetails', 'bankAddDetails'], false);
-        modifyButton.disabled = false;
+        setButtonState(["branchAddDetails", "bankAddDetails"], false);
+
+        document.getElementById("chooseLogoBtn").disabled = true;
+        document.getElementById("saveLogoBtn").disabled = true;
+        document.getElementById("companyLogo").disabled = true;
+
+        await loadCompaniesDropdown();
 
     } catch (err) {
+
         console.error("Error saving company:", err);
-        alert("Unexpected error occurred. Please try again.");
+
+        if (err.code === "23505") {
+
+            if (err.message.includes("company_profile_company_id_key")) {
+                alert("Company ID already exists.");
+            } else if (err.message.includes("company_profile_gst_number_key")) {
+                alert("GST Number already exists.");
+            } else if (err.message.includes("company_profile_pan_number_key")) {
+                alert("PAN Number already exists.");
+            } else {
+                alert(err.message);
+            }
+
+        } else {
+            alert(err.message || "Unexpected error occurred. Please try again.");
+        }
     }
 }
-
 /* ---------------------- 🧩 Form Data Builder ---------------------- */
-function gatherFormData(companyID) {
-    const getVal = id => document.getElementById(id)?.value.trim() || '';
-    return {
-        company_id: companyID,
-        short_code: getVal('shortCode').toUpperCase(),
-        company_name: getVal('companyName'),
-        address: formatAddress(getVal('address')),
-        city: getVal('city'),
-        pin_code: getVal('pinCode'),
-        state: getVal('state'),
-        country: getVal('country'),
-        phone_no: getVal('phoneNumber'),
-        e_mail: getVal('email'),
-        gst_number: getVal('gstNumber').toUpperCase(),
-        pan_number: getVal('panNumber').toUpperCase(),
-        cin_no: getVal('cinNo').toUpperCase(),
-        Udyog_aadhaar_no: getVal('uaNo').toUpperCase(),
-        web_site: getVal('website'),
-        logo_path: document.getElementById('companylogo')?.src || '',
-        created_by: localStorage.getItem('UserLoginID') || 'unknown'
+function gatherFormData(companyID, isInsert) {
+
+    const getVal = id => document.getElementById(id)?.value.trim() || "";
+
+    const data = {
+
+        short_code: getVal("shortCode").toUpperCase(),
+        company_name: getVal("companyName"),
+        address: formatAddress(getVal("address")),
+        city: getVal("city"),
+        pin_code: getVal("pinCode"),
+        state: getVal("state"),
+        country: getVal("country"),
+        phone_no: getVal("phoneNumber"),
+        e_mail: getVal("email"),
+        gst_number: getVal("gstNumber").toUpperCase(),
+        pan_number: getVal("panNumber").toUpperCase(),
+        cin_no: getVal("cinNo").toUpperCase(),
+        Udyog_aadhaar_no: getVal("uaNo").toUpperCase(),
+        web_site: getVal("website"),
+        logo_path: document.getElementById("companylogo")?.src || "",
+        created_by: localStorage.getItem("UserLoginID") || "unknown"
+
     };
+
+    if (isInsert) {
+        data.company_id = companyID;
+    }
+
+    return data;
 }
 
 function formatAddress(address) {
@@ -470,18 +546,28 @@ async function loadCompaniesDropdown() {
 
 // Get selected companyId
 $("#selectCompany").on("change", async function () {
-    const selectedCompanyID = this.value;
 
-    if (selectedCompanyID) {
-        // Get company data
-        saveButton.disabled = true;
-        if (typeof disableForm === "function") disableForm();
-        await fetchCompanyData(selectedCompanyID);
-        await loadSubscriptions(selectedCompanyID);
-        if (typeof loadBranches === "function") await loadBranches();
-        await loadCompanyTandCs(selectedCompanyID);
-        document.getElementById("modifyButton").disabled = false;
+    selectedCompanyID = this.value;
+
+    if (!selectedCompanyID) return;
+
+    saveButton.disabled = true;
+
+    if (typeof disableForm === "function") {
+        disableForm();
     }
+
+    await fetchCompanyData(selectedCompanyID);
+    await loadSubscriptions(selectedCompanyID);
+
+    if (typeof loadBranches === "function") {
+        await loadBranches();
+    }
+
+    await loadCompanyTandCs(selectedCompanyID);
+
+    document.getElementById("modifyButton").disabled = false;
+
 });
 
 function toggleCompanySelect(userType) {

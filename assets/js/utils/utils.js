@@ -2047,3 +2047,4 @@ function enableCustomTab(selector) {
 
 // Usage
 enableCustomTab('input[type="date"]');
+
