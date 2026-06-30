@@ -179,7 +179,7 @@ document.getElementById('saveButton').addEventListener('click', async () => {
         return;
     }
 
-    console.log('Bank ID on Save:', bankID);
+    // console.log('Bank ID on Save:', bankID);
 
     if (!bankID) {
         showToast('Select valid Bank Name');
@@ -239,7 +239,7 @@ document.getElementById('saveButton').addEventListener('click', async () => {
         grand: getTextValue('totalGrandAmt')
     };
 
-    console.log(totals);
+    // console.log(totals);
 
     const invoiceData = {
         InvoiceNo: invoiceNo,
@@ -696,7 +696,7 @@ document.getElementById('addShipmentNo').addEventListener('click', async () => {
     const saveSpinner = document.getElementById('saveSpinner');
     const movementType = document.getElementById('movementType').value.trim();
 
-    console.log('Adding Shipment No:', shipmentNo, 'to Invoice No:', invoiceNo, 'for Movement Type:', movementType);
+    // console.log('Adding Shipment No:', shipmentNo, 'to Invoice No:', invoiceNo, 'for Movement Type:', movementType);
     if (!shipmentNo) {
         alert('Please enter/select a Shipment Number.');
         return;
@@ -709,18 +709,18 @@ document.getElementById('addShipmentNo').addEventListener('click', async () => {
 
     // Check the value and run the relevant function
     if (movementType === 'Forwarding' || movementType === 'Import' || movementType === 'Export') {
-        console.log('Fetching pending invoices for Forwarding/Import/Export');
+        // console.log('Fetching pending invoices for Forwarding/Import/Export');
         await addSingleShipmentToInvoice(shipmentNo, invoiceNo);
     }
     else if (movementType === 'Customs Clearance') {
-        console.log('Adding Shipment No to Customs Clearance Invoice');
+        // console.log('Adding Shipment No to Customs Clearance Invoice');
         await addSingleShipmentToInvoice_cc(shipmentNo, invoiceNo);
     }
     else if (movementType === 'Domestic') {
-        console.log('Adding Shipment No to Domestic Invoice');
+        // console.log('Adding Shipment No to Domestic Invoice');
         await d_addSingleShipmentToInvoice(shipmentNo, invoiceNo);
     } else if (movementType === 'Full Truck Load') {
-        console.log('Adding Shipment No to FTL/FCL Invoice');
+        // console.log('Adding Shipment No to FTL/FCL Invoice');
         await ftl_addSingleShipmentToInvoice(shipmentNo, invoiceNo);
     }
     else {

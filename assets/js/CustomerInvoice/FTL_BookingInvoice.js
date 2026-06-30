@@ -623,7 +623,7 @@ async function ftl_updateInvoiceNumbers(invoiceNo) {
 
             if (updateError) throw updateError;
 
-            console.log('✅ Invoice updated:', shipmentIds);
+            // console.log('✅ Invoice updated:', shipmentIds);
 
         } else {
             console.log('⚠ All shipments removed → invoice cleared');
@@ -669,7 +669,7 @@ async function ftl_unlockBooking(userID) {
             lockedBookingIds = [];
         }
 
-        console.log(`✅ Unlocked ${data?.length || 0} bookings for user: ${userID}`);
+        // console.log(`✅ Unlocked ${data?.length || 0} bookings for user: ${userID}`);
 
     } catch (err) {
         console.error("❌ Unlock failed:", err.message);
@@ -744,6 +744,8 @@ async function ftl_addSingleShipmentToInvoice(shipmentNo, invoiceNo) {
                 IsLocked: true,
                 LockedBy: UserLoginID,
                 LockedAt: new Date().toISOString(),
+                invoice_number: invoiceNo,
+                InvoiceStatus: true
             })
             .eq('id', shipment.id)
             .eq('IsLocked', false)
@@ -816,7 +818,7 @@ async function ftl_addSingleShipmentToInvoice(shipmentNo, invoiceNo) {
             await ftl_loadInvoiceBookings(invoiceNo);
         }
 
-        console.log(`✅ Shipment ${shipmentNo} added`);
+        // console.log(`✅ Shipment ${shipmentNo} added`);
 
     } catch (err) {
         console.error('❌ Error:', err.message);
