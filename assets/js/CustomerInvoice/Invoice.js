@@ -302,6 +302,13 @@ document.getElementById('saveButton').addEventListener('click', async () => {
         }
 
         disableForm();
+
+        // Disable all row delete buttons
+        document.querySelectorAll('.delete-btn').forEach(btn => {
+            btn.disabled = true;
+            btn.classList.add('disabled');
+        });
+
         // Keep Save disabled after successful save
         saveBtn.disabled = true;
         saveBtn.innerHTML = '<i class="bi bi-check-circle"></i> Updated';
