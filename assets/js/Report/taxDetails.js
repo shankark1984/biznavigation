@@ -126,42 +126,77 @@ async function loadTaxReport() {
 
         const { invoiceMonth, invoiceYear, financialYear } = getFilters();
 
-        // Month filter
+        // ==========================
+        // Month Filter
+        // ==========================
         if (invoiceMonth) {
-            const startDate = `${invoiceMonth}-01`;
-            const endDate = new Date(
-                new Date(startDate).getFullYear(),
-                new Date(startDate).getMonth() + 1,
-                0
-            )
-                .toISOString()
-                .split("T")[0];
+            const [year, month] = invoiceMonth.split("-").map(Number);
+
+            const startDate =
+                `${year}-${String(month).padStart(2, "0")}-01`;
+
+            const lastDay = new Date(year, month, 0).getDate();
+
+            const endDate =
+                `${year}-${String(month).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
+
+            console.log("Month Filter");
+            console.log("Start Date:", startDate);
+            console.log("End Date:", endDate);
 
             query = query
                 .gte("InvoiceDate", startDate)
                 .lte("InvoiceDate", endDate);
         }
 
-        // Year filter
+        // ==========================
+        // Invoice Year Filter
+        // ==========================
         if (invoiceYear) {
+            const startDate = `${invoiceYear}-01-01`;
+            const endDate = `${invoiceYear}-12-31`;
+
+            console.log("Year Filter");
+            console.log("Start Date:", startDate);
+            console.log("End Date:", endDate);
+
             query = query
-                .gte("InvoiceDate", `${invoiceYear}-01-01`)
-                .lte("InvoiceDate", `${invoiceYear}-12-31`);
+                .gte("InvoiceDate", startDate)
+                .lte("InvoiceDate", endDate);
         }
 
-        // Financial year filter
+        // ==========================
+        // Financial Year Filter
+        // ==========================
         if (financialYear) {
             const [startYear, endYear] = financialYear.split("-");
+
+            const startDate = `${startYear}-04-01`;
+            const endDate = `${endYear}-03-31`;
+
+            console.log("Financial Year Filter");
+            console.log("Start Date:", startDate);
+            console.log("End Date:", endDate);
+
             query = query
-                .gte("InvoiceDate", `${startYear}-04-01`)
-                .lte("InvoiceDate", `${endYear}-03-31`);
+                .gte("InvoiceDate", startDate)
+                .lte("InvoiceDate", endDate);
         }
 
+        // ==========================
+        // Sort
+        // ==========================
         query = query.order("InvoiceDate", { ascending: true });
 
+        // ==========================
+        // Execute Query
+        // ==========================
         const { data, error } = await query;
 
         if (error) throw error;
+
+        console.log("Records Loaded:", data?.length || 0);
+        console.table(data);
 
         allTaxData = data || [];
         filteredData = [...allTaxData];
@@ -169,20 +204,27 @@ async function loadTaxReport() {
         renderTable(filteredData);
 
         const hasData = filteredData.length > 0;
+
         document.getElementById("exportExcelBtn").disabled = !hasData;
         document.getElementById("exportPdfBtn").disabled = !hasData;
 
     } catch (err) {
-        console.error(err);
+        console.error("Load Tax Report Error:", err);
+
         alert("Failed to load tax report");
+
         allTaxData = [];
         filteredData = [];
+
         renderTable([]);
+
+        document.getElementById("exportExcelBtn").disabled = true;
+        document.getElementById("exportPdfBtn").disabled = true;
+
     } finally {
         showLoading(false);
     }
 }
-
 // ==========================
 // RENDER TABLE
 // ==========================
@@ -214,8 +256,8 @@ function renderTable(data = []) {
     tbody.innerHTML = pageData.map((row, index) => `
         <tr>
             <td class="text-center">${startIndex + index + 1}</td>
-            <td class="text-center">${formatDate(row.InvoiceDate)}</td>
             <td class="text-center">${row.InvoiceNo || ""}</td>
+            <td class="text-center">${formatDate(row.InvoiceDate)}</td>
             <td class="text-start">${row.CustomerName || ""}</td>
             <td class="text-start">${row.State || ""}</td>
             <td class="text-start">${row.GSTNo || ""}</td>

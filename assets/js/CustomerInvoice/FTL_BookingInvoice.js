@@ -116,7 +116,8 @@ async function FTL_FCL_getPendingInvoiceDetails() {
             .eq('CustomerCode', partyCode)
             .eq('InvoiceStatus', "Pending")
             .eq('IsLocked', false)
-            .order('PickupDate', { ascending: true });
+            .order('PickupDate', { ascending: true })
+            .order('LRNumber', { ascending: true });
 
         if (error) throw error;
         if (!data?.length) {

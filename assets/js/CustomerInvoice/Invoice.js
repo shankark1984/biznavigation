@@ -747,6 +747,7 @@ document.getElementById('modifyButton').addEventListener('click', () => {
         button.disabled = false;
     });
     document.getElementById('addShipmentNo').disabled = false; // Enable add shipment button
+    document.getElementById('fetchPendingInvoices').disabled = false; // Enable shipment number field
 });
 
 document.getElementById('deleteButton').addEventListener('click', () => {
