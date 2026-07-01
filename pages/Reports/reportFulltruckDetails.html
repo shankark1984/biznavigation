@@ -120,7 +120,7 @@
 
                     <!-- Filter Toggle -->
                     <div class="mb-3 d-flex justify-content-between align-items-center flex-wrap">
-                        <h2 class="mb-0">Full-Truck Details</h2>
+
                         <button class="btn btn-outline-secondary" type="button" data-bs-toggle="collapse"
                             data-bs-target="#filterSection">
                             <i class="bi bi-funnel"></i> Toggle Filters
@@ -191,9 +191,10 @@
                                 <input type="month" id="bookedMonth" class="form-control">
                             </div>
 
-                            <div class="col-6 col-md-2 col-lg-2">
+                            <div class="col-6 col-md-4 col-lg-2">
                                 <label for="bookedYear" class="form-label">Booked Year</label>
-                                <input type="year" id="bookedYear" class="form-control">
+                                <input type="number" id="bookedYear" class="form-control" placeholder="YYYY" min="2000"
+                                    max="2100">
                             </div>
                             <div class="col-6 col-md-4 col-lg-2">
                                 <label for="financialYear" class="form-label">Financial Year</label>
@@ -201,6 +202,7 @@
                                     list="financialYearList">
                                 <datalist id="financialYearList"></datalist>
                             </div>
+
                             <div class="col-6 col-md-4 col-lg-2">
                                 <label for="invoiceStatus" class="form-label">Invoice Status</label>
                                 <input id="invoiceStatus" class="form-control" list="invoiceStatusList"

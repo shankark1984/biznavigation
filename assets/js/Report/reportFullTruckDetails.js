@@ -465,7 +465,8 @@ async function loadTable(filters = {}) {
     let query = supabaseClient
         .from('FullLoadMovementDetailsView')
         .select('*', { count: 'exact' })
-        .eq('company_id', CompanyID);
+        .eq('company_id', CompanyID)
+        .order('PickupDate', { ascending: false });
 
     // ✅ Apply common filters
     query = applyFilters(query, filters);
@@ -503,7 +504,8 @@ async function fetchAllFilteredData(filters = {}) {
         let query = supabaseClient
             .from('FullLoadMovementDetailsView')
             .select('*')
-            .eq('company_id', CompanyID);
+            .eq('company_id', CompanyID)
+            .order('PickupDate', { ascending: false });
 
         // ✅ Apply same filters
         query = applyFilters(query, filters);
@@ -526,3 +528,37 @@ async function fetchAllFilteredData(filters = {}) {
 
     return allData;
 }
+
+function setSearchButtonLoading(isLoading) {
+    const btn = document.getElementById("searchBtn");
+
+    if (isLoading) {
+        btn.disabled = true;
+        btn.innerHTML = `
+            <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+            Processing...
+        `;
+    } else {
+        btn.disabled = false;
+        btn.innerHTML = `
+            <i class="bi bi-search"></i> Search
+        `;
+    }
+}
+
+document.getElementById("searchBtn").addEventListener("click", async () => {
+    currentPage = 1;
+
+    // Collapse filter section
+    const filterSection = document.getElementById("filterSection");
+    const collapse = bootstrap.Collapse.getOrCreateInstance(filterSection);
+    collapse.hide();
+
+    setSearchButtonLoading(true);
+
+    try {
+        await loadTable(getFilters());
+    } finally {
+        setSearchButtonLoading(false);
+    }
+});
