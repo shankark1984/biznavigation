@@ -30,19 +30,6 @@ function toNumber(value) {
     return Number(value) || 0;
 }
 
-function formatAmount(value) {
-    return toNumber(value).toLocaleString("en-IN", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-    });
-}
-
-function formatDate(dateStr) {
-    if (!dateStr) return "";
-    const date = new Date(dateStr);
-    if (isNaN(date.getTime())) return "";
-    return date.toLocaleDateString("en-GB");
-}
 
 function showLoading(show) {
     document
