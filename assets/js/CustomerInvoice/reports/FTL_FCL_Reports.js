@@ -21,7 +21,7 @@ async function generate_FullTruckReports_InvoicePDF(header, lines = []) {
         fetchCompanyDetails(header),
         fetchPartyDetails(header),
         getTermsAndConditions(header?.company_id),
-        getShipmentData_int_Main(header?.InvoiceNo),
+        getShipmentData_ftl_Main(header?.InvoiceNo),
         getInvoiceBankDetails(header?.InvoiceNo),
         advancedPaymentDetails(
             header?.InvoiceNo,
@@ -57,7 +57,7 @@ async function generate_FullTruckReports_InvoicePDF(header, lines = []) {
     // ==========================================
     // SHIPMENT TABLE
     // ==========================================
-    const shipmentResult = await drawShipmentTable_int_Main(doc, PAGE, FONT, shipmentData, y);
+    const shipmentResult = await drawShipmentTable_ftl_Main(doc, PAGE, FONT, shipmentData, y);
 
     y = shipmentResult.y;
 
@@ -271,13 +271,13 @@ function drawHeaderRow_ftl(doc, FONT, X, COL, y, rowH) {
 
     PDF_FONT.bold(doc, FONT.body);
 
-    drawCenteredText(doc, "Terms & Conditions", X.terms, COL.terms, y, rowH);
+    drawCenteredText_ftl(doc, "Terms & Conditions", X.terms, COL.terms, y, rowH);
 
-    drawCenteredText(doc, "", X.desc, COL.desc, y, rowH); // Empty header for Description column
+    drawCenteredText_ftl(doc, "", X.desc, COL.desc, y, rowH); // Empty header for Description column
 
-    drawCenteredText(doc, "Non-Tax Amount", X.nonTax, COL.nonTax, y, rowH);
+    drawCenteredText_ftl(doc, "Non-Tax Amount", X.nonTax, COL.nonTax, y, rowH);
 
-    drawCenteredText(doc, "Tax Amount", X.tax, COL.tax, y, rowH);
+    drawCenteredText_ftl(doc, "Tax Amount", X.tax, COL.tax, y, rowH);
 }
 
 // ==========================================
@@ -533,7 +533,7 @@ function drawTaxSection_ftl(
 // ==========================================
 // COMMON CENTER TEXT
 // ==========================================
-function drawCenteredText(
+function drawCenteredText_ftl(
     doc,
     text,
     x,
@@ -555,7 +555,7 @@ function drawCenteredText(
 // ==========================================
 // FETCH SHIPMENT DATA
 // ==========================================
-async function getShipmentData_int_Main(invoiceNo) {
+async function getShipmentData_ftl_Main(invoiceNo) {
 
     try {
 
@@ -563,11 +563,11 @@ async function getShipmentData_int_Main(invoiceNo) {
             data: lines,
             error
         } = await supabaseClient
-            .from("InternationalBookingView")
+            .from("FullLoadMovementDetailsView")
             .select("*")
             .eq("InvoiceNumber", invoiceNo)
             .order(
-                "BookedDate",
+                "PickupDate",
                 {
                     ascending: true
                 }
@@ -598,24 +598,23 @@ async function getShipmentData_int_Main(invoiceNo) {
 }
 
 // Utility function to fetch shipment details
-async function drawShipmentTable_int_Main(doc, PAGE, FONT, rows = [], y) {
+async function drawShipmentTable_ftl_Main(doc, PAGE, FONT, rows = [], y) {
+    console.log(rows)
+    let totalFreight = 0,
+        totalOther = 0,
+        totalCGST = 0,
+        totalSGST = 0,
+        totalIGST = 0,
+        totalGST = 0;
 
-    let freightAmount = 0, fuelSurcharge = 0, otherAmount = 0;
-    let totalFreight = 0, totalOther = 0;
-    let totalCGST = 0, totalSGST = 0, totalIGST = 0, totalGST = 0;
-    let nonTaxableAmount = 0, taxableAmount = 0;
-
-    const rowHeight = 10;
+    const rowHeight = 5;
     const headerHeight = 6;
 
-    // 🔥 Reserve space for footer sections
-
+    // Reserve footer space
     const LAYOUT = {
-        footerReserve: 67, // Terms & Tax (60) + Amount in Words (23)
-        rowHeight: 10
+        footerReserve: 83,
+        rowHeight: 5
     };
-
-    const emptyRow = Array(12).fill("");
 
     if (!rows.length) {
         console.warn("No shipment data found");
@@ -624,15 +623,33 @@ async function drawShipmentTable_int_Main(doc, PAGE, FONT, rows = [], y) {
     // ================= BUILD BODY =================
     let body = rows.map((row, i) => {
 
-        freightAmount += safeNumber(row.FreightAmount) || 0;
-        fuelSurcharge += safeNumber(row.FuelSurcharge) || 0;
-        otherAmount += safeNumber(row.OtherAmount) || 0;
-        totalCGST += safeNumber(row.TotalCGSTAmt);
-        totalSGST += safeNumber(row.TotalSGSTAmt);
-        totalIGST += safeNumber(row.TotalIGSTAmt);
-        totalGST += safeNumber(row.TotalGSTAmt);
-        nonTaxableAmount += safeNumber(row.NonTaxableAmount) || 0;
-        taxableAmount += safeNumber(row.TaxableAmount) || 0;
+        let freightAmount = 0,
+            otherAmount = 0,
+            perQtyAmt = 0,
+            Qty = 0;
+
+        (row.FullLoadBookingCharges || []).forEach(c => {
+
+            const amount = safeNumber(c.TotalAmount);
+            const perQtyAmount = safeNumber(c.PerQtyAmt);
+
+            totalCGST += safeNumber(c.CGSTAmt);
+            totalSGST += safeNumber(c.SGSTAmt);
+            totalIGST += safeNumber(c.IGSTAmt);
+
+            Qty = c.Quantity ?? Qty;
+
+            if (["Freight Amount", "Transportation Charges"].includes(c.ChargesType)) {
+                freightAmount += amount;
+                perQtyAmt += perQtyAmount;
+            } else {
+                otherAmount += amount;
+            }
+
+        });
+
+        totalFreight += freightAmount;
+        totalOther += otherAmount;
 
         const safe = (val, fallback = "-") =>
             val !== null &&
@@ -641,58 +658,67 @@ async function drawShipmentTable_int_Main(doc, PAGE, FONT, rows = [], y) {
                 ? val
                 : fallback;
 
-        const mode = [
-            row.MovementType,
-            row.ModeType,
+        const routeDetails =
+            safe(row.routedetails, null) ||
+            `${safe(row.origin_city, "")} → ${safe(row.destination_city, "")}`;
 
-        ]
-            .filter(Boolean)
-            .join("\n");
+        const deliveryDate = row.completion_date
+            ? formatDate(row.completion_date)
+            : null;
 
-        const sector = [
-            `Origin: ${safe(row.Origin)}`,
-            `Dest.: ${safe(row.Destination)}`
-        ]
-            .filter(Boolean)
-            .join(" \n ");
+        const description = [
+            `Movement Type : ${safe(row.movement_type)} / ${safe(row.mode_type)}`,
+            `Ref           : ${safe(row.reference_number)}`,
+            `Vehicle       : ${safe(row.vehicle_type, "")} / ${safe(row.vehicle_number, "")}`,
+            `Container     : ${safe(row.container_number)}`,
+            `Route         : ${routeDetails}`,
+            ...(deliveryDate ? [`Delivery      : ${deliveryDate}`] : [])
+        ].join("\n");
 
         return [
             i + 1,
-            formatDate(row.BookedDate) || "",
-            row.DocketNo || "",
-            mode || "",
-            safe(row.ClearanceMode),
-            safe(row.Origin) || "",
-            safe(row.Destination) || "",
-            row.NoofUnit ?? "0",
-            row.ChargableWeight + " " + row.UOMType,
-            row.FreightAmount ? safeNumber(row.FreightAmount).toFixed(2) : "0.00",
-            row.FuelSurcharge ? safeNumber(row.FuelSurcharge).toFixed(2) : "0.00",
-            row.OtherCharges ? safeNumber(row.OtherCharges).toFixed(2) : "0.00",
-            row.TotalAmount ? safeNumber(row.TotalAmount).toFixed(2) : "0.00"
+            row.lr_number || "",
+            formatDate(row.pickup_date) || "",
+            description,
+            Qty ?? "0",
+            safeNumber(perQtyAmt).toFixed(2),
+            safeNumber(otherAmount).toFixed(2),
+            (freightAmount + otherAmount).toFixed(2)
         ];
     });
 
     // ================= TOTALS =================
-    const grandTotal = Math.round(
-        freightAmount + fuelSurcharge + otherAmount + totalGST
+    totalGST = round2(totalCGST + totalSGST + totalIGST);
+
+    const grandTotal = round2(
+        totalFreight + totalOther + totalGST
     );
 
     // ================= TABLE =================
     doc.autoTable({
+
         startY: y,
-        margin: { left: PAGE.x, right: PAGE.x },
+        margin: {
+            left: PAGE.x,
+            right: PAGE.x
+        },
         tableWidth: PAGE.w,
+
         head: [[
-            "Sl No.", "Date", "AWB No", "Transit", "Mode", "Origin", "Dest.", "Qty",
-            "Weight", "Frt. Amt.", "FSC. Chrgs", "Other Charges", "TotalAmt."
+            "Sl",
+            "Docket no",
+            "Date",
+            "Descriptions",
+            "Qty",
+            "Rate Per Unit",
+            "Other Charges",
+            "Amount (INR)"
         ]],
 
         body,
 
         styles: {
             fontSize: FONT.small,
-            // fontFamily: "times",
             cellPadding: 1,
             overflow: "linebreak",
             textColor: 0,
@@ -706,31 +732,57 @@ async function drawShipmentTable_int_Main(doc, PAGE, FONT, rows = [], y) {
             textColor: 255,
             fontStyle: "bold",
             halign: "center",
+            valign: "middle",
             cellPadding: 1.5,
             lineWidth: 0.2,
             lineColor: [0, 0, 0],
-            valign: "middle"
         },
+
         didParseCell: function (data) {
             if (data.section === "body") {
                 data.cell.styles.fillColor = [255, 255, 255];
                 data.cell.styles.textColor = [0, 0, 0];
             }
         },
+
         columnStyles: {
-            0: { cellWidth: 7, halign: "center", valign: "middle" }, // Sl
-            1: { cellWidth: 16, valign: "middle" }, // Date
-            2: { cellWidth: 19, valign: "middle" }, // AWB No
-            3: { cellWidth: 19, valign: "middle" }, // Transit
-            4: { cellWidth: 15, valign: "middle" }, // Mode
-            5: { cellWidth: 15, valign: "middle" }, // Origin
-            6: { cellWidth: 15, valign: "middle" }, // Dest.
-            7: { cellWidth: 10, halign: "right", valign: "middle" }, // Qty
-            8: { cellWidth: 12, halign: "right", valign: "middle" }, // Weight/CBM
-            9: { cellWidth: 17, halign: "right", valign: "middle" }, // Frt. Amt.
-            10: { cellWidth: 14, halign: "right", valign: "middle" }, // FSC. Chrgs
-            11: { cellWidth: 14, halign: "right", valign: "middle" },  // Other Charges
-            12: { cellWidth: 17, halign: "right", valign: "middle" }, // TotalAmt.
+            0: {
+                cellWidth: 8,
+                halign: "center",
+                valign: "middle"
+            },
+            1: {
+                cellWidth: 20,
+                valign: "middle"
+            },
+            2: {
+                cellWidth: 20,
+                valign: "middle"
+            },
+            3: {
+                cellWidth: 67,
+                valign: "middle"
+            },
+            4: {
+                cellWidth: 15,
+                halign: "right",
+                valign: "middle"
+            },
+            5: {
+                cellWidth: 20,
+                halign: "right",
+                valign: "middle"
+            },
+            6: {
+                cellWidth: 20,
+                halign: "right",
+                valign: "middle"
+            },
+            7: {
+                cellWidth: 20,
+                halign: "right",
+                valign: "middle"
+            }
         },
 
         didDrawCell: (data) => {
@@ -739,19 +791,17 @@ async function drawShipmentTable_int_Main(doc, PAGE, FONT, rows = [], y) {
                 data.cell.styles.lineWidth = 0.2;
             }
         }
+
     });
 
     return {
         y: doc.lastAutoTable.finalY,
-        freightAmount,
-        fuelSurcharge,
-        otherAmount,
+        totalFreight,
+        totalOther,
         totalCGST,
         totalSGST,
         totalIGST,
         totalGST,
-        nonTaxableAmount,
-        taxableAmount,
-        grandTotal,
+        grandTotal
     };
 }

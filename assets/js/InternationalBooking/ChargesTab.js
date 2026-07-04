@@ -133,15 +133,15 @@ async function addFreightRow() {
         <td>${remarksDetails.value}</td>
 
         <td class="text-end">
-            ${taxCalc.totalRate}%
-        </td>
-
-        <td class="text-end">
             ${quantityDisplay}
         </td>
 
         <td class="text-end">
             ${freightAmountValue.toFixed(2)}
+        </td>
+        
+        <td class="text-end">
+            ${taxCalc.totalRate}%
         </td>
 
         <td class="text-end">
@@ -238,13 +238,13 @@ async function saveFreightCharges() {
                 ChargesType: cells[0].textContent.trim(),
                 HSNCode: cells[1].textContent.trim(),
                 Remarks: cells[2].textContent.trim(),
-                TaxRate: parseFloat(cells[3].textContent.trim().replace('%', '')) || 0, // Calculate tax rate, default to 0 if parsing fails.cells[3].textContent.trim().replace('%', '') || "0",
-                Quantity: cells[4].textContent.trim() || "0 Nos",
+                Quantity: cells[3].textContent.trim() || "0 Nos",
                 PerQtyAmt: Number(
-                    (parseFloat(cells[5].textContent || 0) /
-                        (parseFloat(cells[4].textContent.trim().split(' ')[0]) || 1)
+                    (parseFloat(cells[4].textContent || 0) /
+                        (parseFloat(cells[3].textContent.trim().split(' ')[0]) || 1)
                     ).toFixed(2)), // Calculate per quantity amount, default to 0 if parsing fails
-                TotalAmount: parseFloat(cells[5].textContent) || 0, // Quantity is always 1
+                TotalAmount: parseFloat(cells[4].textContent) || 0, // Quantity is always 1
+                TaxRate: parseFloat(cells[5].textContent.trim().replace('%', '')) || 0, // Calculate tax rate, default to 0 if parsing fails.cells[3].textContent.trim().replace('%', '') || "0",
                 SGSTAmt: parseFloat(cells[6].textContent) || 0,
                 CGSTAmt: parseFloat(cells[7].textContent) || 0,
                 IGSTAmt: parseFloat(cells[8].textContent) || 0,
@@ -299,9 +299,9 @@ async function loadFreightCharges() {
         <td>${item.ChargesType || ''}</td>
         <td>${item.HSNCode || ''}</td>
         <td>${item.Remarks || ''}</td>
-        <td class="text-end">${(item.TaxRate || 0).toFixed(2)}%</td>
         <td class="text-end">${item.Quantity || 0}</td>
         <td class="text-end">${(item.TotalAmount || 0).toFixed(2)}</td>
+        <td class="text-end">${(item.TaxRate || 0).toFixed(2)}%</td>
         <td class="text-end">${(item.SGSTAmt || 0).toFixed(2)}</td>
         <td class="text-end">${(item.CGSTAmt || 0).toFixed(2)}</td>
         <td class="text-end">${(item.IGSTAmt || 0).toFixed(2)}</td>
@@ -473,16 +473,14 @@ async function recalcFSC() {
         <td>${fscHSN || ''}</td>
         <td>Fuel Surcharge ${fscPercent}%</td>
 
-        <td class="text-end">
-            ${Number(taxCalc.totalRate || 0).toFixed(2)}%
-        </td>
-
         <td class="text-end">1 Nos</td>
 
         <td class="text-end">
             ${fscAmount.toFixed(2)}
         </td>
-
+        <td class="text-end">
+            ${Number(taxCalc.totalRate || 0).toFixed(2)}%
+        </td>
         <td class="text-end">
             ${taxCalc.sgstAmt.toFixed(2)}
         </td>
