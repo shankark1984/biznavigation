@@ -118,7 +118,7 @@ async function drawTermsAndTaxSection_ftl(doc, PAGE, FONT, company, header, tota
         bankTopGap: 1,
         bankRowHeight: 4,
 
-        bottomMargin: 35,
+        bottomMargin: 34.05,
     };
 
     const colTerms =
@@ -215,7 +215,7 @@ function calculateTermsHeight_ftl(
 ) {
 
     let height =
-        CONFIG.headerH + 4;
+        CONFIG.headerH + 1.8;
 
     tandcData.forEach((item, i) => {
 
@@ -316,7 +316,7 @@ function drawTermsContent_ftl(
             currentY
         );
 
-        currentY += 3.8;
+        currentY += 3;
 
         // Remaining lines aligned
         for (let i = 1; i < lines.length; i++) {
@@ -325,11 +325,11 @@ function drawTermsContent_ftl(
                 leftMargin + indent,
                 currentY
             );
-            currentY += 3.8;
+            currentY += 3;
         }
 
         // Gap between terms
-        currentY += 1.5;
+        currentY += 1;
     });
 
     return currentY;
@@ -338,16 +338,7 @@ function drawTermsContent_ftl(
 // ==========================================
 // TAX SECTION
 // ==========================================
-function drawTaxSection_ftl(
-    doc,
-    FONT,
-    totals,
-    totalPaymentReceived,
-    X,
-    COL,
-    y,
-    CONFIG
-) {
+function drawTaxSection_ftl(doc, FONT, totals, totalPaymentReceived, X, COL, y, CONFIG) {
 
     // =========================
     // VALUES
@@ -363,7 +354,9 @@ function drawTaxSection_ftl(
     // TOTALS
     // =========================
     const totalGST = cgst + sgst + igst;
+
     console.log("Total Cal : ", totalGST + nonTaxable + taxable);
+
     const grandTotal = Math.round(nonTaxable + taxable + totalGST);
 
     const balanceAmount = Math.round(grandTotal - advance);
@@ -599,13 +592,15 @@ async function getShipmentData_ftl_Main(invoiceNo) {
 
 // Utility function to fetch shipment details
 async function drawShipmentTable_ftl_Main(doc, PAGE, FONT, rows = [], y) {
-    console.log(rows)
+
     let totalFreight = 0,
         totalOther = 0,
         totalCGST = 0,
         totalSGST = 0,
         totalIGST = 0,
         totalGST = 0;
+
+    let nonTaxableAmount = 0, taxableAmount = 0;
 
     const rowHeight = 5;
     const headerHeight = 6;
@@ -623,33 +618,16 @@ async function drawShipmentTable_ftl_Main(doc, PAGE, FONT, rows = [], y) {
     // ================= BUILD BODY =================
     let body = rows.map((row, i) => {
 
-        let freightAmount = 0,
-            otherAmount = 0,
-            perQtyAmt = 0,
-            Qty = 0;
+        totalFreight += safeNumber(row.FreightAmountSale) || 0;
+        totalOther += safeNumber(row.OtherAmountSale) || 0;
+        totalCGST += safeNumber(row.CGSTAmountSale);
+        totalSGST += safeNumber(row.SGSTAmountSale);
+        totalIGST += safeNumber(row.IGSTAmountSale);
+        totalGST += safeNumber(row.TotalGSTAmountSale);
+        nonTaxableAmount += safeNumber(row.NonTaxableAmountSale) || 0;
+        taxableAmount += safeNumber(row.TaxableAmountSale) || 0;
 
-        (row.FullLoadBookingCharges || []).forEach(c => {
-
-            const amount = safeNumber(c.TotalAmount);
-            const perQtyAmount = safeNumber(c.PerQtyAmt);
-
-            totalCGST += safeNumber(c.CGSTAmt);
-            totalSGST += safeNumber(c.SGSTAmt);
-            totalIGST += safeNumber(c.IGSTAmt);
-
-            Qty = c.Quantity ?? Qty;
-
-            if (["Freight Amount", "Transportation Charges"].includes(c.ChargesType)) {
-                freightAmount += amount;
-                perQtyAmt += perQtyAmount;
-            } else {
-                otherAmount += amount;
-            }
-
-        });
-
-        totalFreight += freightAmount;
-        totalOther += otherAmount;
+        console.log("Total Value", totalFreight, totalOther, totalCGST, totalSGST, totalIGST, totalGST, nonTaxableAmount, taxableAmount);
 
         const safe = (val, fallback = "-") =>
             val !== null &&
@@ -658,38 +636,39 @@ async function drawShipmentTable_ftl_Main(doc, PAGE, FONT, rows = [], y) {
                 ? val
                 : fallback;
 
+        const origin = safe(row.OriginCity, "");
+        const destination = safe(row.DestinationCity, "");
+
         const routeDetails =
-            safe(row.RouteDetails, null) ||
-            `${safe(row.OriginCity, "")} → ${safe(row.DestinationCity, "")}`;
+            safe(row.RouteDetails, "") ||
+            `${origin} to ${destination}`;
 
         const deliveryDate = row.completion_date
             ? formatDate(row.completion_date)
             : null;
 
         const description = [
-            `Movement Type : ${safe(row.MovementType)} / ${safe(row.ModeType)}`,
-            `Ref           : ${safe(row.ReferenceNo)}`,
-            `Vehicle       : ${safe(row.VehicleType, "")} / ${safe(row.VehicleNumber, "")}`,
-            `Container     : ${safe(row.ContainerNumber)}`,
-            `Route         : ${routeDetails}`,
-            ...(deliveryDate ? [`Delivery      : ${deliveryDate}`] : [])
+            `${safe(row.MovementType)} / ${safe(row.ModeType)} | Ref No : ${safe(row.BookingType)}`, ,
+            `Vehicle : ${safe(row.VehicleType)} | ${safe(row.VehicleNumber)}`,
+            `Container : ${safe(row.ContainerNumber)}`,
+            `${routeDetails}`
         ].join("\n");
 
         return [
-            i + 1,
-            row.LRNumber || "",
-            formatDate(row.PickupDate) || "",
-            description,
-            row.Quantity ?? "0",
-            safeNumber(row.FreightAmountSale).toFixed(2),
-            safeNumber(row.OtherAmountSale).toFixed(2),
-            (row.FreightAmountSale + row.OtherAmountSale).toFixed(2)
+            i + 1, // Sl no
+            row.LRNumber || "", // Docket no
+            formatDate(row.PickupDate) || "", // Pickup date
+            description, // Descriptions
+            row.Quantity ?? "0", // Qty
+            safeNumber(row.FreightAmountSale).toFixed(2), // Rate Per Unit
+            safeNumber(row.OtherAmountSale).toFixed(2), // Other Charges
+            (row.FreightAmountSale + row.OtherAmountSale).toFixed(2) // Amount (INR)
         ];
     });
 
     // ================= TOTALS =================
     totalGST = round2(totalCGST + totalSGST + totalIGST);
-
+    console.log("Total Cal : ", totalGST + totalFreight + totalOther);
     const grandTotal = round2(
         totalFreight + totalOther + totalGST
     );
@@ -705,14 +684,7 @@ async function drawShipmentTable_ftl_Main(doc, PAGE, FONT, rows = [], y) {
         tableWidth: PAGE.w,
 
         head: [[
-            "Sl",
-            "Docket no",
-            "Date",
-            "Descriptions",
-            "Qty",
-            "Rate Per Unit",
-            "Other Charges",
-            "Amount (INR)"
+            "Sl", "Docket no", "Date", "Descriptions", "Qty", "Rate Per Unit", "Other Charges", "Amount (INR)"
         ]],
 
         body,
@@ -746,43 +718,14 @@ async function drawShipmentTable_ftl_Main(doc, PAGE, FONT, rows = [], y) {
         },
 
         columnStyles: {
-            0: {
-                cellWidth: 8,
-                halign: "center",
-                valign: "middle"
-            },
-            1: {
-                cellWidth: 20,
-                valign: "middle"
-            },
-            2: {
-                cellWidth: 20,
-                valign: "middle"
-            },
-            3: {
-                cellWidth: 67,
-                valign: "middle"
-            },
-            4: {
-                cellWidth: 15,
-                halign: "right",
-                valign: "middle"
-            },
-            5: {
-                cellWidth: 20,
-                halign: "right",
-                valign: "middle"
-            },
-            6: {
-                cellWidth: 20,
-                halign: "right",
-                valign: "middle"
-            },
-            7: {
-                cellWidth: 20,
-                halign: "right",
-                valign: "middle"
-            }
+            0: { cellWidth: 8, halign: "center", valign: "middle" }, // Sl no
+            1: { cellWidth: 20, valign: "middle" }, // Docket no
+            2: { cellWidth: 20, valign: "middle" }, // Date
+            3: { cellWidth: 72, valign: "middle" }, // Descriptions
+            4: { cellWidth: 10, halign: "right", valign: "middle" }, // Qty
+            5: { cellWidth: 20, halign: "right", valign: "middle" },
+            6: { cellWidth: 20, halign: "right", valign: "middle" },
+            7: { cellWidth: 20, halign: "right", valign: "middle" }
         },
 
         didDrawCell: (data) => {
@@ -802,6 +745,8 @@ async function drawShipmentTable_ftl_Main(doc, PAGE, FONT, rows = [], y) {
         totalSGST,
         totalIGST,
         totalGST,
-        grandTotal
+        grandTotal,
+        nonTaxableAmount,
+        taxableAmount
     };
 }
