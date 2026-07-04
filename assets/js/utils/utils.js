@@ -841,7 +841,7 @@ function numberToWordsIndian(amount) {
 
 // ✅ Function to update delivery address based on consignee details
 async function consigneeDetails(query, typeOfValue, datalistId) {
-    console.log('Fetching consignee...' + CompanyID);
+    // console.log('Fetching consignee...' + CompanyID);
 
     const datalist = document.getElementById(datalistId);
 

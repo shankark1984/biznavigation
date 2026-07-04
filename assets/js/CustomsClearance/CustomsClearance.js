@@ -117,7 +117,7 @@ function validateFormData(data) {
  */
 async function saveFormData() {
     let formData = getFormData();
-    console.log("Form Data to Save:", formData);
+
     if (!validateFormData(formData)) return;
 
     try {
@@ -160,13 +160,8 @@ async function saveFormData() {
 
         } else {
 
-            console.log("Saving new record...", CompanyID);
-
             // Generate Job ID
             const jobIDResult = await generateJobID(CompanyID);
-
-            console.log("CompanyID:", CompanyID);
-            console.log("Generated JobID:", jobIDResult);
 
             // Validate generated Job ID
             if (
@@ -188,8 +183,6 @@ async function saveFormData() {
             formData.created_by = UserLoginID;
             formData.created_at = localtimeStamp;
             formData.company_id = CompanyID;
-
-            console.log("Final Insert Data:", formData);
 
             // Insert record
             const { data, error } = await supabaseClient
@@ -578,8 +571,17 @@ function populateDuplicateModal(records) {
         .forEach(r => {
 
             r.addEventListener("change", function () {
-                selectedDuplicateId = this.value;
-                selectedDuplicateJobID = records.find(r => r.id === this.value)?.JobID;
+
+                selectedDuplicateId = Number(this.value);
+
+                const selectedRecord = records.find(
+                    record => record.id === selectedDuplicateId
+                );
+
+                selectedDuplicateJobID = selectedRecord
+                    ? selectedRecord.JobID
+                    : null;
+
             });
 
         });
