@@ -789,12 +789,12 @@ document.getElementById('reportButton').addEventListener('click', async function
 
         reportType = document.getElementById('reportType').value;
 
-        console.log(
-            'Generating report for Invoice No:',
-            invoiceNo,
-            'with Report Type:',
-            reportType
-        );
+        // console.log(
+        //     'Generating report for Invoice No:',
+        //     invoiceNo,
+        //     'with Report Type:',
+        //     reportType
+        // );
 
         const invoiceDetails = await getInvoiceDetails(invoiceNo);
 

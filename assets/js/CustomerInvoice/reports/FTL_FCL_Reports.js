@@ -89,10 +89,10 @@ async function generate_FullTruckReports_InvoicePDF(header, lines = []) {
     const fileName =
         `${header?.InvoiceNo || "NA"}_${party?.name || "NA"}.pdf`;
 
-    console.log(
-        "PDF generated successfully",
-        fileName
-    );
+    // console.log(
+    //     "PDF generated successfully",
+    //     fileName
+    // );
 
     doc.save(fileName);
 }
@@ -354,8 +354,6 @@ function drawTaxSection_ftl(doc, FONT, totals, totalPaymentReceived, X, COL, y, 
     // TOTALS
     // =========================
     const totalGST = cgst + sgst + igst;
-
-    console.log("Total Cal : ", totalGST + nonTaxable + taxable);
 
     const grandTotal = Math.round(nonTaxable + taxable + totalGST);
 
@@ -627,8 +625,6 @@ async function drawShipmentTable_ftl_Main(doc, PAGE, FONT, rows = [], y) {
         nonTaxableAmount += safeNumber(row.NonTaxableAmountSale) || 0;
         taxableAmount += safeNumber(row.TaxableAmountSale) || 0;
 
-        console.log("Total Value", totalFreight, totalOther, totalCGST, totalSGST, totalIGST, totalGST, nonTaxableAmount, taxableAmount);
-
         const safe = (val, fallback = "-") =>
             val !== null &&
                 val !== undefined &&
@@ -668,7 +664,7 @@ async function drawShipmentTable_ftl_Main(doc, PAGE, FONT, rows = [], y) {
 
     // ================= TOTALS =================
     totalGST = round2(totalCGST + totalSGST + totalIGST);
-    console.log("Total Cal : ", totalGST + totalFreight + totalOther);
+
     const grandTotal = round2(
         totalFreight + totalOther + totalGST
     );
