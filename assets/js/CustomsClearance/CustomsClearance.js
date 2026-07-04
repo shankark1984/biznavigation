@@ -489,32 +489,37 @@ document.getElementById("blAwbNumber")
 document.getElementById("beNumber")
     .addEventListener("blur", () => checkDuplicate("BE"));
 
+let selectedDuplicateRecord = null;
 
-let selectedDuplicateId = null;
-let selectedDuplicateJobID = null;
-
+// =============================
+// Check Duplicate
+// =============================
 async function checkDuplicate(type) {
 
     let value = "";
 
-    if (type === "BL")
+    if (type === "BL") {
         value = document.getElementById("blAwbNumber").value.trim();
+    }
 
-    if (type === "BE")
+    if (type === "BE") {
         value = document.getElementById("beNumber").value.trim();
+    }
 
     if (!value) return;
 
     let query = supabaseClient
         .from("CustomsClearanceView")
-        .select("id,JobID,JobDate,PartyName,BLAWBNo,BENo")
+        .select("id, JobID, JobDate, PartyName, BLAWBNo, BENo")
         .eq("company_id", CompanyID);
 
-    if (type === "BL")
+    if (type === "BL") {
         query = query.eq("BLAWBNo", value);
+    }
 
-    if (type === "BE")
+    if (type === "BE") {
         query = query.eq("BENo", value);
+    }
 
     const { data, error } = await query;
 
@@ -523,27 +528,28 @@ async function checkDuplicate(type) {
         return;
     }
 
-    if (!data.length)
+    if (!data || data.length === 0) {
         return;
+    }
 
     populateDuplicateModal(data);
-
 }
 
+// =============================
+// Populate Duplicate Modal
+// =============================
 function populateDuplicateModal(records) {
-
-    selectedDuplicateId = null;
-    selectedDuplicateJobID = null;
 
     const tbody = document.getElementById("duplicateRecordBody");
 
     tbody.innerHTML = "";
 
+    selectedDuplicateRecord = records[0];
+
     records.forEach((row, index) => {
 
         tbody.innerHTML += `
             <tr>
-
                 <td>
                     <input
                         type="radio"
@@ -557,30 +563,24 @@ function populateDuplicateModal(records) {
                 <td>${row.PartyName}</td>
                 <td>${row.BLAWBNo ?? ""}</td>
                 <td>${row.BENo ?? ""}</td>
-
             </tr>
         `;
 
     });
 
-    selectedDuplicateId = records[0].id; // default to first record
-    selectedDuplicateJobID = records[0].JobID; // default to first record
-
     document
         .querySelectorAll("input[name='duplicateRecord']")
-        .forEach(r => {
+        .forEach(radio => {
 
-            r.addEventListener("change", function () {
+            radio.addEventListener("change", function () {
 
-                selectedDuplicateId = Number(this.value);
+                const selectedId = Number(this.value);
 
-                const selectedRecord = records.find(
-                    record => record.id === selectedDuplicateId
+                selectedDuplicateRecord = records.find(
+                    record => record.id === selectedId
                 );
 
-                selectedDuplicateJobID = selectedRecord
-                    ? selectedRecord.JobID
-                    : null;
+                // console.log("Selected Record:", selectedDuplicateRecord);
 
             });
 
@@ -589,22 +589,28 @@ function populateDuplicateModal(records) {
     new bootstrap.Modal(
         document.getElementById("duplicateRecordModal")
     ).show();
-
 }
 
-document.getElementById("openDuplicateRecord").addEventListener("click", async () => {
+// =============================
+// Open Selected Duplicate
+// =============================
+document.getElementById("openDuplicateRecord")
+    .addEventListener("click", async () => {
 
-    if (!selectedDuplicateId)
-        return;
+        if (!selectedDuplicateRecord) {
+            return;
+        }
 
-    bootstrap.Modal
-        .getInstance(document.getElementById("duplicateRecordModal"))
-        .hide();
+        bootstrap.Modal
+            .getInstance(document.getElementById("duplicateRecordModal"))
+            .hide();
 
-    // loadCustomsClearance(selectedDuplicateId);
-    console.log("Selected Duplicate ID:", selectedDuplicateId + " | " + selectedDuplicateJobID);
-    loadRecordByField('JobID', selectedDuplicateJobID);
-    await loadChargesByJobID(selectedDuplicateJobID);
-    await fetchEquipmentDetails(selectedDuplicateId);
+        // console.log("Selected Record:", selectedDuplicateRecord);
 
-});
+        await loadRecordByField("JobID", selectedDuplicateRecord.JobID);
+
+        await loadChargesByJobID(selectedDuplicateRecord.JobID);
+
+        await fetchEquipmentDetails(selectedDuplicateRecord.id);
+
+    });
