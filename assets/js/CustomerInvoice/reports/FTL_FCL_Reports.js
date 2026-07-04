@@ -659,31 +659,31 @@ async function drawShipmentTable_ftl_Main(doc, PAGE, FONT, rows = [], y) {
                 : fallback;
 
         const routeDetails =
-            safe(row.routedetails, null) ||
-            `${safe(row.origin_city, "")} → ${safe(row.destination_city, "")}`;
+            safe(row.RouteDetails, null) ||
+            `${safe(row.OriginCity, "")} → ${safe(row.DestinationCity, "")}`;
 
         const deliveryDate = row.completion_date
             ? formatDate(row.completion_date)
             : null;
 
         const description = [
-            `Movement Type : ${safe(row.movement_type)} / ${safe(row.mode_type)}`,
-            `Ref           : ${safe(row.reference_number)}`,
-            `Vehicle       : ${safe(row.vehicle_type, "")} / ${safe(row.vehicle_number, "")}`,
-            `Container     : ${safe(row.container_number)}`,
+            `Movement Type : ${safe(row.MovementType)} / ${safe(row.ModeType)}`,
+            `Ref           : ${safe(row.ReferenceNo)}`,
+            `Vehicle       : ${safe(row.VehicleType, "")} / ${safe(row.VehicleNumber, "")}`,
+            `Container     : ${safe(row.ContainerNumber)}`,
             `Route         : ${routeDetails}`,
             ...(deliveryDate ? [`Delivery      : ${deliveryDate}`] : [])
         ].join("\n");
 
         return [
             i + 1,
-            row.lr_number || "",
-            formatDate(row.pickup_date) || "",
+            row.LRNumber || "",
+            formatDate(row.PickupDate) || "",
             description,
-            Qty ?? "0",
-            safeNumber(perQtyAmt).toFixed(2),
-            safeNumber(otherAmount).toFixed(2),
-            (freightAmount + otherAmount).toFixed(2)
+            row.Quantity ?? "0",
+            safeNumber(row.FreightAmountSale).toFixed(2),
+            safeNumber(row.OtherAmountSale).toFixed(2),
+            (row.FreightAmountSale + row.OtherAmountSale).toFixed(2)
         ];
     });
 

@@ -1880,7 +1880,7 @@ function getFSCTotal(tableId = 'freightTable') {
 
         // Basic Amount = 5
         // FSC = 13
-        const basicAmountCell = cells[5];
+        const basicAmountCell = cells[4];
         const fscCell = cells[13];
 
         if (!basicAmountCell || !fscCell) return;
@@ -1931,8 +1931,7 @@ async function loadFSCModal() {
     const invoiceValue = getFSCTotal();
 
     // Set Total Amount
-    document.getElementById('totalAmount').value =
-        invoiceValue.toFixed(2);
+    document.getElementById('totalAmount').value = invoiceValue.toFixed(2);
 
     // Default FSC Percentage
     document.getElementById('fuelSurchargePercentage').value = 35;
@@ -1941,15 +1940,12 @@ async function loadFSCModal() {
     calculateFSCAmount();
 
     // Recalculate on Percentage Change
-    document.getElementById('fuelSurchargePercentage')
-        .oninput = calculateFSCAmount;
+    document.getElementById('fuelSurchargePercentage').oninput = calculateFSCAmount;
 
     // Show Modal
-    const modalElement =
-        document.getElementById('addFuelSurchargeModal');
+    const modalElement = document.getElementById('addFuelSurchargeModal');
 
-    const modal =
-        bootstrap.Modal.getOrCreateInstance(modalElement);
+    const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
 
     modal.show();
 }
