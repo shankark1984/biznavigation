@@ -350,8 +350,9 @@ document.getElementById("saveButton").addEventListener("click", async function (
 
     if (!lrNumber) {
         lrNumber = await generateLRNumber();
+        document.getElementById("lrNumber").value = lrNumber;
     }
-
+    // console.log(lrNumber);
     const val = id => document.getElementById(id)?.value || "";
 
     const modeType = val("modeType");
@@ -390,7 +391,7 @@ document.getElementById("saveButton").addEventListener("click", async function (
         waybillno: val("wayBillNo"),
         company_id: CompanyID
     };
-
+    console.log("Form Data:", formData);
     try {
 
         let query;
@@ -965,4 +966,23 @@ function applyFixedCharges(charges, accountType) {
 
     });
 
+}
+
+async function generateLRNumber() {
+    const companyId = localStorage.getItem("CompanyID");
+    const companyProfile = await getCompanyProfile(companyId);
+    const shortCode = companyProfile.short_code;
+
+    // console.log("CompanyID:", companyId);
+    // console.log("ShortCode:", shortCode);
+
+    const { data, error } = await supabaseClient.rpc("generate_lr_number", {
+        p_company_id: companyId,
+        p_short_code: shortCode
+    });
+
+    // console.log("RPC Data:", data);
+    // console.log("RPC Error:", error);
+
+    return data;
 }

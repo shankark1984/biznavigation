@@ -21,33 +21,42 @@ async function initializeForm() {
     }
 }
 
+function getDateValue(id) {
+    const value = document.getElementById(id).value.trim();
+    return value === "" ? null : value;
+}
 /**
  * Retrieves trimmed form data from input fields.
  */
 function getFormData() {
     return {
-        JobDate: document.getElementById('jobDate').value.trim(),
+        JobDate: getDateValue('jobDate'),
         PartyCode: document.getElementById('partyCode').value.trim(),
         PartyName: document.getElementById('partyName').value.trim(),
         MovementType: document.getElementById('movementType').value.trim(),
         TransitType: document.getElementById('transitType').value.trim(),
         ModeType: document.getElementById('modeType').value.trim(),
+
         BLAWBNo: document.getElementById('blAwbNumber').value.trim().toUpperCase(),
-        BLAWBDate: document.getElementById('blAwbDate').value.trim(),
+        BLAWBDate: getDateValue('blAwbDate'),
+
         BENo: document.getElementById('beNumber').value.trim().toUpperCase(),
-        BEDate: document.getElementById('beDate').value.trim(),
+        BEDate: getDateValue('beDate'),
+
         Consignee: document.getElementById('consigneeName').value.trim(),
         Address: document.getElementById('deliveryAddress').value.trim(),
+
         Quantity: parseFloat(document.getElementById('quantity').value) || 0,
         CargoWeight: parseFloat(document.getElementById('cargoWeight').value) || 0,
+
         ClearanceMode: document.getElementById('clearanceMode').value.trim(),
         Commodity: document.getElementById('commodity').value.trim(),
         Origin: document.getElementById('originCountry').value.trim(),
         Destination: document.getElementById('destinationCountry').value.trim(),
+
         ClearancePort: clearancePortInput.value.trim(),
         CustomsBroker: document.getElementById('customsBroker').value.trim(),
-        AnyInformation: document.getElementById('information').value.trim(),
-        // company_id will be appended in save logic (to keep formData clean)
+        AnyInformation: document.getElementById('information').value.trim()
     };
 }
 
@@ -55,26 +64,29 @@ function getFormData() {
  * Generates unique JobID based on last record for the company.
  */
 async function generateJobID(companyID) {
+
     const { data, error } = await supabaseClient
-        .from('CustomsClearance_Details')
-        .select('JobID, JobRunningNo')
-        .eq('company_id', companyID)
-        .order('JobRunningNo', { ascending: false })
+        .from("CustomsClearance_Details")
+        .select("JobID, JobRunningNo")
+        .eq("company_id", companyID)
+        .order("JobRunningNo", { ascending: false })
         .limit(1);
-    console.log("Last JobID data for generating new JobID:", data, "Error:", error);
 
     if (error) throw error;
 
-    if (!data.length) return `${companyID}_CC001`;
+    // First Job
+    if (!data || data.length === 0) {
+        return {
+            JobID: `${companyID}_CC001`,
+            JobRunningNo: 1
+        };
+    }
 
-    const lastJobID = data[0].JobID;
-    const matches = lastJobID.match(/_CC(\d+)$/);
-    const lastNumber = matches ? parseInt(matches[1], 10) : 0;
-    const nextNumber = lastNumber + 1;
+    const lastRunningNo = data[0].JobRunningNo || 0;
 
     return {
-        JobID: `${companyID}_CC${String(nextNumber).padStart(3, '0')}`,
-        JobRunningNo: nextNumber
+        JobID: `${companyID}_CC${String(lastRunningNo + 1).padStart(3, "0")}`,
+        JobRunningNo: lastRunningNo + 1
     };
 }
 
@@ -105,7 +117,7 @@ function validateFormData(data) {
  */
 async function saveFormData() {
     let formData = getFormData();
-
+    console.log("Form Data to Save:", formData);
     if (!validateFormData(formData)) return;
 
     try {
@@ -134,41 +146,74 @@ async function saveFormData() {
             }
             parentId = idData.id; // id for charges table
 
-            response = await supabaseClient
-                .from('CustomsClearance_Details')
+            const { data, error } = await supabaseClient
+                .from("CustomsClearance_Details")
                 .update(formData)
-                .eq('JobID', jobID);
+                .eq("JobID", jobID)
+                .select()
+                .single();
+
+            if (error) throw error;
+
+            parentId = data.id;
+            jobID = data.JobID;
 
         } else {
-            // Insert new record
+
+            console.log("Saving new record...", CompanyID);
+
+            // Generate Job ID
             const jobIDResult = await generateJobID(CompanyID);
+
+            console.log("CompanyID:", CompanyID);
+            console.log("Generated JobID:", jobIDResult);
+
+            // Validate generated Job ID
+            if (
+                !jobIDResult ||
+                typeof jobIDResult !== "object" ||
+                !jobIDResult.JobID
+            ) {
+                throw new Error("Failed to generate JobID.");
+            }
+
+            // Assign generated values
             formData.JobID = jobIDResult.JobID;
             formData.JobRunningNo = jobIDResult.JobRunningNo;
-            // Set jobNo input to new JobID
-            document.getElementById('jobNo').value = formData.JobID;
 
+            // Update Job No textbox
+            document.getElementById("jobNo").value = formData.JobID;
+
+            // Audit fields
             formData.created_by = UserLoginID;
             formData.created_at = localtimeStamp;
             formData.company_id = CompanyID;
 
-            // .select() so we get inserted row back (with "id")
-            response = await supabaseClient
-                .from('CustomsClearance_Details')
-                .insert([formData])
-                .select();
+            console.log("Final Insert Data:", formData);
 
-            if (response.error || !response.data || !response.data[0]) {
-                throw response.error || new Error("No inserted record returned.");
+            // Insert record
+            const { data, error } = await supabaseClient
+                .from("CustomsClearance_Details")
+                .insert([formData])
+                .select()
+                .single();
+
+            if (error) throw error;
+
+            headerRow = data;
+            parentId = data.id;
+            jobID = data.JobID;
+
+            if (error) {
+                throw error;
             }
 
-            headerRow = response.data[0];
-            parentId = headerRow.id;    // This is the parent record ID for charges
-            jobID = headerRow.JobID;    // The JobID just generated
+            headerRow = data;
+            parentId = data.id;
+            jobID = data.JobID;
         }
 
-        if (response.error) {
-            throw response.error;
-        }
+
         document.querySelectorAll('.btn-delete-row').forEach(button => {
             button.disabled = true;
         });
@@ -193,7 +238,6 @@ async function saveFormData() {
         alert(`Error saving data: ${error.message || error}`);
     }
 }
-
 
 // ========== Event Listeners ==========
 
@@ -239,34 +283,6 @@ if (modifyButton) {
 
     });
 }
-
-// async function loadJobNoSuggestions() {
-//     try {
-//         console.log("Loading job number suggestions for company ID:", CompanyID);
-//         const { data, error } = await supabaseClient
-//             .from('CustomsClearance_Details')
-//             .select('JobID')
-//             .eq('company_id', CompanyID)
-//             .limit(50)
-//             .order('JobID', { ascending: true });
-
-//         if (error) {
-//             console.error('Error fetching jobNo suggestions:', error);
-//             return;
-//         }
-
-//         const datalist = document.getElementById('jobNoSuggestions');
-//         datalist.innerHTML = ''; // Clear previous suggestions
-
-//         data.forEach(item => {
-//             const option = document.createElement('option');
-//             option.value = item.JobID;
-//             datalist.appendChild(option);
-//         });
-//     } catch (err) {
-//         console.error('Unexpected error fetching jobNo suggestions:', err);
-//     }
-// }
 
 
 jobNoInput.addEventListener('input', async function () {
@@ -427,6 +443,7 @@ async function loadRecordByField(fieldName, value) {
             .from('CustomsClearance_Details')
             .select('*')
             .eq(fieldName, trimmedValue)
+            .eq('company_id', CompanyID)
             .single(); // since limit(1) + maybeSingle not needed
 
         if (error) {
@@ -458,21 +475,7 @@ jobNoInput.addEventListener('change', async e => {
     }
 });
 
-blAwbNumberInput.addEventListener('change', async e => {
-    let record = await loadRecordByField('BLAWBNo', e.target.value);
-    if (record?.JobID) {
-        await loadChargesByJobID(record.JobID);
-        await fetchEquipmentDetails(record.id);
-    }
-});
 
-beNumberInput.addEventListener('change', async e => {
-    let record = await loadRecordByField('BENo', e.target.value);
-    if (record?.JobID) {
-        await loadChargesByJobID(record.JobID);
-        await fetchEquipmentDetails(record.id);
-    }
-});
 
 newButton.addEventListener('click', () => {
     jobNoInput.value = ''; // Clear job number input
@@ -485,4 +488,121 @@ newButton.addEventListener('click', () => {
     const tbody = document.querySelector('#chargesTable tbody');
     tbody.innerHTML = ''; // Clear current rows
     resetTotalsRow();
+});
+
+document.getElementById("blAwbNumber")
+    .addEventListener("blur", () => checkDuplicate("BL"));
+
+document.getElementById("beNumber")
+    .addEventListener("blur", () => checkDuplicate("BE"));
+
+
+let selectedDuplicateId = null;
+let selectedDuplicateJobID = null;
+
+async function checkDuplicate(type) {
+
+    let value = "";
+
+    if (type === "BL")
+        value = document.getElementById("blAwbNumber").value.trim();
+
+    if (type === "BE")
+        value = document.getElementById("beNumber").value.trim();
+
+    if (!value) return;
+
+    let query = supabaseClient
+        .from("CustomsClearanceView")
+        .select("id,JobID,JobDate,PartyName,BLAWBNo,BENo")
+        .eq("company_id", CompanyID);
+
+    if (type === "BL")
+        query = query.eq("BLAWBNo", value);
+
+    if (type === "BE")
+        query = query.eq("BENo", value);
+
+    const { data, error } = await query;
+
+    if (error) {
+        console.error(error);
+        return;
+    }
+
+    if (!data.length)
+        return;
+
+    populateDuplicateModal(data);
+
+}
+
+function populateDuplicateModal(records) {
+
+    selectedDuplicateId = null;
+    selectedDuplicateJobID = null;
+
+    const tbody = document.getElementById("duplicateRecordBody");
+
+    tbody.innerHTML = "";
+
+    records.forEach((row, index) => {
+
+        tbody.innerHTML += `
+            <tr>
+
+                <td>
+                    <input
+                        type="radio"
+                        name="duplicateRecord"
+                        value="${row.id}"
+                        ${index === 0 ? "checked" : ""}
+                    >
+                </td>
+
+                <td>${row.JobID}</td>
+                <td>${row.PartyName}</td>
+                <td>${row.BLAWBNo ?? ""}</td>
+                <td>${row.BENo ?? ""}</td>
+
+            </tr>
+        `;
+
+    });
+
+    selectedDuplicateId = records[0].id; // default to first record
+    selectedDuplicateJobID = records[0].JobID; // default to first record
+
+    document
+        .querySelectorAll("input[name='duplicateRecord']")
+        .forEach(r => {
+
+            r.addEventListener("change", function () {
+                selectedDuplicateId = this.value;
+                selectedDuplicateJobID = records.find(r => r.id === this.value)?.JobID;
+            });
+
+        });
+
+    new bootstrap.Modal(
+        document.getElementById("duplicateRecordModal")
+    ).show();
+
+}
+
+document.getElementById("openDuplicateRecord").addEventListener("click", async () => {
+
+    if (!selectedDuplicateId)
+        return;
+
+    bootstrap.Modal
+        .getInstance(document.getElementById("duplicateRecordModal"))
+        .hide();
+
+    // loadCustomsClearance(selectedDuplicateId);
+    console.log("Selected Duplicate ID:", selectedDuplicateId + " | " + selectedDuplicateJobID);
+    loadRecordByField('JobID', selectedDuplicateJobID);
+    await loadChargesByJobID(selectedDuplicateJobID);
+    await fetchEquipmentDetails(selectedDuplicateId);
+
 });

@@ -69,8 +69,9 @@
                                     <!-- Job Details -->
                                     <div class="col-md-2 col-sm-6">
                                         <label for="jobNo" class="form-label">Job No</label>
-                                        <input list="jobNoSuggestions" id="jobNo" class="form-control bg-light-input"
-                                            autocomplete="off" />
+                                        <input list="jobNoSuggestions" id="jobNo"
+                                            class="form-control border-primary bg-primary-subtle"
+                                            placeholder="🔍 Search Job No..." autocomplete="off">
                                         <datalist id="jobNoSuggestions"></datalist>
                                     </div>
                                     <div class="col-md-2 col-sm-6">
@@ -117,7 +118,7 @@
                                     <div class="col-md-2 col-sm-6">
                                         <label for="blAwbNumber" class="form-label">BL / AWB No.</label>
                                         <input list="blAwbNumberSuggestions" id="blAwbNumber"
-                                            class="form-control text-uppercase" autocomplete="off" />
+                                            class="form-control border-primary bg-primary-subtle" autocomplete="off" />
                                         <datalist id="blAwbNumberSuggestions"></datalist>
                                     </div>
                                     <div class="col-md-2 col-sm-6">
@@ -127,8 +128,8 @@
                                     <div class="col-md-2 col-sm-6">
                                         <label for="beNumber" class="form-label">BE No.</label>
                                         <input list="beNumberSuggestions" id="beNumber"
-                                            class="form-control text-uppercase" placeholder="Choose..."
-                                            autocomplete="off" />
+                                            class="form-control border-primary bg-primary-subtle"
+                                            placeholder="Choose..." autocomplete="off" />
                                         <datalist id="beNumberSuggestions"></datalist>
                                     </div>
                                     <div class="col-md-2 col-sm-6">
@@ -439,6 +440,57 @@
                                                 Add Consignee
                                             </button>
                                         </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Duplicate Record Modal -->
+                            <div class="modal fade" id="duplicateRecordModal" tabindex="-1">
+                                <div class="modal-dialog modal-lg">
+                                    <div class="modal-content">
+
+                                        <div class="modal-header bg-warning">
+                                            <h5 class="modal-title">
+                                                Duplicate Record Found
+                                            </h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                        </div>
+
+                                        <div class="modal-body">
+
+                                            <p>
+                                                Matching records already exist.
+                                                Select one to open or create a new record anyway.
+                                            </p>
+
+                                            <table class="table table-bordered table-hover">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Select</th>
+                                                        <th>Job No</th>
+                                                        <th>Customer</th>
+                                                        <th>BL/AWB</th>
+                                                        <th>BE No</th>
+                                                    </tr>
+                                                </thead>
+
+                                                <tbody id="duplicateRecordBody"></tbody>
+
+                                            </table>
+
+                                        </div>
+
+                                        <div class="modal-footer">
+
+                                            <button class="btn btn-secondary" data-bs-dismiss="modal">
+                                                Create New Anyway
+                                            </button>
+
+                                            <button class="btn btn-primary" id="openDuplicateRecord">
+                                                Open Selected
+                                            </button>
+
+                                        </div>
+
                                     </div>
                                 </div>
                             </div>
