@@ -405,7 +405,7 @@ async function recalcFSC() {
         if (fscApplicable !== 'yes') return;
 
         const basicAmt = parseFloat(
-            row.children[5]?.innerText
+            row.children[4]?.innerText
                 ?.replace(/,/g, '')
                 ?.replace(/[^\d.-]/g, '')
         ) || 0;
