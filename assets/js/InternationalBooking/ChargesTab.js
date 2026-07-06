@@ -333,7 +333,7 @@ function recalcTotals() {
         // If we don’t have at least 11 data cells, skip this row
         if (cells.length < 11) return;
 
-        totals.freight += parseFloat(cells[5].textContent) || 0;
+        totals.freight += parseFloat(cells[4].textContent) || 0;
         totals.sgst += parseFloat(cells[6].textContent) || 0;
         totals.cgst += parseFloat(cells[7].textContent) || 0;
         totals.igst += parseFloat(cells[8].textContent) || 0;
