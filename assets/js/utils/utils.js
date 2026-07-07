@@ -433,6 +433,7 @@ async function validatePANInput(
         input.classList.remove('is-invalid');
     }
 }
+
 let bankMap = {}; // Global mapping: DisplayName -> BankID
 let bankID = null; // Selected Bank ID
 
@@ -451,8 +452,7 @@ async function loadBankNameSuggestions() {
         const { data, error } = await supabaseClient
             .from('CompanyBankDetails')
             .select('id, BankName, AccountNo')
-            .eq('CompanyID', CompanyID)
-            .eq('DefaultBank', 'Yes');
+            .eq('CompanyID', CompanyID);
 
         if (error) {
             // console.error('Error loading bank data:', error.message);

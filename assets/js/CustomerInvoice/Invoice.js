@@ -6,12 +6,30 @@ const totalFreight = 0;
 /* =========================================================
    DOM READY
 ========================================================= */
+
 document.addEventListener('DOMContentLoaded', async () => {
     await loadSuggestions('partySuggestions', 'PartyDetails', CompanyID);
     await loadBankNameSuggestions();
     await loadDefaultBank();
     await loadInvoiceNoSuggestions();
-    await loadDatalist('departmentList', 'Department'); // Static data
+    await loadDatalist('departmentList', 'Department');
+
+    // Attach event after suggestions are loaded
+    const bankInput = document.getElementById('inputBankName');
+    const bankIDInput = document.getElementById('bankIDs');
+
+    bankInput.addEventListener('input', function () {
+        const selectedValue = this.value.trim();
+
+        if (bankMap[selectedValue]) {
+            bankID = bankMap[selectedValue];
+            bankIDInput.value = bankID;
+            console.log('Selected Bank ID:', bankID);
+        } else {
+            bankID = null;
+            bankIDInput.value = '';
+        }
+    });
 });
 
 /* =========================================================
@@ -339,9 +357,9 @@ document.getElementById('saveButton').addEventListener('click', async () => {
 /* =========================================================
    BANK SELECTION
 ========================================================= */
-document.getElementById('inputBankName').addEventListener('input', function () {
-    bankID = bankMap[this.value] || null;
-});
+// document.getElementById('inputBankName').addEventListener('input', function () {
+//     bankID = bankMap[this.value] || null;
+// });
 
 /* =========================================================
    SAFE UNLOCK ON EXIT
@@ -755,17 +773,17 @@ document.getElementById('deleteButton').addEventListener('click', () => {
     alert('Delete functionality not implemented yet.');
 });
 // Listen for input selection
-document.getElementById('inputBankName').addEventListener('input', function () {
-    const selectedValue = this.value;
-    if (bankMap[selectedValue]) {
-        bankID = bankMap[selectedValue];
-        const bankIDInput = document.getElementById('bankIDs');
-        bankIDInput.value = bankID;
-        console.log('Selected Bank ID:', bankID);
-    } else {
-        bankID = null; // Reset if not valid selection
-    }
-});
+// document.getElementById('inputBankName').addEventListener('input', function () {
+//     const selectedValue = this.value;
+//     if (bankMap[selectedValue]) {
+//         bankID = bankMap[selectedValue];
+//         const bankIDInput = document.getElementById('bankIDs');
+//         bankIDInput.value = bankID;
+//         console.log('Selected Bank ID:', bankID);
+//     } else {
+//         bankID = null; // Reset if not valid selection
+//     }
+// });
 
 document.getElementById('reportButton').addEventListener('click', async function () {
 

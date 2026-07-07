@@ -12,10 +12,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('searchBtn').addEventListener('click', () => {
 
         const customerName = document.getElementById('customerName').value.trim();
+        const financialYear = document.getElementById('financialYear').value.trim();
+        const dateRange = document.getElementById('dateRange').value.trim();
 
         if (!customerName) {
             alert("Please select a Customer Name.");
             document.getElementById('customerName').focus();
+            return;
+        }
+
+        // At least one of Financial Year or Date Range is required
+        if (!financialYear && !dateRange) {
+            alert("Please select either a Financial Year or a Date Range.");
+            document.getElementById('financialYear').focus();
             return;
         }
 
@@ -86,7 +95,6 @@ async function loadTable(filters = {}) {
     const spinner = document.getElementById('loadingSpinner');
     spinner.style.display = 'block';
 
-    // Calculate opening balance
     const openingBalance = await getOpeningBalance(filters);
 
     let query = buildQuery(filters);
@@ -104,6 +112,8 @@ async function loadTable(filters = {}) {
     }
 
     renderTable(data, openingBalance);
+
+    await loadGrandTotals(filters, openingBalance);
 
     renderPagination(count, loadTable);
 
@@ -142,12 +152,23 @@ function buildQuery(filters = {}) {
     return query;
 }
 
-function renderTable(data, openingBalance = 0) {
+function renderTable(data, openingBalance = { debit: 0, credit: 0, balance: 0 }) {
 
     const tbody = document.querySelector("#ledgerTable tbody");
     tbody.innerHTML = "";
 
+    // Footer elements
+    const totalDebitEl = document.getElementById("totalDebit");
+    const totalCreditEl = document.getElementById("totalCredit");
+
+    let totalDebit = 0;
+    let totalCredit = 0;
+
     if (!data || data.length === 0) {
+
+        totalDebitEl.textContent = formatAmount(0);
+        totalCreditEl.textContent = formatAmount(0);
+
         tbody.innerHTML = `
             <tr>
                 <td colspan="9" class="text-center text-muted py-4">
@@ -157,12 +178,32 @@ function renderTable(data, openingBalance = 0) {
         return;
     }
 
-    let runningBalance = openingBalance;
+    let runningBalance = openingBalance.balance;
+    const openingDate = getOpeningBalanceDate(getFilters());
+
+    tbody.insertAdjacentHTML("beforeend", `
+        <tr class="table-warning fw-bold">
+            <td></td>
+            <td>${openingDate ? formatDate(openingDate) : ""}</td>
+            <td>Opening Balance</td>
+            <td></td>
+            <td></td>
+            <td class="text-end">${openingBalance.debit ? formatAmount(openingBalance.debit) : "0.00"}</td>
+            <td class="text-end">${openingBalance.credit ? formatAmount(openingBalance.credit) : "0.00"}</td>
+            <td class="text-end">${formatAmount(openingBalance.balance)}
+            </td>
+                <td></td>
+        </tr>
+    `);
 
     data.forEach((row, index) => {
 
         const debit = Number(row.Debit || 0);
         const credit = Number(row.Credit || 0);
+
+        // Totals
+        totalDebit += debit;
+        totalCredit += credit;
 
         runningBalance += credit - debit;
 
@@ -180,7 +221,6 @@ function renderTable(data, openingBalance = 0) {
             </tr>
         `);
     });
-
 }
 
 function getFilters() {
@@ -310,27 +350,99 @@ function updateHeaderSortIndicators() {
 
 async function getOpeningBalance(filters = {}) {
 
-    let query = buildQuery(filters);
+    let query = supabaseClient
+        .from("AccountingLedgerView")
+        .select("Debit,Credit,VoucherDate")
+        .eq("company_id", CompanyID);
 
-    // Get all records before current page
-    const endIndex = (currentPage - 1) * pageSize - 1;
+    // Customer Filter
+    if (filters.customerName) {
+        query = query.ilike("PartyName", `%${filters.customerName}%`);
+    }
 
-    if (endIndex < 0) return 0;
+    // Financial Year Filter
+    if (filters.financialYear) {
 
-    const { data, error } = await query.range(0, endIndex);
+        const [startYear] = filters.financialYear.split("-").map(Number);
+
+        const fyStartDate = `${startYear}-04-01`;
+
+        // Opening should start from FY beginning
+        query = query.gte("VoucherDate", fyStartDate);
+    }
+
+    // Calculate only till one day before selected Start Date
+    if (filters.startDate) {
+        query = query.lt("VoucherDate", filters.startDate);
+    }
+
+    const { data, error } = await query;
 
     if (error) {
         console.error(error);
-        return 0;
+        return {
+            debit: 0,
+            credit: 0,
+            balance: 0
+        };
     }
 
-    let openingBalance = 0;
+    let debit = 0;
+    let credit = 0;
 
     data.forEach(row => {
-        openingBalance +=
-            Number(row.Credit || 0) -
-            Number(row.Debit || 0);
+        debit += Number(row.Debit || 0);
+        credit += Number(row.Credit || 0);
     });
 
-    return openingBalance;
+    return {
+        debit,
+        credit,
+        balance: credit - debit
+    };
+}
+
+async function loadGrandTotals(filters = {}, openingBalance = { debit: 0, credit: 0 }) {
+
+    let query = buildQuery(filters);
+
+    const { data, error } = await query;
+
+    if (error) return console.error(error);
+
+    let totalDebit = Number(openingBalance.debit || 0);
+    let totalCredit = Number(openingBalance.credit || 0);
+
+    data.forEach(row => {
+        totalDebit += Number(row.Debit || 0);
+        totalCredit += Number(row.Credit || 0);
+    });
+
+    document.getElementById("totalDebit").textContent = formatAmount(totalDebit);
+    document.getElementById("totalCredit").textContent = formatAmount(totalCredit);
+}
+
+function getOpeningBalanceDate(filters = {}) {
+
+    // If Date Range is selected → previous day of Start Date
+    if (filters.startDate) {
+        const d = new Date(filters.startDate);
+        d.setDate(d.getDate() - 1);
+
+        return d.toISOString().split("T")[0];
+    }
+
+    // If only Financial Year is selected
+    if (filters.financialYear) {
+
+        const [startYear] = filters.financialYear.split("-").map(Number);
+
+        // Previous date of FY start (01-Apr-YYYY => 31-Mar-YYYY)
+        const d = new Date(startYear, 3, 1); // April = 3
+        d.setDate(d.getDate() - 1);
+
+        return d.toISOString().split("T")[0];
+    }
+
+    return "";
 }
