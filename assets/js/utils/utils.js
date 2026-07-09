@@ -1231,12 +1231,30 @@ function safeRect(doc, x, y, w, h) {
     }
 }
 // Load image safely
-function loadImage(url) {
+async function loadImage(url) {
     return new Promise((resolve) => {
+
         const img = new Image();
         img.crossOrigin = "anonymous";
-        img.onload = () => resolve(img);
+
+        img.onload = () => {
+
+            const canvas = document.createElement("canvas");
+
+            const scale = Math.min(1, 500 / img.width);
+
+            canvas.width = img.width * scale;
+            canvas.height = img.height * scale;
+
+            const ctx = canvas.getContext("2d");
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+            resolve(canvas);   // <-- Return canvas
+
+        };
+
         img.onerror = () => resolve(null);
+
         img.src = url;
     });
 }

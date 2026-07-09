@@ -5,7 +5,12 @@ async function generate_FullTruckReports_InvoicePDF(header, lines = []) {
 
     const { jsPDF } = window.jspdf;
 
-    const doc = new jsPDF("p", "mm", "a4");
+    const doc = new jsPDF({
+        orientation: "p",
+        unit: "mm",
+        format: "a4",
+        compress: true
+    });
 
     const PAGE = { x: 15, w: 190, h: 297 };
 

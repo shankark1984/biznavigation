@@ -87,7 +87,7 @@ async function loadReportSuggestions() {
     populateDatalists(reportSuggestionData, 'ExpenseType', 'expenseTypeList');
     populateDatalists(reportSuggestionData, 'ExpenseFor', 'expenseForList');
     populateDatalists(reportSuggestionData, 'PartyName', 'vendorNameList');
-    populateDatalists(reportSuggestionData, 'PaymentStatus', 'paymentStatusList');
+    // populateDatalists(reportSuggestionData, 'PaymentStatus', 'paymentStatusList');
 
     const financialYears = [...new Set(reportSuggestionData
         .map(item => item.AccountedDate)
@@ -114,6 +114,11 @@ function populateDatalists(data, field, datalistId) {
 
     const datalist = document.getElementById(datalistId);
 
+    if (!datalist) {
+        console.error(`Datalist not found: ${datalistId}`);
+        return;
+    }
+
     datalist.innerHTML = uniqueValues
         .map(value => `<option value="${value}">`)
         .join('');
@@ -125,7 +130,7 @@ function attachSuggestionFilters() {
     attachDatalistFilter('expenseType', 'expenseTypeList', 'ExpenseType');
     attachDatalistFilter('expenseFor', 'expenseForList', 'ExpenseFor');
     attachDatalistFilter('billNo', 'billNoList', 'BillNo');
-    attachDatalistFilter('paymentStatus', 'paymentStatusList', 'PaymentStatus');
+    // attachDatalistFilter('paymentStatus', 'paymentStatusList', 'PaymentStatus');
 }
 
 function attachDatalistFilter(inputId, datalistId, field) {

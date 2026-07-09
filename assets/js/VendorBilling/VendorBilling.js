@@ -58,7 +58,7 @@ async function saveAndUpdateVendorBills() {
             Number(document.getElementById("vendorBilledAmount").value || 0);
 
         if (billedAmount <= 0) {
-            alert("Vendor Bill Amount must be greater than zero.");
+            alert("Vendor Bill Amount must be greater than zero."); f
             saveButton.disabled = false;
             return;
         }
@@ -66,7 +66,26 @@ async function saveAndUpdateVendorBills() {
             saveButton.disabled = false;
             return;
         }
+        // Check shipment table
+        const rows = document.querySelectorAll("#pendingShipmentTable tbody tr");
+
+        if (rows.length === 0) {
+            alert("Please add at least one shipment before saving the Vendor Bill.");
+            saveButton.disabled = false;
+            return;
+        }
+
         const $ = id => document.getElementById(id);
+        const billDate = $("vendorBillDate").value;
+        let dueDate = $("vendorDueDate").value;
+
+        if (!dueDate && billDate) {
+            const date = new Date(billDate);
+            date.setDate(date.getDate() + 30);
+            dueDate = date.toISOString().split("T")[0]; // YYYY-MM-DD
+            document.getElementById("vendorDueDate").value = dueDate;
+        }
+
 
         const vBillsDetails = {
             ExpenseType: $("expenseType").value,
@@ -75,11 +94,12 @@ async function saveAndUpdateVendorBills() {
             PartyCode: $("partyCode").value,
             PartyName: $("partyName").value,
             BillNo: $("vendorBillNo").value,
-            BillDate: $("vendorBillDate").value,
+            BillDate: billDate,
             BilledAmount: Number($("vendorBilledAmount").value || 0),
-            DueDate: $("vendorDueDate").value,
+            DueDate: dueDate,
             Information: $("vendorBillInformation").value
         };
+        console.log('Vendor Bill Details:', vBillsDetails);
 
         let error;
 
@@ -609,8 +629,7 @@ async function saveVendorBillingCharges() {
 
     try {
         const billReferenceNo = document.getElementById("billReferenceNo").value.trim();
-        const rows =
-            document.querySelectorAll("#pendingShipmentTable tbody tr");
+        const rows = document.querySelectorAll("#pendingShipmentTable tbody tr");
 
         const insertRows = [];
         const deleteIds = [];
@@ -752,7 +771,7 @@ function enforceDatalistSelection(inputId, datalistId) {
         ].map(option => option.value);
 
         if (!validOptions.includes(value)) {
-            alert(`Please select a valid value from the list.`);
+            // alert(`Please select a valid value from the list.`);
             this.value = "";
             this.focus();
         }
