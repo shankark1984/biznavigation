@@ -56,6 +56,7 @@ function getFormData() {
 
         ClearancePort: clearancePortInput.value.trim(),
         CustomsBroker: document.getElementById('customsBroker').value.trim(),
+        PONo: document.getElementById('poNo').value.trim(),
         AnyInformation: document.getElementById('information').value.trim()
     };
 }
@@ -408,6 +409,8 @@ function populateForm(data) {
     document.getElementById('clearancePort').value = data.ClearancePort || '';
     document.getElementById('customsBroker').value = data.CustomsBroker || '';
     document.getElementById('information').value = data.AnyInformation || '';
+    document.getElementById('poNo').value = data.PONo || '';
+
 
 
     // Also update the data-mode and enable form for updating, if applicable
@@ -594,23 +597,22 @@ function populateDuplicateModal(records) {
 // =============================
 // Open Selected Duplicate
 // =============================
-document.getElementById("openDuplicateRecord")
-    .addEventListener("click", async () => {
+document.getElementById("openDuplicateRecord").addEventListener("click", async () => {
 
-        if (!selectedDuplicateRecord) {
-            return;
-        }
+    if (!selectedDuplicateRecord) {
+        return;
+    }
 
-        bootstrap.Modal
-            .getInstance(document.getElementById("duplicateRecordModal"))
-            .hide();
+    bootstrap.Modal
+        .getInstance(document.getElementById("duplicateRecordModal"))
+        .hide();
 
-        // console.log("Selected Record:", selectedDuplicateRecord);
+    // console.log("Selected Record:", selectedDuplicateRecord);
 
-        await loadRecordByField("JobID", selectedDuplicateRecord.JobID);
+    await loadRecordByField("JobID", selectedDuplicateRecord.JobID);
 
-        await loadChargesByJobID(selectedDuplicateRecord.JobID);
+    await loadChargesByJobID(selectedDuplicateRecord.JobID);
 
-        await fetchEquipmentDetails(selectedDuplicateRecord.id);
+    await fetchEquipmentDetails(selectedDuplicateRecord.id);
 
-    });
+});
