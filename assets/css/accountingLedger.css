@@ -19,7 +19,8 @@
 
 #ledgerTable {
     width: 100%;
-    table-layout: fixed;
+    table-layout: auto;
+    min-width: 900px;
 }
 
 #ledgerTable thead th {
