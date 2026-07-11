@@ -39,7 +39,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 });
 
-
 async function loadReportSuggestions() {
     const { data, error } = await supabaseClient
         .from('AccountingLedgerView')

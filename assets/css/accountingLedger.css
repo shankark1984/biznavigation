@@ -1,0 +1,87 @@
+        :root {
+            --table-header-bg: #212529;
+            --table-header-color: #fff;
+            --table-hover: #eef4ff;
+            --table-even: #f8f9fa;
+            --border-radius: 8px;
+        }
+
+        #root {
+            flex: 1;
+        }
+
+        .table-responsive {
+            height: 70vh;
+            overflow: auto;
+            overflow: auto;
+            background: #fff;
+            border-radius: 8px;
+        }
+
+        #ledgerTable thead th {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background: var(--table-header-bg);
+            color: var(--table-header-color);
+            white-space: nowrap;
+            text-align: center;
+            vertical-align: middle;
+        }
+
+        #ledgerTable tfoot td {
+            position: sticky;
+            bottom: 0;
+            background: #e9ecef;
+            z-index: 5;
+        }
+
+        #ledgerTable td,
+        #ledgerTable th {
+            white-space: nowrap;
+            vertical-align: middle;
+        }
+
+        #ledgerTable tbody tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+
+        #ledgerTable tbody tr:hover {
+            background-color: #eef4ff;
+        }
+
+        #ledgerTable td:nth-child(6),
+        #ledgerTable td:nth-child(7),
+        #ledgerTable td:nth-child(8),
+        #ledgerTable th:nth-child(6),
+        #ledgerTable th:nth-child(7),
+        #ledgerTable th:nth-child(8) {
+            text-align: right;
+        }
+
+        #paginationControls {
+            gap: 4px;
+        }
+
+        #loadingSpinner {
+            min-height: 80px;
+        }
+
+        @media (max-width: 768px) {
+            #ledgerTable {
+                font-size: 0.8rem;
+            }
+
+            .table-responsive {
+                max-height: calc(100vh - 250px);
+            }
+        }
+
+        table {
+            table-layout: fixed;
+        }
+
+        td {
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }

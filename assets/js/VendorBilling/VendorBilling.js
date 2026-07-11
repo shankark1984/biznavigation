@@ -4,14 +4,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (accountedDate) {
             accountedDate.value = new Date().toISOString().split('T')[0];
         }
-
-        if (typeof CompanyID !== 'undefined') {
-            await loadSuggestions(
-                'partySuggestions',
-                'PartyDetails',
-                CompanyID
-            );
-        }
+        await loadAccountSuggestions(
+            "partySuggestions",
+            "partyName",
+            "partyCode",
+            CompanyID
+        );
 
         const chargesType = document.getElementById('chargesType');
         if (chargesType) {

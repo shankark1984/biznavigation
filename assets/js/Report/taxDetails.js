@@ -127,9 +127,9 @@ async function loadTaxReport() {
             const endDate =
                 `${year}-${String(month).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
 
-            console.log("Month Filter");
-            console.log("Start Date:", startDate);
-            console.log("End Date:", endDate);
+            // console.log("Month Filter");
+            // console.log("Start Date:", startDate);
+            // console.log("End Date:", endDate);
 
             query = query
                 .gte("InvoiceDate", startDate)
@@ -182,8 +182,8 @@ async function loadTaxReport() {
 
         if (error) throw error;
 
-        console.log("Records Loaded:", data?.length || 0);
-        console.table(data);
+        // console.log("Records Loaded:", data?.length || 0);
+        // console.table(data);
 
         allTaxData = data || [];
         filteredData = [...allTaxData];

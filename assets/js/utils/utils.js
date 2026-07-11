@@ -2062,3 +2062,74 @@ function enableCustomTab(selector) {
 // Usage
 enableCustomTab('input[type="date"]');
 
+
+
+// Load Account Master Suggestions
+const accountMaps = {};
+
+async function loadAccountSuggestions(datalistId, inputId, hiddenCodeId, companyId, accountTypes = []) {
+    try {
+        let query = supabaseClient
+            .from("AccountMasterView")
+            .select("AccountCode, AccountName, AccountType")
+            .eq("company_id", companyId)
+            .order("AccountName");
+
+        if (accountTypes.length) {
+            query = query.in("AccountType", accountTypes);
+        }
+
+        const { data, error } = await query;
+
+        if (error) throw error;
+
+        const datalist = document.getElementById(datalistId);
+        const input = document.getElementById(inputId);
+        const hiddenCode = document.getElementById(hiddenCodeId);
+
+        datalist.innerHTML = "";
+        accountMaps[datalistId] = {};
+
+        data.forEach(item => {
+            accountMaps[datalistId][item.AccountName] = item;
+
+            const option = document.createElement("option");
+            option.value = item.AccountName;
+            datalist.appendChild(option);
+        });
+
+        // Remove previous handler if any
+        input.oninput = function () {
+
+            const selected = accountMaps[datalistId][this.value];
+
+            if (selected) {
+                hiddenCode.value = selected.AccountCode;
+            } else {
+                hiddenCode.value = "";
+            }
+        };
+
+    } catch (err) {
+        console.error("Error loading accounts:", err);
+    }
+}
+// ======Load Only Vendors
+// await loadAccountSuggestions('partySuggestionsList',CompanyID, ['Vendor']);
+
+// ======Load Only Customers
+// await loadAccountSuggestions('customerSuggestionsList', CompanyID, ['Customer']);
+
+// ======Load Only Vendors + Courier
+// await loadAccountSuggestions('partySuggestionsList', CompanyID, ['Vendor', 'Courier']);
+
+// ======Load Only Employees
+// await loadAccountSuggestions('employeeSuggestionsList', CompanyID, ['Employee']);
+
+// ======Load Only Banks
+// await loadAccountSuggestions('bankSuggestionsList', CompanyID, ['Bank']);
+
+// ======Load Only Everything
+// await loadAccountSuggestions('accountSuggestionsList', CompanyID);
+
+

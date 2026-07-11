@@ -282,18 +282,18 @@ async function updateInvoiceNumbers(invNo) {
         const shipId = row.getAttribute('data-ship-id'); // Assuming you store the shipment ID here
         if (shipId) shipmentIds.push(parseInt(shipId));
     });
-    console.log('Shipment IDs to update:', shipmentIds);
+    // console.log('Shipment IDs to update:', shipmentIds);
     if (shipmentIds.length === 0) {
         console.warn('No shipment IDs found for invoice update.');
         return;
     }
 
-    console.log('Clearing previous invoice assignments for:', invNo);
+    // console.log('Clearing previous invoice assignments for:', invNo);
     if (clearError) {
         console.error('Error clearing previous invoice assignments:', clearError.message);
         throw clearError;
     }
-    console.log('Previous invoice assignments cleared for:', invNo);
+    // console.log('Previous invoice assignments cleared for:', invNo);
 
     // Step 2: Update new assignments
     const { error: updateError } = await supabaseClient
@@ -312,7 +312,7 @@ async function updateInvoiceNumbers(invNo) {
         throw updateError;
     }
 
-    console.log('Invoice numbers updated for shipments:', shipmentIds);
+    // console.log('Invoice numbers updated for shipments:', shipmentIds);
 }
 
 async function loadInvoiceBookings(invoiceNo) {

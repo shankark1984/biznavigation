@@ -17,74 +17,8 @@
 
     <!-- Sidebar -->
     <link rel="stylesheet" href="../../assets/css/navbar.css">
+    <link rel="stylesheet" href="../../assets/css/accountingLedger.css">
 
-    <style>
-        :root {
-            --table-header-bg: #212529;
-            --table-header-color: #fff;
-        }
-
-        #root {
-            flex: 1;
-        }
-
-        .table-responsive {
-            max-height: calc(100vh - 320px);
-            overflow: auto;
-            background: #fff;
-            border-radius: 8px;
-        }
-
-        #ledgerTable thead th {
-            position: sticky;
-            top: 0;
-            z-index: 10;
-            background: var(--table-header-bg);
-            color: var(--table-header-color);
-            white-space: nowrap;
-            text-align: center;
-            vertical-align: middle;
-        }
-
-        #ledgerTable td,
-        #ledgerTable th {
-            white-space: nowrap;
-            vertical-align: middle;
-        }
-
-        #ledgerTable tbody tr:nth-child(even) {
-            background-color: #f8f9fa;
-        }
-
-        #ledgerTable tbody tr:hover {
-            background-color: #eef4ff;
-        }
-
-        #ledgerTable td:nth-child(5),
-        #ledgerTable td:nth-child(6),
-        #ledgerTable th:nth-child(5),
-        #ledgerTable th:nth-child(6) {
-            text-align: right;
-        }
-
-        #paginationControls {
-            gap: 4px;
-        }
-
-        #loadingSpinner {
-            min-height: 80px;
-        }
-
-        @media (max-width: 768px) {
-            #ledgerTable {
-                font-size: 0.8rem;
-            }
-
-            .table-responsive {
-                max-height: calc(100vh - 250px);
-            }
-        }
-    </style>
 </head>
 
 <body class="bg-light">
@@ -106,6 +40,7 @@
                 <div class="container-fluid py-3" id="root">
 
                     <!-- Filters -->
+
                     <div class="collapse show mb-4" id="filterSection">
 
                         <div class="card shadow-sm">
@@ -160,6 +95,15 @@
                                         </button>
 
                                     </div>
+                                    <div class="col-md-2 col-lg-2 d-grid align-self-end"> <button
+                                            class="btn btn-outline-secondary" id="resetBtn">
+
+                                            <i class="bi bi-arrow-clockwise"></i>
+
+                                            Reset
+
+                                        </button>
+                                    </div>
 
                                 </div>
 
@@ -182,10 +126,13 @@
                     </div>
 
                     <!-- Empty State -->
-                    <div id="emptyState" class="alert alert-warning d-none">
+                    <div id="emptyState" class="alert alert-warning d-none text-center">
 
-                        <i class="bi bi-info-circle"></i>
-                        No ledger records found.
+                        <i class="bi bi-search fs-2"></i>
+
+                        <h5>No Ledger Records Found</h5>
+
+                        <p>Try changing filters and search again.</p>
 
                     </div>
 
@@ -201,15 +148,15 @@
                             <thead>
 
                                 <tr>
-                                    <th>Sr No</th>
-                                    <th>Voucher Date</th>
-                                    <th>Voucher Type</th>
-                                    <th>Voucher No.</th>
-                                    <th>Reference No.</th>
-                                    <th>Debit</th>
-                                    <th>Credit</th>
-                                    <th>Running Balance</th>
-                                    <th>Particulars</th>
+                                    <th scope="col">Sr No</th>
+                                    <th scope="col">Voucher Date</th>
+                                    <th scope="col">Voucher Type</th>
+                                    <th scope="col">Voucher No.</th>
+                                    <th scope="col">Reference No.</th>
+                                    <th scope="col">Debit</th>
+                                    <th scope="col">Credit</th>
+                                    <th scope="col">Running Balance</th>
+                                    <th scope="col">Particulars</th>
                                 </tr>
 
                             </thead>
@@ -238,14 +185,22 @@
                         </nav>
 
                         <!-- Export Buttons -->
-                        <div class="d-flex gap-2">
-                            <button type="button" id="exportExcelBtn" class="btn btn-success">
+                        <div class="btn-group">
+
+                            <button class="btn btn-success">
+
                                 <i class="bi bi-file-earmark-excel"></i>
-                                Export Excel
+
+                                Excel
+
                             </button>
-                            <button type="button" id="exportPdfBtn" class="btn btn-danger">
+
+                            <button class="btn btn-danger">
+
                                 <i class="bi bi-file-earmark-pdf"></i>
-                                Export PDF
+
+                                PDF
+
                             </button>
 
                         </div>
@@ -255,7 +210,6 @@
                 </div>
 
             </div>
-
         </main>
 
     </div>
