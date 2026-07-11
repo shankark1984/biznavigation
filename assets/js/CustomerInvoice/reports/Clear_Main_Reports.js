@@ -996,20 +996,33 @@ async function drawShipmentTable_Clear_Main(
     // ==========================================
     allCharges.sort((a, b) => {
 
-        const getPriority = (chargeType = "") => {
-            const txt = chargeType.toLowerCase();
+        function getPriority(chargeType = "") {
+            const txt = String(chargeType).trim().toLowerCase();
 
             if (reportType === "Duty Invoice") {
                 if (txt.includes("import duty")) return 1;
                 if (txt.includes("duty")) return 2;
             } else {
-                if (txt.includes("customs clearance charges")) return 1;
+                if (
+                    txt.includes("customs clearance charges") ||
+                    txt.includes("custom clearance charges") ||
+                    txt.includes("customs clearance") ||
+                    txt.includes("custom clearance")
+                ) {
+                    return 1;
+                }
             }
 
             return 999;
-        };
+        }
 
-        return getPriority(a.ChargesType) - getPriority(b.ChargesType);
+        const p1 = getPriority(a.ChargesType);
+        const p2 = getPriority(b.ChargesType);
+
+        if (p1 !== p2) return p1 - p2;
+
+        // Keep remaining charges alphabetically sorted
+        return (a.ChargesType || "").localeCompare(b.ChargesType || "");
     });
     // ==========================================
     // CHARGE ROWS

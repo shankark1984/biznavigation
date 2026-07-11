@@ -1,9 +1,20 @@
+// accountingLedger.js
 let currentPage = 1;
 const pageSize = 50;
 const CompanyID = localStorage.getItem('CompanyID');
 let sortColumn = null;
 let sortOrder = 'asc';
 let partyNameCache = {};
+
+const elements = {
+    tbody: document.getElementById("ledgerTableBody"),
+    totalDebit: document.getElementById("totalDebit"),
+    totalCredit: document.getElementById("totalCredit"),
+    closingDebit: document.getElementById("closingBalanceDebit"),
+    closingCredit: document.getElementById("closingBalanceCredit"),
+    balanceDebit: document.getElementById("balanceDebit"),
+    balanceCredit: document.getElementById("balanceCredit")
+};
 
 document.addEventListener('DOMContentLoaded', async () => {
 
@@ -42,7 +53,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 async function loadReportSuggestions() {
     const { data, error } = await supabaseClient
         .from('AccountingLedgerView')
-        .select('VoucherNo, PartyCode, PartyName, VoucherType, VoucherDate')
+        .select('PartyCode, PartyName,  VoucherDate')
         .eq('company_id', CompanyID);
 
     if (error) return console.error('Error fetching suggestions:', error);
@@ -92,9 +103,11 @@ function populateDatalists(data, field, datalistId) {
 async function loadTable(filters = {}) {
 
     const spinner = document.getElementById('loadingSpinner');
-    spinner.style.display = 'block';
+    spinner.classList.remove("d-none");
 
-    const openingBalance = await getOpeningBalance(filters);
+    const [openingBalance] = await Promise.all([
+        getOpeningBalance(filters)
+    ]);
 
     let query = buildQuery(filters);
 
@@ -103,7 +116,7 @@ async function loadTable(filters = {}) {
         currentPage * pageSize - 1
     );
 
-    spinner.style.display = 'none';
+    spinner.classList.add("d-none");
 
     if (error) {
         console.error(error);
@@ -112,11 +125,89 @@ async function loadTable(filters = {}) {
 
     renderTable(data, openingBalance);
 
-    await loadGrandTotals(filters, openingBalance);
+    loadGrandTotals(filters, openingBalance);
 
     renderPagination(count, loadTable);
 
     updateHeaderSortIndicators();
+}
+
+function getFilters() {
+    const filters = {
+        customerName: document.getElementById("customerName")?.value.trim(),
+        financialYear: document.getElementById("financialYear")?.value.trim(),
+    };
+
+    const dateRange = document.getElementById("dateRange")?.value.trim();
+    if (dateRange) {
+        const [startDate, endDate] = dateRange.split(" to ");
+        filters.startDate = startDate || "";
+        filters.endDate = endDate || startDate || "";
+    }
+
+    return filters;
+}
+
+async function getOpeningBalance(filters = {}) {
+
+    let query = supabaseClient
+        .from("AccountingLedgerView")
+        .select("Debit,Credit")
+        .eq("company_id", CompanyID);
+
+    // Customer Filter
+    if (filters.customerName) {
+        query = query.ilike("PartyName", `%${filters.customerName}%`);
+    }
+
+    // Determine Opening Date
+    let openingDate = "";
+
+    if (filters.startDate) {
+        openingDate = filters.startDate;
+    } else if (filters.financialYear) {
+        const [startYear] = filters.financialYear.split("-").map(Number);
+        openingDate = `${startYear}-04-01`;
+    }
+
+    // Transactions before report start date
+    if (openingDate) {
+        query = query.lt("VoucherDate", openingDate);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+        console.error("Opening Balance Error:", error);
+        return {
+            debit: 0,
+            credit: 0,
+            balance: 0,
+            balanceType: "",
+            debitBalance: 0,
+            creditBalance: 0
+        };
+    }
+
+    const debit = data.reduce((sum, row) => sum + Number(row.Debit || 0), 0);
+    const credit = data.reduce((sum, row) => sum + Number(row.Credit || 0), 0);
+
+    const net = credit - debit;
+
+    return {
+        debit,
+        credit,
+
+        // Absolute balance
+        balance: Math.abs(net),
+
+        // Balance Type
+        balanceType: net < 0 ? "Dr" : net > 0 ? "Cr" : "",
+
+        // Accounting Balance Columns
+        debitBalance: net < 0 ? Math.abs(net) : 0,
+        creditBalance: net > 0 ? net : 0
+    };
 }
 
 function buildQuery(filters = {}) {
@@ -135,7 +226,8 @@ function buildQuery(filters = {}) {
         });
     }
 
-    console.log("filters data", query);
+    console.log("Query:", query);
+
     if (filters.customerName) query = query.ilike('PartyName', `%${filters.customerName}%`);
     if (filters.startDate) query = query.gte('VoucherDate', filters.startDate);
     if (filters.endDate) query = query.lte('VoucherDate', filters.endDate);
@@ -151,91 +243,117 @@ function buildQuery(filters = {}) {
     return query;
 }
 
-function renderTable(data, openingBalance = { debit: 0, credit: 0, balance: 0 }) {
+function renderTable(data, openingBalance = {}) {
 
-    const tbody = document.querySelector("#ledgerTable tbody");
+    const tbody = document.getElementById("ledgerTableBody");
     tbody.innerHTML = "";
 
-    // Footer elements
     const totalDebitEl = document.getElementById("totalDebit");
     const totalCreditEl = document.getElementById("totalCredit");
+    const closingBalanceDebitEl = document.getElementById("closingBalanceDebit");
+    const closingBalanceCreditEl = document.getElementById("closingBalanceCredit");
+    const balanceDebitEl = document.getElementById("balanceDebit");
+    const balanceCreditEl = document.getElementById("balanceCredit");
 
-    let totalDebit = 0;
-    let totalCredit = 0;
+    const openingDebit = Number(openingBalance.debitBalance || 0);
+    const openingCredit = Number(openingBalance.creditBalance || 0);
+    const openingBalanceValue = Number(openingBalance.balance || 0);
 
-    if (!data || data.length === 0) {
-
-        totalDebitEl.textContent = formatAmount(0);
-        totalCreditEl.textContent = formatAmount(0);
+    if (!data?.length) {
 
         tbody.innerHTML = `
-            <tr>
-                <td colspan="9" class="text-center text-muted py-4">
-                    No records found
-                </td>
-            </tr>`;
+        <tr>
+            <td colspan="9" class="text-center py-4">
+                No records found
+            </td>
+        </tr>`;
+
+        totalDebitEl.textContent = "0.00";
+        totalCreditEl.textContent = "0.00";
+        closingBalanceDebitEl.textContent = "0.00";
+        closingBalanceCreditEl.textContent = "0.00";
+        balanceDebitEl.textContent = "0.00";
+        balanceCreditEl.textContent = "0.00";
         return;
     }
 
-    let runningBalance = openingBalance.balance;
+    let runningBalance =
+        openingBalance.balanceType === "Dr"
+            ? -openingBalanceValue
+            : openingBalanceValue;
+
+
     const openingDate = getOpeningBalanceDate(getFilters());
 
-    tbody.insertAdjacentHTML("beforeend", `
-        <tr class="table-warning fw-bold">
-            <td></td>
-            <td>${openingDate ? formatDate(openingDate) : ""}</td>
-            <td>Opening Balance</td>
-            <td></td>
-            <td></td>
-            <td class="text-end">${openingBalance.debit ? formatAmount(openingBalance.debit) : "0.00"}</td>
-            <td class="text-end">${openingBalance.credit ? formatAmount(openingBalance.credit) : "0.00"}</td>
-            <td class="text-end">${formatAmount(openingBalance.balance)}
-            </td>
-                <td></td>
-        </tr>
-    `);
+    let html = `
+    <tr class="table-warning fw-bold">
+        <td></td>
+        <td>${openingDate ? formatDate(openingDate) : ""}</td>
+        <td>Opening Balance</td>
+        <td></td>
+        <td></td>
+        <td class="text-end">${openingDebit ? formatAmount(openingDebit) : ""}</td>
+        <td class="text-end">${openingCredit ? formatAmount(openingCredit) : ""}</td>
+        <td class="text-end">
+            ${openingBalanceValue
+            ? `${formatAmount(openingBalanceValue)} ${openingBalance.balanceType}`
+            : "0.00"}
+        </td>
+        <td></td>
+    </tr>`;
 
     data.forEach((row, index) => {
 
-        const debit = Number(row.Debit || 0);
-        const credit = Number(row.Credit || 0);
-
-        // Totals
-        totalDebit += debit;
-        totalCredit += credit;
+        const debit = Number(row.Debit) || 0;
+        const credit = Number(row.Credit) || 0;
 
         runningBalance += credit - debit;
 
-        tbody.insertAdjacentHTML("beforeend", `
-            <tr>
-                <td class="text-center">${((currentPage - 1) * pageSize) + index + 1}</td>
-                <td>${formatDate(row.VoucherDate)}</td>
-                <td>${row.VoucherType ?? ""}</td>
-                <td>${row.VoucherNo ?? ""}</td>
-                <td>${row.ReferenceNo ?? ""}</td>
-                <td class="text-end">${debit ? formatAmount(debit) : ""}</td>
-                <td class="text-end">${credit ? formatAmount(credit) : ""}</td>
-                <td class="text-end fw-bold">${formatAmount(runningBalance)}</td>
-                <td>${row.Narration ?? ""}</td>
-            </tr>
-        `);
+        const balanceAmount = Math.abs(runningBalance);
+        const balanceType = runningBalance < 0 ? "Dr" : runningBalance > 0 ? "Cr" : "";
+
+        html += `
+        <tr>
+            <td class="text-center">${((currentPage - 1) * pageSize) + index + 1}</td>
+            <td>${formatDate(row.VoucherDate)}</td>
+            <td>${row.VoucherType || ""}</td>
+            <td>${row.VoucherNo || ""}</td>
+            <td>${row.ReferenceNo || ""}</td>
+            <td class="text-end">${debit ? formatAmount(debit) : ""}</td>
+            <td class="text-end">${credit ? formatAmount(credit) : ""}</td>
+            <td class="text-end fw-bold">
+                ${balanceAmount ? `${formatAmount(balanceAmount)} ${balanceType}` : "0.00"}
+            </td>
+            <td>${row.Narration || ""}</td>
+        </tr>`;
     });
+
+    tbody.innerHTML = html;
 }
 
-function getFilters() {
-    const filters = {
-        customerName: document.getElementById("customerName")?.value.trim(),
-        financialYear: document.getElementById("financialYear")?.value.trim(),
-    };
+function getOpeningBalanceDate(filters = {}) {
 
-    const dateRange = document.getElementById("dateRange")?.value.trim();
-    if (dateRange) {
-        const [startDate, endDate] = dateRange.split(" to ");
-        filters.startDate = startDate || "";
-        filters.endDate = endDate || startDate || "";
+    // If Date Range is selected → previous day of Start Date
+    if (filters.startDate) {
+        const d = new Date(filters.startDate);
+        d.setDate(d.getDate() - 1);
+
+        return d.toISOString().split("T")[0];
     }
 
-    return filters;
+    // If only Financial Year is selected
+    if (filters.financialYear) {
+
+        const [startYear] = filters.financialYear.split("-").map(Number);
+
+        // Previous date of FY start (01-Apr-YYYY => 31-Mar-YYYY)
+        const d = new Date(startYear, 3, 1); // April = 3
+        d.setDate(d.getDate() - 1);
+
+        return d.toISOString().split("T")[0];
+    }
+
+    return "";
 }
 
 function renderPagination(totalCount, loadTableFn) {
@@ -337,6 +455,58 @@ function renderPagination(totalCount, loadTableFn) {
     }
 }
 
+async function loadGrandTotals(filters = {}, openingBalance = {}) {
+
+    const query = buildQuery(filters).select("Debit,Credit");
+
+    const { data, error } = await query;
+
+    if (error) {
+        console.error(error);
+        return;
+    }
+
+    // totalDebit = Number(openingBalance.debitBalance || 0);
+    // totalCredit = Number(openingBalance.creditBalance || 0);
+
+    const {
+        totalDebit,
+        totalCredit
+    } = data.reduce((totals, row) => {
+
+        totals.totalDebit += Number(row.Debit || 0);
+        totals.totalCredit += Number(row.Credit || 0);
+
+        return totals;
+
+    }, {
+        totalDebit: Number(openingBalance.debitBalance || 0),
+        totalCredit: Number(openingBalance.creditBalance || 0)
+    });
+
+    document.getElementById("totalDebit").textContent = formatAmount(totalDebit);
+    document.getElementById("totalCredit").textContent = formatAmount(totalCredit);
+
+    // Closing Balance
+    const net = totalCredit - totalDebit;
+
+    const closingDebit = net < 0 ? Math.abs(net) : 0;
+    const closingCredit = net > 0 ? net : 0;
+
+    document.getElementById("closingBalanceDebit").textContent =
+        closingDebit ? formatAmount(closingDebit) : "";
+
+    document.getElementById("closingBalanceCredit").textContent =
+        closingCredit ? formatAmount(closingCredit) : "";
+
+    // Final Balance (both sides equal)
+    document.getElementById("balanceDebit").textContent =
+        formatAmount(totalDebit + closingCredit);
+
+    document.getElementById("balanceCredit").textContent =
+        formatAmount(totalCredit + closingDebit);
+}
+
 function updateHeaderSortIndicators() {
     document.querySelectorAll('#ledgerTable thead th[data-key]').forEach(th => {
         const key = th.getAttribute('data-key');
@@ -345,103 +515,4 @@ function updateHeaderSortIndicators() {
             th.textContent += sortOrder === 'asc' ? ' ▲' : ' ▼';
         }
     });
-}
-
-async function getOpeningBalance(filters = {}) {
-
-    let query = supabaseClient
-        .from("AccountingLedgerView")
-        .select("Debit,Credit,VoucherDate")
-        .eq("company_id", CompanyID);
-
-    // Customer Filter
-    if (filters.customerName) {
-        query = query.ilike("PartyName", `%${filters.customerName}%`);
-    }
-
-    // Financial Year Filter
-    if (filters.financialYear) {
-
-        const [startYear] = filters.financialYear.split("-").map(Number);
-
-        const fyStartDate = `${startYear}-04-01`;
-
-        // Opening should start from FY beginning
-        query = query.gte("VoucherDate", fyStartDate);
-    }
-
-    // Calculate only till one day before selected Start Date
-    if (filters.startDate) {
-        query = query.lt("VoucherDate", filters.startDate);
-    }
-
-    const { data, error } = await query;
-
-    if (error) {
-        console.error(error);
-        return {
-            debit: 0,
-            credit: 0,
-            balance: 0
-        };
-    }
-
-    let debit = 0;
-    let credit = 0;
-
-    data.forEach(row => {
-        debit += Number(row.Debit || 0);
-        credit += Number(row.Credit || 0);
-    });
-
-    return {
-        debit,
-        credit,
-        balance: credit - debit
-    };
-}
-
-async function loadGrandTotals(filters = {}, openingBalance = { debit: 0, credit: 0 }) {
-
-    let query = buildQuery(filters);
-
-    const { data, error } = await query;
-
-    if (error) return console.error(error);
-
-    let totalDebit = Number(openingBalance.debit || 0);
-    let totalCredit = Number(openingBalance.credit || 0);
-
-    data.forEach(row => {
-        totalDebit += Number(row.Debit || 0);
-        totalCredit += Number(row.Credit || 0);
-    });
-
-    document.getElementById("totalDebit").textContent = formatAmount(totalDebit);
-    document.getElementById("totalCredit").textContent = formatAmount(totalCredit);
-}
-
-function getOpeningBalanceDate(filters = {}) {
-
-    // If Date Range is selected → previous day of Start Date
-    if (filters.startDate) {
-        const d = new Date(filters.startDate);
-        d.setDate(d.getDate() - 1);
-
-        return d.toISOString().split("T")[0];
-    }
-
-    // If only Financial Year is selected
-    if (filters.financialYear) {
-
-        const [startYear] = filters.financialYear.split("-").map(Number);
-
-        // Previous date of FY start (01-Apr-YYYY => 31-Mar-YYYY)
-        const d = new Date(startYear, 3, 1); // April = 3
-        d.setDate(d.getDate() - 1);
-
-        return d.toISOString().split("T")[0];
-    }
-
-    return "";
 }

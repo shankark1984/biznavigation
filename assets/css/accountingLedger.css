@@ -1,87 +1,95 @@
-        :root {
-            --table-header-bg: #212529;
-            --table-header-color: #fff;
-            --table-hover: #eef4ff;
-            --table-even: #f8f9fa;
-            --border-radius: 8px;
-        }
+:root {
+    --table-header-bg: #212529;
+    --table-header-color: #fff;
+    --table-hover: #eef4ff;
+    --table-even: #f8f9fa;
+    --border-radius: 8px;
+}
 
-        #root {
-            flex: 1;
-        }
+#root {
+    flex: 1;
+}
 
-        .table-responsive {
-            height: 70vh;
-            overflow: auto;
-            overflow: auto;
-            background: #fff;
-            border-radius: 8px;
-        }
+.table-responsive {
+    height: 70vh;
+    overflow: auto;
+    background: #fff;
+    border-radius: var(--border-radius);
+}
 
-        #ledgerTable thead th {
-            position: sticky;
-            top: 0;
-            z-index: 10;
-            background: var(--table-header-bg);
-            color: var(--table-header-color);
-            white-space: nowrap;
-            text-align: center;
-            vertical-align: middle;
-        }
+#ledgerTable {
+    width: 100%;
+    table-layout: fixed;
+}
 
-        #ledgerTable tfoot td {
-            position: sticky;
-            bottom: 0;
-            background: #e9ecef;
-            z-index: 5;
-        }
+#ledgerTable thead th {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: var(--table-header-bg);
+    color: var(--table-header-color);
+    white-space: nowrap;
+    text-align: center;
+    vertical-align: middle;
+}
 
-        #ledgerTable td,
-        #ledgerTable th {
-            white-space: nowrap;
-            vertical-align: middle;
-        }
+#ledgerTable tfoot td {
+    position: sticky;
+    bottom: 0;
+    z-index: 5;
+    background: #e9ecef;
+}
 
-        #ledgerTable tbody tr:nth-child(even) {
-            background-color: #f8f9fa;
-        }
+#ledgerTable td,
+#ledgerTable th {
+    white-space: nowrap;
+    vertical-align: middle;
+}
 
-        #ledgerTable tbody tr:hover {
-            background-color: #eef4ff;
-        }
+#ledgerTable td {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
 
-        #ledgerTable td:nth-child(6),
-        #ledgerTable td:nth-child(7),
-        #ledgerTable td:nth-child(8),
-        #ledgerTable th:nth-child(6),
-        #ledgerTable th:nth-child(7),
-        #ledgerTable th:nth-child(8) {
-            text-align: right;
-        }
+#ledgerTable tbody tr:nth-child(even) {
+    background: var(--table-even);
+}
 
-        #paginationControls {
-            gap: 4px;
-        }
+#ledgerTable tbody tr:hover {
+    background: var(--table-hover);
+}
 
-        #loadingSpinner {
-            min-height: 80px;
-        }
+#ledgerTable th:nth-child(6),
+#ledgerTable th:nth-child(7),
+#ledgerTable th:nth-child(8),
+#ledgerTable td:nth-child(6),
+#ledgerTable td:nth-child(7),
+#ledgerTable td:nth-child(8) {
+    text-align: right;
+}
 
-        @media (max-width: 768px) {
-            #ledgerTable {
-                font-size: 0.8rem;
-            }
+#paginationControls {
+    gap: 4px;
+}
 
-            .table-responsive {
-                max-height: calc(100vh - 250px);
-            }
-        }
+#loadingSpinner {
+    min-height: 80px;
+}
 
-        table {
-            table-layout: fixed;
-        }
+@media (max-width: 768px) {
+    #ledgerTable {
+        font-size: 0.8rem;
+    }
 
-        td {
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
+    .table-responsive {
+        height: 60vh;
+    }
+
+    .btn-group {
+        width: 100%;
+    }
+
+    .btn-group .btn {
+        flex: 1;
+    }
+}

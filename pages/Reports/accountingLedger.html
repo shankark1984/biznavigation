@@ -28,7 +28,7 @@
         <!-- Sidebar -->
         <aside id="sidebar">
             <div class="text-center text-white p-3">
-                Loading...
+                Loading Ledger...
             </div>
         </aside>
 
@@ -46,7 +46,7 @@
                         <div class="card shadow-sm">
                             <div class="card-body">
 
-                                <div class="row g-3">
+                                <div class="row g-3 align-items-end">
 
                                     <!-- Customer -->
                                     <div class="col-md-6 col-lg-3">
@@ -64,7 +64,7 @@
                                     <!-- Date Range -->
                                     <div class="col-md-6 col-lg-3">
                                         <label for="dateRange" class="form-label">
-                                            Booked Date Range
+                                            Date Range
                                         </label>
 
                                         <input type="text" id="dateRange" class="form-control"
@@ -85,23 +85,17 @@
                                     </div>
 
                                     <!-- Search Button -->
-                                    <div class="col-md-2 col-lg-2 d-grid align-self-end">
+                                    <div class="col-md-2 col-lg-2 d-grid">
 
                                         <button type="button" class="btn btn-primary" id="searchBtn">
-
                                             <i class="bi bi-search"></i>
                                             Search
-
                                         </button>
-
                                     </div>
-                                    <div class="col-md-2 col-lg-2 d-grid align-self-end"> <button
-                                            class="btn btn-outline-secondary" id="resetBtn">
-
+                                    <div class="col-md-2 col-lg-2 d-grid">
+                                        <button type="button" class="btn btn-primary" id="resetBtn">
                                             <i class="bi bi-arrow-clockwise"></i>
-
                                             Reset
-
                                         </button>
                                     </div>
 
@@ -114,66 +108,73 @@
 
                     <!-- Loading -->
                     <div id="loadingSpinner" class="d-none text-center my-4">
-
                         <div class="spinner-border text-primary" role="status">
-
                             <span class="visually-hidden">
-                                Loading...
+                                Loading Ledger...
                             </span>
-
                         </div>
-
                     </div>
 
                     <!-- Empty State -->
                     <div id="emptyState" class="alert alert-warning d-none text-center">
-
                         <i class="bi bi-search fs-2"></i>
-
                         <h5>No Ledger Records Found</h5>
-
                         <p>Try changing filters and search again.</p>
-
                     </div>
 
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <small id="recordCount" class="text-muted">
+                            Showing 0 records
+                        </small>
+                    </div>
                     <!-- Ledger Table -->
-                    <div class="table-responsive border shadow-sm">
+                    <div class="card shadow-sm">
+                        <div class="table-responsive">
 
-                        <table id="ledgerTable" class="table table-bordered table-hover table-sm mb-0">
+                            <table id="ledgerTable" class="table table-bordered table-hover table-sm mb-0">
+                                <caption class="visually-hidden">
+                                    Accounting Ledger Report
+                                </caption>
+                                <thead>
 
-                            <caption class="visually-hidden">
-                                Accounting Ledger Report
-                            </caption>
+                                    <tr>
+                                        <th scope="col">Sr No</th>
+                                        <th scope="col">Voucher Date</th>
+                                        <th scope="col">Voucher Type</th>
+                                        <th scope="col">Voucher No.</th>
+                                        <th scope="col">Reference No.</th>
+                                        <th scope="col">Debit</th>
+                                        <th scope="col">Credit</th>
+                                        <th scope="col">Running Balance</th>
+                                        <th scope="col">Particulars</th>
+                                    </tr>
 
-                            <thead>
+                                </thead>
 
-                                <tr>
-                                    <th scope="col">Sr No</th>
-                                    <th scope="col">Voucher Date</th>
-                                    <th scope="col">Voucher Type</th>
-                                    <th scope="col">Voucher No.</th>
-                                    <th scope="col">Reference No.</th>
-                                    <th scope="col">Debit</th>
-                                    <th scope="col">Credit</th>
-                                    <th scope="col">Running Balance</th>
-                                    <th scope="col">Particulars</th>
-                                </tr>
+                                <tbody id="ledgerTableBody">
+                                </tbody>
 
-                            </thead>
+                                <tfoot>
+                                    <tr class="table-secondary fw-bold">
+                                        <td colspan="5" class="text-end"> Grand Total </td>
+                                        <td id="totalDebit" class="text-end"> 0.00 </td>
+                                        <td id="totalCredit" class="text-end"> 0.00 </td>
+                                    </tr>
+                                    <!-- Closing Balance -->
+                                    <tr class="table-warning fw-bold">
+                                        <td colspan="5" class="text-end">Closing Balance</td>
+                                        <td id="closingBalanceDebit" class="text-end">0.00</td>
+                                        <td id="closingBalanceCredit" class="text-end">0.00</td>
+                                    </tr>
+                                    <tr class="table-warning fw-bold">
+                                        <td colspan="5" class="text-end"></td>
+                                        <td id="balanceDebit" class="text-end">0.00</td>
+                                        <td id="balanceCredit" class="text-end">0.00</td>
+                                    </tr>
+                                </tfoot>
 
-                            <tbody id="ledgerTableBody">
-                            </tbody>
-
-                            <tfoot>
-                                <tr class="table-secondary fw-bold">
-                                    <td colspan="5" class="text-end"> Grand Total </td>
-                                    <td id="totalDebit" class="text-end"> 0.00 </td>
-                                    <td id="totalCredit" class="text-end"> 0.00 </td>
-                                </tr>
-                            </tfoot>
-
-                        </table>
-
+                            </table>
+                        </div>
                     </div>
 
                     <!-- Footer Actions -->
@@ -187,20 +188,14 @@
                         <!-- Export Buttons -->
                         <div class="btn-group">
 
-                            <button class="btn btn-success">
-
+                            <button id="exportExcelBtn" class="btn btn-success">
                                 <i class="bi bi-file-earmark-excel"></i>
-
-                                Excel
-
+                                Export Excel
                             </button>
 
-                            <button class="btn btn-danger">
-
+                            <button id="exportPdfBtn" class="btn btn-danger">
                                 <i class="bi bi-file-earmark-pdf"></i>
-
-                                PDF
-
+                                Export PDF
                             </button>
 
                         </div>
