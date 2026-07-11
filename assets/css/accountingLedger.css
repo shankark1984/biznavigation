@@ -78,19 +78,23 @@
 }
 
 @media (max-width: 768px) {
+
     #ledgerTable {
-        font-size: 0.8rem;
+        table-layout: auto;
+        min-width: 900px;
+        font-size: 12px;
+    }
+
+    #ledgerTable td,
+    #ledgerTable th {
+        white-space: nowrap;
+        overflow: visible;
+        text-overflow: clip;
+        padding: 6px;
     }
 
     .table-responsive {
-        height: 60vh;
-    }
-
-    .btn-group {
-        width: 100%;
-    }
-
-    .btn-group .btn {
-        flex: 1;
+        overflow-x: auto;
+        overflow-y: auto;
     }
 }
