@@ -1,4 +1,4 @@
-const CACHE_NAME = 'biznavigation-cache-v3.04.07.25';
+const CACHE_NAME = 'biznavigation-cache-v3.04.07.26';
 const MAX_CACHE_ITEMS = 50;
 
 const PRECACHE_URLS = [

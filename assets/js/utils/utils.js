@@ -2133,3 +2133,17 @@ async function loadAccountSuggestions(datalistId, inputId, hiddenCodeId, company
 // await loadAccountSuggestions('accountSuggestionsList', CompanyID);
 
 
+async function loadPdfLibs() {
+    if (!window.jspdf) {
+        await import(
+            "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"
+        );
+    }
+}
+async function loadExportLibraries() {
+    if (!window.XLSX) {
+        await import(
+            "https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"
+        );
+    }
+}
