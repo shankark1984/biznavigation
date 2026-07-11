@@ -490,10 +490,10 @@ async function loadGrandTotals(filters = {}, openingBalance = {}) {
     const closingCredit = net > 0 ? net : 0;
 
     document.getElementById("closingBalanceDebit").textContent =
-        closingDebit ? formatAmount(closingDebit) : "";
+        closingCredit ? formatAmount(closingCredit) : "";
 
     document.getElementById("closingBalanceCredit").textContent =
-        closingCredit ? formatAmount(closingCredit) : "";
+        closingDebit ? formatAmount(closingDebit) : "";
 
     // Final Balance (both sides equal)
     document.getElementById("balanceDebit").textContent =
@@ -513,156 +513,438 @@ function updateHeaderSortIndicators() {
     });
 }
 
-
-
-
-
 async function fetchAllFilteredData(filters = {}) {
-    let allData = [], batchSize = 1000, from = 0, to = batchSize - 1, hasMore = true;
+    let allData = [];
+    const batchSize = 1000;
+    let from = 0;
+    let hasMore = true;
 
     while (hasMore) {
+
         let query = supabaseClient
-            .from('AccountingLedgerView')
-            .select('*')
-            .eq('company_id', CompanyID)
-            .order('VoucherDate', { ascending: true });
+            .from("AccountingLedgerView")
+            .select("*")
+            .eq("company_id", CompanyID)
+            .order("VoucherDate", { ascending: true })
+            .range(from, from + batchSize - 1);
 
-        if (filters.customerName) query = query.ilike('PartyName', `%${filters.customerName}%`);
-        if (filters.startDate) query = query.gte('VoucherDate', filters.startDate);
-        if (filters.endDate) query = query.lte('VoucherDate', filters.endDate);
+        if (filters.customerName) {
+            query = query.ilike("PartyName", `%${filters.customerName}%`);
+        }
 
+        if (filters.startDate) {
+            query = query.gte("VoucherDate", filters.startDate);
+        }
+
+        if (filters.endDate) {
+            query = query.lte("VoucherDate", filters.endDate);
+        }
 
         if (filters.financialYear) {
-            const [startYear, endYear] = filters.financialYear.split('-').map(Number);
-            query = query.gte('VoucherDate', `${startYear}-04-01`).lte('VoucherDate', `${endYear}-03-31`);
+            const [startYear, endYear] = filters.financialYear.split("-").map(Number);
+
+            query = query
+                .gte("VoucherDate", `${startYear}-04-01`)
+                .lte("VoucherDate", `${endYear}-03-31`);
         }
 
         const { data, error } = await query;
+
         if (error) {
-            console.error('Error fetching data for export:', error);
+            console.error("Error fetching data:", error);
             break;
         }
 
-        if (data.length > 0) {
-            allData = allData.concat(data);
-            from += batchSize;
-            to += batchSize;
-        } else {
+        if (!data || data.length === 0) {
             hasMore = false;
+            break;
+        }
+
+        allData.push(...data);
+
+        if (data.length < batchSize) {
+            hasMore = false;
+        } else {
+            from += batchSize;
         }
     }
-    console.log(`Fetched ${allData.length} records for export.`, allData);
 
+    console.log(`Fetched ${allData.length} records.`);
     return allData;
 }
-
 async function exportToExcel() {
-    console.log("Exporting to Excel...");
-    const filters = getFilters();
-    const allData = await fetchAllFilteredData(filters);
-    loadExportLibraries();
-    if (allData.length === 0) return alert('No data to export.');
+    try {
+        const filters = getFilters();
 
-    let tableHtml = `<table><thead><tr>
-        <th>Voucher Date</th><th>Voucher Type</th><th>Voucher No</th><th>Reference No</th><th>Debit</th><th>Credit</th>`;
+        const allData = await fetchAllFilteredData(filters);
 
-    for (let i = 0; i < allData.length; i++) {
-        const row = allData[i];
-        let partyName = '';
-        if (row.PartyCode) {
-            if (partyNameCache[row.PartyCode]) {
-                partyName = partyNameCache[row.PartyCode];
-            } else {
-                const details = await getPartyDetailsByCode(row.PartyCode);
-                partyName = details?.PartyName || '';
-                partyNameCache[row.PartyCode] = partyName;
+        if (!allData.length) {
+            alert("No data found.");
+            return;
+        }
+
+        await loadExportLibraries();
+
+        const openingBalance = await getOpeningBalance(filters);
+        const company = await getCompanyProfile(CompanyID);
+
+        const partyName = filters.customerName || "All Parties";
+        const openingDate = getOpeningBalanceDate(filters);
+
+        const dateRange =
+            filters.startDate && filters.endDate
+                ? `${formatDate(filters.startDate)} To ${formatDate(filters.endDate)}`
+                : filters.financialYear
+                    ? `Financial Year : ${filters.financialYear}`
+                    : "All Dates";
+
+        const aoa = [];
+
+        //=========================
+        // Header
+        //=========================
+
+        aoa.push([company?.company_name || ""]);
+        aoa.push(["ACCOUNTING LEDGER REPORT"]);
+        aoa.push([`Party : ${partyName}`]);
+        aoa.push([`Period : ${dateRange}`]);
+        aoa.push([]);
+
+        //=========================
+        // Column Header
+        //=========================
+
+        aoa.push([
+            "Voucher Date",
+            "Voucher Type",
+            "Voucher No",
+            "Reference No",
+            "Debit",
+            "Credit"
+        ]);
+
+        //=========================
+        // Opening Balance
+        //=========================
+
+        let totalDebit = Number(openingBalance.debitBalance || 0);
+        let totalCredit = Number(openingBalance.creditBalance || 0);
+
+        aoa.push([
+            openingDate ? formatDate(openingDate) : "",
+            "Opening Balance",
+            "",
+            "",
+            totalDebit,
+            totalCredit
+        ]);
+
+        //=========================
+        // Transactions
+        //=========================
+
+        allData.forEach(row => {
+
+            const debit = Number(row.Debit || 0);
+            const credit = Number(row.Credit || 0);
+
+            totalDebit += debit;
+            totalCredit += credit;
+
+            aoa.push([
+                formatDate(row.VoucherDate),
+                row.VoucherType || "",
+                row.VoucherNo || "",
+                row.ReferenceNo || "",
+                debit,
+                credit
+            ]);
+
+        });
+
+        //=========================
+        // Summary
+        //=========================
+
+        const net = totalCredit - totalDebit;
+
+        const closingDebit = net < 0 ? Math.abs(net) : 0;
+        const closingCredit = net > 0 ? net : 0;
+
+        aoa.push([]);
+
+        aoa.push([
+            "",
+            "",
+            "",
+            "Total",
+            totalDebit,
+            totalCredit
+        ]);
+
+        aoa.push([
+            "",
+            "",
+            "",
+            "Closing Balance",
+            closingCredit,
+            closingDebit
+        ]);
+
+        aoa.push([
+            "",
+            "",
+            "",
+            "Grand Total",
+            totalDebit + closingCredit,
+            totalCredit + closingDebit
+        ]);
+
+        //=========================
+        // Workbook
+        //=========================
+
+        const ws = XLSX.utils.aoa_to_sheet(aoa);
+
+        // Merge Company Header
+        ws["!merges"] = [
+            { s: { r: 0, c: 0 }, e: { r: 0, c: 5 } },
+            { s: { r: 1, c: 0 }, e: { r: 1, c: 5 } },
+            { s: { r: 2, c: 0 }, e: { r: 2, c: 5 } },
+            { s: { r: 3, c: 0 }, e: { r: 3, c: 5 } }
+        ];
+
+        // Column Widths
+        ws["!cols"] = [
+            { wch: 15 },
+            { wch: 30 },
+            { wch: 22 },
+            { wch: 22 },
+            { wch: 18 },
+            { wch: 18 }
+        ];
+
+        // Apply Number Format
+        const range = XLSX.utils.decode_range(ws["!ref"]);
+
+        for (let R = 0; R <= range.e.r; R++) {
+
+            // Debit
+            const dCell = XLSX.utils.encode_cell({ r: R, c: 4 });
+
+            if (ws[dCell] && typeof ws[dCell].v === "number") {
+                ws[dCell].z = '#,##0.00';
+            }
+
+            // Credit
+            const cCell = XLSX.utils.encode_cell({ r: R, c: 5 });
+
+            if (ws[cCell] && typeof ws[cCell].v === "number") {
+                ws[cCell].z = '#,##0.00';
             }
         }
 
-        tableHtml += `<tr>
-            <td>${row.VoucherDate || ''}</td>
-            <td>${row.VoucherType || ''}</td>
-            <td>${row.VoucherNo || ''}</td>
-            <td>${row.ReferenceNo || ''}</td>
-            <td>${row.Debit || '0'}</td>
-            <td>${row.Credit || '0'}</td>
-        </tr>`;
-    }
+        const wb = XLSX.utils.book_new();
 
-    tableHtml += `</tbody></table>`;
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = tableHtml;
-    const wb = XLSX.utils.table_to_book(tempDiv.querySelector('table'), { sheet: "Bookings" });
-    XLSX.writeFile(wb, 'AccountingLedger.xlsx');
+        XLSX.utils.book_append_sheet(
+            wb,
+            ws,
+            "Accounting Ledger"
+        );
+
+        XLSX.writeFile(
+            wb,
+            `AccountingLedger_${new Date().toISOString().slice(0, 10)}.xlsx`
+        );
+
+    } catch (err) {
+
+        console.error(err);
+
+        alert("Export failed.");
+
+    }
 }
 
 // PDF Export Function with PartyName
 async function exportToPdf() {
+
     const filters = getFilters();
     const allData = await fetchAllFilteredData(filters);
-    loadPdfLibs();
-    if (!allData.length) return alert('No data to export.');
 
-    const doc = new window.jspdf.jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
-
-    const headers = [
-        'Sr No', 'Invoice No', 'Invoice Date', 'Invoice Type', 'Customer Name', 'Basic Amount', 'Other Amount',
-        'CGST Amount', 'SGST Amount', 'IGST Amount', 'Total GST Amount', 'Grand Total Amount', 'Collected Amount',
-        'Other Deduction Amount', 'TDS Deduction Amount', 'Total Payment Amount', 'Balance Amount', 'Payment Status'
-    ];
-
-    const formatNumber = (value) => typeof value === 'number' ? value.toFixed(2) : (parseFloat(value) || 0).toFixed(2);
-    const formatDate = (dateStr) => {
-        const date = new Date(dateStr);
-        return isNaN(date) ? '' : date.toLocaleDateString();
-    };
-
-    // Step 1: Get unique PartyCodes
-    const uniqueCodes = [...new Set(allData.map(r => r.PartyCode).filter(Boolean))];
-
-    // Step 2: Build PartyCode -> PartyName map
-    const partyNameMap = {};
-    for (const code of uniqueCodes) {
-        const details = await getPartyDetailsByCode(code);
-        partyNameMap[code] = details?.PartyName || code;
+    if (!allData.length) {
+        alert("No data to export.");
+        return;
     }
 
-    // Step 3: Prepare rows
-    const rows = allData.map((row, i) => [
-        i + 1,
-        row.InvoiceNo || '',
-        formatDate(row.InvoiceDate),
-        row.InvoiceType || '',
-        partyNameMap[row.PartyCode] || row.PartyCode || '',
-        formatNumber(row.BasicAmount),
-        formatNumber(row.OtherAmount),
-        formatNumber(row.CGSTAmount),
-        formatNumber(row.SGSTAmount),
-        formatNumber(row.IGSTAmount),
-        formatNumber(row.TotalGSTAmount),
-        formatNumber(row.GrandTotalAmount),
-        formatNumber(row.PaymentAmount),
-        formatNumber(row.OtherDeductionAmount),
-        formatNumber(row.TDSDeductionAmount),
-        formatNumber(row.PaymentTotalAmount),
-        formatNumber(row.BalanceAmount),
-        row.PaymentStatus || ''
-    ]);
+    await loadPdfLibs();
 
-    // Step 4: Export
-    doc.autoTable({
-        head: [headers],
-        body: rows,
-        startY: 20,
-        margin: { left: 10, right: 10 },
-        styles: { fontSize: 6.5, overflow: 'linebreak', cellPadding: 1.2 },
-        headStyles: { fillColor: [0, 123, 255] },
-        didDrawPage: function (data) {
-            doc.setFontSize(10);
-            doc.text("Customer Invoice Report", data.settings.margin.left, 10);
-        },
-        pageBreak: 'auto'
+    const openingBalance = await getOpeningBalance(filters);
+    const company = await getCompanyProfile(CompanyID);
+
+    const partyName = filters.customerName || "All Parties";
+    const openingDate = getOpeningBalanceDate(filters);
+
+    const dateRange =
+        filters.startDate && filters.endDate
+            ? `${formatDate(filters.startDate)} To ${formatDate(filters.endDate)}`
+            : filters.financialYear
+                ? `Financial Year : ${filters.financialYear}`
+                : "All Dates";
+
+    const doc = new jspdf.jsPDF({
+        orientation: "landscape",
+        unit: "mm",
+        format: "a4"
     });
 
-    doc.save('CustomerInvoiceReport.pdf');
+    const formatAmount = value =>
+        Number(value || 0).toLocaleString("en-IN", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
+
+    // Running totals
+    let totalDebit = Number(openingBalance.debitBalance || 0);
+    let totalCredit = Number(openingBalance.creditBalance || 0);
+
+    const rows = [];
+
+    // Opening Balance
+    rows.push([
+        formatDate(openingDate),
+        "Opening Balance",
+        "",
+        "",
+        formatAmount(totalDebit),
+        formatAmount(totalCredit)
+    ]);
+
+    // Ledger Rows
+    allData.forEach(row => {
+
+        const debit = Number(row.Debit || 0);
+        const credit = Number(row.Credit || 0);
+
+        totalDebit += debit;
+        totalCredit += credit;
+
+        rows.push([
+            formatDate(row.VoucherDate),
+            row.VoucherType || "",
+            row.VoucherNo || "",
+            row.ReferenceNo || "",
+            formatAmount(debit),
+            formatAmount(credit)
+        ]);
+
+    });
+
+    // Closing Balance
+    const net = totalCredit - totalDebit;
+
+    const closingDebit = net < 0 ? Math.abs(net) : 0;
+    const closingCredit = net > 0 ? net : 0;
+
+    // Totals
+    rows.push([
+        "",
+        "",
+        "",
+        "Total",
+        formatAmount(totalDebit),
+        formatAmount(totalCredit)
+    ]);
+
+    rows.push([
+        "",
+        "",
+        "",
+        "Closing Balance",
+        closingCredit ? formatAmount(closingCredit) : "",
+        closingDebit ? formatAmount(closingDebit) : ""
+    ]);
+
+    rows.push([
+        "",
+        "",
+        "",
+        "Grand Total",
+        formatAmount(totalDebit + closingCredit),
+        formatAmount(totalCredit + closingDebit)
+    ]);
+
+    doc.setFontSize(16);
+    doc.text(company.company_name || "", 148, 12, { align: "center" });
+
+    doc.setFontSize(13);
+    doc.text("ACCOUNTING LEDGER REPORT", 148, 20, { align: "center" });
+
+    doc.setFontSize(10);
+    doc.text(`Party : ${partyName}`, 14, 28);
+    doc.text(`Period : ${dateRange}`, 14, 34);
+
+    doc.autoTable({
+
+        startY: 40,
+
+        head: [[
+            "Voucher Date",
+            "Voucher Type",
+            "Voucher No",
+            "Reference No",
+            "Debit",
+            "Credit"
+        ]],
+
+        body: rows,
+
+        theme: "grid",
+
+        styles: {
+            fontSize: 8,
+            cellPadding: 2,
+            halign: "left"
+        },
+
+        headStyles: {
+            fillColor: [41, 128, 185],
+            textColor: 255,
+            halign: "center"
+        },
+
+        columnStyles: {
+            4: { halign: "right" },
+            5: { halign: "right" }
+        },
+
+        didParseCell(data) {
+
+            if (
+                data.row.index >= rows.length - 3 &&
+                data.section === "body"
+            ) {
+                data.cell.styles.fontStyle = "bold";
+                data.cell.styles.fillColor = [242, 242, 242];
+            }
+
+        },
+
+        didDrawPage(data) {
+
+            doc.setFontSize(9);
+
+            doc.text(
+                `Page ${doc.internal.getNumberOfPages()}`,
+                285,
+                200,
+                { align: "right" }
+            );
+
+        }
+
+    });
+
+    doc.save("AccountingLedger.pdf");
+
 }

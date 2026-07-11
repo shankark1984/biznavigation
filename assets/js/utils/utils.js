@@ -2139,11 +2139,23 @@ async function loadPdfLibs() {
             "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"
         );
     }
+    if (!window.jspdf?.jsPDF?.API?.autoTable) {
+        await import(
+            "https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js");
+    }
 }
+
 async function loadExportLibraries() {
     if (!window.XLSX) {
         await import(
             "https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"
         );
     }
+}
+
+function formatExcelAmount(value) {
+    return Number(value || 0).toLocaleString("en-IN", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
 }
