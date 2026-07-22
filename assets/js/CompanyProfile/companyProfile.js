@@ -217,8 +217,8 @@ function onNewClick() {
 }
 
 /* ---------------------- 💾 Save / Update ---------------------- */
-/* ---------------------- 💾 Save / Update ---------------------- */
 async function onSaveClick(e) {
+
     e.preventDefault();
 
     const saveBtn = e.currentTarget;
@@ -270,14 +270,39 @@ async function onSaveClick(e) {
                 .from("company_profile")
                 .update(formData)
                 .eq("id", tempID));
-
         }
 
         if (error) throw error;
 
-        // ---------------------------
+        // --------------------------------------------------
+        // Create Default Chart Of Accounts (NEW)
+        // --------------------------------------------------
+        if (isInsert) {
+
+            const { error: coaError } = await supabaseClient.rpc(
+                "CreateDefaultChartOfAccounts",
+                {
+                    p_company_id: companyID
+                }
+            );
+
+            if (coaError) throw coaError;
+        }
+        // --------------------------------------------------
+        // Create Default Cost Centers (NEW)
+        // --------------------------------------------------
+        if (isInsert) {
+
+            const { error: coaError } = await supabaseClient.rpc(
+                "create_default_cost_centers", {
+                p_company_id: companyCode
+            });
+
+            if (coaError) throw coaError;
+        }
+        // --------------------------------------------------
         // Create Admin User
-        // ---------------------------
+        // --------------------------------------------------
         if (isInsert) {
 
             const adminData = {

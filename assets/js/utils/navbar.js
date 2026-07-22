@@ -25,7 +25,7 @@ const Navbar = (() => {
                 { label: "Domestic", icon: "bi-truck", href: "/pages/Functions/DomesticBooking.html" },
                 { label: "Customs Clearance", icon: "bi-box-seam", href: "/pages/Functions/CustomsClearance.html" },
                 { label: "Full Truck Load", icon: "bi-truck-front", href: "/pages/Functions/fulltruckload.html" },
-                { label: "Upload Data", icon: "bi-cloud-upload", href: "#" }
+
             ]
         },
         {
@@ -37,6 +37,7 @@ const Navbar = (() => {
                 { label: "Payments Credit", icon: "bi-arrow-down-square", href: "/pages/Accounting/PaymentDetails_Credit.html?type=Credit" },
                 { label: "Payment Debit", icon: "bi-arrow-up-square", href: "/pages/Accounting/PaymentDetails_Debit.html?type=Debit" },
                 { label: "Credit Debit Note", icon: "bi-file-earmark-diff", href: "/pages/Accounting/CreditDebitNote.html" },
+                { label: "Accounting Voucher", icon: "bi-cash-coin", href: "/pages/Accounting/AccountingVoucher.html" },
                 { label: "Tax Details", icon: "bi-calculator", href: "/pages/Accounting/TaxDetails.html" }
             ]
         },

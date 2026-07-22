@@ -99,13 +99,14 @@
                                             <label class="form-label" for="paymentMode">Payment Mode</label>
                                             <select id="paymentMode" class="form-select" required>
                                                 <option value="">Choose...</option>
-                                                <option>Cash</option>
-                                                <option>Cheque</option>
-                                                <option>Card</option>
-                                                <option>IMPS</option>
-                                                <option>NEFT</option>
-                                                <option>RTGS</option>
-                                                <option>UPI</option>
+                                                <option value="Cash">Cash</option>
+                                                <option value="Cheque">Cheque</option>
+                                                <option value="Card">Card</option>
+                                                <option value="IMPS">IMPS</option>
+                                                <option value="NEFT">NEFT</option>
+                                                <option value="RTGS">RTGS</option>
+                                                <option value="UPI">UPI</option>
+                                                <option value="Net Settlement">Net Settlement</option>
                                             </select>
                                         </div>
 
@@ -117,7 +118,9 @@
                                         </div>
 
                                         <div class="col-md-2">
-                                            <label class="form-label" for="referenceNo">Reference No</label>
+                                            <label class="form-label" id="referenceNoLabel" for="referenceNo">
+                                                Reference No
+                                            </label>
                                             <input type="text" id="referenceNo" class="form-control" required>
                                         </div>
 

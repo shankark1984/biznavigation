@@ -104,24 +104,28 @@
                                             <label class="form-label">Payment Mode</label>
                                             <select id="paymentMode" class="form-control" required>
                                                 <option value="">Choose...</option>
-                                                <option>Cash</option>
-                                                <option>Cheque</option>
-                                                <option>Card</option>
-                                                <option>IMPS</option>
-                                                <option>NEFT</option>
-                                                <option>RTGS</option>
-                                                <option>UPI</option>
+                                                <option value="Cash">Cash</option>
+                                                <option value="Cheque">Cheque</option>
+                                                <option value="Card">Card</option>
+                                                <option value="IMPS">IMPS</option>
+                                                <option value="NEFT">NEFT</option>
+                                                <option value="RTGS">RTGS</option>
+                                                <option value="UPI">UPI</option>
+                                                <option value="Net Settlement">Net Settlement</option>
                                             </select>
                                         </div>
 
                                         <div class="col-md-2">
-                                            <label class="form-label">Bank Name</label>
-                                            <input list="bankNameSuggestions" id="inputBankName" class="form-control">
+                                            <label class="form-label" for="inputBankName">Bank Name</label>
+                                            <input list="bankNameSuggestions" id="inputBankName" class="form-control"
+                                                required>
                                             <datalist id="bankNameSuggestions"></datalist>
                                         </div>
 
                                         <div class="col-md-2">
-                                            <label class="form-label">Reference No</label>
+                                            <label class="form-label" id="referenceNoLabel" for="referenceNo">
+                                                Reference No
+                                            </label>
                                             <input type="text" id="referenceNo" class="form-control" required>
                                         </div>
 
@@ -329,7 +333,6 @@
     <script src="../../assets/js/utils/logout.js" defer>    </script>
     <script src="../../assets/js/utils/GlobalShortcut.js" defer>    </script>
     <script src="../../assets/js/utils/utils.js" defer>    </script>
-    <!-- <script src="../../assets/js/Payment/PaymentDetails_Credit.js" defer>    </script> -->
     <script src="../../assets/js/Payment/credit_Payments.js" defer></script>
 
 </body>

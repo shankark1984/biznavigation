@@ -2132,7 +2132,35 @@ async function loadAccountSuggestions(datalistId, inputId, hiddenCodeId, company
 // ======Load Only Everything
 // await loadAccountSuggestions('accountSuggestionsList', CompanyID);
 
+async function loadBankAccounts(companyID, AccountType) {
 
+    const ddl = document.getElementById("bankAccount");
+
+    ddl.innerHTML = '<option value="">Loading...</option>';
+
+    const { data, error } = await supabaseClient
+        .from("AccountMasterView")
+        .select("AccountCode, AccountName")
+        .eq("company_id", companyID)
+        .eq("AccountType", AccountType)
+        .order("AccountName");
+
+    if (error) {
+        console.error(error);
+        ddl.innerHTML = '<option value="">Error</option>';
+        return;
+    }
+
+    ddl.innerHTML = '<option value="">Select Bank</option>';
+
+    data.forEach(bank => {
+
+        ddl.innerHTML += `
+            <option value="${bank.AccountCode}">
+                ${bank.AccountName}
+            </option>`;
+    });
+}
 async function loadPdfLibs() {
     if (!window.jspdf) {
         await import(
@@ -2158,4 +2186,92 @@ function formatExcelAmount(value) {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2
     });
+}
+
+async function loadBranches(companyID, selectedBranch = "") {
+    const branchSelect = document.getElementById("branch");
+
+    if (!branchSelect) return;
+
+    // Loading option
+    branchSelect.innerHTML = `<option value="">Loading...</option>`;
+
+    try {
+        const { data, error } = await supabaseClient
+            .from("CompanyBranchDetails")
+            .select("BranchCode, Address, City, State")
+            .eq("CompanyID", companyID)
+            .eq("Status", "Active")
+            .order("BranchCode", { ascending: true });
+
+        if (error) throw error;
+
+        branchSelect.innerHTML = `<option value="">Select Branch</option>`;
+
+        if (!data || data.length === 0) {
+            branchSelect.innerHTML = `<option value="">No Branch Found</option>`;
+            return;
+        }
+
+        data.forEach(branch => {
+            const option = document.createElement("option");
+            option.value = branch.BranchCode;
+            option.textContent = `${branch.BranchCode} - ${branch.City || ""}`;
+
+            if (branch.BranchCode === selectedBranch) {
+                option.selected = true;
+            }
+
+            branchSelect.appendChild(option);
+        });
+
+    } catch (err) {
+        console.error("Error loading branches:", err);
+        branchSelect.innerHTML = `<option value="">Error Loading Branches</option>`;
+    }
+}
+async function loadCostCenters(companyID, selectedCostCenter = "") {
+    const costCenterSelect = document.getElementById("costCenter");
+
+    if (!costCenterSelect) return;
+
+    // Loading
+    costCenterSelect.innerHTML = `<option value="">Loading...</option>`;
+
+    try {
+        const { data, error } = await supabaseClient
+            .from("CostCenter")
+            .select("CostCenterCode, CostCenterName, CostCenterType")
+            .eq("company_id", companyID)
+            .eq("Status", true)
+            .order("CostCenterName", { ascending: true });
+
+        if (error) throw error;
+
+        costCenterSelect.innerHTML = `<option value="">Select Cost Center</option>`;
+
+        if (!data || data.length === 0) {
+            costCenterSelect.innerHTML = `<option value="">No Cost Center Found</option>`;
+            return;
+        }
+
+        data.forEach(cc => {
+            const option = document.createElement("option");
+            option.value = cc.CostCenterCode;
+            option.textContent = `${cc.CostCenterCode} - ${cc.CostCenterName}`;
+
+            // Store additional information if needed
+            option.dataset.type = cc.CostCenterType;
+
+            if (cc.CostCenterCode === selectedCostCenter) {
+                option.selected = true;
+            }
+
+            costCenterSelect.appendChild(option);
+        });
+
+    } catch (err) {
+        console.error("Error loading cost centers:", err);
+        costCenterSelect.innerHTML = `<option value="">Error Loading Cost Centers</option>`;
+    }
 }

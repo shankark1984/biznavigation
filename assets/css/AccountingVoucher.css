@@ -1,0 +1,696 @@
+/* ==========================================================
+   AccountingVoucher.css
+   Logistics ERP Accounting Module
+========================================================== */
+
+:root {
+
+    --primary: #0d6efd;
+    --success: #198754;
+    --danger: #dc3545;
+    --warning: #ffc107;
+
+    --header: #1f2937;
+    --header-text: #ffffff;
+
+    --bg: #f4f6f9;
+    --card: #ffffff;
+
+    --border: #d8dee4;
+
+    --row-hover: #eef6ff;
+
+    --total: #e9f7ef;
+
+    --difference: #fff4d6;
+
+    --input-focus: #cfe2ff;
+
+    --radius: 8px;
+
+    --shadow: 0 2px 10px rgba(0, 0, 0, .08);
+
+    --font: 14px;
+
+}
+
+/* ==========================================================
+   BODY
+========================================================== */
+
+body {
+
+    background: var(--bg);
+
+    font-size: var(--font);
+
+    font-family:
+        "Segoe UI",
+        Roboto,
+        Arial,
+        sans-serif;
+
+}
+
+
+/* ==========================================================
+   CARD
+========================================================== */
+
+.card {
+    border: none;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+}
+
+
+.card-header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: #fff;
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
+    font-weight: 600;
+}
+
+
+/* ==========================================================
+   BUTTONS
+========================================================== */
+
+.btn {
+
+    border-radius: 6px;
+
+    font-size: 13px;
+
+    padding: 6px 14px;
+
+}
+
+.btn i {
+
+    margin-right: 4px;
+
+}
+
+
+/* ==========================================================
+   LABEL
+========================================================== */
+
+.form-label {
+
+    font-weight: 600;
+
+    color: #555;
+
+    margin-bottom: 4px;
+
+}
+
+
+/* ==========================================================
+   INPUTS
+========================================================== */
+
+.form-control,
+.form-select {
+
+    font-size: 13px;
+
+    border-radius: 6px;
+
+    border: 1px solid var(--border);
+
+    height: 36px;
+
+}
+
+textarea.form-control {
+
+    height: auto;
+
+}
+
+
+.form-control:focus,
+.form-select:focus {
+
+    box-shadow: 0 0 0 .2rem var(--input-focus);
+
+    border-color: var(--primary);
+
+}
+
+
+/* ==========================================================
+   TABLE
+========================================================== */
+
+.table {
+
+    margin-bottom: 0;
+
+    white-space: nowrap;
+
+}
+
+.table thead {
+
+    position: sticky;
+
+    top: 0;
+
+    z-index: 5;
+
+}
+
+.table-dark {
+
+    background: var(--header);
+
+}
+
+.table-dark th {
+    background: var(--header);
+    color: var(--header-text);
+    border-color: #444;
+    text-align: center;
+    vertical-align: middle;
+}
+
+.table td {
+    vertical-align: middle;
+    padding: 2px 4px;
+}
+
+.table tbody tr:hover {
+    background: #eaf4ff;
+}
+
+.table tbody tr:nth-child(even) {
+    background: #fafafa;
+}
+
+.accountSearch,
+.partySearch {
+
+    width: 38px;
+
+    background: #f8f9fa;
+
+    border-left: 1px solid #dcdcdc;
+}
+
+.accountSearch:hover,
+.partySearch:hover {
+
+    background: #0d6efd;
+    color: #fff;
+
+}
+
+/* ==========================================================
+   GRID INPUTS
+========================================================== */
+#voucherTable input,
+#voucherTable select {
+    height: 32px;
+    font-size: 13px;
+}
+
+#voucherTable input {
+
+    border: none;
+
+    background: transparent;
+
+    width: 100%;
+
+}
+
+#voucherTable select {
+
+    border: none;
+
+    background: transparent;
+
+}
+
+#voucherTable input:focus {
+
+    background: white;
+
+}
+
+#voucherTable td {
+
+    padding: 3px;
+
+}
+
+tfoot tr:first-child {
+
+    background: #d1f7dd;
+
+    font-size: 15px;
+
+}
+
+tfoot tr:last-child {
+
+    font-size: 16px;
+
+}
+
+/* ==========================================================
+   TOTAL ROW
+========================================================== */
+
+tfoot tr:first-child {
+
+    background: var(--total);
+
+    font-weight: bold;
+
+}
+
+
+/* ==========================================================
+   DIFFERENCE ROW
+========================================================== */
+
+tfoot tr:last-child {
+
+    background: var(--difference);
+
+    font-weight: bold;
+
+}
+
+
+/* ==========================================================
+   NUMERIC ALIGNMENT
+========================================================== */
+
+.debit,
+.credit {
+
+    text-align: right;
+
+    font-weight: 600;
+
+}
+
+
+/* ==========================================================
+   ACTION BUTTON
+========================================================== */
+
+.deleteRow {
+
+    width: 34px;
+
+    height: 34px;
+
+    padding: 0;
+
+}
+
+
+/* ==========================================================
+   TABLE RESPONSIVE
+========================================================== */
+
+.table-responsive {
+
+    max-height: 550px;
+
+    overflow: auto;
+
+}
+
+
+/* ==========================================================
+   SCROLLBAR
+========================================================== */
+
+.table-responsive::-webkit-scrollbar {
+
+    width: 10px;
+
+    height: 10px;
+
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+
+    background: #b5b5b5;
+
+    border-radius: 20px;
+
+}
+
+.table-responsive::-webkit-scrollbar-track {
+
+    background: #efefef;
+
+}
+
+
+/* ==========================================================
+   TOTAL PANEL
+========================================================== */
+
+#totalDebit,
+#totalCredit,
+#difference {
+
+    text-align: right;
+
+    font-size: 15px;
+
+    font-weight: bold;
+
+}
+
+
+/* ==========================================================
+   DIFFERENCE COLORS
+========================================================== */
+
+.balance-ok {
+
+    color: green;
+
+}
+
+.balance-error {
+
+    color: #dc3545;
+
+    animation: blink .8s infinite;
+
+}
+
+@keyframes blink {
+
+    50% {
+        opacity: .3;
+    }
+
+}
+
+
+/* ==========================================================
+   HEADER BUTTON GROUP
+========================================================== */
+
+.card-header .btn {
+
+    margin-left: 4px;
+
+}
+
+
+/* ==========================================================
+   ADD ROW BUTTON
+========================================================== */
+
+#btnAddRow {
+
+    font-size: 13px;
+
+}
+
+
+/* ==========================================================
+   READONLY
+========================================================== */
+input[readonly] {
+
+    background: #f5f5f5 !important;
+
+    color: #333;
+
+    font-weight: 600;
+
+}
+
+
+/* ==========================================================
+   PRINT
+========================================================== */
+
+@media print {
+
+    body {
+
+        background: white;
+
+    }
+
+    .btn {
+
+        display: none;
+
+    }
+
+    .card {
+
+        box-shadow: none;
+
+        border: 1px solid #ccc;
+
+    }
+
+    .table {
+
+        font-size: 12px;
+
+    }
+
+}
+
+
+/* ==========================================================
+   MOBILE
+========================================================== */
+
+@media(max-width:992px) {
+
+    .card-header {
+
+        flex-direction: column;
+
+        align-items: flex-start;
+
+        gap: 10px;
+
+    }
+
+}
+
+
+@media(max-width:768px) {
+
+    body {
+
+        font-size: 13px;
+
+    }
+
+    .table {
+
+        min-width: 1100px;
+
+    }
+
+    .btn {
+
+        margin-bottom: 5px;
+
+    }
+
+}
+
+
+/* ==========================================================
+   STICKY FOOTER TOTALS
+========================================================== */
+
+tfoot {
+    position: sticky;
+    bottom: 0;
+    z-index: 4;
+    background: white;
+}
+
+
+/* ==========================================================
+   KEYBOARD FOCUS
+========================================================== */
+
+input:focus,
+select:focus {
+
+    outline: none;
+
+}
+
+#voucherTable input:focus,
+#voucherTable select:focus {
+
+    background: #fffbe6;
+
+    border: 1px solid #0d6efd;
+
+    box-shadow: none;
+
+}
+
+/* ==========================================================
+   VALIDATION
+========================================================== */
+
+.invalid {
+
+    border: 2px solid red !important;
+
+}
+
+.valid {
+
+    border: 2px solid green !important;
+
+}
+
+
+/* ==========================================================
+   ERP LOOK
+========================================================== */
+
+.card-header h4 {
+
+    font-weight: 700;
+
+}
+
+.table tbody tr {
+    height: 36px;
+}
+
+.table td {
+    vertical-align: middle;
+    padding: 2px 4px;
+}
+
+.table th {
+    font-size: 13px;
+}
+
+.form-control,
+.form-select {
+
+    min-width: 100%;
+
+}
+
+#totalDebit {
+
+    color: #198754;
+
+}
+
+#totalCredit {
+
+    color: #0d6efd;
+
+}
+
+#difference {
+
+    font-size: 18px;
+
+    font-weight: 700;
+
+}
+
+.modal-body table tbody tr {
+
+    cursor: pointer;
+
+}
+
+.modal-body table tbody tr:hover {
+
+    background: #0d6efd;
+
+    color: #fff;
+
+}
+
+.table-responsive::-webkit-scrollbar {
+
+    width: 8px;
+    height: 8px;
+
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+
+    background: #6c757d;
+
+}
+
+.table-responsive::-webkit-scrollbar-thumb:hover {
+
+    background: #495057;
+
+}
+
+@media print {
+
+    .modal,
+    .btn,
+    #btnAddRow {
+
+        display: none !important;
+
+    }
+
+    .table {
+
+        font-size: 11px;
+
+    }
+
+    tfoot {
+
+        position: static;
+
+    }
+
+}
+
+#voucherTable thead th {
+
+    position: sticky;
+
+    top: 0;
+
+    z-index: 2;
+
+}
+
+.input-group {
+    flex-wrap: nowrap;
+}
+
+.accountSearch,
+.partySearch {
+    white-space: nowrap;
+    flex-shrink: 0;
+}

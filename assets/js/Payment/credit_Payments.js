@@ -24,6 +24,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         receiptOn.value = new Date().toISOString().split("T")[0];
     }
     loadDefaultBank();
+    toggleSettlementMode();
     document.getElementById('transactionType').value = "Credit";
 });
 
@@ -31,6 +32,7 @@ document.getElementById("saveButton").addEventListener("click", async () => {
     await saveUpdatedCreditPayments();
 });
 
+document.getElementById("paymentMode").addEventListener("change", toggleSettlementMode);
 // ------------------------------------------
 // GENERATE PAYMENT ID
 // ------------------------------------------
@@ -892,3 +894,26 @@ suspenseModalEl.addEventListener("hidden.bs.modal", () => {
 
     creditPayInput.paymentID.focus();
 });
+
+function toggleSettlementMode() {
+
+    const paymentMode = document.getElementById("paymentMode").value;
+    const bankInput = document.getElementById("inputBankName");
+    const referenceLabel = document.getElementById("referenceNoLabel");
+
+    if (paymentMode === "Net Settlement") {
+
+        bankInput.value = "";
+        bankInput.disabled = true;
+        bankInput.required = false;
+
+        referenceLabel.textContent = "Settlement Ref No";
+
+    } else {
+
+        bankInput.disabled = false;
+        bankInput.required = true;
+
+        referenceLabel.textContent = "Reference No";
+    }
+}

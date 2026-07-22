@@ -1,4 +1,4 @@
-const maxIdleTime = 5 * 60 * 1000; // 5 minutes
+const maxIdleTime = 30 * 60 * 1000; // 5 minutes
 let idleInterval = null;
 let sessionInterval = null;
 let isLoggingOut = false;
