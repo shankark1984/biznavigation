@@ -431,7 +431,12 @@ async function renderTable(data) {
 
         tr.innerHTML = `
             <td>${(currentPage - 1) * pageSize + idx + 1}</td>
-            <td>${row.InvoiceNo || ''}</td>
+           <td>
+    <a href="../Accounting/CustomerInvoice.html?invoiceNo=${encodeURIComponent(row.InvoiceNo)}"
+       class="text-decoration-none fw-bold">
+        ${row.InvoiceNo}
+    </a>
+</td>
             <td>${formatDate(row.InvoiceDate) || ''}</td>
             <td>${row.InvoiceType || ''}</td>
             <td>${partyName || ''}</td>
@@ -579,7 +584,12 @@ async function exportToExcel() {
 
         tableHtml += `<tr>
             <td>${i + 1}</td>
-            <td>${row.InvoiceNo || ''}</td>
+           <td>
+    <a href="../Accounting/CustomerInvoice.html?invoiceNo=${encodeURIComponent(row.InvoiceNo)}"
+       class="text-decoration-none fw-bold">
+        ${row.InvoiceNo}
+    </a>
+</td>
             <td>${row.InvoiceDate || ''}</td>
             <td>${row.InvoiceType || ''}</td>
             <td>${partyName}</td>

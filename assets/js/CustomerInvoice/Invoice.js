@@ -32,6 +32,49 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 });
 
+document.addEventListener('DOMContentLoaded', async () => {
+
+    await loadSuggestions('partySuggestions', 'PartyDetails', CompanyID);
+    await loadBankNameSuggestions();
+    await loadDefaultBank();
+    await loadInvoiceNoSuggestions();
+    await loadDatalist('departmentList', 'Department');
+
+    // Bank selection
+    const bankInput = document.getElementById('inputBankName');
+    const bankIDInput = document.getElementById('bankIDs');
+
+    bankInput.addEventListener('input', function () {
+        const selectedValue = this.value.trim();
+
+        if (bankMap[selectedValue]) {
+            bankID = bankMap[selectedValue];
+            bankIDInput.value = bankID;
+            console.log('Selected Bank ID:', bankID);
+        } else {
+            bankID = null;
+            bankIDInput.value = '';
+        }
+    });
+
+    // ==========================
+    // Open Invoice from Report
+    // ==========================
+    const params = new URLSearchParams(window.location.search);
+    const invoiceNo = params.get("invoiceNo");
+
+    if (invoiceNo) {
+        const invoiceInput = document.getElementById("invoiceNo");
+
+        invoiceInput.value = invoiceNo;
+
+        // Trigger your existing change event
+        invoiceInput.dispatchEvent(new Event("change"));
+        await loadInvoice(invoiceNo);
+    }
+
+});
+
 /* =========================================================
    CUSTOMER SELECTION
 ========================================================= */
@@ -642,72 +685,168 @@ document.getElementById('movementType').addEventListener('change', async (e) => 
     }
 });
 
-document.getElementById('invoiceNo').addEventListener('change', async (e) => {
-    const invoiceNo = e.target.value.trim();
-    if (invoiceNo.length === 0) return;
+// document.getElementById('invoiceNo').addEventListener('change', async (e) => {
+//     const invoiceNo = e.target.value.trim();
+//     if (invoiceNo.length === 0) return;
+
+//     const invoiceDetails = await getInvoiceDetails(invoiceNo);
+
+
+//     if (invoiceDetails) {
+//         // Populate your form fields here
+//         document.getElementById('partyCode').value = invoiceDetails.PartyCode || '';
+//         document.getElementById('invoiceDate').value = invoiceDetails.InvoiceDate || '';
+//         document.getElementById('invoiceAddress').value = invoiceDetails.InvoiceAddress || '';
+//         document.getElementById('movementType').value = invoiceDetails.InvoiceType || '';
+//         document.getElementById('bankIDs').value = getBankNameByCode(invoiceDetails.BankID) || '';
+//         document.getElementById('inputBankName').value = invoiceDetails.id || '';
+//         document.getElementById('invoiceInformation').value = invoiceDetails.Remarks || '';
+//         document.getElementById('tempFormID').value = invoiceDetails.id || '';
+
+//         // ✅ Fetch and update Party Name
+//         const partyData = await getPartyDetailsByCode(invoiceDetails.PartyCode);
+//         if (partyData) {
+//             document.getElementById('partyName').value = partyData.PartyName || '';
+//         } else {
+//             alert('Party not found.');
+//         }
+
+//         const paymentInfo = await paymentDetails(invoiceNo);
+
+//         if (paymentInfo.rows.length > 0) {
+//             document.getElementById('modifyButton').disabled = true; // Disable modify button
+//         } else {
+//             document.getElementById('modifyButton').disabled = false; // Enable modify button
+//         }
+//         // Load international_booking records linked to this invoice
+//         disableForm(); // Disable form after loading invoice details
+
+//         saveButton.disabled = true; // Disable save button
+//         document.getElementById('deleteButton').disabled = true; // Disable delete button
+//         document.getElementById('reportButton').disabled = false; // Enable report button
+//         document.getElementById('fetchPendingInvoices').disabled = true; // Disable party code field
+
+//         // Check the value and run the relevant function
+//         if (invoiceDetails.InvoiceType === 'Forwarding' || invoiceDetails.InvoiceType === 'Import' || invoiceDetails.InvoiceType === 'Export') {
+//             // console.log('Fetching pending invoices for Forwarding/Import/Export');
+//             await createPendingShipmentTableHeaderAndFooter_ib();
+//             await loadInvoiceBookings(invoiceNo);
+//         } else if (invoiceDetails.InvoiceType === 'Customs Clearance') {
+//             await createPendingShipmentTableHeaderAndFooter();
+//             await loadInvoiceLineItems_cc(invoiceNo); // Load Customs Clearance bookings if applicable
+//         } else if (invoiceDetails.InvoiceType === 'Domestic') {
+//             await d_createPendingShipmentTableHeaderAndFooter_ib();
+//             await d_loadInvoiceBookings(invoiceNo); // Load Domestic bookings if applicable
+//         } else if (invoiceDetails.InvoiceType === 'Full Truck Load') {
+//             await FTL_FCL_createPendingShipmentTableHeaderAndFooter();
+//             await ftl_loadInvoiceBookings(invoiceNo);
+
+//         } else {
+//             console.warn('Unknown movement type:', invoiceDetails.InvoiceType);
+//         }
+
+//         document.querySelectorAll('.delete-btn').forEach(btn => {
+//             btn.disabled = true; // Disable delete buttons when loading existing invoice
+//         });
+//     }
+// });
+
+document.getElementById("invoiceNo").addEventListener("change", async (e) => {
+    await loadInvoice(e.target.value);
+});
+// ===============================
+// Reusable Invoice Loader
+// ===============================
+async function loadInvoice(invoiceNo) {
+    if (!invoiceNo || invoiceNo.trim() === "") return;
+
+    invoiceNo = invoiceNo.trim();
 
     const invoiceDetails = await getInvoiceDetails(invoiceNo);
+    if (!invoiceDetails) {
+        alert("Invoice not found.");
+        return;
+    }
 
+    // -----------------------------
+    // Populate Form
+    // -----------------------------
+    document.getElementById("invoiceNo").value = invoiceNo;
+    document.getElementById("partyCode").value = invoiceDetails.PartyCode || "";
+    document.getElementById("invoiceDate").value = invoiceDetails.InvoiceDate || "";
+    document.getElementById("invoiceAddress").value = invoiceDetails.InvoiceAddress || "";
+    document.getElementById("movementType").value = invoiceDetails.InvoiceType || "";
+    document.getElementById("bankIDs").value = getBankNameByCode(invoiceDetails.BankID) || "";
+    document.getElementById("inputBankName").value = invoiceDetails.id || "";
+    document.getElementById("invoiceInformation").value = invoiceDetails.Remarks || "";
+    document.getElementById("tempFormID").value = invoiceDetails.id || "";
 
-    if (invoiceDetails) {
-        // Populate your form fields here
-        document.getElementById('partyCode').value = invoiceDetails.PartyCode || '';
-        document.getElementById('invoiceDate').value = invoiceDetails.InvoiceDate || '';
-        document.getElementById('invoiceAddress').value = invoiceDetails.InvoiceAddress || '';
-        document.getElementById('movementType').value = invoiceDetails.InvoiceType || '';
-        document.getElementById('bankIDs').value = getBankNameByCode(invoiceDetails.BankID) || '';
-        document.getElementById('inputBankName').value = invoiceDetails.id || '';
-        document.getElementById('invoiceInformation').value = invoiceDetails.Remarks || '';
-        document.getElementById('tempFormID').value = invoiceDetails.id || '';
+    // -----------------------------
+    // Party Details
+    // -----------------------------
+    const partyData = await getPartyDetailsByCode(invoiceDetails.PartyCode);
 
-        // ✅ Fetch and update Party Name
-        const partyData = await getPartyDetailsByCode(invoiceDetails.PartyCode);
-        if (partyData) {
-            document.getElementById('partyName').value = partyData.PartyName || '';
-        } else {
-            alert('Party not found.');
-        }
+    if (partyData) {
+        document.getElementById("partyName").value = partyData.PartyName || "";
+    } else {
+        alert("Party not found.");
+    }
 
-        const paymentInfo = await paymentDetails(invoiceNo);
+    // -----------------------------
+    // Payment Check
+    // -----------------------------
+    const paymentInfo = await paymentDetails(invoiceNo);
 
-        if (paymentInfo.rows.length > 0) {
-            document.getElementById('modifyButton').disabled = true; // Disable modify button
-        } else {
-            document.getElementById('modifyButton').disabled = false; // Enable modify button
-        }
-        // Load international_booking records linked to this invoice
-        disableForm(); // Disable form after loading invoice details
+    document.getElementById("modifyButton").disabled =
+        paymentInfo.rows.length > 0;
 
-        saveButton.disabled = true; // Disable save button
-        document.getElementById('deleteButton').disabled = true; // Disable delete button
-        document.getElementById('reportButton').disabled = false; // Enable report button
-        document.getElementById('fetchPendingInvoices').disabled = true; // Disable party code field
+    // -----------------------------
+    // Disable/Enable Controls
+    // -----------------------------
+    disableForm();
 
-        // Check the value and run the relevant function
-        if (invoiceDetails.InvoiceType === 'Forwarding' || invoiceDetails.InvoiceType === 'Import' || invoiceDetails.InvoiceType === 'Export') {
-            // console.log('Fetching pending invoices for Forwarding/Import/Export');
+    saveButton.disabled = true;
+    document.getElementById("deleteButton").disabled = true;
+    document.getElementById("reportButton").disabled = false;
+    document.getElementById("fetchPendingInvoices").disabled = true;
+
+    // -----------------------------
+    // Load Shipment Details
+    // -----------------------------
+    switch (invoiceDetails.InvoiceType) {
+        case "Forwarding":
+        case "Import":
+        case "Export":
             await createPendingShipmentTableHeaderAndFooter_ib();
             await loadInvoiceBookings(invoiceNo);
-        } else if (invoiceDetails.InvoiceType === 'Customs Clearance') {
+            break;
+
+        case "Customs Clearance":
             await createPendingShipmentTableHeaderAndFooter();
-            await loadInvoiceLineItems_cc(invoiceNo); // Load Customs Clearance bookings if applicable
-        } else if (invoiceDetails.InvoiceType === 'Domestic') {
+            await loadInvoiceLineItems_cc(invoiceNo);
+            break;
+
+        case "Domestic":
             await d_createPendingShipmentTableHeaderAndFooter_ib();
-            await d_loadInvoiceBookings(invoiceNo); // Load Domestic bookings if applicable
-        } else if (invoiceDetails.InvoiceType === 'Full Truck Load') {
+            await d_loadInvoiceBookings(invoiceNo);
+            break;
+
+        case "Full Truck Load":
             await FTL_FCL_createPendingShipmentTableHeaderAndFooter();
             await ftl_loadInvoiceBookings(invoiceNo);
+            break;
 
-        } else {
-            console.warn('Unknown movement type:', invoiceDetails.InvoiceType);
-        }
-
-        document.querySelectorAll('.delete-btn').forEach(btn => {
-            btn.disabled = true; // Disable delete buttons when loading existing invoice
-        });
+        default:
+            console.warn("Unknown Invoice Type:", invoiceDetails.InvoiceType);
     }
-});
 
+    // -----------------------------
+    // Disable Delete Buttons
+    // -----------------------------
+    document.querySelectorAll(".delete-btn").forEach(btn => {
+        btn.disabled = true;
+    });
+}
 document.getElementById('addShipmentNo').addEventListener('click', async () => {
     const shipmentNo = document.getElementById('shipmentNo').value.trim();
     const invoiceNo = document.getElementById('invoiceNo').value.trim();
