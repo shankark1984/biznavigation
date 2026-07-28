@@ -18,7 +18,17 @@ const PDF_CONFIG = {
 };
 // Utility function to fetch company details
 async function fetchCompanyDetails(header) {
-    const data = await getCompanyProfile(header?.CompanyID || CompanyID);
+
+    const companyId = header?.CompanyID || CompanyID;
+
+    const data = await getCompanyProfile(companyId);
+
+    const {
+        data: { publicUrl }
+    } = supabaseClient.storage
+        .from("company-logos")
+        .getPublicUrl(`${companyId}.png`);
+
     return {
         name: data?.company_name || "",
         address: [
@@ -30,7 +40,7 @@ async function fetchCompanyDetails(header) {
         phone: data?.phone_no || "-",
         email: data?.e_mail || "-",
         gst: data?.gst_number || "-",
-        logo: data?.logo_path,
+        logo: publicUrl,
         uANo: data?.Udyog_aadhaar_no || "-",
         panNo: data?.pan_number || "-"
     };

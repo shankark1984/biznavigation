@@ -57,7 +57,7 @@ async function saveAndUpdateVendorBills() {
             Number(document.getElementById("vendorBilledAmount").value || 0);
 
         if (billedAmount <= 0) {
-            alert("Vendor Bill Amount must be greater than zero."); f
+            alert("Vendor Bill Amount must be greater than zero."); 
             saveButton.disabled = false;
             return;
         }
@@ -858,6 +858,7 @@ async function generateBillReferenceNo() {
         await supabaseClient.rpc(
             "generate_vendor_bill_reference",
             {
+                p_company_id: CompanyID,
                 p_accounted_date: accountedDate
             }
         );
