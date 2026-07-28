@@ -35,7 +35,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             tableName: "VendorBillingDetails",
             columnName: "BillNo"
         });
-
+        document.getElementById("expenseType").value = "Purchase";
+        document.getElementById("expenseFor").value = "Service";
     } catch (error) {
         console.error('Initialization Error:', error);
     }
@@ -397,6 +398,8 @@ newButton.addEventListener("click", async () => {
     document.getElementById("billReferenceNo").value = "";
     // Focus first field
     document.getElementById("billReferenceNo")?.focus();
+    document.getElementById("expenseType").value = "Purchase";
+    document.getElementById("expenseFor").value = "Service";
 });
 
 document.getElementById("addChargesDetails").addEventListener("click", addChargesDetails);

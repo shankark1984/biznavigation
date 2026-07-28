@@ -1,696 +1,1039 @@
 /* ==========================================================
-   AccountingVoucher.css
+   AccountingVoucher.css - Optimized Version
    Logistics ERP Accounting Module
 ========================================================== */
 
-:root {
+/* ==========================================================
+   CSS VARIABLES / THEME
+========================================================== */
 
+:root {
+    /* Colors */
     --primary: #0d6efd;
+    --primary-hover: #0b5ed7;
     --success: #198754;
     --danger: #dc3545;
     --warning: #ffc107;
+    --info: #0dcaf0;
 
-    --header: #1f2937;
-    --header-text: #ffffff;
-
+    /* Backgrounds */
     --bg: #f4f6f9;
-    --card: #ffffff;
-
-    --border: #d8dee4;
-
+    --card-bg: #ffffff;
+    --header-bg: #1f2937;
+    --header-text: #ffffff;
     --row-hover: #eef6ff;
+    --row-even: #fafafa;
+    --total-bg: #e9f7ef;
+    --difference-bg: #fff4d6;
+    --input-focus-bg: #fffbe6;
 
-    --total: #e9f7ef;
+    /* Borders */
+    --border: #d8dee4;
+    --border-dark: #ced4da;
 
-    --difference: #fff4d6;
+    /* Shadows */
+    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.04);
+    --shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    --shadow-lg: 0 4px 20px rgba(0, 0, 0, 0.12);
 
-    --input-focus: #cfe2ff;
-
+    /* Sizing */
     --radius: 8px;
+    --radius-sm: 4px;
+    --font-size: 14px;
+    --input-height: 36px;
+    --row-height: 36px;
 
-    --shadow: 0 2px 10px rgba(0, 0, 0, .08);
+    /* Spacing */
+    --spacing-xs: 2px;
+    --spacing-sm: 4px;
+    --spacing-md: 8px;
+    --spacing-lg: 12px;
+    --spacing-xl: 16px;
 
-    --font: 14px;
-
+    /* Transitions */
+    --transition: 0.15s ease-in-out;
 }
 
 /* ==========================================================
-   BODY
+   RESET & BASE
 ========================================================== */
 
-body {
-
-    background: var(--bg);
-
-    font-size: var(--font);
-
-    font-family:
-        "Segoe UI",
-        Roboto,
-        Arial,
-        sans-serif;
-
+* {
+    box-sizing: border-box;
 }
 
+body {
+    background: var(--bg);
+    font-size: var(--font-size);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    line-height: 1.5;
+    color: #212529;
+    margin: 0;
+    padding: 0;
+}
 
 /* ==========================================================
-   CARD
+   LAYOUT
+========================================================== */
+
+.app-wrapper {
+    display: flex;
+    min-height: 100vh;
+}
+
+.main-content {
+    flex: 1;
+    padding: 0 15px 20px;
+    overflow-x: hidden;
+}
+
+/* ==========================================================
+   CARD COMPONENT
 ========================================================== */
 
 .card {
-    border: none;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
     border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    transition: box-shadow var(--transition);
+}
+
+.card:hover {
     box-shadow: var(--shadow);
 }
 
-
 .card-header {
+    background: var(--card-bg);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 16px;
     position: sticky;
     top: 0;
     z-index: 100;
-    background: #fff;
-    background: var(--card);
-    border-bottom: 1px solid var(--border);
-    font-weight: 600;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
 }
 
+.card-header .btn-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.card-body {
+    padding: 16px;
+}
 
 /* ==========================================================
    BUTTONS
 ========================================================== */
 
 .btn {
-
-    border-radius: 6px;
-
+    border-radius: var(--radius-sm);
     font-size: 13px;
-
     padding: 6px 14px;
-
+    font-weight: 500;
+    transition: all var(--transition);
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
 }
 
 .btn i {
-
-    margin-right: 4px;
-
+    font-size: 14px;
 }
 
+.btn-sm {
+    padding: 4px 10px;
+    font-size: 12px;
+}
+
+.btn-primary {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: white;
+}
+
+.btn-primary:hover {
+    background: var(--primary-hover);
+    border-color: var(--primary-hover);
+}
+
+.btn-success {
+    background: var(--success);
+    border-color: var(--success);
+    color: white;
+}
+
+.btn-success:hover {
+    background: #157347;
+    border-color: #146c43;
+}
+
+.btn-danger {
+    background: var(--danger);
+    border-color: var(--danger);
+    color: white;
+}
+
+.btn-danger:hover {
+    background: #bb2d3b;
+    border-color: #b02a37;
+}
+
+.btn-warning {
+    background: var(--warning);
+    border-color: var(--warning);
+    color: #000;
+}
+
+.btn-warning:hover {
+    background: #ffca2c;
+    border-color: #ffc720;
+}
+
+.btn-info {
+    background: var(--info);
+    border-color: var(--info);
+    color: #000;
+}
+
+.btn-info:hover {
+    background: #31d2f2;
+    border-color: #25cff2;
+}
+
+.btn-outline-secondary {
+    border-color: var(--border);
+    background: #f8f9fa;
+}
+
+.btn-outline-secondary:hover {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: white;
+}
 
 /* ==========================================================
-   LABEL
+   FORM ELEMENTS
 ========================================================== */
 
 .form-label {
-
     font-weight: 600;
-
-    color: #555;
-
+    color: #495057;
     margin-bottom: 4px;
-
+    font-size: 13px;
 }
-
-
-/* ==========================================================
-   INPUTS
-========================================================== */
 
 .form-control,
 .form-select {
-
     font-size: 13px;
-
-    border-radius: 6px;
-
+    border-radius: var(--radius-sm);
     border: 1px solid var(--border);
-
-    height: 36px;
-
+    height: var(--input-height);
+    padding: 6px 10px;
+    transition: border-color var(--transition), box-shadow var(--transition);
+    background: white;
+    width: 100%;
 }
-
-textarea.form-control {
-
-    height: auto;
-
-}
-
 
 .form-control:focus,
 .form-select:focus {
-
-    box-shadow: 0 0 0 .2rem var(--input-focus);
-
     border-color: var(--primary);
-
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
+    outline: none;
 }
 
+.form-control[readonly] {
+    background: #f5f5f5 !important;
+    cursor: default;
+}
+
+textarea.form-control {
+    height: auto;
+    min-height: 38px;
+    resize: vertical;
+}
 
 /* ==========================================================
    TABLE
 ========================================================== */
 
+.table-responsive {
+    overflow-x: auto;
+    max-height: 550px;
+    overflow-y: auto;
+}
+
 .table {
-
     margin-bottom: 0;
-
-    white-space: nowrap;
-
+    font-size: 13px;
+    border-collapse: separate;
+    border-spacing: 0;
+    width: 100%;
 }
 
 .table thead {
-
     position: sticky;
-
     top: 0;
-
-    z-index: 5;
-
+    z-index: 10;
 }
 
 .table-dark {
-
-    background: var(--header);
-
+    background: var(--header-bg);
 }
 
 .table-dark th {
-    background: var(--header);
+    background: var(--header-bg);
     color: var(--header-text);
     border-color: #444;
+    padding: 8px 6px;
+    font-size: 12px;
+    font-weight: 600;
     text-align: center;
     vertical-align: middle;
+    white-space: nowrap;
 }
 
 .table td {
     vertical-align: middle;
     padding: 2px 4px;
+    border-bottom: 1px solid var(--border);
+}
+
+.table tbody tr {
+    height: var(--row-height);
+    transition: background-color var(--transition);
 }
 
 .table tbody tr:hover {
-    background: #eaf4ff;
+    background: var(--row-hover);
 }
 
 .table tbody tr:nth-child(even) {
-    background: #fafafa;
+    background: var(--row-even);
+}
+
+.table tbody tr:nth-child(even):hover {
+    background: var(--row-hover);
+}
+
+.table-striped>tbody>tr:nth-of-type(odd) {
+    background-color: rgba(0, 0, 0, 0.02);
+}
+
+/* ==========================================================
+   TABLE INPUTS
+========================================================== */
+
+#voucherTable input,
+#voucherTable select {
+    height: 30px;
+    font-size: 13px;
+    padding: 2px 6px;
+    border: 1px solid transparent;
+    background: transparent;
+    border-radius: var(--radius-sm);
+    width: 100%;
+    transition: all var(--transition);
+}
+
+#voucherTable input:focus,
+#voucherTable select:focus {
+    background: var(--input-focus-bg);
+    border-color: var(--primary);
+    box-shadow: 0 0 0 0.1rem rgba(13, 110, 253, 0.1);
+    outline: none;
+}
+
+#voucherTable input[readonly] {
+    background: #f5f5f5 !important;
+    font-weight: 600;
+}
+
+#voucherTable select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23333' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 6px center;
+    padding-right: 24px;
+    appearance: none;
+}
+
+/* ==========================================================
+   TABLE COLUMN WIDTHS
+========================================================== */
+
+#voucherTable th:first-child,
+#voucherTable td:first-child {
+    width: 40px;
+    text-align: center;
+}
+
+#voucherTable th:nth-child(2),
+#voucherTable td:nth-child(2) {
+    min-width: 200px;
+}
+
+#voucherTable th:nth-child(3),
+#voucherTable td:nth-child(3) {
+    min-width: 180px;
+}
+
+#voucherTable th:nth-child(4),
+#voucherTable td:nth-child(4),
+#voucherTable th:nth-child(5),
+#voucherTable td:nth-child(5) {
+    min-width: 110px;
+}
+
+/* ==========================================================
+   INPUT GROUP
+========================================================== */
+
+.input-group {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    gap: 1px;
+}
+
+.input-group .form-control {
+    flex: 1;
+    min-width: 0;
+    border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+}
+
+.input-group .btn {
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    flex-shrink: 0;
+    padding: 0 10px;
+    min-width: 32px;
 }
 
 .accountSearch,
 .partySearch {
-
-    width: 38px;
-
     background: #f8f9fa;
-
-    border-left: 1px solid #dcdcdc;
+    border: 1px solid var(--border);
+    border-left: none;
+    height: 30px;
+    width: 32px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .accountSearch:hover,
 .partySearch:hover {
-
-    background: #0d6efd;
-    color: #fff;
-
+    background: var(--primary);
+    border-color: var(--primary);
+    color: white;
 }
 
 /* ==========================================================
-   GRID INPUTS
-========================================================== */
-#voucherTable input,
-#voucherTable select {
-    height: 32px;
-    font-size: 13px;
-}
-
-#voucherTable input {
-
-    border: none;
-
-    background: transparent;
-
-    width: 100%;
-
-}
-
-#voucherTable select {
-
-    border: none;
-
-    background: transparent;
-
-}
-
-#voucherTable input:focus {
-
-    background: white;
-
-}
-
-#voucherTable td {
-
-    padding: 3px;
-
-}
-
-tfoot tr:first-child {
-
-    background: #d1f7dd;
-
-    font-size: 15px;
-
-}
-
-tfoot tr:last-child {
-
-    font-size: 16px;
-
-}
-
-/* ==========================================================
-   TOTAL ROW
-========================================================== */
-
-tfoot tr:first-child {
-
-    background: var(--total);
-
-    font-weight: bold;
-
-}
-
-
-/* ==========================================================
-   DIFFERENCE ROW
-========================================================== */
-
-tfoot tr:last-child {
-
-    background: var(--difference);
-
-    font-weight: bold;
-
-}
-
-
-/* ==========================================================
-   NUMERIC ALIGNMENT
+   NUMERIC FIELDS
 ========================================================== */
 
 .debit,
-.credit {
-
+.credit,
+.gstAmount,
+.totalAmount {
     text-align: right;
-
-    font-weight: 600;
-
+    font-weight: 500;
+    min-width: 80px;
 }
 
+.debit {
+    color: var(--danger);
+}
+
+.credit {
+    color: var(--primary);
+}
 
 /* ==========================================================
-   ACTION BUTTON
+   TOTALS FOOTER
+========================================================== */
+
+tfoot {
+    position: sticky;
+    bottom: 0;
+    z-index: 5;
+    background: white;
+    border-top: 2px solid var(--primary);
+}
+
+tfoot tr {
+    height: 40px;
+}
+
+tfoot tr:first-child {
+    background: var(--total-bg);
+    font-weight: 700;
+}
+
+tfoot tr:last-child {
+    background: var(--difference-bg);
+    font-weight: 700;
+}
+
+tfoot th,
+tfoot td {
+    padding: 6px 8px;
+    border-top: 1px solid var(--border);
+}
+
+/* ==========================================================
+   TOTALS DISPLAY
+========================================================== */
+
+#totalDebit {
+    color: var(--danger);
+    font-size: 16px;
+    font-weight: 700;
+}
+
+#totalCredit {
+    color: var(--primary);
+    font-size: 16px;
+    font-weight: 700;
+}
+
+#totalGst {
+    color: #6c757d;
+    font-weight: 600;
+}
+
+#difference {
+    font-size: 18px;
+    font-weight: 700;
+    padding: 8px 12px;
+}
+
+.balance-ok {
+    color: var(--success);
+}
+
+.balance-error {
+    color: var(--danger);
+    animation: blink 0.8s ease-in-out infinite;
+}
+
+@keyframes blink {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.3;
+    }
+}
+
+/* ==========================================================
+   ACTION BUTTONS
 ========================================================== */
 
 .deleteRow {
-
-    width: 34px;
-
-    height: 34px;
-
+    width: 30px;
+    height: 30px;
     padding: 0;
-
+    border-radius: var(--radius-sm);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
-
-/* ==========================================================
-   TABLE RESPONSIVE
-========================================================== */
-
-.table-responsive {
-
-    max-height: 550px;
-
-    overflow: auto;
-
+.deleteRow:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
 }
-
 
 /* ==========================================================
    SCROLLBAR
 ========================================================== */
 
 .table-responsive::-webkit-scrollbar {
-
-    width: 10px;
-
-    height: 10px;
-
-}
-
-.table-responsive::-webkit-scrollbar-thumb {
-
-    background: #b5b5b5;
-
-    border-radius: 20px;
-
+    width: 8px;
+    height: 8px;
 }
 
 .table-responsive::-webkit-scrollbar-track {
-
-    background: #efefef;
-
-}
-
-
-/* ==========================================================
-   TOTAL PANEL
-========================================================== */
-
-#totalDebit,
-#totalCredit,
-#difference {
-
-    text-align: right;
-
-    font-size: 15px;
-
-    font-weight: bold;
-
-}
-
-
-/* ==========================================================
-   DIFFERENCE COLORS
-========================================================== */
-
-.balance-ok {
-
-    color: green;
-
-}
-
-.balance-error {
-
-    color: #dc3545;
-
-    animation: blink .8s infinite;
-
-}
-
-@keyframes blink {
-
-    50% {
-        opacity: .3;
-    }
-
-}
-
-
-/* ==========================================================
-   HEADER BUTTON GROUP
-========================================================== */
-
-.card-header .btn {
-
-    margin-left: 4px;
-
-}
-
-
-/* ==========================================================
-   ADD ROW BUTTON
-========================================================== */
-
-#btnAddRow {
-
-    font-size: 13px;
-
-}
-
-
-/* ==========================================================
-   READONLY
-========================================================== */
-input[readonly] {
-
-    background: #f5f5f5 !important;
-
-    color: #333;
-
-    font-weight: 600;
-
-}
-
-
-/* ==========================================================
-   PRINT
-========================================================== */
-
-@media print {
-
-    body {
-
-        background: white;
-
-    }
-
-    .btn {
-
-        display: none;
-
-    }
-
-    .card {
-
-        box-shadow: none;
-
-        border: 1px solid #ccc;
-
-    }
-
-    .table {
-
-        font-size: 12px;
-
-    }
-
-}
-
-
-/* ==========================================================
-   MOBILE
-========================================================== */
-
-@media(max-width:992px) {
-
-    .card-header {
-
-        flex-direction: column;
-
-        align-items: flex-start;
-
-        gap: 10px;
-
-    }
-
-}
-
-
-@media(max-width:768px) {
-
-    body {
-
-        font-size: 13px;
-
-    }
-
-    .table {
-
-        min-width: 1100px;
-
-    }
-
-    .btn {
-
-        margin-bottom: 5px;
-
-    }
-
-}
-
-
-/* ==========================================================
-   STICKY FOOTER TOTALS
-========================================================== */
-
-tfoot {
-    position: sticky;
-    bottom: 0;
-    z-index: 4;
-    background: white;
-}
-
-
-/* ==========================================================
-   KEYBOARD FOCUS
-========================================================== */
-
-input:focus,
-select:focus {
-
-    outline: none;
-
-}
-
-#voucherTable input:focus,
-#voucherTable select:focus {
-
-    background: #fffbe6;
-
-    border: 1px solid #0d6efd;
-
-    box-shadow: none;
-
-}
-
-/* ==========================================================
-   VALIDATION
-========================================================== */
-
-.invalid {
-
-    border: 2px solid red !important;
-
-}
-
-.valid {
-
-    border: 2px solid green !important;
-
-}
-
-
-/* ==========================================================
-   ERP LOOK
-========================================================== */
-
-.card-header h4 {
-
-    font-weight: 700;
-
-}
-
-.table tbody tr {
-    height: 36px;
-}
-
-.table td {
-    vertical-align: middle;
-    padding: 2px 4px;
-}
-
-.table th {
-    font-size: 13px;
-}
-
-.form-control,
-.form-select {
-
-    min-width: 100%;
-
-}
-
-#totalDebit {
-
-    color: #198754;
-
-}
-
-#totalCredit {
-
-    color: #0d6efd;
-
-}
-
-#difference {
-
-    font-size: 18px;
-
-    font-weight: 700;
-
-}
-
-.modal-body table tbody tr {
-
-    cursor: pointer;
-
-}
-
-.modal-body table tbody tr:hover {
-
-    background: #0d6efd;
-
-    color: #fff;
-
-}
-
-.table-responsive::-webkit-scrollbar {
-
-    width: 8px;
-    height: 8px;
-
+    background: #f1f1f1;
+    border-radius: var(--radius);
 }
 
 .table-responsive::-webkit-scrollbar-thumb {
-
-    background: #6c757d;
-
+    background: #c1c7cd;
+    border-radius: var(--radius);
+    transition: background var(--transition);
 }
 
 .table-responsive::-webkit-scrollbar-thumb:hover {
-
-    background: #495057;
-
+    background: #a0a7ad;
 }
 
-@media print {
+/* Firefox scrollbar */
+.table-responsive {
+    scrollbar-width: thin;
+    scrollbar-color: #c1c7cd #f1f1f1;
+}
 
-    .modal,
-    .btn,
-    #btnAddRow {
+/* ==========================================================
+   MODAL
+========================================================== */
 
-        display: none !important;
+.modal-content {
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-lg);
+}
 
+.modal-header {
+    border-bottom: 1px solid var(--border);
+    padding: 16px 20px;
+}
+
+.modal-header h5 {
+    font-weight: 700;
+    margin: 0;
+}
+
+.modal-body {
+    padding: 20px;
+}
+
+.modal-body .table tbody tr {
+    cursor: pointer;
+    height: auto;
+}
+
+.modal-body .table tbody tr:hover {
+    background: var(--primary);
+    color: white;
+}
+
+.modal-body .table tbody tr:hover td {
+    color: white;
+}
+
+/* ==========================================================
+   STICKY SEARCH IN MODAL
+========================================================== */
+
+.sticky-top {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    background: white;
+    padding: 8px 0 12px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 12px;
+}
+
+/* ==========================================================
+   NARRATION SECTION
+========================================================== */
+
+#narrationSection textarea {
+    min-height: 38px;
+    max-height: 80px;
+    resize: none;
+}
+
+/* ==========================================================
+   RESPONSIVE
+========================================================== */
+
+@media (max-width: 1200px) {
+    .card-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .card-header .d-flex {
+        flex-wrap: wrap;
+        gap: 4px;
+    }
+}
+
+@media (max-width: 992px) {
+    .main-content {
+        padding: 0 10px 15px;
+    }
+
+    .card-body {
+        padding: 12px;
+    }
+
+    .table-responsive {
+        max-height: 400px;
+    }
+}
+
+@media (max-width: 768px) {
+    :root {
+        --font-size: 13px;
     }
 
     .table {
+        min-width: 900px;
+        font-size: 12px;
+    }
 
+    #voucherTable input,
+    #voucherTable select {
+        height: 28px;
+        font-size: 12px;
+    }
+
+    .btn {
+        font-size: 12px;
+        padding: 4px 10px;
+    }
+
+    .card-header {
+        padding: 8px 12px;
+    }
+
+    .card-body {
+        padding: 8px;
+    }
+
+    .form-label {
+        font-size: 12px;
+    }
+
+    .form-control,
+    .form-select {
+        font-size: 12px;
+        height: 32px;
+    }
+
+    .modal-dialog {
+        margin: 10px;
+    }
+}
+
+@media (max-width: 576px) {
+    .card-header .btn {
+        flex: 1;
+        min-width: 60px;
+        justify-content: center;
+    }
+
+    #voucherTable td {
+        padding: 1px 2px;
+    }
+
+    #voucherTable input,
+    #voucherTable select {
+        height: 26px;
         font-size: 11px;
+        padding: 1px 4px;
+    }
+}
 
+/* ==========================================================
+   PRINT STYLES
+========================================================== */
+
+@media print {
+    body {
+        background: white !important;
+        font-size: 11px !important;
+    }
+
+    .card {
+        box-shadow: none !important;
+        border: 1px solid #ddd !important;
+        break-inside: avoid;
+    }
+
+    .card-header {
+        position: static !important;
+        background: #f8f9fa !important;
+    }
+
+    .btn,
+    .btn-group,
+    #btnAddRow,
+    .deleteRow,
+    .accountSearch,
+    .partySearch,
+    .modal {
+        display: none !important;
+    }
+
+    .table {
+        font-size: 10px !important;
+        min-width: 100% !important;
+    }
+
+    .table-responsive {
+        max-height: none !important;
+        overflow: visible !important;
     }
 
     tfoot {
-
-        position: static;
-
+        position: static !important;
+        border-top: 2px solid #000 !important;
     }
 
+    .table-dark th {
+        background: #333 !important;
+        color: white !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    tfoot tr:first-child {
+        background: #d1f7dd !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    tfoot tr:last-child {
+        background: #fff4d6 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    #voucherTable input,
+    #voucherTable select {
+        border: none !important;
+        background: transparent !important;
+    }
+
+    #voucherTable input[readonly] {
+        background: transparent !important;
+    }
+
+    .form-control,
+    .form-select {
+        border: none !important;
+        background: transparent !important;
+    }
+
+    .input-group .form-control {
+        border: none !important;
+    }
+
+    .input-group .btn-outline-secondary {
+        display: none !important;
+    }
 }
 
-#voucherTable thead th {
+/* ==========================================================
+   UTILITY CLASSES
+========================================================== */
 
-    position: sticky;
+.text-end {
+    text-align: right !important;
+}
 
+.text-center {
+    text-align: center !important;
+}
+
+.d-none {
+    display: none !important;
+}
+
+.d-flex {
+    display: flex !important;
+}
+
+.flex-wrap {
+    flex-wrap: wrap !important;
+}
+
+.align-items-center {
+    align-items: center !important;
+}
+
+.justify-content-between {
+    justify-content: space-between !important;
+}
+
+.gap-1 {
+    gap: 4px !important;
+}
+
+.gap-2 {
+    gap: 8px !important;
+}
+
+.mb-2 {
+    margin-bottom: 8px !important;
+}
+
+.mb-3 {
+    margin-bottom: 16px !important;
+}
+
+.mt-2 {
+    margin-top: 8px !important;
+}
+
+.p-3 {
+    padding: 16px !important;
+}
+
+/* ==========================================================
+   ANIMATIONS
+========================================================== */
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.table tbody tr {
+    animation: fadeIn 0.2s ease-out;
+}
+
+/* ==========================================================
+   ACCESSIBILITY
+========================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
+
+/* ==========================================================
+   THEME SUPPORT
+========================================================== */
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg: #1a1a2e;
+        --card-bg: #16213e;
+        --border: #2a2a4a;
+        --row-even: #1a1a2e;
+        --row-hover: #2a2a4a;
+        --header-bg: #0f0f1f;
+        --header-text: #e0e0e0;
+        --total-bg: #1a3a2a;
+        --difference-bg: #3a2a1a;
+        --input-focus-bg: #2a2a4a;
+    }
+
+    body {
+        color: #e0e0e0;
+    }
+
+    .form-control,
+    .form-select {
+        background: #1a1a2e;
+        color: #e0e0e0;
+    }
+
+    .form-control:focus,
+    .form-select:focus {
+        background: #1a1a2e;
+    }
+
+    .form-label {
+        color: #b0b0b0;
+    }
+
+    .table tbody tr:nth-child(even) {
+        background: #1a1a2e;
+    }
+
+    .table tbody tr:hover {
+        background: #2a2a4a;
+    }
+
+    .table-dark {
+        background: #0f0f1f;
+    }
+
+    .table-dark th {
+        background: #0f0f1f;
+    }
+
+    tfoot {
+        background: #16213e;
+    }
+
+    .card-header {
+        background: #16213e;
+    }
+
+    .modal-content {
+        background: #16213e;
+        color: #e0e0e0;
+    }
+
+    .modal-header {
+        border-bottom-color: #2a2a4a;
+    }
+
+    .sticky-top {
+        background: #16213e;
+    }
+
+    #voucherTable input:focus,
+    #voucherTable select:focus {
+        background: #2a2a4a;
+    }
+}
+
+/* Loading Spinner Overlay */
+.spinner-overlay {
+    position: fixed;
     top: 0;
-
-    z-index: 2;
-
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
 }
 
-.input-group {
-    flex-wrap: nowrap;
+/* Toast Notifications */
+.toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
 }
 
-.accountSearch,
-.partySearch {
-    white-space: nowrap;
-    flex-shrink: 0;
+/* Quick Action Badges */
+.badge-success {
+    background: var(--success);
+    color: white;
+}
+
+/* Keyboard Shortcuts Hint */
+.kbd-hint {
+    font-size: 10px;
+    opacity: 0.6;
+    padding: 1px 4px;
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 3px;
 }
