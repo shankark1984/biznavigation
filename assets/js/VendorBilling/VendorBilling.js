@@ -464,7 +464,7 @@ async function addChargesDetails() {
             document.getElementById("vendorBilledAmount").value || 0
         );
 
-        // Current Grand Total (Ignore Round Off & Deleted Rows)
+        // Current Total (Ignore Round Off & Deleted Rows)
         let currentGrandTotal = 0;
 
         [...tableBody.rows].forEach(row => {
@@ -475,6 +475,7 @@ async function addChargesDetails() {
 
             if (status === "Deleted") return;
 
+            // Ignore Round Off Row
             if (row.cells[1]?.innerText.trim() === "Round Off") return;
 
             currentGrandTotal += parseFloat(row.cells[10].innerText || 0);
@@ -483,20 +484,30 @@ async function addChargesDetails() {
 
         currentGrandTotal = Number(currentGrandTotal.toFixed(2));
 
-        // Calculate New Total
+        // New Total
         const newGrandTotal = Number(
             (currentGrandTotal + totalAmount).toFixed(2)
         );
 
-        // Round Off
-        const roundedTotal = Math.round(newGrandTotal);
-        const roundOff = Number(
-            (roundedTotal - newGrandTotal).toFixed(2)
-        );
+        // Check Vendor Bill has decimal value
+        const hasDecimal = (vendorBillAmount % 1) !== 0;
 
-        const finalTotal = Number(
-            (newGrandTotal + roundOff).toFixed(2)
-        );
+        let roundOff = 0;
+        let finalTotal = newGrandTotal;
+
+        if (!hasDecimal) {
+
+            // Apply Round Off only for whole-number Vendor Bill
+            const roundedTotal = Math.round(newGrandTotal);
+
+            roundOff = Number(
+                (roundedTotal - newGrandTotal).toFixed(2)
+            );
+
+            finalTotal = Number(
+                (newGrandTotal + roundOff).toFixed(2)
+            );
+        }
 
         // Validation
         if (vendorBillAmount > 0 && finalTotal > vendorBillAmount) {
@@ -535,7 +546,8 @@ Excess Amount      : ${(finalTotal - vendorBillAmount).toFixed(2)}`
             <td class="text-end fw-bold">${totalAmount.toFixed(2)}</td>
 
             <td>
-                <button type="button" class="btn btn-danger btn-sm delete-row">
+                <button type="button"
+                        class="btn btn-danger btn-sm delete-row">
                     <i class="bi bi-trash"></i>
                 </button>
             </td>
@@ -553,7 +565,7 @@ Excess Amount      : ${(finalTotal - vendorBillAmount).toFixed(2)}`
     }
     catch (error) {
 
-        console.error(error);
+        console.error("Error adding charges:", error);
         alert("Failed to add charges.");
 
         return false;
@@ -577,9 +589,11 @@ function updateTotals() {
 
     // Remove existing Round Off row
     [...tbody.rows].forEach(row => {
+
         if (row.cells[1]?.innerText.trim() === "Round Off") {
             row.remove();
         }
+
     });
 
     let totalNonTaxable = 0;
@@ -594,6 +608,10 @@ function updateTotals() {
 
         if (row.style.display === "none") return;
 
+        const status = row.querySelector(".status")?.innerText.trim() || "";
+
+        if (status === "Deleted") return;
+
         totalNonTaxable += parseFloat(row.cells[4].innerText || 0);
         totalTaxable += parseFloat(row.cells[5].innerText || 0);
         totalSGST += parseFloat(row.cells[6].innerText || 0);
@@ -604,40 +622,57 @@ function updateTotals() {
 
     });
 
+    totalNonTaxable = Number(totalNonTaxable.toFixed(2));
+    totalTaxable = Number(totalTaxable.toFixed(2));
+    totalSGST = Number(totalSGST.toFixed(2));
+    totalCGST = Number(totalCGST.toFixed(2));
+    totalIGST = Number(totalIGST.toFixed(2));
+    totalGST = Number(totalGST.toFixed(2));
     grandTotal = Number(grandTotal.toFixed(2));
 
-    // Calculate Round Off
-    const roundedTotal = Math.round(grandTotal);
-    const roundOff = Number((roundedTotal - grandTotal).toFixed(2));
+    // Vendor Bill Amount
+    const vendorBillAmount = parseFloat(
+        document.getElementById("vendorBilledAmount").value || 0
+    );
 
-    // Add Round Off Row (only if required)
-    if (roundOff !== 0) {
+    // Apply Round Off only if Vendor Bill is whole number
+    const hasDecimal = (vendorBillAmount % 1) !== 0;
 
-        const row = tbody.insertRow();
+    if (!hasDecimal) {
 
-        row.innerHTML = `
-            <td></td>
-            <td><b>Round Off</b></td>
-            <td>-</td>
-            <td>0%</td>
+        const result = calculateRoundOff(grandTotal);
 
-            <td class="text-end">${roundOff.toFixed(2)}</td>
-            <td class="text-end">0.00</td>
-            <td class="text-end">0.00</td>
-            <td class="text-end">0.00</td>
-            <td class="text-end">0.00</td>
-            <td class="text-end">0.00</td>
+        if (result.roundOff !== 0) {
 
-            <td class="text-end fw-bold">${roundOff.toFixed(2)}</td>
+            const row = tbody.insertRow();
 
-            <td></td>
+            row.dataset.chargeId = "";
 
-            <td class="tax-id d-none">0</td>
-            <td class="status d-none">RoundOff</td>
-        `;
+            row.innerHTML = `
+                <td></td>
+                <td><b>Round Off</b></td>
+                <td>-</td>
+                <td>0%</td>
 
-        totalNonTaxable += roundOff;
-        grandTotal += roundOff;
+                <td class="text-end">${result.roundOff.toFixed(2)}</td>
+                <td class="text-end">0.00</td>
+                <td class="text-end">0.00</td>
+                <td class="text-end">0.00</td>
+                <td class="text-end">0.00</td>
+                <td class="text-end">0.00</td>
+
+                <td class="text-end fw-bold">${result.roundOff.toFixed(2)}</td>
+
+                <td></td>
+
+                <td class="tax-id d-none">0</td>
+                <td class="status d-none">RoundOff</td>
+            `;
+
+            totalNonTaxable += result.roundOff;
+            grandTotal = result.finalAmount;
+        }
+
     }
 
     reindexRows();
