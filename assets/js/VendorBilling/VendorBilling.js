@@ -57,7 +57,7 @@ async function saveAndUpdateVendorBills() {
             Number(document.getElementById("vendorBilledAmount").value || 0);
 
         if (billedAmount <= 0) {
-            alert("Vendor Bill Amount must be greater than zero."); 
+            alert("Vendor Bill Amount must be greater than zero.");
             saveButton.disabled = false;
             return;
         }
@@ -414,28 +414,22 @@ async function addChargesDetails() {
     const taxID = parseInt(document.getElementById("partyDefaultTax").value || 0);
 
     if (!chargesType || !shipmentNo) {
-        alert("Please select Charges Type and Shipment No");
+        alert("Please select Charges Type and Shipment No.");
         return false;
     }
 
-    // Check duplicate Charges Type + Shipment No
     const tableBody = document.querySelector("#pendingShipmentTable tbody");
 
-    const exists = [...tableBody.rows].some(row => {
-
-        const status =
-            row.querySelector(".status")?.innerText?.trim() || "";
-
-        const rowChargesType =
-            row.cells[1]?.textContent?.trim() || "";
-
-        const rowShipmentNo =
-            row.cells[2]?.textContent?.trim() || "";
-
-        return status !== "Deleted" &&
-            rowChargesType === chargesType &&
-            rowShipmentNo === shipmentNo;
-    });
+    // Duplicate Check
+    const exists = [...tableBody.rows]
+        .filter(row => {
+            const status = row.querySelector(".status")?.innerText.trim() || "";
+            return status !== "Deleted";
+        })
+        .some(row =>
+            row.cells[1]?.textContent.trim() === chargesType &&
+            row.cells[2]?.textContent.trim() === shipmentNo
+        );
 
     if (exists) {
         alert("This Charges Type and Shipment No already exists.");
@@ -444,7 +438,7 @@ async function addChargesDetails() {
 
     try {
 
-        // Get Tax Configuration
+        // Get Tax Details
         const taxes = await getTaxRatesById(taxID);
 
         if (!taxes) {
@@ -452,7 +446,7 @@ async function addChargesDetails() {
             return false;
         }
 
-        // Calculate GST
+        // GST Calculation
         const {
             sgstAmt,
             cgstAmt,
@@ -461,35 +455,63 @@ async function addChargesDetails() {
             totalRate
         } = calculateTaxes(taxableAmt, taxes);
 
-        // Current Charge Total
-        const totalAmount = nonTaxable + taxableAmt + totalGstAmt;
+        const totalAmount = Number(
+            (nonTaxable + taxableAmt + totalGstAmt).toFixed(2)
+        );
 
         // Vendor Bill Amount
-        const vendorBilledAmount = parseFloat(
+        const vendorBillAmount = parseFloat(
             document.getElementById("vendorBilledAmount").value || 0
         );
 
-        // Current Grand Total
-        const currentGrandTotal = parseFloat(
-            document.getElementById("grandTotalAmount").innerText || 0
+        // Current Grand Total (Ignore Round Off & Deleted Rows)
+        let currentGrandTotal = 0;
+
+        [...tableBody.rows].forEach(row => {
+
+            if (row.style.display === "none") return;
+
+            const status = row.querySelector(".status")?.innerText.trim() || "";
+
+            if (status === "Deleted") return;
+
+            if (row.cells[1]?.innerText.trim() === "Round Off") return;
+
+            currentGrandTotal += parseFloat(row.cells[10].innerText || 0);
+
+        });
+
+        currentGrandTotal = Number(currentGrandTotal.toFixed(2));
+
+        // Calculate New Total
+        const newGrandTotal = Number(
+            (currentGrandTotal + totalAmount).toFixed(2)
         );
 
-        // New Grand Total after adding row
-        const newGrandTotal = currentGrandTotal + totalAmount;
-        const excessAmount = newGrandTotal - vendorBilledAmount;
+        // Round Off
+        const roundedTotal = Math.round(newGrandTotal);
+        const roundOff = Number(
+            (roundedTotal - newGrandTotal).toFixed(2)
+        );
+
+        const finalTotal = Number(
+            (newGrandTotal + roundOff).toFixed(2)
+        );
 
         // Validation
-        if (newGrandTotal > vendorBilledAmount) {
+        if (vendorBillAmount > 0 && finalTotal > vendorBillAmount) {
 
-            alert(`
-                    Total amount cannot exceed Vendor Bill Amount.
+            alert(
+                `Total amount cannot exceed Vendor Bill Amount.
 
-                    Vendor Bill Amount : ${vendorBilledAmount.toFixed(2)}
-                    Current Total      : ${currentGrandTotal.toFixed(2)}
-                    Adding Amount      : ${totalAmount.toFixed(2)}
-                    New Total          : ${newGrandTotal.toFixed(2)}
-                    Excess Amount      : ${excessAmount.toFixed(2)}
-                    `);
+Vendor Bill Amount : ${vendorBillAmount.toFixed(2)}
+Current Total      : ${currentGrandTotal.toFixed(2)}
+Adding Amount      : ${totalAmount.toFixed(2)}
+Round Off          : ${roundOff.toFixed(2)}
+Final Total        : ${finalTotal.toFixed(2)}
+Excess Amount      : ${(finalTotal - vendorBillAmount).toFixed(2)}`
+            );
+
             return false;
         }
 
@@ -499,10 +521,11 @@ async function addChargesDetails() {
         row.dataset.chargeId = "";
 
         row.innerHTML = `
-            <td>${tableBody.rows.length}</td>
+            <td></td>
             <td>${chargesType}</td>
             <td>${shipmentNo}</td>
             <td>${totalRate}%</td>
+
             <td class="text-end">${nonTaxable.toFixed(2)}</td>
             <td class="text-end">${taxableAmt.toFixed(2)}</td>
             <td class="text-end">${sgstAmt.toFixed(2)}</td>
@@ -518,28 +541,46 @@ async function addChargesDetails() {
             </td>
 
             <td class="tax-id d-none">${taxID}</td>
-            <td class="status text-center text-success d-none">New</td>
+            <td class="status d-none">New</td>
         `;
 
-        // Update Totals
         reindexRows();
         updateTotals();
-
-        // Clear Input Controls
         clearChargesInputs();
 
         return true;
 
-    } catch (error) {
+    }
+    catch (error) {
 
-        console.error("Error adding charges:", error);
+        console.error(error);
         alert("Failed to add charges.");
 
         return false;
     }
 }
+function calculateRoundOff(amount) {
+
+    amount = Number(amount.toFixed(2));
+
+    const roundedAmount = Math.round(amount);
+
+    return {
+        roundOff: Number((roundedAmount - amount).toFixed(2)),
+        finalAmount: roundedAmount
+    };
+}
 
 function updateTotals() {
+
+    const tbody = document.querySelector("#pendingShipmentTable tbody");
+
+    // Remove existing Round Off row
+    [...tbody.rows].forEach(row => {
+        if (row.cells[1]?.innerText.trim() === "Round Off") {
+            row.remove();
+        }
+    });
 
     let totalNonTaxable = 0;
     let totalTaxable = 0;
@@ -549,9 +590,8 @@ function updateTotals() {
     let totalGST = 0;
     let grandTotal = 0;
 
-    document.querySelectorAll("#pendingShipmentTable tbody tr").forEach(row => {
+    [...tbody.rows].forEach(row => {
 
-        // Ignore hidden/deleted rows
         if (row.style.display === "none") return;
 
         totalNonTaxable += parseFloat(row.cells[4].innerText || 0);
@@ -561,7 +601,46 @@ function updateTotals() {
         totalIGST += parseFloat(row.cells[8].innerText || 0);
         totalGST += parseFloat(row.cells[9].innerText || 0);
         grandTotal += parseFloat(row.cells[10].innerText || 0);
+
     });
+
+    grandTotal = Number(grandTotal.toFixed(2));
+
+    // Calculate Round Off
+    const roundedTotal = Math.round(grandTotal);
+    const roundOff = Number((roundedTotal - grandTotal).toFixed(2));
+
+    // Add Round Off Row (only if required)
+    if (roundOff !== 0) {
+
+        const row = tbody.insertRow();
+
+        row.innerHTML = `
+            <td></td>
+            <td><b>Round Off</b></td>
+            <td>-</td>
+            <td>0%</td>
+
+            <td class="text-end">${roundOff.toFixed(2)}</td>
+            <td class="text-end">0.00</td>
+            <td class="text-end">0.00</td>
+            <td class="text-end">0.00</td>
+            <td class="text-end">0.00</td>
+            <td class="text-end">0.00</td>
+
+            <td class="text-end fw-bold">${roundOff.toFixed(2)}</td>
+
+            <td></td>
+
+            <td class="tax-id d-none">0</td>
+            <td class="status d-none">RoundOff</td>
+        `;
+
+        totalNonTaxable += roundOff;
+        grandTotal += roundOff;
+    }
+
+    reindexRows();
 
     document.getElementById("totalNonTaxableAmount").innerText = totalNonTaxable.toFixed(2);
     document.getElementById("totalTaxableAmount").innerText = totalTaxable.toFixed(2);
