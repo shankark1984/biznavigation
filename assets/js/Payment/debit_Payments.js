@@ -30,7 +30,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 
 document.getElementById("saveButton").addEventListener("click", async () => {
-    await saveUpdatedCreditPayments();
+    await saveUpdatedDebitPayments();
 });
 document.getElementById("paymentMode").addEventListener("change", toggleSettlementMode);
 // ------------------------------------------
@@ -46,12 +46,12 @@ async function generatePaymentID(companyID) {
         console.error("PaymentID generation failed:", error);
         throw error;
     }
-
     return data; // e.g. COMP1_P000123
 }
 
-async function saveUpdatedCreditPayments() {
+async function saveUpdatedDebitPayments() {
     const originalText = saveButton.innerHTML;
+
     try {
         if (!validatePaymentForm()) return;
 
@@ -358,7 +358,7 @@ async function getPendingInvoiceDetails(partyCode) {
             BillReferenceNo,
             BillNo,
             AccountedDate,
-            TotalAmount,
+            ChargeTotalAmount,
             BalanceAmount
         `)
         .neq("PaymentStatus", "Paid")

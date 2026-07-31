@@ -2275,3 +2275,29 @@ async function loadCostCenters(companyID, selectedCostCenter = "") {
         costCenterSelect.innerHTML = `<option value="">Error Loading Cost Centers</option>`;
     }
 }
+
+/*==========================================================
+    SUCCESS MESSAGE
+==========================================================*/
+
+function showSuccess(message) {
+
+    alert(message);
+
+}
+/*==========================================================
+    ERROR MESSAGE
+==========================================================*/
+
+function showError(error) {
+
+    console.error(error);
+
+    const message =
+        typeof error === "string"
+            ? error
+            : error?.message || "Unexpected error occurred.";
+
+    alert(message);
+
+}
