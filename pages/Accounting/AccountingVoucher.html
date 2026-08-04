@@ -447,53 +447,91 @@
                     <!-- VOUCHER SEARCH MODAL -->
                     <!-- ===================================================== -->
 
-                    <div class="modal fade" id="voucherModal" tabindex="-1" aria-hidden="true">
+                    <div class="modal fade" id="voucherModal" tabindex="-1" aria-labelledby="voucherModalLabel"
+                        aria-hidden="true">
                         <div class="modal-dialog modal-xl modal-dialog-scrollable">
-                            <div class="modal-content">
-                                <div class="modal-header bg-success text-white">
-                                    <h5 class="modal-title">
-                                        <i class="bi bi-people-fill me-2"></i> Select Voucher
+                            <div class="modal-content shadow">
+
+                                <!-- Header -->
+                                <div class="modal-header bg-success text-white py-2">
+                                    <h5 class="modal-title" id="voucherModalLabel">
+                                        <i class="bi bi-receipt-cutoff me-2"></i>
+                                        Select Voucher
                                     </h5>
-                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal">
+
+                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                                        aria-label="Close">
                                     </button>
                                 </div>
 
+                                <!-- Body -->
                                 <div class="modal-body">
-                                    <div class="row mb-3">
-                                        <div class="col-md-8">
-                                            <input type="text" id="voucherSearch" class="form-control"
-                                                placeholder="Search by Voucher Number / Party Name / GSTIN..."
-                                                autocomplete="off">
+
+                                    <!-- Search -->
+                                    <div class="row g-2 align-items-center mb-3">
+
+                                        <div class="col-lg-9 col-md-8">
+                                            <div class="input-group">
+                                                <span class="input-group-text">
+                                                    <i class="bi bi-search"></i>
+                                                </span>
+
+                                                <input type="text" id="voucherSearch" class="form-control"
+                                                    placeholder="Search Voucher No, Branch, Cost Center, Bank..."
+                                                    autocomplete="off">
+                                            </div>
                                         </div>
-                                        <div class="col-md-4 text-end">
-                                            <span id="partyCount" class="badge bg-secondary">
+
+                                        <div class="col-lg-3 col-md-4 text-md-end">
+                                            <span id="partyCount" class="badge bg-secondary fs-6 px-3 py-2">
                                                 0 Records
                                             </span>
                                         </div>
+
                                     </div>
 
-                                    <div class="table-responsive">
-                                        <table class="table table-hover table-bordered table-sm align-middle">
-                                            <thead class="table-light">
+                                    <!-- Voucher List -->
+                                    <div class="table-responsive" style="max-height: 60vh;">
+
+                                        <table class="table table-hover table-bordered table-sm align-middle mb-0">
+
+                                            <thead class="table-success sticky-top">
                                                 <tr>
-                                                    <th width="100"> Voucher No </th>
-                                                    <th width="100"> Voucher Date </th>
-                                                    <th width="100"> Branch </th>
-                                                    <th width="150"> Cost Center </th>
-                                                    <th width="100"> Bank Account </th>
-                                                    <th width="100"> Amount </th>
+                                                    <th style="width:150px;">Voucher No</th>
+                                                    <th style="width:120px;">Date</th>
+                                                    <th>Branch</th>
+                                                    <th>Cost Center</th>
+                                                    <th>Bank Account</th>
+                                                    <th class="text-end" style="width:140px;">Amount</th>
                                                 </tr>
                                             </thead>
+
                                             <tbody id="voucherListBody">
+                                                <!-- Dynamic Rows -->
                                             </tbody>
+
                                         </table>
+
                                     </div>
+
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center mt-3">
+
+                                    <div id="partyCount" class="text-muted">
+                                        0 Records
+                                    </div>
+
+                                    <div id="voucherPagination"></div>
+
+                                </div>
+                                <!-- Footer -->
+                                <div class="modal-footer py-2">
+                                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                                        <i class="bi bi-x-circle me-1"></i>
+                                        Close
+                                    </button>
                                 </div>
 
-                                <div class="modal-footer">
-                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                                        Close </button>
-                                </div>
                             </div>
                         </div>
                     </div>

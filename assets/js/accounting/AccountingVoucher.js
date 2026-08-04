@@ -16,6 +16,10 @@ let voucherMaster = [];
 let voucherModal;
 
 
+let voucherPage = 1;
+const voucherPageSize = 10;
+let voucherTotalRecords = 0;
+
 /*=========================================================
     COMMON CONTROLS
 =========================================================*/
@@ -1062,9 +1066,14 @@ voucherDate.addEventListener("change", loadVoucherNumber);
 // LOAD VOUCHERS
 //======================================================
 
-async function loadVoucherList() {
+async function loadVoucherList(page = 1) {
 
-    const { data, error } = await supabaseClient
+    voucherPage = page;
+
+    const from = (page - 1) * voucherPageSize;
+    const to = from + voucherPageSize - 1;
+
+    const { data, error, count } = await supabaseClient
         .from("AccountingVoucherView")
         .select(`
             VoucherID,
@@ -1077,10 +1086,11 @@ async function loadVoucherList() {
             BankAccountName,
             Amount,
             AmountType
-        `)
+        `, { count: "exact" })
         .eq("CompanyID", CompanyID)
         .eq("Status", true)
-        .order("VoucherDate", { ascending: false });
+        .order("VoucherDate", { ascending: false })
+        .range(from, to);
 
     if (error) {
         console.error(error);
@@ -1088,8 +1098,10 @@ async function loadVoucherList() {
     }
 
     voucherMaster = data || [];
+    voucherTotalRecords = count || 0;
 
     renderVoucherList(voucherMaster);
+    renderVoucherPagination();
 }
 
 //======================================================
@@ -1144,6 +1156,36 @@ function renderVoucherList(list) {
 
 }
 
+function renderVoucherPagination() {
+
+    const totalPages = Math.ceil(voucherTotalRecords / voucherPageSize);
+
+    const container = document.getElementById("voucherPagination");
+
+    if (!container) return;
+
+    container.innerHTML = "";
+
+    if (totalPages <= 1) return;
+
+    container.insertAdjacentHTML("beforeend", `
+        <button class="btn btn-sm btn-outline-secondary me-2"
+            ${voucherPage === 1 ? "disabled" : ""}
+            onclick="loadVoucherList(${voucherPage - 1})">
+            Previous
+        </button>
+
+        <span class="mx-2">
+            Page ${voucherPage} of ${totalPages}
+        </span>
+
+        <button class="btn btn-sm btn-outline-secondary ms-2"
+            ${voucherPage === totalPages ? "disabled" : ""}
+            onclick="loadVoucherList(${voucherPage + 1})">
+            Next
+        </button>
+    `);
+}
 //======================================================
 // SEARCH
 //======================================================
