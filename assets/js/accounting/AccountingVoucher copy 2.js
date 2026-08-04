@@ -1,670 +1,704 @@
-/* ==========================================================
-   AccountingVoucher.js - Logistics ERP
-   Optimized Version
-========================================================== */
+/*=========================================================
+    GLOBAL VARIABLES
+=========================================================*/
+let accountMaster = [];
+let currentAccountTextbox = null;
+let partyMaster = [];
+let currentPartyTextbox = null;
+let selectedAccountIndex = -1;
+let filteredAccounts = [];
+let filteredParty = [];
+let selectedPartyIndex = -1;
+let companyProfile = null;
 
-// ===========================================================
-// DOM CACHE & STATE
-// ===========================================================
-const DOM = {
-    voucherBody: document.getElementById("voucherBody"),
-    totalDebit: document.getElementById("totalDebit"),
-    totalCredit: document.getElementById("totalCredit"),
-    totalGst: document.getElementById("totalGst"),
-    difference: document.getElementById("difference"),
-    voucherNo: document.getElementById("voucherNo"),
-    voucherDate: document.getElementById("voucherDate"),
-    voucherType: document.getElementById("voucherType"),
-    referenceNo: document.getElementById("referenceNo"),
-    narration: document.getElementById("narration"),
-    saveButton: document.getElementById("saveButton"),
-    transactionMode: document.getElementById("transactionMode"),
-    bankSection: document.getElementById("bankSection"),
-    instrumentSection: document.getElementById("instrumentSection"),
-    narrationSection: document.getElementById("narrationSection"),
-    bankAccount: document.getElementById("bankAccount"),
-    instrumentNo: document.getElementById("instrumentNo"),
-    accountSearch: document.getElementById("accountSearch"),
-    partySearch: document.getElementById("partySearch"),
-    accountListBody: document.getElementById("accountListBody"),
-    partyListBody: document.getElementById("partyListBody"),
-    accountModal: document.getElementById("accountModal"),
-    partyModal: document.getElementById("partyModal")
-};
+const partyModalEl = document.getElementById("partyModal");
+const partySearchInput = document.getElementById("partySearch");
+const partyListBody = document.getElementById("partyListBody");
+const accountModalEl = document.getElementById("accountModal");
+const accountSearchInput = document.getElementById("accountSearch");
+const accountListBody = document.getElementById("accountListBody");
+const transactionMode = document.getElementById("transactionMode");
+const bankSection = document.getElementById("bankSection");
+const instrumentSection = document.getElementById("instrumentSection");
+const narrationSection = document.getElementById("narrationSection");
+const bankAccount = document.getElementById("bankAccount");
+const instrumentNo = document.getElementById("instrumentNo");
+const partyGST = document.getElementById("partyGST");
 
-const STATE = {
-    accountMaster: [],
-    partyMaster: [],
-    currentAccountTextbox: null,
-    currentPartyTextbox: null,
-    isSaving: false
-};
 
-// ===========================================================
-// INITIALIZATION
-// ===========================================================
+/*=========================================================
+    INITIAL LOAD
+=========================================================*/
 document.addEventListener("DOMContentLoaded", async () => {
-    await initVoucher();
-    setupEventListeners();
+    try {
+        await Promise.all([
+            loadBranches(CompanyID),
+            loadCostCenters(CompanyID),
+            loadBankAccounts(CompanyID, "Bank"),
+            loadAccounts(),
+            loadParties(CompanyID),
+
+        ]);
+        // Apply on initial page load
+        toggleTransactionFields()
+        companyProfile = await getCompanyProfile(CompanyID)
+    } catch (err) {
+        console.error("Initialization Error:", err);
+    }
 });
 
-async function initVoucher() {
-    // Set today's date
-    DOM.voucherDate.value = new Date().toLocaleDateString("en-CA");
-
-    // Load master data in parallel
-    await Promise.all([
-        loadAccounts(),
-        loadParties(CompanyID),
-        loadVoucherNumber(),
-        loadBranches(CompanyID),
-        loadCostCenters(CompanyID),
-        loadBankAccounts(CompanyID, 'Bank')
-    ]);
-
-    // Initialize first row
-    addRow();
-    calculateTotals();
-    updateTransactionMode();
-}
-
-// ===========================================================
-// ROW MANAGEMENT
-// ===========================================================
-function createRowHTML(index) {
-    return `
-        <td>${index + 1}</td>
-        <td>
-            <div class="input-group">
-                <input type="text" class="form-control accountName" placeholder="Select Ledger" readonly>
-                <input type="hidden" class="accountCode">
-                <button type="button" class="btn btn-outline-secondary accountSearch">
-                    <i class="bi bi-search"></i>
-                </button>
-            </div>
-        </td>
-        <td>
-            <div class="input-group">
-                <input type="text" class="form-control partyName" placeholder="Select Party" readonly>
-                <input type="hidden" class="partyCode">
-                <button type="button" class="btn btn-outline-secondary partySearch">
-                    <i class="bi bi-search"></i>
-                </button>
-            </div>
-        </td>
-        <td><input type="number" step="0.01" value="0" class="form-control debit text-end"></td>
-        <td><input type="number" step="0.01" value="0" class="form-control credit text-end"></td>
-        <td>
-            <select class="form-select gstRate">
-                ${[0, 5, 12, 18, 28].map(rate =>
-        `<option value="${rate}">${rate}%</option>`
-    ).join('')}
-            </select>
-        </td>
-        <td><input type="number" class="form-control gstAmount text-end" value="0" readonly></td>
-        <td><input type="number" class="form-control totalAmount text-end" readonly></td>
-        <td><input class="form-control remarks"></td>
-        <td class="text-center">
-            <button class="btn btn-danger btn-sm deleteRow" ${DOM.voucherBody.rows.length === 1 ? 'disabled' : ''}>
-                <i class="bi bi-trash"></i>
-            </button>
-        </td>
-    `;
-}
-
-function addRow() {
-    const row = DOM.voucherBody.insertRow();
-    row.innerHTML = createRowHTML(DOM.voucherBody.rows.length - 1);
-
-    bindRowEvents(row);
-    renumberRows();
-    row.querySelector(".accountName").focus();
-    calculateTotals();
-
-    return row;
-}
-
-function deleteRow(button) {
-    const row = button.closest("tr");
-    if (DOM.voucherBody.rows.length === 1) {
-        alert("Minimum one row required.");
-        return;
-    }
-    row.remove();
-    renumberRows();
-    calculateTotals();
-}
-
-function renumberRows() {
-    const rows = DOM.voucherBody.rows;
-    Array.from(rows).forEach((row, index) => {
-        row.cells[0].textContent = index + 1;
-        const deleteBtn = row.querySelector(".deleteRow");
-        if (deleteBtn) deleteBtn.disabled = rows.length === 1;
-    });
-}
-
-function clearVoucher() {
-    DOM.voucherBody.innerHTML = "";
-    addRow();
-    DOM.referenceNo.value = "";
-    DOM.narration.value = "";
-    calculateTotals();
-}
-
-// ===========================================================
-// EVENT BINDING
-// ===========================================================
-function setupEventListeners() {
-    // Add Row
-    document.getElementById("btnAddRow").addEventListener("click", addRow);
-
-    // Save
-    DOM.saveButton.addEventListener("click", saveVoucher);
-
-    // Print
-    document.getElementById("reportButton").addEventListener("click", () => window.print());
-
-    // Delete
-    document.getElementById("deleteButton").addEventListener("click", () => alert("Delete module coming next."));
-
-    // Voucher Type change
-    DOM.voucherType.addEventListener("change", async () => {
-        clearVoucher();
-        await loadVoucherNumber();
-    });
-
-    // Voucher Date change
-    DOM.voucherDate.addEventListener("change", loadVoucherNumber);
-
-    // Transaction Mode
-    DOM.transactionMode.addEventListener("change", updateTransactionMode);
-
-    // Account Search
-    DOM.accountSearch.addEventListener("input", filterAccounts);
-    DOM.accountListBody.addEventListener("click", handleAccountSelection);
-
-    // Party Search
-    DOM.partySearch.addEventListener("input", filterParties);
-    DOM.partyListBody.addEventListener("click", handlePartySelection);
-
-    // Global keyboard shortcuts
-    document.addEventListener("keydown", handleGlobalKeys);
-
-    // Account/Party search buttons (delegated)
-    document.addEventListener("click", handleSearchButtons);
-
-    // GST calculation (delegated)
-    document.addEventListener("change", handleGSTRateChange);
-
-    // Blur formatting
-    document.addEventListener("blur", handleInputBlur, true);
-}
-
-function bindRowEvents(row) {
-    // Delete button
-    row.querySelector(".deleteRow").addEventListener("click", function () {
-        deleteRow(this);
-    });
-
-    // Debit/Credit inputs
-    row.querySelectorAll(".debit, .credit").forEach(input => {
-        input.addEventListener("input", () => {
-            calculateTotals();
-            updateRowGST(row);
-        });
-    });
-
-    // GST Rate
-    row.querySelector(".gstRate").addEventListener("change", () => {
-        updateRowGST(row);
-        calculateTotals();
-    });
-
-    // Keyboard navigation
-    bindKeyboardEvents(row);
-
-    // Debit/Credit mutual exclusivity
-    bindDebitCreditRule(row);
-}
-
-// ===========================================================
-// KEYBOARD NAVIGATION
-// ===========================================================
-function bindKeyboardEvents(row) {
-    const controls = row.querySelectorAll("input,select");
-    controls.forEach((control, index) => {
-        control.addEventListener("keydown", (e) => {
-            switch (e.key) {
-                case "Enter":
-                    e.preventDefault();
-                    if (index < controls.length - 1) {
-                        controls[index + 1].focus();
-                        controls[index + 1].select?.();
-                    } else {
-                        moveToNextRow(row);
-                    }
-                    break;
-                case "ArrowDown":
-                    e.preventDefault();
-                    const next = row.nextElementSibling;
-                    if (next) {
-                        const nextControls = next.querySelectorAll("input,select");
-                        if (nextControls[index]) nextControls[index].focus();
-                    }
-                    break;
-                case "ArrowUp":
-                    e.preventDefault();
-                    const prev = row.previousElementSibling;
-                    if (prev) {
-                        const prevControls = prev.querySelectorAll("input,select");
-                        if (prevControls[index]) prevControls[index].focus();
-                    }
-                    break;
-            }
-        });
-    });
-}
-
-function moveToNextRow(currentRow) {
-    const nextRow = currentRow.nextElementSibling;
-    if (nextRow) {
-        nextRow.querySelector(".accountName").focus();
-    } else {
-        addRow();
-    }
-}
-
-function bindDebitCreditRule(row) {
-    const debit = row.querySelector(".debit");
-    const credit = row.querySelector(".credit");
-
-    debit.addEventListener("input", function () {
-        if (Number(this.value) > 0) credit.value = 0;
-    });
-    credit.addEventListener("input", function () {
-        if (Number(this.value) > 0) debit.value = 0;
-    });
-}
-
-// ===========================================================
-// CALCULATIONS
-// ===========================================================
-function calculateTotals() {
-    let totalDebit = 0, totalCredit = 0, totalGST = 0;
-
-    Array.from(DOM.voucherBody.rows).forEach(row => {
-        totalDebit += Number(row.querySelector(".debit")?.value || 0);
-        totalCredit += Number(row.querySelector(".credit")?.value || 0);
-        totalGST += Number(row.querySelector(".gstAmount")?.value || 0);
-    });
-
-    DOM.totalDebit.textContent = totalDebit.toFixed(2);
-    DOM.totalCredit.textContent = totalCredit.toFixed(2);
-    DOM.totalGst.textContent = totalGST.toFixed(2);
-
-    const diff = totalDebit - totalCredit;
-    DOM.difference.textContent = diff.toFixed(2);
-    DOM.difference.classList.toggle("balance-ok", diff === 0);
-    DOM.difference.classList.toggle("balance-error", diff !== 0);
-}
-
-function updateRowGST(row) {
-    const amount = Number(row.querySelector(".debit")?.value || 0) ||
-        Number(row.querySelector(".credit")?.value || 0);
-    const rate = Number(row.querySelector(".gstRate")?.value || 0);
-    const gst = (amount * rate) / 100;
-
-    row.querySelector(".gstAmount").value = gst.toFixed(2);
-    row.querySelector(".totalAmount").value = (amount + gst).toFixed(2);
-}
-
-// ===========================================================
-// VALIDATION
-// ===========================================================
-function validateVoucher() {
-    const debit = parseFloat(DOM.totalDebit.textContent) || 0;
-    const credit = parseFloat(DOM.totalCredit.textContent) || 0;
-
-    if (debit === 0 && credit === 0) {
-        alert("Enter either a Debit or Credit amount.");
-        return false;
-    }
-
-    // if (debit !== credit) {
-    //     alert("Voucher is not balanced.");
-    //     return false;
-    // }
-
-    for (const row of DOM.voucherBody.rows) {
-        const accountCode = row.querySelector(".accountCode")?.value;
-        if (!accountCode) {
-            alert("Please select an account.");
-            row.querySelector(".accountSearch")?.focus();
-            return false;
-        }
-
-        const debitAmt = parseFloat(row.querySelector(".debit")?.value) || 0;
-        const creditAmt = parseFloat(row.querySelector(".credit")?.value) || 0;
-
-        if (debitAmt === 0 && creditAmt === 0) {
-            alert("Enter a debit or credit amount.");
-            row.querySelector(".debit")?.focus();
-            return false;
-        }
-
-        if (debitAmt > 0 && creditAmt > 0) {
-            alert("A row cannot contain both Debit and Credit.");
-            row.querySelector(".debit")?.focus();
-            return false;
-        }
-    }
-
-    return true;
-}
-
-// ===========================================================
-// ACCOUNT MANAGEMENT
-// ===========================================================
+/*=========================================================
+    LOAD ACCOUNTS
+=========================================================*/
 async function loadAccounts() {
+
     const { data, error } = await supabaseClient
         .from("ChartOfAccountsView")
         .select("*")
         .order("AccountName");
 
     if (error) {
-        console.error("Error loading accounts:", error);
+        console.error("Load Accounts:", error);
         return;
     }
 
-    STATE.accountMaster = data || [];
-    renderAccounts(STATE.accountMaster);
+    accountMaster = data ?? [];
+    renderAccounts(accountMaster);
 }
 
-function renderAccounts(data) {
-    DOM.accountListBody.innerHTML = data.map(acc => `
-        <tr data-code="${acc.AccountCode}">
+/*=========================================================
+    RENDER ACCOUNT LIST
+=========================================================*/
+function renderAccounts(accounts) {
+
+    filteredAccounts = accounts;
+    selectedAccountIndex = accounts.length ? 0 : -1;
+
+    accountListBody.innerHTML = accounts.map((acc, index) => `
+        <tr data-code="${acc.AccountCode}"
+            class="${index === selectedAccountIndex ? "table-primary" : ""}">
             <td>${acc.AccountCode}</td>
             <td>${acc.AccountName}</td>
-            <td>${acc.AccountType}</td>
+            <td>${acc.AccountType ?? ""}</td>
         </tr>
-    `).join('');
+    `).join("");
+
+    highlightSelectedAccount();
 }
 
-function filterAccounts() {
-    const search = DOM.accountSearch.value.toLowerCase();
-    const filtered = STATE.accountMaster.filter(acc =>
-        acc.AccountCode.toLowerCase().includes(search) ||
-        acc.AccountName.toLowerCase().includes(search)
-    );
-    renderAccounts(filtered);
+function highlightSelectedAccount() {
+
+    const rows = accountListBody.querySelectorAll("tr");
+
+    rows.forEach((row, index) => {
+        row.classList.toggle("table-primary", index === selectedAccountIndex);
+    });
+
+    if (rows[selectedAccountIndex]) {
+        rows[selectedAccountIndex].scrollIntoView({
+            block: "nearest"
+        });
+    }
+
 }
 
-function handleAccountSelection(e) {
-    const row = e.target.closest("tr");
-    if (!row) return;
-    selectAccount(row.dataset.code);
-}
-
-function selectAccount(code) {
-    const acc = STATE.accountMaster.find(x => x.AccountCode === code);
-    if (!acc) return;
-
-    STATE.currentAccountTextbox.value = acc.AccountName;
-    STATE.currentAccountTextbox.parentElement
-        .querySelector(".accountCode").value = acc.AccountCode;
-
-    bootstrap.Modal.getInstance(DOM.accountModal)?.hide();
-}
-
+/*=========================================================
+    OPEN ACCOUNT SEARCH
+=========================================================*/
 function openAccountSearch(input) {
-    STATE.currentAccountTextbox = input;
-    DOM.accountSearch.value = "";
-    renderAccounts(STATE.accountMaster);
-    new bootstrap.Modal(DOM.accountModal).show();
+
+    currentAccountTextbox = input;
+
+    accountSearchInput.value = "";
+    renderAccounts(accountMaster);
+
+    const modal = bootstrap.Modal.getOrCreateInstance(accountModalEl);
+
+    // Focus search box after modal is fully visible
+    accountModalEl.addEventListener("shown.bs.modal", function onShown() {
+        accountSearchInput.focus();
+        accountSearchInput.select();   // Optional: select existing text
+        accountModalEl.removeEventListener("shown.bs.modal", onShown);
+    });
+
+    modal.show();
+
 }
 
-// ===========================================================
-// PARTY MANAGEMENT
-// ===========================================================
+/*=========================================================
+    SELECT ACCOUNT
+=========================================================*/
+function selectAccount(code) {
+
+    const account = accountMaster.find(a => String(a.AccountCode) === String(code));
+
+    if (!account || !currentAccountTextbox) return;
+
+    const card = currentAccountTextbox.closest(".entry-card");
+    if (!card) return;
+
+    currentAccountTextbox.value = account.AccountName;
+
+    card.querySelector(".accountCode").value = account.AccountCode;
+
+    const gstInput = card.querySelector(".gstRate");
+    if (gstInput)
+        gstInput.value = account.GSTRate ?? "";
+
+    bootstrap.Modal.getOrCreateInstance(accountModalEl).hide();
+
+    card.querySelector(".partyName")?.focus();
+}
+
+/*=========================================================
+    KEYBOARD SHORTCUTS
+=========================================================*/
+document.addEventListener("keydown", e => {
+
+    if (!["Enter", "F2"].includes(e.key))
+        return;
+
+    const card = e.target.closest(".entry-card");
+    if (!card)
+        return;
+
+    if (e.target.classList.contains("accountName")) {
+        e.preventDefault();
+        card.querySelector(".accountSearch")?.click();
+    }
+
+    if (e.target.classList.contains("partyName")) {
+        e.preventDefault();
+        card.querySelector(".partySearch")?.click();
+    }
+
+});
+
+/*=========================================================
+    OPEN ACCOUNT MODAL
+=========================================================*/
+document.addEventListener("click", e => {
+
+    const btn = e.target.closest(".accountSearch");
+    if (!btn)
+        return;
+
+    const input = btn.closest(".entry-card")?.querySelector(".accountName");
+    if (input)
+        openAccountSearch(input);
+
+});
+
+/*=========================================================
+    SEARCH ACCOUNT
+=========================================================*/
+accountSearchInput.addEventListener("keydown", function (e) {
+
+    const rows = accountListBody.querySelectorAll("tr");
+
+    if (!rows.length)
+        return;
+
+    switch (e.key) {
+
+        case "ArrowDown":
+
+            e.preventDefault();
+
+            if (selectedAccountIndex < rows.length - 1)
+                selectedAccountIndex++;
+
+            highlightSelectedAccount();
+            break;
+
+        case "ArrowUp":
+
+            e.preventDefault();
+
+            if (selectedAccountIndex > 0)
+                selectedAccountIndex--;
+
+            highlightSelectedAccount();
+            break;
+
+        case "Enter":
+
+            e.preventDefault();
+
+            if (selectedAccountIndex >= 0) {
+                const code = rows[selectedAccountIndex].dataset.code;
+                selectAccount(code);
+            }
+            break;
+
+    }
+
+});
+
+accountSearchInput.addEventListener("input", function () {
+
+    const keyword = this.value.trim().toLowerCase();
+
+    if (!keyword) {
+        renderAccounts(accountMaster);
+        return;
+    }
+
+    const filtered = accountMaster.filter(acc =>
+        String(acc.AccountCode).toLowerCase().includes(keyword) ||
+        String(acc.AccountName).toLowerCase().includes(keyword) ||
+        String(acc.AccountType ?? "").toLowerCase().includes(keyword)
+    );
+
+    renderAccounts(filtered);
+
+});
+/*=========================================================
+    ACCOUNT SELECT
+=========================================================*/
+accountListBody.addEventListener("click", e => {
+
+    const tr = e.target.closest("tr");
+    if (!tr)
+        return;
+
+    selectAccount(tr.dataset.code);
+
+});
+
+/*=========================================================
+    LOAD PARTIES
+=========================================================*/
 async function loadParties(companyId) {
+
     const { data, error } = await supabaseClient
-        .from("PartyDetails")
-        .select("PartyCode, PartyName, GSTNumber, State")
+        .from("AccountMasterView")
+        .select(`
+            AccountCode,
+            AccountName,
+            GSTNumber,
+            State
+        `)
         .eq("company_id", companyId)
-        .order("PartyName");
+        .order("AccountName");
 
     if (error) {
-        console.error("Error loading parties:", error);
+        console.error("Load Parties:", error);
         return;
     }
 
-    STATE.partyMaster = data;
-    renderPartyList(data);
+    partyMaster = data ?? [];
+    renderPartyList(partyMaster);
 }
 
-function renderPartyList(data) {
-    DOM.partyListBody.innerHTML = data.map(p => `
-        <tr data-code="${p.PartyCode}">
-            <td>${p.PartyCode}</td>
-            <td>${p.PartyName}</td>
-            <td>${p.GSTNumber || ""}</td>
-            <td>${p.State || ""}</td>
+/*=========================================================
+    RENDER PARTY LIST
+=========================================================*/
+function renderPartyList(parties) {
+
+    filteredParty = parties;
+    selectedPartyIndex = parties.length ? 0 : -1;
+    partyListBody.innerHTML = parties.map((p, index) => `
+        <tr data-code="${p.AccountCode}"
+        class="${index === selectedPartyIndex ? "table-primary" : ""}">
+            <td>${p.AccountCode}</td>
+            <td>${p.AccountName}</td>
+            <td>${p.GSTNumber ?? ""}</td>
+            <td>${p.State ?? ""}</td>
         </tr>
-    `).join('');
+    `).join("");
+
+    highlightSelectedParty();
+
 }
 
-function filterParties() {
-    const search = DOM.partySearch.value.toLowerCase();
-    const filtered = STATE.partyMaster.filter(p =>
-        p.PartyCode.toLowerCase().includes(search) ||
-        p.PartyName.toLowerCase().includes(search) ||
-        (p.GSTNumber || "").toLowerCase().includes(search)
+function highlightSelectedParty() {
+
+    const rows = partyListBody.querySelectorAll("tr");
+
+    rows.forEach((row, index) => {
+        row.classList.toggle("table-primary", index === selectedPartyIndex);
+    });
+
+    if (rows[selectedPartyIndex]) {
+        rows[selectedPartyIndex].scrollIntoView({
+            block: "nearest"
+        });
+    }
+
+}
+
+/*=========================================================
+    OPEN PARTY SEARCH
+=========================================================*/
+function openPartySearch(input) {
+    currentPartyTextbox = input;
+    partySearchInput.value = "";
+    renderPartyList(partyMaster);
+
+    const modal = bootstrap.Modal.getOrCreateInstance(partyModalEl);
+
+    partyModalEl.addEventListener("shown.bs.modal", function onShown() {
+        partySearchInput.focus();
+        partySearchInput.select();   // Optional: select existing text
+        partyModalEl.removeEventListener("shown.bs.modal", onShown);
+    }, { once: true });
+
+    modal.show();
+}
+
+/*=========================================================
+    SELECT PARTY
+=========================================================*/
+function selectParty(code) {
+
+    const party = partyMaster.find(
+        p => String(p.AccountCode) === String(code)
+    );
+
+    if (!party || !currentPartyTextbox) return;
+
+    const card = currentPartyTextbox.closest(".entry-card");
+    if (!card) return;
+
+    currentPartyTextbox.value = party.AccountName;
+    card.querySelector(".partyCode").value = party.AccountCode;
+
+    // Update Party GST (outside the entry card)
+    document.getElementById("partyGST").value = party.GSTNumber || "";
+
+    // Update Party GST (inside the entry card, if present)
+    const gstInput = card.querySelector(".partyGST");
+    if (gstInput) {
+        gstInput.value = party.GSTNumber || "";
+    }
+
+    const stateInput = card.querySelector(".partyState");
+    if (stateInput) {
+        stateInput.value = party.State || "";
+    }
+
+    // Recalculate GST for this row
+    updateGST(card);
+
+
+    bootstrap.Modal.getOrCreateInstance(partyModalEl).hide();
+    card.querySelector(".debit")?.focus();
+}
+/*=========================================================
+    PARTY SEARCH
+=========================================================*/
+partySearchInput.addEventListener("input", function () {
+    const keyword = this.value.trim().toLowerCase();
+    if (!keyword) {
+        renderPartyList(partyMaster);
+        return;
+    }
+    const filtered = partyMaster.filter(p =>
+        String(p.AccountCode).toLowerCase().includes(keyword) ||
+        String(p.AccountName).toLowerCase().includes(keyword) ||
+        String(p.GSTNumber ?? "").toLowerCase().includes(keyword) ||
+        String(p.State ?? "").toLowerCase().includes(keyword)
     );
     renderPartyList(filtered);
+
+});
+
+partySearchInput.addEventListener("keydown", function (e) {
+
+    const rows = partyListBody.querySelectorAll("tr");
+
+    if (!rows.length)
+        return;
+
+    switch (e.key) {
+
+        case "ArrowDown":
+
+            e.preventDefault();
+
+            if (selectedPartyIndex < rows.length - 1)
+                selectedPartyIndex++;
+
+            highlightSelectedParty();
+            break;
+
+        case "ArrowUp":
+
+            e.preventDefault();
+
+            if (selectedPartyIndex > 0)
+                selectedPartyIndex--;
+
+            highlightSelectedParty();
+            break;
+
+        case "Enter":
+
+            e.preventDefault();
+
+            if (selectedPartyIndex >= 0) {
+                const code = rows[selectedPartyIndex].dataset.code;
+                selectParty(code);
+            }
+            break;
+
+    }
+
+});
+/*=========================================================
+    PARTY SELECT
+=========================================================*/
+partyListBody.addEventListener("click", function (e) {
+    const row = e.target.closest("tr");
+    if (!row)
+        return;
+    selectParty(row.dataset.code);
+});
+
+/*=========================================================
+    OPEN PARTY MODAL
+=========================================================*/
+document.addEventListener("click", function (e) {
+    const btn = e.target.closest(".partySearch");
+    if (!btn) return;
+    const card = btn.closest(".entry-card");
+    if (!card) return;
+    const input = card.querySelector(".partyName");
+    if (input) openPartySearch(input);
+});
+
+/*=========================================================
+    TOGGLE TRANSACTION FIELDS
+=========================================================*/
+
+const BANK_MODES = new Set([
+    "Bank",
+    "Cheque",
+    "NEFT",
+    "RTGS",
+    "IMPS",
+    "UPI"
+]);
+
+function toggleTransactionFields() {
+
+    if (!transactionMode) return;
+
+    const showBankDetails = BANK_MODES.has(transactionMode.value);
+
+    bankSection.classList.toggle("d-none", !showBankDetails);
+    instrumentSection.classList.toggle("d-none", !showBankDetails);
+
+    // Set narration width
+    narrationSection.className =
+        showBankDetails
+            ? "col-12 col-lg-7"
+            : "col-12";
+
+    // Clear hidden fields
+    if (!showBankDetails) {
+        bankAccount.value = "";
+        instrumentNo.value = "";
+    }
+
 }
 
-function handlePartySelection(e) {
-    const row = e.target.closest("tr");
+transactionMode?.addEventListener("change", toggleTransactionFields);
+
+// Initialize on page load
+toggleTransactionFields();
+
+// Debit / Credit Mutual Exclusive + GST Calculation
+document.addEventListener("input", function (e) {
+
+    const row = e.target.closest(".entry-card");
     if (!row) return;
 
-    const party = STATE.partyMaster.find(x => x.PartyCode === row.dataset.code);
-    if (!party) return;
+    const debit = row.querySelector(".debit");
+    const credit = row.querySelector(".credit");
 
-    STATE.currentPartyTextbox.value = party.PartyName;
-    STATE.currentPartyTextbox.parentElement
-        .querySelector(".partyCode").value = party.PartyCode;
+    if (e.target.classList.contains("debit")) {
 
-    bootstrap.Modal.getInstance(DOM.partyModal)?.hide();
-}
+        const value = parseFloat(debit.value) || 0;
 
-function openPartySearch(input) {
-    STATE.currentPartyTextbox = input;
-    DOM.partySearch.value = "";
-    renderPartyList(STATE.partyMaster);
-    new bootstrap.Modal(DOM.partyModal).show();
-}
+        credit.disabled = value > 0;
 
-// ===========================================================
-// VOUCHER NUMBER
-// ===========================================================
-async function loadVoucherNumber() {
-    try {
-        const { data, error } = await supabaseClient.rpc("generate_voucher_no", {
-            p_company_id: CompanyID,
-            p_voucher_type: DOM.voucherType.value,
-            p_date: DOM.voucherDate.value
-        });
-
-        if (error) throw error;
-        DOM.voucherNo.value = data;
-    } catch (error) {
-        console.error("Error loading voucher number:", error);
+        if (value > 0)
+            credit.value = "0.00";
     }
+
+    if (e.target.classList.contains("credit")) {
+
+        const value = parseFloat(credit.value) || 0;
+
+        debit.disabled = value > 0;
+
+        if (value > 0)
+            debit.value = "0.00";
+    }
+
+    if (e.target.matches(".debit,.credit,.gstRate,.gstType")) {
+
+        updateGST(row);
+
+        // calculateTotals();
+    }
+
+});
+
+function updateGST(row) {
+
+    if (!row) return;
+
+    const debit = row.querySelector(".debit");
+    const credit = row.querySelector(".credit");
+
+    const companyGSTNo = (companyProfile?.gst_number || "")
+        .trim()
+        .substring(0, 2);
+
+    const partyGSTNo = (
+        document.getElementById("partyGST")?.value ||
+        companyGSTNo
+    )
+        .trim()
+        .substring(0, 2);
+
+    const amount =
+        (parseFloat(debit?.value) || 0) +
+        (parseFloat(credit?.value) || 0);
+
+    const rate =
+        parseFloat(row.querySelector(".gstRate")?.value) || 0;
+
+    const type =
+        row.querySelector(".gstType")?.value || "Exclusive";
+
+    const gst = calculateGST(amount, rate, type);
+
+    const gstAmount = Number(gst.gst || 0);
+    const totalAmount = Number(gst.total || amount);
+
+    const cgstAmount = row.querySelector(".cgstAmount");
+    const sgstAmount = row.querySelector(".sgstAmount");
+    const igstAmount = row.querySelector(".igstAmount");
+    const gstAmountInput = row.querySelector(".gstAmount");
+    const totalAmountInput = row.querySelector(".totalAmount");
+
+    if (companyGSTNo === partyGSTNo) {
+
+        if (cgstAmount) cgstAmount.value = (gstAmount / 2).toFixed(2);
+        if (sgstAmount) sgstAmount.value = (gstAmount / 2).toFixed(2);
+        if (igstAmount) igstAmount.value = "0.00";
+
+    } else {
+
+        if (cgstAmount) cgstAmount.value = "0.00";
+        if (sgstAmount) sgstAmount.value = "0.00";
+        if (igstAmount) igstAmount.value = gstAmount.toFixed(2);
+
+    }
+
+    if (gstAmountInput) gstAmountInput.value = gstAmount.toFixed(2);
+    if (totalAmountInput) totalAmountInput.value = totalAmount.toFixed(2);
 }
 
-// ===========================================================
-// SAVE VOUCHER
-// ===========================================================
-async function saveVoucher() {
-    if (STATE.isSaving) return;
+// document.querySelectorAll(".entry-card").forEach(updateGST);
 
-    calculateTotals();
-    if (!validateVoucher()) return;
+function calculateGST(amount, rate, type) {
 
-    STATE.isSaving = true;
-    DOM.saveButton.disabled = true;
-    DOM.saveButton.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Saving...';
+    amount = Number(amount) || 0;
+    rate = Number(rate) || 0;
 
-    try {
-        const voucher = {
-            company_id: CompanyID,
-            voucher_no: DOM.voucherNo.value,
-            voucher_date: DOM.voucherDate.value,
-            voucher_type: DOM.voucherType.value,
-            reference_no: DOM.referenceNo.value,
-            narration: DOM.narration.value,
-            created_by: UserLoginID,
-            details: getVoucherLines()
+    if (rate <= 0) {
+        return {
+            taxable: amount,
+            gst: 0,
+            total: amount
         };
-
-        const { data, error } = await supabaseClient.rpc(
-            "save_accounting_voucher",
-            { voucher_data: voucher }
-        );
-
-        if (error) throw error;
-
-        alert("Voucher Saved Successfully");
-        clearVoucher();
-        await loadVoucherNumber();
-
-    } catch (error) {
-        console.error("Save error:", error);
-        alert(error.message);
-    } finally {
-        STATE.isSaving = false;
-        DOM.saveButton.disabled = false;
-        DOM.saveButton.innerHTML = '<i class="bi bi-floppy"></i> Save';
     }
-}
 
-function getVoucherLines() {
-    return Array.from(DOM.voucherBody.rows).map((row, index) => ({
-        lineNo: index + 1,
-        accountCode: row.querySelector(".accountCode").value,
-        partyCode: row.querySelector(".partyCode").value,
-        debit: Number(row.querySelector(".debit")?.value || 0),
-        credit: Number(row.querySelector(".credit")?.value || 0),
-        gstPercent: Number(row.querySelector(".gstRate")?.value || 0),
-        gstAmount: Number(row.querySelector(".gstAmount")?.value || 0),
-        remarks: row.querySelector(".remarks")?.value || ""
-    }));
-}
+    // Inclusive GST
+    if (type === "Inclusive") {
 
-// ===========================================================
-// TRANSACTION MODE
-// ===========================================================
-function updateTransactionMode() {
-    const mode = DOM.transactionMode.value;
-    const showBank = ["Bank", "Cheque", "NEFT", "RTGS", "IMPS", "UPI"].includes(mode);
+        const taxable = amount / (1 + rate / 100);
+        const gst = amount - taxable;
 
-    DOM.bankSection.style.display = showBank ? "" : "none";
-    DOM.instrumentSection.style.display = showBank ? "" : "none";
-    DOM.narrationSection.className = showBank ? "col-5" : "col-10";
-
-    if (!showBank) {
-        DOM.bankAccount.value = "";
-        DOM.instrumentNo.value = "";
+        return {
+            taxable: Number(taxable.toFixed(2)),
+            gst: Number(gst.toFixed(2)),
+            total: amount
+        };
     }
+
+    // Exclusive GST
+    const gst = amount * rate / 100;
+
+    return {
+        taxable: amount,
+        gst: Number(gst.toFixed(2)),
+        total: Number((amount + gst).toFixed(2))
+    };
 }
 
-// ===========================================================
-// GLOBAL EVENT HANDLERS
-// ===========================================================
-function handleSearchButtons(e) {
-    const accountBtn = e.target.closest(".accountSearch");
-    if (accountBtn) {
-        const row = accountBtn.closest("tr");
-        openAccountSearch(row.querySelector(".accountName"));
+document.addEventListener("keydown", function (e) {
+
+    if (e.key !== "Delete") return;
+
+    if (e.target.classList.contains("accountName")) {
+
+        const row = e.target.closest(".entry-card");
+
+        e.target.value = "";
+        row.querySelector(".accountCode").value = "";
+
+        e.preventDefault();
+    }
+
+    if (e.target.classList.contains("partyName")) {
+
+        const row = e.target.closest(".entry-card");
+
+        e.target.value = "";
+        row.querySelector(".partyCode").value = "";
+        document.getElementById("partyGST").value = "";
+
+        updateGST(row);
+
+        e.preventDefault();
+    }
+
+});
+
+async function loadVoucherNumber() {
+
+    const voucherType = document.getElementById("voucherType").value;
+    const voucherDate = document.getElementById("voucherDate").value;
+
+    const { data, error } = await supabaseClient.rpc(
+        "generate_voucher_no",
+        {
+            p_company_id: CompanyID,
+            p_voucher_type: voucherType,
+            p_date: voucherDate
+        }
+    );
+
+    if (error) {
+        console.error(error);
         return;
     }
 
-    const partyBtn = e.target.closest(".partySearch");
-    if (partyBtn) {
-        const row = partyBtn.closest("tr");
-        openPartySearch(row.querySelector(".partyName"));
-    }
+    document.getElementById("voucherNo").value = data;
 }
 
-function handleGSTRateChange(e) {
-    if (!e.target.classList.contains("gstRate")) return;
-    const row = e.target.closest("tr");
-    if (row) updateRowGST(row);
+
+
+async function saveUpdateAccountingVoucher() {
+    
 }
 
-function handleInputBlur(e) {
-    if (e.target.classList.contains("debit") || e.target.classList.contains("credit")) {
-        e.target.value = Number(e.target.value || 0).toFixed(2);
-    }
-}
 
-function handleGlobalKeys(e) {
-    const activeElement = document.activeElement;
-    const row = activeElement?.closest?.("tr");
 
-    // Delete empty row
-    if (e.key === "Delete" && row) {
-        if (DOM.voucherBody.rows.length > 1) {
-            const debit = Number(row.querySelector(".debit")?.value || 0);
-            const credit = Number(row.querySelector(".credit")?.value || 0);
-            if (debit === 0 && credit === 0) {
-                row.remove();
-                renumberRows();
-                calculateTotals();
-            }
-        }
-    }
 
-    // Ctrl+S - Save
-    if (e.ctrlKey && e.key.toLowerCase() === "s") {
-        e.preventDefault();
-        DOM.saveButton.click();
-    }
-
-    // Ctrl+D - Copy previous row
-    if (e.ctrlKey && e.key.toLowerCase() === "d" && row) {
-        const prev = row.previousElementSibling;
-        if (prev) {
-            e.preventDefault();
-            const fields = ["accountName", "partyName", "accountCode", "partyCode"];
-            fields.forEach(field => {
-                const prevVal = prev.querySelector(`.${field}`)?.value;
-                if (prevVal) row.querySelector(`.${field}`).value = prevVal;
-            });
-        }
-    }
-
-    // Enter/F2 - Open search
-    if (["Enter", "F2"].includes(e.key) && row) {
-        if (e.target.classList.contains("accountName")) {
-            e.preventDefault();
-            row.querySelector(".accountSearch")?.click();
-        }
-        if (e.target.classList.contains("partyName")) {
-            e.preventDefault();
-            row.querySelector(".partySearch")?.click();
-        }
-    }
-}
-
-// ===========================================================
-// INITIAL LOAD
-// ===========================================================
-// Initial call to renumber and calculate
-renumberRows();
-calculateTotals();
-updateTransactionMode();
-
-// Export for debugging if needed
-window.__app = { DOM, STATE, addRow, saveVoucher };

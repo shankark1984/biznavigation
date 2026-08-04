@@ -289,12 +289,12 @@ async function getOpeningBalance(filters = {}) {
         .select("Debit,Credit")
         .eq("company_id", CompanyID);
 
-    console.log(filters);
+    // console.log(filters);
     // Customer Filter
     if (filters.bankAccountName) {
         query = query.ilike("BankAccountNo", `%${filters.bankAccountName}%`);
     }
-    console.log(query);
+    // console.log(query);
     // Determine Opening Date
     let openingDate = "";
 
@@ -328,7 +328,7 @@ async function getOpeningBalance(filters = {}) {
     const credit = data.reduce((sum, row) => sum + Number(row.Credit || 0), 0);
 
     const net = credit - debit;
-    console.log(net);
+    // console.log(net);
     return {
         debit,
         credit,

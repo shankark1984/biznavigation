@@ -322,32 +322,23 @@ document.getElementById('employeeStatus').addEventListener('change', function ()
 
 async function generateEmployeeCode() {
     try {
-        const { data, error } = await supabaseClient
-            .from("EmployeeMaster")
-            .select("EmployeeCode")
-            .eq("company_id", CompanyID)
-            .order("EmployeeCode", { ascending: false })
-            .limit(1);
+
+        const { data, error } = await supabaseClient.rpc(
+            "generate_employee_code",
+            {
+                p_company_id: CompanyID
+            }
+        );
 
         if (error) throw error;
 
-        let nextNo = 1;
-
-        if (data && data.length > 0) {
-            const lastCode = data[0].EmployeeCode || "";
-            const num = parseInt(lastCode.replace(/\D/g, ""), 10);
-            nextNo = isNaN(num) ? 1 : num + 1;
-        }
-
-        const newCode = `E${String(nextNo).padStart(4, "0")}`;
-
         $("#employeeCode")
-            .val(newCode)
+            .val(data)
             .prop("readonly", true);
 
     } catch (err) {
-        console.error("Employee code generation failed:", err);
-        alert("Unable to generate Employee Code");
+        console.error(err);
+        showAlert("Unable to generate Employee Code", "danger");
     }
 }
 /* ==============================
@@ -360,7 +351,7 @@ async function saveUpdateUserCredentials() {
         const userType = document.getElementById('userType').value; // Role ID
         const employeeCode = document.getElementById('employeeCode').value;
         const employeeName = document.getElementById('employeeName').value.trim();
-        const tempPassword = sha256(reSetPass); // Default password
+        const tempPassword = await bcrypt.hash(reSetPass, 12);//sha256(reSetPass); // Default password
         const workingBranch = await getUserWorkingBranch(empID);
 
         /* ==============================
@@ -470,8 +461,8 @@ async function resetUserPassword() {
             showToast("Login ID cannot be the same as Employee Code");
             return;
         }
+        console.log(typeof bcrypt);
         const tempPassword = sha256(reSetPass); // Default password
-
         const { error } = await supabaseClient
             .from('user_login')
             .update({

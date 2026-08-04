@@ -2301,3 +2301,41 @@ function showError(error) {
     alert(message);
 
 }
+
+function showAlert(message, type = "success", duration = 3000) {
+
+    const container = document.getElementById("alertContainer");
+    if (!container) {
+        console.error("alertContainer not found.");
+        return;
+    }
+
+    const icons = {
+        success: "bi-check-circle-fill",
+        danger: "bi-x-circle-fill",
+        warning: "bi-exclamation-triangle-fill",
+        info: "bi-info-circle-fill"
+    };
+
+    const alert = document.createElement("div");
+    alert.className = `alert alert-${type} alert-dismissible fade show shadow`;
+    alert.role = "alert";
+
+    alert.innerHTML = `
+        <i class="bi ${icons[type] || icons.info} me-2"></i>
+        ${message}
+        <button type="button"
+                class="btn-close"
+                data-bs-dismiss="alert"
+                aria-label="Close"></button>
+    `;
+
+    container.appendChild(alert);
+
+    if (duration > 0) {
+        setTimeout(() => {
+            alert.classList.remove("show");
+            setTimeout(() => alert.remove(), 300);
+        }, duration);
+    }
+}

@@ -53,9 +53,12 @@ resetForm.addEventListener('submit', async (e) => {
     }
 
     // 🔐 TODO: Supabase password update logic
+    // const hashPassword = await bcrypt.hash(pwd, 12);
+
     const { data, error } = await supabaseClient
         .from('user_login')
         .update({
+            // user_password: hashPassword,
             user_password: sha256(pwd).toString(),
         })
         .eq('user_login_id', localStorage.getItem('UserLoginID'));

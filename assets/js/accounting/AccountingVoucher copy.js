@@ -1,46 +1,403 @@
-/* ==========================================================
-   AccountingVoucher.js
-   Logistics ERP
-========================================================== */
+//AccountingVoucher.js
+
+let accountMaster = [];
+let currentPartyTextbox = null;
+let partyMaster = [];
+let currentAccountTextbox;
+
 
 const voucherBody = document.getElementById("voucherBody");
 const totalDebitEl = document.getElementById("totalDebit");
 const totalCreditEl = document.getElementById("totalCredit");
-const differenceEl = document.getElementById("difference");
+
+const transactionMode = document.getElementById("transactionMode");
+const bankSection = document.getElementById("bankSection");
+const instrumentSection = document.getElementById("instrumentSection");
+const narrationSection = document.getElementById("narrationSection");
 
 const btnAddRow = document.getElementById("btnAddRow");
 
+
 document.addEventListener("DOMContentLoaded", async () => {
-    await initVoucher();
-});
-
-/*==========================================================
-    INITIALIZE
-==========================================================*/
-
-async function initVoucher() {
-
     const today = new Date();
     document.getElementById("voucherDate").value =
         today.toLocaleDateString("en-CA");
 
     calculateTotals();
-    bindEvents(voucherBody.rows[0]);
+    // bindEvents(voucherBody.rows[0]);
     await loadAccounts();
     await loadParties(CompanyID);
     await loadVoucherNumber();
     await loadBranches(CompanyID);
     await loadCostCenters(CompanyID);
     await loadBankAccounts(CompanyID, 'Bank');
-}
+});
 
 /*==========================================================
-    ADD ROW
+    CALCULATE TOTALS
 ==========================================================*/
 
-btnAddRow.addEventListener("click", () => {
-    addRow();
+function calculateTotals() {
+
+    let totalDebit = 0;
+    let totalCredit = 0;
+    let totalGST = 0;
+
+    for (const row of voucherBody.rows) {
+        totalDebit += Number(row.querySelector(".debit")?.value) || 0;
+        totalCredit += Number(row.querySelector(".credit")?.value) || 0;
+        totalGST += Number(row.querySelector(".gstAmount")?.value) || 0;
+    }
+
+    totalDebitEl.textContent = totalDebit.toFixed(2);
+    totalCreditEl.textContent = totalCredit.toFixed(2);
+    document.getElementById("totalGst").textContent = totalGST.toFixed(2);
+
+    return {
+        debit: totalDebit,
+        credit: totalCredit,
+        gst: totalGST,
+        balance: totalDebit - totalCredit
+    };
+
+}
+
+
+
+function updateGST(row) {
+    const debit = Number(row.querySelector(".debit").value) || 0;
+    const credit = Number(row.querySelector(".credit").value) || 0;
+    const amount = debit > 0 ? debit : credit;
+    const rate = Number(row.querySelector(".gstRate").value) || 0;
+    const gstType = row.querySelector(".gstType")?.value ?? "Exclusive";
+    const result = calculateGST(amount, rate, gstType);
+
+    row.querySelector(".gstAmount").value = result.gst.toFixed(2);
+    row.querySelector(".totalAmount").value = result.total.toFixed(2);
+
+}
+
+document.getElementById("voucherDate").addEventListener("change", async () => {
+    await loadVoucherNumber();
 });
+function calculateGST(amount, rate, type) {
+
+    amount = Number(amount) || 0;
+    rate = Number(rate) || 0;
+
+    if (rate <= 0) {
+        return {
+            taxable: amount,
+            gst: 0,
+            total: amount
+        };
+    }
+
+    // GST Inclusive
+    if (type === "Inclusive") {
+
+        const taxable = amount / (1 + (rate / 100));
+        const gst = amount - taxable;
+
+        return {
+            taxable: Number(taxable.toFixed(2)),
+            gst: Number(gst.toFixed(2)),
+            total: amount
+        };
+    }
+
+    // GST Exclusive
+    const gst = amount * rate / 100;
+
+    return {
+        taxable: amount,
+        gst: Number(gst.toFixed(2)),
+        total: Number((amount + gst).toFixed(2))
+    };
+
+}
+
+async function loadVoucherNumber() {
+
+    const voucherType = document.getElementById("voucherType").value;
+    const voucherDate = document.getElementById("voucherDate").value;
+
+    const { data, error } = await supabaseClient.rpc(
+        "generate_voucher_no",
+        {
+            p_company_id: CompanyID,
+            p_voucher_type: voucherType,
+            p_date: voucherDate
+        }
+    );
+
+    if (error) {
+        console.error(error);
+        return;
+    }
+
+    document.getElementById("voucherNo").value = data;
+}
+
+async function loadAccounts() {
+
+    const { data, error } = await supabaseClient
+        .from("ChartOfAccountsView")
+        .select("*")
+        .order("AccountName");
+    if (error) {
+        console.error(error);
+        return;
+    }
+
+    accountMaster = data || [];
+    renderAccounts(accountMaster);
+
+}
+
+function renderAccounts(data) {
+
+    const tbody = document.getElementById("accountListBody");
+
+    let html = "";
+
+    data.forEach(acc => {
+        html += `
+            <tr data-code="${acc.AccountCode}">
+                <td>${acc.AccountCode}</td>
+                <td>${acc.AccountName}</td>
+                <td>${acc.AccountType}</td>
+            </tr>`;
+    });
+
+    tbody.innerHTML = html;
+
+}
+
+async function loadParties(companyId) {
+
+    const { data, error } = await supabaseClient
+
+        .from("AccountMasterView")
+
+        .select(`
+            AccountCode,
+            AccountName,
+            GSTNumber,
+            State
+        `)
+
+        .eq("company_id", companyId)
+
+        .order("AccountName");
+
+    if (error) {
+
+        console.error(error);
+
+        return;
+
+    }
+
+    partyMaster = data;
+
+    renderPartyList(data);
+}
+
+function renderPartyList(data) {
+
+    const tbody = document.getElementById("partyListBody");
+
+    tbody.innerHTML = "";
+
+    data.forEach(p => {
+
+        tbody.innerHTML += `
+
+        <tr
+            data-code="${p.AccountCode}">
+            <td>${p.AccountCode}</td>
+            <td>${p.AccountName}</td>
+            <td>${p.GSTNumber ?? ""}</td>
+            <td>${p.State ?? ""}</td>
+        </tr>
+
+        `;
+
+    });
+
+}
+
+document.getElementById("partySearch").addEventListener("input", function () {
+    const txt = this.value.toLowerCase();
+    const filtered = partyMaster.filter(p =>
+        p.AccountCode.toLowerCase().includes(txt)
+        ||
+        p.AccountName.toLowerCase().includes(txt)
+        ||
+        (p.GSTNumber || "").toLowerCase().includes(txt)
+    );
+    renderPartyList(filtered);
+});
+
+function openPartySearch(input) {
+    currentPartyTextbox = input;
+    const modal = new bootstrap.Modal(
+        document.getElementById("partyModal")
+    );
+    modal.show();
+    document.getElementById("partySearch").focus();
+}
+
+document.getElementById("partyListBody").addEventListener("click", function (e) {
+    const row = e.target.closest("tr");
+    if (!row) return;
+    const code = row.dataset.code;
+    const party = partyMaster.find(x =>
+        x.AccountCode === code
+    );
+    currentPartyTextbox.value = party.AccountName;
+    currentPartyTextbox.parentElement.querySelector(".partyCode").value = party.AccountCode;
+    bootstrap.Modal.getInstance(
+        document.getElementById("partyModal")
+    ).hide();
+});
+
+document.addEventListener("click", function (e) {
+    if (e.target.closest(".partySearch")) {
+        const row = e.target.closest("tr");
+        openPartySearch(
+            row.querySelector(".partyName")
+        );
+    }
+});
+
+//==================================================
+// Show/Hide Bank Details
+//==================================================
+function toggleTransactionFields() {
+
+    const transactionMode = document.getElementById("transactionMode");
+    const bankSection = document.getElementById("bankSection");
+    const instrumentSection = document.getElementById("instrumentSection");
+    const narrationSection = document.getElementById("narrationSection");
+    const bankAccount = document.getElementById("bankAccount");
+    const instrumentNo = document.getElementById("instrumentNo");
+
+    if (!transactionMode) return;
+
+    const mode = transactionMode.value;
+
+    const showBankDetails = [
+        "Bank",
+        "Cheque",
+        "NEFT",
+        "RTGS",
+        "IMPS",
+        "UPI"
+    ].includes(mode);
+
+    // Show/Hide Bank Section
+    if (bankSection) {
+        bankSection.style.display = showBankDetails ? "" : "none";
+    }
+
+    // Show/Hide Instrument Section
+    if (instrumentSection) {
+        instrumentSection.style.display = showBankDetails ? "" : "none";
+    }
+
+    // Change Narration Width
+    if (narrationSection) {
+        narrationSection.classList.remove("col-5", "col-10");
+        narrationSection.classList.add(showBankDetails ? "col-5" : "col-10");
+    }
+
+    // Clear values when hidden
+    if (!showBankDetails) {
+        if (bankAccount) bankAccount.value = "";
+        if (instrumentNo) instrumentNo.value = "";
+    }
+}
+
+//==================================================
+// Event
+//==================================================
+
+if (transactionMode) {
+    transactionMode.addEventListener("change", toggleTransactionFields);
+
+    // Run once on page load
+    toggleTransactionFields();
+}
+
+
+
+// Trigger on page load
+transactionMode.dispatchEvent(new Event("change"));
+
+document.addEventListener("keydown", function (e) {
+    if (!["Enter", "F2"].includes(e.key)) return;
+    const row = e.target.closest("tr");
+    if (!row) return;
+    if (e.target.classList.contains("accountName")) {
+        e.preventDefault();
+        row.querySelector(".accountSearch").click();
+    }
+    if (e.target.classList.contains("partyName")) {
+        e.preventDefault();
+        row.querySelector(".partySearch").click();
+    }
+});
+
+// Trigger on input change of debit or credit amount field in voucher 
+document.addEventListener("input", function (e) {
+    if (e.target.classList.contains("debit") || e.target.classList.contains("credit")) {
+
+        const row = e.target.closest("tr");
+        const debit = row.querySelector(".debit");
+        const credit = row.querySelector(".credit");
+
+        if (e.target.classList.contains("debit")) {
+            if (parseFloat(debit.value) > 0) {
+                credit.value = 0;
+                credit.disabled = true;
+            } else {
+                credit.disabled = false;
+            }
+        }
+
+        if (e.target.classList.contains("credit")) {
+            if (parseFloat(credit.value) > 0) {
+                debit.value = 0;
+                debit.disabled = true;
+            } else {
+                debit.disabled = false;
+            }
+        }
+    }
+});
+
+document.getElementById("voucherType").addEventListener("change", async function () {
+
+    clearVoucher();
+
+    await loadVoucherNumber();
+
+});
+
+function clearVoucher() {
+
+    voucherBody.innerHTML = "";
+
+    addRow();
+
+    document.getElementById("referenceNo").value = "";
+    document.getElementById("narration").value = "";
+
+    calculateTotals();
+
+}
 
 function addRow() {
 
@@ -79,23 +436,28 @@ function addRow() {
         </button>
     </div>
 </td>
-
+<td><textarea class="form-control remarks" rows="1"></textarea></td>
 <td>
     <input type="number"
            step="0.01"
-           value="0"
+           placeholder="0.00"
            class="form-control debit text-end">
 </td>
 
 <td>
     <input type="number"
            step="0.01"
-           value="0"
+           placeholder="0.00"
            class="form-control credit text-end">
 </td>
-
 <td>
-    <select class="form-select gstRate">
+    <select class="form-select gstType">
+    <option value="Exclusive" selected>Exclusive</option>
+    <option value="Inclusive">Inclusive</option>
+    </select>
+</td>
+<td>
+    <select class="form-select gstRate text-end">
         <option value="0">0%</option>
         <option value="5">5%</option>
         <option value="12">12%</option>
@@ -110,8 +472,7 @@ function addRow() {
            value="0"
            readonly>
 </td>
-<td><input type="number" class="form-control totalAmount text-end" readonly></td>
-<td><input class="form-control remarks"></td>
+<td><input type="number" class="form-control totalAmount text-end" readonly value="0"></td>
 
 <td class="text-center">
     <button class="btn btn-danger btn-sm deleteRow">
@@ -121,28 +482,8 @@ function addRow() {
 `;
 
     renumberRows();
-    bindEvents(row);
     row.querySelector(".accountName").focus();
 }
-
-/*==========================================================
-    DELETE ROW
-==========================================================*/
-
-function deleteRow(button) {
-    if (voucherBody.rows.length === 1) {
-        alert("Minimum one row required.");
-        return;
-    }
-
-    button.closest("tr").remove();
-    renumberRows();
-    calculateTotals();
-}
-
-/*==========================================================
-    RENUMBER
-==========================================================*/
 
 function renumberRows() {
     [...voucherBody.rows].forEach((row, index) => {
@@ -150,400 +491,6 @@ function renumberRows() {
         row.querySelector(".deleteRow").disabled =
             voucherBody.rows.length === 1;
     });
-}
-
-/*==========================================================
-    EVENTS
-==========================================================*/
-
-function bindEvents(row) {
-
-    row.querySelector(".deleteRow").addEventListener("click", function () {
-        deleteRow(this);
-    });
-    row.querySelector(".debit").addEventListener("input", calculateTotals);
-    row.querySelector(".credit").addEventListener("input", calculateTotals);
-    row.querySelector(".gstRate").addEventListener("change", function () {
-        updateGST(row);
-        calculateTotals();
-
-    });
-}
-
-/*==========================================================
-    TOTALS
-==========================================================*/
-
-function calculateTotals() {
-
-    let debit = 0;
-    let credit = 0;
-    let gst = 0;
-
-    [...voucherBody.rows].forEach(row => {
-
-        debit += Number(row.querySelector(".debit").value || 0);
-        credit += Number(row.querySelector(".credit").value || 0);
-        gst += Number(row.querySelector(".gstAmount").value || 0);
-
-    });
-
-    totalDebitEl.innerText = debit.toFixed(2);
-    totalCreditEl.innerText = credit.toFixed(2);
-
-    document.getElementById("totalGst").innerText = gst.toFixed(2);
-
-    const difference = debit - credit;
-
-    differenceEl.innerText = difference.toFixed(2);
-
-    differenceEl.classList.toggle("balance-ok", difference === 0);
-    differenceEl.classList.toggle("balance-error", difference !== 0);
-
-}
-
-/*==========================================================
-    VALIDATION
-==========================================================*/
-
-function validateVoucher() {
-
-    const debit = parseFloat(totalDebitEl.textContent) || 0;
-    const credit = parseFloat(totalCreditEl.textContent) || 0;
-
-    console.log({
-        totalDebit: debit,
-        totalCredit: credit
-    });
-
-    // console.log({
-    //     rowDebit: debitAmt,
-    //     rowCredit: creditAmt
-    // });
-    if (debit === 0 && credit === 0) {
-        alert("Enter either a Debit or Credit amount.");
-        return false;
-    }
-
-    if (debit !== credit) {
-        alert("Voucher is not balanced.");
-        return false;
-    }
-
-    // Validate each row
-    for (const row of voucherBody.rows) {
-
-        const accountCode = row.querySelector(".accountCode")?.value || "";
-
-        if (!accountCode) {
-            alert("Please select an account.");
-            row.querySelector(".accountSearch").focus();
-            return false;
-        }
-
-        const debitAmt = parseFloat(row.querySelector(".debit")?.value) || 0;
-
-        const creditAmt = parseFloat(row.querySelector(".credit")?.value) || 0;
-
-        if (debitAmt === 0 && creditAmt === 0) {
-            alert("Enter a debit or credit amount.");
-            row.querySelector(".debit").focus();
-            return false;
-        }
-
-        if (debitAmt > 0 && creditAmt > 0) {
-            alert("A row cannot contain both Debit and Credit.");
-            row.querySelector(".debit").focus();
-            return false;
-        }
-    }
-
-    return true;
-}
-
-/*==========================================================
-    DELETE BUTTON
-==========================================================*/
-
-document.getElementById("deleteButton").addEventListener("click", () => {
-    alert("Delete module coming next.");
-});
-
-/*==========================================================
-    PRINT BUTTON
-==========================================================*/
-
-document.getElementById("reportButton").addEventListener("click", () => {
-    window.print();
-});
-
-renumberRows();
-calculateTotals();
-
-/*==========================================================
-    BIND KEYBOARD EVENTS
-==========================================================*/
-
-function bindKeyboardEvents(row) {
-    const controls = row.querySelectorAll("input,select");
-    controls.forEach((control, index) => {
-        control.addEventListener("keydown", function (e) {
-            /*-------------------------------------
-              ENTER = NEXT FIELD
-            -------------------------------------*/
-            if (e.key === "Enter") {
-                e.preventDefault();
-                if (index < controls.length - 1) {
-                    controls[index + 1].focus();
-                    controls[index + 1].select?.();
-                }
-                else {
-                    moveToNextRow(row);
-                }
-            }
-
-            /*-------------------------------------
-              DOWN ARROW
-            -------------------------------------*/
-
-            if (e.key === "ArrowDown") {
-                e.preventDefault();
-                const next = row.nextElementSibling;
-                if (next) {
-                    next.querySelectorAll("input,select")[index].focus();
-                }
-            }
-            /*-------------------------------------
-              UP ARROW
-            -------------------------------------*/
-
-            if (e.key === "ArrowUp") {
-                e.preventDefault();
-                const prev = row.previousElementSibling;
-                if (prev) {
-                    prev.querySelectorAll("input,select")[index].focus();
-                }
-            }
-        });
-    });
-
-}
-
-/*==========================================================
-    MOVE TO NEXT ROW
-==========================================================*/
-
-function moveToNextRow(currentRow) {
-    const nextRow = currentRow.nextElementSibling;
-    if (nextRow) {
-        nextRow.querySelector(".accountName").focus();
-        return;
-    }
-    addRow();
-}
-
-/*==========================================================
-    DEBIT/CREDIT RULE
-==========================================================*/
-
-function bindDebitCreditRule(row) {
-    const debit = row.querySelector(".debit");
-    const credit = row.querySelector(".credit");
-    debit.addEventListener("input", function () {
-        if (Number(this.value) > 0) {
-            credit.value = 0;
-        }
-        updateGST(row);
-        calculateTotals();
-    });
-    credit.addEventListener("input", function () {
-        if (Number(this.value) > 0) {
-            debit.value = 0;
-        }
-        updateGST(row);
-        calculateTotals();
-    });
-}
-
-/*==========================================================
-    DELETE EMPTY ROW
-==========================================================*/
-
-document.addEventListener("keydown", function (e) {
-
-    if (e.key !== "Delete") return;
-    const row = document.activeElement.closest("tr");
-    if (!row) return;
-    if (voucherBody.rows.length === 1) return;
-    const debit = Number(row.querySelector(".debit").value);
-    const credit = Number(row.querySelector(".credit").value);
-
-    if (debit === 0 && credit === 0) {
-        row.remove();
-        renumberRows();
-        calculateTotals();
-    }
-});
-
-/*==========================================================
-    CTRL + S
-==========================================================*/
-
-document.addEventListener("keydown", function (e) {
-    if (!(e.ctrlKey && e.key.toLowerCase() === "s")) return;
-    e.preventDefault();
-    document.getElementById("saveButton").click();
-});
-
-/*==========================================================
-    CTRL + D
-    COPY PREVIOUS ACCOUNT & PARTY
-==========================================================*/
-
-document.addEventListener("keydown", function (e) {
-
-    if (!(e.ctrlKey && e.key.toLowerCase() === "d")) return;
-    const row = document.activeElement.closest("tr");
-    if (!row) return;
-    const prev = row.previousElementSibling;
-    if (!prev) return;
-    e.preventDefault();
-
-    row.querySelector(".accountName").value = prev.querySelector(".accountName").value;
-    row.querySelector(".partyName").value = prev.querySelector(".partyName").value;
-
-    row.querySelector(".accountCode").value = prev.querySelector(".accountCode").value;
-    row.querySelector(".partyCode").value = prev.querySelector(".partyCode").value;
-
-});
-
-/*==========================================================
-    OVERRIDE bindEvents()
-==========================================================*/
-
-const oldBindEvents = bindEvents;
-
-bindEvents = function (row) {
-
-    oldBindEvents(row);
-
-    bindKeyboardEvents(row);
-
-    bindDebitCreditRule(row);
-
-};
-
-
-let accountMaster = [];
-
-async function loadAccounts() {
-
-    const { data, error } = await supabaseClient
-        .from("ChartOfAccountsView")
-        .select("*")
-        .order("AccountName");
-
-    if (error) {
-        console.error(error);
-        return;
-    }
-
-    accountMaster = data || [];
-    renderAccounts(accountMaster);
-
-}
-
-function renderAccounts(data) {
-
-    const tbody = document.getElementById("accountListBody");
-
-    tbody.innerHTML = "";
-
-    data.forEach(acc => {
-
-        tbody.innerHTML += `
-<tr data-code="${acc.AccountCode}">
-    <td>${acc.AccountCode}</td>
-    <td>${acc.AccountName}</td>
-    <td>${acc.AccountType}</td>
-</tr>`;
-
-    });
-
-}
-document.getElementById("accountListBody")
-    .addEventListener("click", function (e) {
-
-        const row = e.target.closest("tr");
-
-        if (!row) return;
-
-        selectAccount(row.dataset.code);
-
-    });
-
-document
-    .getElementById("accountSearch")
-    .addEventListener("input", function () {
-
-        const txt = this.value.toLowerCase();
-
-        const filtered =
-
-            accountMaster.filter(a =>
-
-                a.AccountCode.toLowerCase().includes(txt)
-
-                ||
-
-                a.AccountName.toLowerCase().includes(txt)
-
-            );
-
-        renderAccounts(filtered);
-
-    });
-
-let currentAccountTextbox;
-
-function openAccountSearch(input) {
-
-    currentAccountTextbox = input;
-
-    document.getElementById("accountSearch").value = "";
-
-    renderAccounts(accountMaster);
-
-    new bootstrap.Modal(
-        document.getElementById("accountModal")
-    ).show();
-
-}
-
-function selectAccount(code) {
-
-    const acc =
-
-        accountMaster.find(x => x.AccountCode === code);
-
-    currentAccountTextbox.value =
-
-        acc.AccountName;
-
-    currentAccountTextbox.parentElement
-
-        .querySelector(".accountCode")
-
-        .value =
-
-        acc.AccountCode;
-
-    bootstrap.Modal.getInstance(
-
-        document.getElementById("accountModal")
-
-    ).hide();
-
 }
 
 document.addEventListener("click", function (e) {
@@ -560,380 +507,388 @@ document.addEventListener("click", function (e) {
 
 });
 
-
-
-async function loadParties(companyId) {
-
-    const { data, error } = await supabaseClient
-
-        .from("PartyDetails")
-
-        .select(`
-            PartyCode,
-            PartyName,
-            GSTNumber,
-            State
-        `)
-
-        .eq("company_id", companyId)
-
-        .order("PartyName");
-
-    if (error) {
-
-        console.error(error);
-
-        return;
-
-    }
-
-    partyMaster = data;
-
-    renderPartyList(data);
-
-}
-
-
-
-function renderPartyList(data) {
-
-    const tbody = document.getElementById("partyListBody");
-
-    tbody.innerHTML = "";
-
-    data.forEach(p => {
-
-        tbody.innerHTML += `
-
-        <tr
-            data-code="${p.PartyCode}">
-            <td>${p.PartyCode}</td>
-            <td>${p.PartyName}</td>
-            <td>${p.GSTNumber ?? ""}</td>
-            <td>${p.State ?? ""}</td>
-        </tr>
-
-        `;
-
-    });
-
-}
-
-document.getElementById("partySearch")
-    .addEventListener("input", function () {
-
-        const txt = this.value.toLowerCase();
-
-        const filtered = partyMaster.filter(p =>
-
-            p.PartyCode.toLowerCase().includes(txt)
-
-            ||
-
-            p.PartyName.toLowerCase().includes(txt)
-
-            ||
-
-            (p.GSTNumber || "").toLowerCase().includes(txt)
-
-        );
-
-        renderPartyList(filtered);
-
-    });
-
-let currentPartyTextbox = null;
-
-function openPartySearch(input) {
-
-    currentPartyTextbox = input;
-
-    const modal = new bootstrap.Modal(
-        document.getElementById("partyModal")
-    );
-
-    modal.show();
-
-    document.getElementById("partySearch").focus();
-
-}
-
-
-document
-    .getElementById("partyListBody")
-    .addEventListener("click", function (e) {
-
-        const row = e.target.closest("tr");
-
-        if (!row) return;
-
-        const code = row.dataset.code;
-
-        const party = partyMaster.find(x =>
-            x.PartyCode === code
-        );
-
-        currentPartyTextbox.value =
-            party.PartyName;
-
-        currentPartyTextbox
-            .parentElement
-            .querySelector(".partyCode")
-            .value =
-            party.PartyCode;
-
-        bootstrap.Modal.getInstance(
-            document.getElementById("partyModal")
-        ).hide();
-
-    });
-
-document.addEventListener("click", function (e) {
-
-    if (e.target.closest(".partySearch")) {
-
-        const row = e.target.closest("tr");
-
-        openPartySearch(
-            row.querySelector(".partyName")
-        );
-
-    }
-
-});
-
-function calculateGST(amount, rate) {
-    return (amount * rate) / 100;
-}
-
-document.addEventListener("input", function (e) {
-
-    if (!e.target.classList.contains("gstRate"))
-        return;
+document.getElementById("accountListBody").addEventListener("click", function (e) {
 
     const row = e.target.closest("tr");
 
-    const amount = Number(
+    if (!row) return;
 
-        row.querySelector(".debit").value ||
+    selectAccount(row.dataset.code);
 
-        row.querySelector(".credit").value
-
-    );
-    const rate = Number(e.target.value);
-    row.querySelector(".gstAmount").value =
-        calculateGST(amount, rate);
-    calculateTotals();
 });
+document.getElementById("accountSearch").addEventListener("input", function () {
 
-async function loadVoucherNumber() {
+    const txt = this.value.toLowerCase();
 
-    const voucherType = document.getElementById("voucherType").value;
-    const voucherDate = document.getElementById("voucherDate").value;
+    const filtered =
 
-    const { data, error } = await supabaseClient.rpc(
-        "generate_voucher_no",
-        {
-            p_company_id: CompanyID,
-            p_voucher_type: voucherType,
-            p_date: voucherDate
-        }
-    );
+        accountMaster.filter(a =>
 
-    if (error) {
-        console.error(error);
-        return;
-    }
+            a.AccountCode.toLowerCase().includes(txt)
 
-    document.getElementById("voucherNo").value = data;
-}
+            ||
 
-function getVoucherLines() {
+            a.AccountName.toLowerCase().includes(txt)
 
-    const rows = [];
-
-    document.querySelectorAll("#voucherBody tr").forEach((tr, index) => {
-
-        rows.push({
-            lineNo: index + 1,
-            accountCode: tr.querySelector(".accountCode").value,
-            partyCode: tr.querySelector(".partyCode").value,
-            debit: Number(tr.querySelector(".debit").value || 0),
-            credit: Number(tr.querySelector(".credit").value || 0),
-            gstPercent: Number(tr.querySelector(".gstRate").value || 0),
-            gstAmount: Number(tr.querySelector(".gstAmount").value || 0),
-            remarks: tr.querySelector(".remarks").value
-        });
-
-    });
-
-    return rows;
-}
-
-async function saveVoucher() {
-    const saveButton = document.getElementById("saveButton");
-    saveButton.disabled = true;
-    saveButton.innerHTML =
-        '<span class="spinner-border spinner-border-sm"></span> Saving...';
-    try {
-        calculateTotals();
-        if (!validateVoucher())
-            return;
-
-        const voucher = {
-            company_id: CompanyID,
-            voucher_no: document.getElementById("voucherNo").value,
-            voucher_date: document.getElementById("voucherDate").value,
-            voucher_type: document.getElementById("voucherType").value,
-            reference_no: document.getElementById("referenceNo").value,
-            narration: document.getElementById("narration").value,
-            created_by: UserLoginID,
-            details: getVoucherLines()
-        };
-
-        const { data, error } = await supabaseClient.rpc(
-            "save_accounting_voucher",
-            {
-                voucher_data: voucher
-            }
         );
 
-        if (error) {
-            alert(error.message);
-            return;
-        }
-
-        alert("Voucher Saved Successfully");
-        clearVoucher();
-
-        await loadVoucherNumber();
-
-    } catch (err) {
-
-        console.error(err);
-
-    }
-    finally {
-
-        saveButton.disabled = false;
-        saveButton.innerHTML =
-            '<i class="bi bi-floppy"></i> Save';
-
-    }
-}
-
-document.getElementById("saveButton").onclick = saveVoucher;
-
-document.getElementById("voucherType").addEventListener("change", async function () {
-
-    console.log("Voucher Type:", this.value);
-
-    clearVoucher();
-
-    await loadVoucherNumber();
+    renderAccounts(filtered);
 
 });
 
-document.getElementById("voucherDate")
-    .addEventListener("change", async () => {
-        await loadVoucherNumber();
-    });
-function updateGST(row) {
-
-    const amount = Number(row.querySelector(".debit").value || 0) ||
-        Number(row.querySelector(".credit").value || 0);
-
-    const rate = Number(row.querySelector(".gstRate").value || 0);
-
-    row.querySelector(".gstAmount").value = calculateGST(amount, rate).toFixed(2);
-    row.querySelector(".totalAmount").value = (amount + Number(row.querySelector(".gstAmount").value || 0)).toFixed(2);
+function openAccountSearch(input) {
+    currentAccountTextbox = input;
+    document.getElementById("accountSearch").value = "";
+    renderAccounts(accountMaster);
+    new bootstrap.Modal(
+        document.getElementById("accountModal")
+    ).show();
 }
 
-function clearVoucher() {
+function selectAccount(code) {
 
-    voucherBody.innerHTML = "";
+    const acc = accountMaster.find(x => x.AccountCode === code);
 
-    addRow();
+    currentAccountTextbox.value = acc.AccountName;
 
-    document.getElementById("referenceNo").value = "";
-    document.getElementById("narration").value = "";
+    const row = currentAccountTextbox.closest("tr");
 
+    row.querySelector(".accountCode").value = acc.AccountCode;
+
+    // ==========================
+    // Auto Fill GST Rate
+    // ==========================
+    if (acc.GSTRate) {
+        row.querySelector(".gstRate").value = acc.GSTRate;
+    }
+
+    // Recalculate GST & Total Amount
+    updateGST(row);
     calculateTotals();
 
+    // Close modal
+    bootstrap.Modal.getInstance(
+        document.getElementById("accountModal")
+    ).hide();
+
+    // Move cursor to Party field
+    row.querySelector(".partyName").focus();
 }
 
-document.addEventListener("blur", function (e) {
+voucherBody.addEventListener("blur", function (e) {
 
-    if (e.target.classList.contains("debit") ||
-        e.target.classList.contains("credit")) {
-
-        e.target.value =
-            Number(e.target.value || 0).toFixed(2);
-
+    if (
+        e.target.classList.contains("debit") ||
+        e.target.classList.contains("credit")
+    ) {
+        formatAmount(e.target);
     }
 
 }, true);
 
-
-const transactionMode = document.getElementById("transactionMode");
-const bankSection = document.getElementById("bankSection");
-const instrumentSection = document.getElementById("instrumentSection");
-const narrationSection = document.getElementById("narrationSection");
-
-transactionMode.addEventListener("change", () => {
-
-    const mode = transactionMode.value;
-
-    const showBankDetails = [
-        "Bank",
-        "Cheque",
-        "NEFT",
-        "RTGS",
-        "IMPS",
-        "UPI"
-    ].includes(mode);
-
-    if (showBankDetails) {
-
-        bankSection.style.display = "";
-        instrumentSection.style.display = "";
-
-        // Narration occupies 5 columns
-        narrationSection.classList.remove("col-10");
-        narrationSection.classList.add("col-5");
-
-    } else {
-
-        bankSection.style.display = "none";
-        instrumentSection.style.display = "none";
-
-        document.getElementById("bankAccount").value = "";
-        document.getElementById("instrumentNo").value = "";
-
-        // Narration occupies full width
-        narrationSection.classList.remove("col-5");
-        narrationSection.classList.add("col-10");
-    }
+btnAddRow.addEventListener("click", () => {
+    addRow();
 });
 
-// Trigger on page load
-transactionMode.dispatchEvent(new Event("change"));
+/*==========================================================
+    SAVE VOUCHER
+==========================================================*/
 
-document.addEventListener("keydown", function (e) {
+async function saveVoucher() {
+    let header = null;
+    try {
 
-    if (!["Enter", "F2"].includes(e.key)) return;
+        setSaveButton(true);
 
-    const row = e.target.closest("tr");
-    if (!row) return;
+        if (!validateVoucher())
+            return;
+        const voucher = buildVoucherHeader();
+        header = await insertVoucherHeader(voucher);
+        const voucherDetails = getVoucherLines(header.VoucherID);
 
-    if (e.target.classList.contains("accountName")) {
-        e.preventDefault();
-        row.querySelector(".accountSearch").click();
+        if (!voucherDetails.length)
+            throw new Error("No voucher details found.");
+
+        await insertVoucherDetails(voucherDetails);
+        showSuccess(`Voucher ${voucher.VoucherNo} saved successfully.`);
+        await resetVoucherForm();
+    }
+    catch (err) {
+
+        if (typeof header !== "undefined")
+            await rollbackVoucher(header.VoucherID);
+
+        showError(err);
+
+    }
+    finally {
+
+        setSaveButton(false);
+
     }
 
-    if (e.target.classList.contains("partyName")) {
-        e.preventDefault();
-        row.querySelector(".partySearch").click();
+}
+
+/*==========================================================
+    GET VOUCHER DETAILS
+==========================================================*/
+
+function getVoucherLines(voucherID) {
+    const rows = [];
+    const voucherRows = document.querySelectorAll("#voucherBody tr");
+    voucherRows.forEach((tr) => {
+
+        // Cache Controls
+        const accountCode = tr.querySelector(".accountCode")?.value.trim() || "";
+        const partyCode = tr.querySelector(".partyCode")?.value.trim() || "";
+        const debit = Number(tr.querySelector(".debit")?.value) || 0;
+        const credit = Number(tr.querySelector(".credit")?.value) || 0;
+        const gstType = tr.querySelector(".gstType")?.value || "Exclusive";
+        const gstPercent = Number(tr.querySelector(".gstRate")?.value) || 0;
+        const gstAmount = Number(tr.querySelector(".gstAmount")?.value) || 0;
+        const totalAmount = gstAmount + debit + credit;
+        const remarks = tr.querySelector(".remarks")?.value.trim() || "";
+
+        // Skip Completely Empty Rows
+        if (
+            !accountCode &&
+            !partyCode &&
+            debit === 0 &&
+            credit === 0 &&
+            gstAmount === 0 &&
+            remarks === ""
+        ) {
+            return;
+        }
+
+        rows.push({
+            LineNo: rows.length + 1,
+            VoucherID: voucherID,
+            AccountCode: accountCode,
+            PartyCode: partyCode || null,
+            Debit: debit,
+            Credit: credit,
+            GSTType: gstType,
+            GSTPercent: gstPercent,
+            GSTAmount: gstAmount,
+            TotalAmount: totalAmount,
+            Remarks: remarks
+        });
+    });
+    return rows;
+}
+
+/*==========================================================
+    ROLLBACK VOUCHER
+==========================================================*/
+
+async function rollbackVoucher(voucherID) {
+
+    if (!voucherID)
+        return;
+
+    try {
+
+        // Delete Details First
+        await supabaseClient
+            .from("AccountingVoucherDetails")
+            .delete()
+            .eq("VoucherID", voucherID);
+
+        // Delete Header
+        const { error } = await supabaseClient
+            .from("AccountingVoucher")
+            .delete()
+            .eq("VoucherID", voucherID);
+
+        if (error)
+            throw error;
+
+    }
+    catch (err) {
+
+        console.error("Rollback Failed :", err);
+
     }
 
-});
+}
+
+/*==========================================================
+    SAVE BUTTON
+==========================================================*/
+
+function setSaveButton(isSaving = false) {
+
+    const btn = document.getElementById("saveButton");
+
+    btn.disabled = isSaving;
+
+    btn.innerHTML = isSaving
+        ? '<span class="spinner-border spinner-border-sm"></span> Saving...'
+        : '<i class="bi bi-floppy"></i> Save';
+
+}
+
+/*==========================================================
+    BUILD HEADER
+==========================================================*/
+
+function buildVoucherHeader() {
+    return {
+        CompanyID: CompanyID,
+        VoucherNo: document.getElementById("voucherNo").value.trim(),
+        VoucherDate: document.getElementById("voucherDate").value,
+        VoucherType: document.getElementById("voucherType").value,
+        ReferenceNo: document.getElementById("referenceNo").value.trim(),
+        BranchID: document.getElementById("branch").value,
+        CostCenter: document.getElementById("costCenter").value,
+        TransactionMode: document.getElementById("transactionMode").value,
+        BankAccountID: document.getElementById("bankAccount").value || null,
+        ChequeUTRNo: document.getElementById("instrumentNo").value.trim(),
+        Narration: document.getElementById("narration").value.trim(),
+        CreatedBy: UserLoginID
+    };
+
+}
+
+/*==========================================================
+    INSERT HEADER
+==========================================================*/
+
+async function insertVoucherHeader(voucher) {
+    const { data, error } = await supabaseClient
+        .from("AccountingVoucher")
+        .insert([voucher])
+        .select()
+        .single();
+    if (error)
+        throw error;
+    return data;
+}
+
+/*==========================================================
+    INSERT DETAILS
+==========================================================*/
+
+async function insertVoucherDetails(details) {
+    const { error } = await supabaseClient
+        .from("AccountingVoucherDetails")
+        .insert(details);
+    if (error)
+        throw error;
+}
+/*==========================================================
+    RESET VOUCHER
+==========================================================*/
+
+async function resetVoucherForm() {
+    clearVoucher();
+    await loadVoucherNumber();
+}
+
+/*==========================================================
+    DEBUG
+==========================================================*/
+
+function logVoucher(header, details) {
+    console.group("Voucher");
+    console.table(header);
+    console.table(details);
+    console.groupEnd();
+}
+
+document.getElementById("saveButton").onclick = saveVoucher;
+
+/*==========================================================
+    VALIDATION
+==========================================================*/
+
+function validateVoucher() {
+
+    calculateTotals();
+
+    const totalDebit = Number(totalDebitEl.textContent) || 0;
+    const totalCredit = Number(totalCreditEl.textContent) || 0;
+
+    const branch = document.getElementById("branch");
+    const costCenter = document.getElementById("costCenter");
+    const transactionMode = document.getElementById("transactionMode");
+    const bankAccount = document.getElementById("bankAccount");
+
+    // Header Validation
+    if (!branch.value) {
+        alert("Please select a Branch.");
+        branch.focus();
+        return false;
+    }
+
+    if (!costCenter.value) {
+        alert("Please select a Cost Center.");
+        costCenter.focus();
+        return false;
+    }
+
+    if (
+        transactionMode.value &&
+        transactionMode.value !== "Cash" &&
+        !bankAccount.value
+    ) {
+        alert("Please select a Bank Account.");
+        bankAccount.focus();
+        return false;
+    }
+
+    if (totalDebit === 0 && totalCredit === 0) {
+        alert("Voucher amount cannot be zero.");
+        return false;
+    }
+
+    // Detail Validation
+    const rows = document.querySelectorAll("#voucherBody tr");
+
+    for (let i = 0; i < rows.length; i++) {
+
+        const row = rows[i];
+
+        const accountCode = row.querySelector(".accountCode").value.trim();
+        const partyCode = row.querySelector(".partyCode").value.trim();
+
+        const debit = Number(row.querySelector(".debit").value) || 0;
+        const credit = Number(row.querySelector(".credit").value) || 0;
+
+        const accountInput = row.querySelector(".accountName");
+        const debitInput = row.querySelector(".debit");
+        const creditInput = row.querySelector(".credit");
+
+        // Skip completely empty rows
+        if (!accountCode && debit === 0 && credit === 0)
+            continue;
+
+        if (!accountCode) {
+            alert(`Please select Ledger in Row ${i + 1}.`);
+            accountInput.focus();
+            return false;
+        }
+
+        if (debit === 0 && credit === 0) {
+            alert(`Please enter Debit or Credit in Row ${i + 1}.`);
+            debitInput.focus();
+            return false;
+        }
+
+        if (debit > 0 && credit > 0) {
+            alert(`Both Debit and Credit cannot be entered in Row ${i + 1}.`);
+            debitInput.focus();
+            return false;
+        }
+
+        if (debit < 0 || credit < 0) {
+            alert(`Negative amounts are not allowed in Row ${i + 1}.`);
+            debitInput.focus();
+            return false;
+        }
+
+    }
+
+    return true;
+}

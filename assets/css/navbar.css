@@ -703,3 +703,12 @@ body {
 body.page-exit {
     opacity: 0;
 }
+
+.cgstAmount,
+.sgstAmount,
+.igstAmount,
+.gstAmount,
+.totalAmount {
+    background-color: #fff3cd;
+    font-weight: 600;
+}
