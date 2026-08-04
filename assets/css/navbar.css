@@ -712,3 +712,43 @@ body.page-exit {
     background-color: #fff3cd;
     font-weight: 600;
 }
+
+/* Base button styles */
+.logout-btn {
+    background-color: transparent;
+    color: #dc3545;
+    /* Crimson red color for the power icon */
+    border: 2px solid #dc3545;
+    /* Creates the box outline */
+    border-radius: 20px;
+    /* Slightly rounds the corners */
+    padding: 10px 14px;
+    /* Spaces out the box around the icon */
+    font-size: 1.25rem;
+    /* Adjusts icon size */
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.25s ease-in-out;
+    /* Smooth transition animation */
+}
+
+/* Hover state effect */
+.logout-btn:hover {
+    background-color: #dc3545;
+    /* Fills the box with red */
+    color: #ffffff;
+    /* Changes the power icon to white */
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+    /* Adds a subtle red glow */
+    transform: translateY(-2px);
+    /* Lifts the button slightly */
+}
+
+/* Active state (when clicked) */
+.logout-btn:active {
+    transform: translateY(0);
+    /* Pushes the button back down */
+    box-shadow: 0 2px 6px rgba(220, 53, 69, 0.3);
+}

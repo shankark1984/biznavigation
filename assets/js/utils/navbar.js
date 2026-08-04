@@ -163,7 +163,7 @@ const Navbar = (() => {
                 </div>
                 <div class="sidebar-actions">
                     <button id="mobileThemeToggle" class="theme-btn" title="Theme"><i class="bi bi-moon"></i></button>
-                    <button id="mobileLogoutBtn" class="logout-btn" title="Logout"><i class="bi bi-box-arrow-right"></i></button>
+                    <button id="mobileLogoutBtn" class="logout-btn" title="Logout"><i class="bi bi-power"></i></button>
                 </div>
             </div>
         </div>`;
@@ -399,7 +399,7 @@ const Navbar = (() => {
                     <div class="avatar">${userName.charAt(0).toUpperCase()}</div>
                     <span class="username">${userName}</span>
                 </div>
-                <button id="logoutBtn" class="logout-btn"><i class="bi bi-box-arrow-right"></i></button>
+                <button id="logoutBtn" class="logout-btn"><i class="bi bi-power"></i></button>
             </div>
         `;
 
