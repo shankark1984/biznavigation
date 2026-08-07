@@ -467,34 +467,76 @@ function handleAdminUserTabVisibility() {
 
 async function resetUserPassword() {
     try {
-
-        const userLogID = document.getElementById('userLogID').value;
-        const compID = document.getElementById('companyCode').value;
+        const userName = document.getElementById("userName").value.trim();
+        const userLogID = document.getElementById("userLogID").value.trim();
+        const compID = document.getElementById("companyCode").value.trim();
 
         if (!userLogID) {
-            showToast("Login ID cannot be empty");
+            showToast("Login ID cannot be empty.");
             return;
         }
+
         if (!compID) {
-            showToast("Company ID cannot be empty");
+            showToast("Company ID cannot be empty.");
             return;
         }
 
-        const tempPassword = sha256(reSetPass); // Default password
+        const tempPassword = sha256(reSetPass);
 
-        const { error } = await supabaseClient
-            .from('user_login')
-            .update({
-                user_password: tempPassword
-            })
-            .eq('company_id', compID)
-            .eq('user_login_id', userLogID);
-        if (error) throw error;
+        // Check if user already exists
+        const { data: existingUser, error: checkError } = await supabaseClient
+            .from("user_login")
+            .select("id")
+            .eq("user_login_id", userLogID)
+            .maybeSingle();
 
-        showToast("Password reset successfully to default, password is: " + reSetPass);
+        if (checkError) throw checkError;
+
+        if (existingUser) {
+
+            // Reset password
+            const { error: updateError } = await supabaseClient
+                .from("user_login")
+                .update({
+                    user_password: tempPassword
+                })
+                .eq("user_login_id", userLogID);
+
+            if (updateError) throw updateError;
+
+            showToast("Password reset successfully.\nDefault Password : " + reSetPass);
+
+        } else {
+
+            // Create new user
+            const newUser = {
+                emp_code: "ADMIN",               // Change if you have an employee code
+                user_name: userName,      // Change if required
+                user_login_id: userLogID,
+                user_password: tempPassword,
+                user_type: 2,                    // 2 = Admin
+                company_id: compID,
+                working_branch: null,
+                created_by: UserLoginID
+                // created_at is automatic
+            };
+
+            const { error: insertError } = await supabaseClient
+                .from("user_login")
+                .insert([newUser]);
+
+            if (insertError) throw insertError;
+            await addDefaultFormPages(userLogID); // Add default form pages for the new user
+            showToast(
+                "New user created successfully.\n\n" +
+                "Login ID : " + userLogID + "\n" +
+                "Password : " + reSetPass
+            );
+        }
+
     } catch (err) {
-        console.error("Failed to reset user password:", err);
-        showToast(err.message || "Error resetting user password");
+        console.error(err);
+        showToast(err.message || "Failed to reset/create user.");
     }
 }
 
@@ -606,3 +648,55 @@ function toggleCompanySelect(userType) {
     }
 }
 
+async function addDefaultFormPages(newUserLoginID) {
+    try {
+
+        // User whose permissions will be used as the template
+        const TEMPLATE_USER = "shankark";
+
+        // Read template permissions
+        const { data: templateRoles, error: fetchError } = await supabaseClient
+            .from("UserAccessRules")
+            .select(`
+                FormID,
+                FromDescription,
+                CanRead,
+                CanWrite,
+                CanDelete,
+                CanUpdate
+            `)
+            .eq("UserLoginID", TEMPLATE_USER)
+            .order("id");
+
+        if (fetchError) throw fetchError;
+
+        if (!templateRoles || templateRoles.length === 0) {
+            throw new Error("Default access rules not found.");
+        }
+
+        // Create records for the new Admin user
+        const insertData = templateRoles.map(role => ({
+            UserLoginID: newUserLoginID,
+            FormID: role.FormID,
+            FromDescription: role.FromDescription,
+            CanRead: role.CanRead,
+            CanWrite: role.CanWrite,
+            CanDelete: role.CanDelete,
+            CanUpdate: role.CanUpdate,
+            created_by: UserLoginID,
+            created_at: new Date().toISOString()
+        }));
+
+        const { error: insertError } = await supabaseClient
+            .from("UserAccessRules")
+            .insert(insertData);
+
+        if (insertError) throw insertError;
+
+        console.log("Default access rules created.");
+
+    } catch (err) {
+        console.error("Error creating default access rules:", err);
+        alert(err.message);
+    }
+}
