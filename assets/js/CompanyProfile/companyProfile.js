@@ -467,9 +467,15 @@ function handleAdminUserTabVisibility() {
 
 async function resetUserPassword() {
     try {
+
         const userName = document.getElementById("userName").value.trim();
         const userLogID = document.getElementById("userLogID").value.trim();
         const compID = document.getElementById("companyCode").value.trim();
+
+        if (!userName) {
+            showToast("User Name cannot be empty.");
+            return;
+        }
 
         if (!userLogID) {
             showToast("Login ID cannot be empty.");
@@ -483,16 +489,24 @@ async function resetUserPassword() {
 
         const tempPassword = sha256(reSetPass);
 
-        // Check if user already exists
+        // Check whether the login ID already exists
         const { data: existingUser, error: checkError } = await supabaseClient
             .from("user_login")
-            .select("id")
+            .select("*")
             .eq("user_login_id", userLogID)
             .maybeSingle();
 
         if (checkError) throw checkError;
 
         if (existingUser) {
+            console.log("Existing user found:", existingUser);
+            // Login ID belongs to another company
+            if (existingUser.company_id !== compID) {
+                showToast(
+                    `Login ID '${userLogID}' already exists in Company '${existingUser.company_id}'.`
+                );
+                return;
+            }
 
             // Reset password
             const { error: updateError } = await supabaseClient
@@ -500,43 +514,60 @@ async function resetUserPassword() {
                 .update({
                     user_password: tempPassword
                 })
+                .eq("company_id", compID)
                 .eq("user_login_id", userLogID);
 
             if (updateError) throw updateError;
 
-            showToast("Password reset successfully.\nDefault Password : " + reSetPass);
-
-        } else {
-
-            // Create new user
-            const newUser = {
-                emp_code: "ADMIN",               // Change if you have an employee code
-                user_name: userName,      // Change if required
-                user_login_id: userLogID,
-                user_password: tempPassword,
-                user_type: 2,                    // 2 = Admin
-                company_id: compID,
-                working_branch: null,
-                created_by: UserLoginID
-                // created_at is automatic
-            };
-
-            const { error: insertError } = await supabaseClient
-                .from("user_login")
-                .insert([newUser]);
-
-            if (insertError) throw insertError;
-            await addDefaultFormPages(userLogID); // Add default form pages for the new user
             showToast(
-                "New user created successfully.\n\n" +
-                "Login ID : " + userLogID + "\n" +
-                "Password : " + reSetPass
+                "Password reset successfully.\n\n" +
+                "Default Password : " + reSetPass
             );
+
+            return;
         }
+
+        // Create new user
+        const newUser = {
+            emp_code: "E0001",
+            user_name: userName,
+            user_login_id: userLogID,
+            user_password: tempPassword,
+            user_type: 2,
+            company_id: compID,
+            working_branch: null,
+            created_by: UserLoginID
+        };
+
+        const { error: insertError } = await supabaseClient
+            .from("user_login")
+            .insert([newUser]);
+
+        if (insertError) throw insertError;
+
+        // Create Employee Master
+        const empResult = await createDefaultEmployee(
+            compID,
+            userLogID,
+            userName
+        );
+
+        if (!empResult.success) {
+            throw new Error(empResult.message);
+        }
+
+        // Copy default access rights
+        await addDefaultFormPages(userLogID);
+
+        showToast(
+            "Administrator created successfully.\n\n" +
+            "Login ID : " + userLogID + "\n" +
+            "Password : " + reSetPass
+        );
 
     } catch (err) {
         console.error(err);
-        showToast(err.message || "Failed to reset/create user.");
+        showToast(err.message || "Failed to create/reset user.");
     }
 }
 
@@ -698,5 +729,64 @@ async function addDefaultFormPages(newUserLoginID) {
     } catch (err) {
         console.error("Error creating default access rules:", err);
         alert(err.message);
+    }
+}
+
+async function createDefaultEmployee(compID, userLogID, employeeName = "Administrator") {
+    try {
+
+        // Generate Employee Code
+        const { data: empCode, error: codeError } = await supabaseClient
+            .rpc("generate_employee_code", {
+                p_company_id: compID
+            });
+
+        if (codeError) throw codeError;
+
+        const employeeData = {
+            EmployeeCode: 'E0001',
+            EmployeeName: employeeName,
+            EmployeeType: "Permanent",
+            DateofJoining: new Date().toISOString().split("T")[0],
+            Gender: null,
+            MaritalStatus: null,
+            DateofBirth: null,
+            BloodGroup: null,
+            PanNumber: null,
+            PassportNumber: null,
+            AadharNumber: null,
+            UANNumber: null,
+            ESICNumber: null,
+            PersonalContactNo: null,
+            PersonalEmailID: null,
+            PermanentAddress: null,
+            CurrentAddress: null,
+            StatusDate: null,
+            EmployeeStatus: "Active",
+            LeavingReason: null,
+            company_id: compID,
+            LoginID: userLogID,
+            LoginType: 2,
+            created_by: UserLoginID
+        };
+
+        const { error } = await supabaseClient
+            .from("EmployeeMaster")
+            .insert([employeeData]);
+
+        if (error) throw error;
+
+        return {
+            success: true,
+            employeeCode: empCode
+        };
+
+    } catch (err) {
+        console.error("Create Employee Error:", err);
+
+        return {
+            success: false,
+            message: err.message
+        };
     }
 }

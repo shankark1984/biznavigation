@@ -1324,7 +1324,7 @@ async function getUserWorkingBranch(empID) {
             .eq('EM_ID', empID)
             .order('EffectiveDate', { ascending: false })
             .limit(1)
-            .single();
+            .maybeSingle();
         if (error) throw error;
         return data?.WorkLocation || WorkingBranch;
     } catch (err) {

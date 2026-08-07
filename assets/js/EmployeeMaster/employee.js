@@ -351,8 +351,13 @@ async function saveUpdateUserCredentials() {
         const userType = document.getElementById('userType').value; // Role ID
         const employeeCode = document.getElementById('employeeCode').value;
         const employeeName = document.getElementById('employeeName').value.trim();
-        const tempPassword = await bcrypt.hash(reSetPass, 12);//sha256(reSetPass); // Default password
+        const tempPassword = sha256(reSetPass); // Default password
         const workingBranch = await getUserWorkingBranch(empID);
+
+        if (!workingBranch) {
+            showToast("Unable to determine working branch for the employee");
+            return;
+        }
 
         /* ==============================
            VALIDATION
@@ -461,7 +466,7 @@ async function resetUserPassword() {
             showToast("Login ID cannot be the same as Employee Code");
             return;
         }
-        console.log(typeof bcrypt);
+
         const tempPassword = sha256(reSetPass); // Default password
         const { error } = await supabaseClient
             .from('user_login')
