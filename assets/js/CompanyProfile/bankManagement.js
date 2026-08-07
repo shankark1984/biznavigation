@@ -2,114 +2,199 @@ const branchBankForm = document.getElementById('bank');
 const bankAddBtn = document.getElementById('bankAddDetails');
 const bankTableBody = document.getElementById('branchBankTableBody');
 
-bankAddBtn.addEventListener('click', async function () {
+bankAddBtn.addEventListener("click", async function () {
+
     const bankData = {
-        BankName: document.getElementById('branchBankName').value.trim(),
-        AccountNo: document.getElementById('branchAccountNo').value.trim(),
-        BranchName: document.getElementById('branchAcBankName').value.trim(),
-        IFSCCode: document.getElementById('branchIFSCCode').value.trim(),
-        MICRCode: document.getElementById('branchMICRCode').value.trim(),
-        Address: document.getElementById('branchBankAddress').value.trim(),
-        DefaultBank: document.getElementById('branchDefaultBank').value, // No trim() for dropdown
-        BankStatus: document.getElementById('branchAccountStatus').value, // No trim() for dropdown
-        CompanyID: CompanyID,
+        BankName: document.getElementById("branchBankName").value.trim(),
+        AccountNo: document.getElementById("branchAccountNo").value.trim(),
+        BranchName: document.getElementById("branchAcBankName").value.trim(),
+        IFSCCode: document.getElementById("branchIFSCCode").value.trim().toUpperCase(),
+        MICRCode: document.getElementById("branchMICRCode").value.trim(),
+        Address: document.getElementById("branchBankAddress").value.trim(),
+        DefaultBank: document.getElementById("branchDefaultBank").value,
+        BankStatus: document.getElementById("branchAccountStatus").value,
+        CompanyID: document.getElementById("companyCode").value.trim(),
         BranchCode: branchCode,
         created_by: UserLoginID
     };
 
-    // Validate required fields
     if (!bankData.BankName || !bankData.AccountNo || !bankData.IFSCCode) {
-        alert('Please fill in required fields: Bank Name, Account Number, and IFSC Code.');
+        alert("Please fill in Bank Name, Account Number and IFSC Code.");
         return;
     }
 
     try {
-        let response;
+
+        let data, error;
+
         if (bankRowIDEdit) {
-            // Update existing record
-            response = await supabaseClient
-                .from('CompanyBankDetails')
+
+            ({ data, error } = await supabaseClient
+                .from("CompanyBankDetails")
                 .update(bankData)
-                .eq('id', bankRowIDEdit);
+                .eq("id", bankRowIDEdit)
+                .select());
 
-            if (response.error) throw response.error;
-            alert('Branch bank details updated successfully!');
-            bankRowIDEdit = null; // Reset after update
+            if (error) throw error;
+
+            alert("Branch bank updated successfully.");
+
         } else {
-            // Insert new record
-            response = await supabaseClient
-                .from('CompanyBankDetails')
-                .insert([bankData]);
 
-            if (response.error) throw response.error;
-            alert('Branch bank added successfully!');
+            ({ data, error } = await supabaseClient
+                .from("CompanyBankDetails")
+                .insert([bankData])
+                .select());
+
+            if (error) throw error;
+
+            alert("Branch bank added successfully.");
         }
-        loadBanks();
+
         resetBranchBankForm();
+        loadBanks();
 
     } catch (error) {
-        console.error('Database Error:', error);
-        alert('Failed to save branch details. Please try again.');
-    }
-});
 
+        console.error("Database Error:", error);
+
+        alert(
+            `Error Code : ${error.code || ""}\n\n` +
+            `Message : ${error.message || error}\n\n` +
+            `${error.details || ""}`
+        );
+    }
+
+});
 // Function to Reset Branch Form
 function resetBranchBankForm() {
-    document.getElementById('branchAccountNo').value = '';
-    document.getElementById('branchIFSCCode').value = '';
-    document.getElementById('branchBankName').value = '';
-    document.getElementById('branchAcBankName').value = '';
-    document.getElementById('branchMICRCode').value = '';
-    document.getElementById('branchBankAddress').value = '';
-    document.getElementById('branchDefaultBank').value = '';
-    document.getElementById('branchAccountStatus').value = '';
-    // Reset UI elements
-    rowIDEdit = null;
+
+    // Reset edit mode
     bankRowIDEdit = null;
-    document.getElementById('branchBankAddDetails').innerText = 'Add Bank';
-    branchCode = null;
+
+    // Reset all input fields
+    const fields = [
+        "branchBankName",
+        "branchAccountNo",
+        "branchAcBankName",
+        "branchIFSCCode",
+        "branchMICRCode",
+        "branchBankAddress"
+    ];
+
+    fields.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = "";
+    });
+
+    // Reset dropdowns
+    const defaultBank = document.getElementById("branchDefaultBank");
+    if (defaultBank) defaultBank.selectedIndex = 0;
+
+    const bankStatus = document.getElementById("branchAccountStatus");
+    if (bankStatus) bankStatus.selectedIndex = 0;
+
+    // Reset heading/button text (if available)
+    const bankTitle = document.getElementById("branchBankTitle");
+    if (bankTitle) {
+        bankTitle.innerText = "Add Bank";
+    }
+
+    const bankBtn = document.getElementById("bankAddBtn");
+    if (bankBtn) {
+        bankBtn.innerText = "Add Bank";
+    }
+
+    // Remove validation styles
+    document.querySelectorAll(
+        "#branchBankName, #branchAccountNo, #branchAcBankName, #branchIFSCCode, #branchMICRCode, #branchBankAddress"
+    ).forEach(el => {
+        el.classList.remove("is-invalid");
+        el.classList.remove("is-valid");
+    });
 }
 
 // Load bank List
 async function loadBanks() {
     try {
-        const CompanyID = document.getElementById('companyCode').value.trim();
+
+        const companyCodeEl = document.getElementById("companyCode");
+
+        if (!companyCodeEl) {
+            console.error("companyCode element not found.");
+            return;
+        }
+
+        const CompanyID = companyCodeEl.value.trim();
+
+        if (!CompanyID || !branchCode) {
+            bankTableBody.innerHTML = `
+                <tr>
+                    <td colspan="8" class="text-center text-muted">
+                        No Branch Selected
+                    </td>
+                </tr>`;
+            return;
+        }
+
         const { data, error } = await supabaseClient
-            .from('CompanyBankDetails')
-            .select('*')
-            .eq('CompanyID', CompanyID)
-            .eq('BranchCode', branchCode);
+            .from("CompanyBankDetails")
+            .select("*")
+            .eq("CompanyID", CompanyID)
+            .eq("BranchCode", branchCode)
+            .order("BankName", { ascending: true });
 
         if (error) throw error;
-        if (!data) {
-            console.warn('No data returned from Supabase.');
-            return;
-        }
 
         if (!bankTableBody) {
-            console.error('bankTableBody element not found.');
+            console.error("bankTableBody element not found.");
             return;
         }
-        bankTableBody.innerHTML = data.length
-            ? data.map(bank => `
+
+        if (!data || data.length === 0) {
+
+            bankTableBody.innerHTML = `
                 <tr>
-                    <td><input type="checkbox" class="selectBank" data-id="${bank.id}" data-code="${bank.BankName}"></td>
-                    <td>${bank.BankName}</td>
-                    <td>${bank.AccountNo}</td>
-                    <td>${bank.IFSCCode}</td>
-                    <td>${bank.BranchName}</td>
-                    <td>${bank.MICRCode}</td>
-                    <td>${bank.DefaultBank}</td>
-                    <td>${bank.BankStatus}</td>
+                    <td colspan="8" class="text-center text-muted">
+                        No Bank Found
+                    </td>
+                </tr>`;
+            return;
+        }
+
+        bankTableBody.innerHTML = "";
+
+        data.forEach(bank => {
+
+            bankTableBody.insertAdjacentHTML("beforeend", `
+                <tr>
+                    <td>
+                        <input
+                            type="checkbox"
+                            class="selectBank"
+                            data-id="${bank.id}"
+                            data-code="${bank.BankName}">
+                    </td>
+                    <td>${bank.BankName ?? ""}</td>
+                    <td>${bank.AccountNo ?? ""}</td>
+                    <td>${bank.IFSCCode ?? ""}</td>
+                    <td>${bank.BranchName ?? ""}</td>
+                    <td>${bank.MICRCode ?? ""}</td>
+                    <td>${bank.DefaultBank ?? ""}</td>
+                    <td>${bank.BankStatus ?? ""}</td>
                 </tr>
-            `).join('')
-            : '<tr><td colspan="9" class="text-center">No bank created</td></tr>';
+            `);
+
+        });
+
     } catch (error) {
-        console.error('Error loading bank list:', error.message || error);
-        alert('Failed to load bank details. Please try again.');
+
+        console.error("Error loading banks:", error);
+
+        alert(error.message || "Unable to load bank details.");
+
     }
 }
-
 // Select and Load Branch Bank Details into the Form
 document.addEventListener('change', async function (event) {
     if (event.target.classList.contains('selectBank')) {

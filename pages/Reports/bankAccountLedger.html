@@ -18,7 +18,53 @@
     <!-- Sidebar -->
     <link rel="stylesheet" href="../../assets/css/navbar.css">
     <link rel="stylesheet" href="../../assets/css/accountingLedger.css">
+    <style>
+        #ledgerTable {
+            table-layout: fixed;
+            width: 100%;
+        }
 
+        #ledgerTable th,
+        #ledgerTable td {
+            vertical-align: middle;
+        }
+
+        #ledgerTable th:nth-child(1),
+        #ledgerTable td:nth-child(1) {
+            width: 50px;
+            text-align: center;
+        }
+
+        #ledgerTable th:nth-child(2),
+        #ledgerTable td:nth-child(2) {
+            width: 130px;
+            white-space: nowrap;
+        }
+
+        #ledgerTable th:nth-child(3),
+        #ledgerTable td:nth-child(3) {
+            width: 350px;
+            white-space: normal;
+            word-break: break-word;
+        }
+
+        #ledgerTable th:nth-child(4),
+        #ledgerTable td:nth-child(4) {
+            width: 180px;
+            white-space: nowrap;
+        }
+
+        #ledgerTable th:nth-child(5),
+        #ledgerTable td:nth-child(5),
+        #ledgerTable th:nth-child(6),
+        #ledgerTable td:nth-child(6),
+        #ledgerTable th:nth-child(7),
+        #ledgerTable td:nth-child(7) {
+            width: 140px;
+            text-align: right;
+            white-space: nowrap;
+        }
+    </style>
 </head>
 
 <body class="bg-light">
@@ -56,7 +102,7 @@
 
                                         <input type="text" id="bankAccountName" class="form-control"
                                             list="bankAccountNameList" placeholder="Enter Bank Account Name"
-                                            autocomplete="off" aria-label="Customer Name">
+                                            autocomplete="off" aria-label="Bank Account Name">
 
                                         <datalist id="bankAccountNameList"></datalist>
                                     </div>
@@ -130,22 +176,18 @@
                                     Accounting Ledger Report
                                 </caption>
                                 <thead>
-
                                     <tr>
                                         <th scope="col">Sr No</th>
                                         <th scope="col">Transaction Date</th>
                                         <th scope="col">Particulars</th>
                                         <th scope="col">Reference No.</th>
-                                        <th scope="col">Debit</th>
-                                        <th scope="col">Credit</th>
-                                        <th scope="col">Running Balance</th>
+                                        <th scope="col" class="text-end">Debit</th>
+                                        <th scope="col" class="text-end">Credit</th>
+                                        <th scope="col" class="text-end">Running Balance</th>
                                     </tr>
-
                                 </thead>
-
                                 <tbody id="ledgerTableBody">
                                 </tbody>
-
                                 <tfoot>
                                     <tr class="table-secondary fw-bold">
                                         <td colspan="4" class="text-end"> Grand Total </td>
@@ -153,7 +195,6 @@
                                         <td id="totalCredit" class="text-end"> 0.00 </td>
                                     </tr>
                                 </tfoot>
-
                             </table>
                         </div>
                     </div>
@@ -167,7 +208,7 @@
                         </nav>
 
                         <!-- Export Buttons -->
-                        <div class="btn-group">
+                        <div class="btn-group flex-wrap">
 
                             <button id="exportExcelBtn" class="btn btn-success">
                                 <i class="bi bi-file-earmark-excel"></i>
@@ -196,6 +237,7 @@
     <!-- Flatpickr -->
     <script src="https://cdn.jsdelivr.net/npm/flatpickr" defer></script>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"
         defer></script>
 

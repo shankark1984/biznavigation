@@ -24,13 +24,12 @@ branchAddBtn.addEventListener('click', async function () {
         EmailID: document.getElementById('branchEmailID').value.trim(),
         GSTNo: document.getElementById('branchGSTNo').value.trim(),
         PANNo: document.getElementById('branchPANNo').value.trim(),
-        InvYN: document.getElementById('branchInvYN').checked ? 1 : 0,
-        BranchScope: document.getElementById('branchScope').value.trim(),
-        Status: branchStatus,
-        InactiveDate: branchInactiveDate,
+        InvYN: document.getElementById('branchInvYN').checked ? true : false,
+        BranchScope: document.getElementById('branchScope').value.trim() || null,
+        Status: branchStatus || "Active",
+        InactiveDate: branchInactiveDate || null,
         CompanyID: document.getElementById('companyCode').value.trim(),
         created_by: UserLoginID,
-        created_at: localtimeStamp
     };
 
     // Validate required fields
@@ -38,22 +37,35 @@ branchAddBtn.addEventListener('click', async function () {
         alert('Please fill in required fields: Branch Code, GST No, and Address.');
         return;
     }
-    console.log(branchData);
+    // console.log(branchData);
     try {
         let response
         if (rowIDEdit) {
             // Update existing record
-            response = await supabaseClient
-                .from('CompanyBranchDetails')
+            const { data, error } = await supabaseClient
+                .from("CompanyBranchDetails")
                 .update(branchData)
-                .eq('id', rowIDEdit);
+                .eq("id", rowIDEdit)
+                .select();
+
+            if (error) {
+                console.error(error);
+                alert(error.message);
+                return;
+            }
 
             alert('Branch details updated successfully!');
         } else {
-            // Insert new record
-            response = await supabaseClient
-                .from('CompanyBranchDetails')
-                .insert([branchData]);
+            const { data, error } = await supabaseClient
+                .from("CompanyBranchDetails")
+                .insert([branchData])
+                .select();
+
+            if (error) {
+                console.error(error);
+                alert(error.message);
+                return;
+            }
 
             alert('Branch added successfully!');
         }

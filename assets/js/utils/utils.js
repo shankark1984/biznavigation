@@ -2161,17 +2161,28 @@ async function loadBankAccounts(companyID, AccountType) {
             </option>`;
     });
 }
-async function loadPdfLibs() {
-    if (!window.jspdf) {
-        await import(
-            "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"
-        );
-    }
-    if (!window.jspdf?.jsPDF?.API?.autoTable) {
-        await import(
-            "https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js");
-    }
-}
+const loadPdfLibs = () => {
+    return new Promise((resolve) => {
+        if (typeof jspdf !== 'undefined' && typeof jspdf.plugins !== 'undefined') {
+            resolve();
+            return;
+        }
+        const scripts = [
+            'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
+            'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js'
+        ];
+        let loaded = 0;
+        scripts.forEach(src => {
+            const script = document.createElement('script');
+            script.src = src;
+            script.onload = () => {
+                loaded++;
+                if (loaded === scripts.length) resolve();
+            };
+            document.head.appendChild(script);
+        });
+    });
+};
 
 async function loadExportLibraries() {
     if (!window.XLSX) {
