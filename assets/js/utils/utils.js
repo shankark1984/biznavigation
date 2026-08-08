@@ -49,15 +49,19 @@ function toProperCase(str) {
 }
 
 // ✅ Format date string as dd-mm-yyyy
-function formatDate(dateString) {
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) return '';
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
+function formatDate(dateValue) {
+    if (!dateValue) return "";
+
+    const date = new Date(dateValue);
+
+    if (isNaN(date.getTime())) return "";
+
+    const day = String(date.getDate()).padStart(2, "0");
+    const month = String(date.getMonth() + 1).padStart(2, "0");
     const year = date.getFullYear();
+
     return `${day}-${month}-${year}`;
 }
-
 // ✅ Generate a temporary form ID using timestamp and random number
 function generateTempFormID() {
     return `TEMP-${Date.now()}-${Math.floor(Math.random() * 10000)}`;

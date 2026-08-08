@@ -429,6 +429,12 @@ async function fetchAllFilteredData(filters = {}) {
 // ==========================
 // EXPORT EXCEL
 // ==========================
+// ==========================
+// EXPORT EXCEL
+// ==========================
+// ==========================
+// EXPORT EXCEL
+// ==========================
 async function exportToExcel() {
     const filters = getFilters();
     const allData = await fetchAllFilteredData(filters);
@@ -440,60 +446,116 @@ async function exportToExcel() {
         return;
     }
 
-    let tableHtml = `
-        <table>
-            <thead>
-                <tr>
-                    <th>Sr No</th>
-                    <th>Invoice Date</th>
-                    <th>Invoice No</th>
-                    <th>Customer Name</th>
-                    <th>State</th>
-                    <th>GST No</th>
-                    <th>Non-Taxable Amount</th>
-                    <th>Taxable Amount</th>
-                    <th>SGST Amount</th>
-                    <th>CGST Amount</th>
-                    <th>IGST Amount</th>
-                    <th>Total GST Amount</th>
-                    <th>Total Invoice Amount</th>
-                </tr>
-            </thead>
-            <tbody>
-    `;
+    // ==========================================
+    // EXCEL HEADERS
+    // ==========================================
+    const headers = [
+        "Sr No",
+        "Invoice Date",
+        "Invoice No",
+        "Customer Name",
+        "State",
+        "GST No",
+        "Non-Taxable Amount",
+        "Taxable Amount",
+        "SGST Amount",
+        "CGST Amount",
+        "IGST Amount",
+        "Total GST Amount",
+        "Total Invoice Amount"
+    ];
+
+    // ==========================================
+    // CREATE DATA ARRAY
+    // ==========================================
+    const excelData = [headers];
 
     for (let i = 0; i < allData.length; i++) {
+
         const row = allData[i];
-        tableHtml += `
-            <tr>
-                <td>${i + 1}</td>
-                <td>${formatDate(row.InvoiceDate)}</td>
-                <td>${row.InvoiceNo || ""}</td>
-                <td>${row.CustomerName || ""}</td>
-                <td>${row.State || ""}</td>
-                <td>${row.GSTNo || ""}</td>
-                <td>${toNumber(row.NonTaxableAmount)}</td>
-                <td>${toNumber(row.TaxableAmount)}</td>
-                <td>${toNumber(row.SGST)}</td>
-                <td>${toNumber(row.CGST)}</td>
-                <td>${toNumber(row.IGST)}</td>
-                <td>${toNumber(row.TotalGST)}</td>
-                <td>${toNumber(row.TotalInvoiceAmount)}</td>
-            </tr>
-        `;
+
+        excelData.push([
+            i + 1,
+
+            // IMPORTANT:
+            // Keep Invoice Date as STRING
+            // DD-MM-YYYY
+            formatDate(row.InvoiceDate),
+
+            row.InvoiceNo || "",
+            row.CustomerName || "",
+            row.State || "",
+            row.GSTNo || "",
+
+            toNumber(row.NonTaxableAmount),
+            toNumber(row.TaxableAmount),
+            toNumber(row.SGST),
+            toNumber(row.CGST),
+            toNumber(row.IGST),
+            toNumber(row.TotalGST),
+            toNumber(row.TotalInvoiceAmount)
+        ]);
     }
 
-    tableHtml += `</tbody></table>`;
+    // ==========================================
+    // CREATE WORKSHEET DIRECTLY
+    // ==========================================
+    const ws = XLSX.utils.aoa_to_sheet(excelData);
 
-    const tempDiv = document.createElement("div");
-    tempDiv.innerHTML = tableHtml;
+    // ==========================================
+    // COLUMN WIDTHS
+    // ==========================================
+    ws["!cols"] = [
+        { wch: 8 },    // Sr No
+        { wch: 15 },   // Invoice Date
+        { wch: 18 },   // Invoice No
+        { wch: 40 },   // Customer Name
+        { wch: 18 },   // State
+        { wch: 22 },   // GST No
+        { wch: 18 },   // Non-Taxable
+        { wch: 18 },   // Taxable
+        { wch: 16 },   // SGST
+        { wch: 16 },   // CGST
+        { wch: 16 },   // IGST
+        { wch: 18 },   // Total GST
+        { wch: 20 }    // Total Invoice
+    ];
 
-    const wb = XLSX.utils.table_to_book(tempDiv.querySelector("table"), {
-        sheet: "GST Report"
-    });
+    // ==========================================
+    // FORCE INVOICE DATE COLUMN AS TEXT
+    // Column B
+    // ==========================================
+    for (let row = 2; row <= allData.length + 1; row++) {
 
-    XLSX.writeFile(wb, "GSTReport.xlsx");
+        const cellAddress = `B${row}`;
+        const cell = ws[cellAddress];
+
+        if (cell) {
+            cell.t = "s";
+            cell.v = String(cell.v);
+        }
+    }
+
+    // ==========================================
+    // CREATE WORKBOOK
+    // ==========================================
+    const wb = XLSX.utils.book_new();
+
+    XLSX.utils.book_append_sheet(
+        wb,
+        ws,
+        "GST Report"
+    );
+
+    // ==========================================
+    // DOWNLOAD
+    // ==========================================
+    XLSX.writeFile(
+        wb,
+        "GSTReport.xlsx"
+    );
 }
+
 
 // ==========================
 // EXPORT PDF
