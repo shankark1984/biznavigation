@@ -7,30 +7,30 @@ const totalFreight = 0;
    DOM READY
 ========================================================= */
 
-document.addEventListener('DOMContentLoaded', async () => {
-    await loadSuggestions('partySuggestions', 'PartyDetails', CompanyID);
-    await loadBankNameSuggestions();
-    await loadDefaultBank();
-    await loadInvoiceNoSuggestions();
-    await loadDatalist('departmentList', 'Department');
+// document.addEventListener('DOMContentLoaded', async () => {
+//     await loadSuggestions('partySuggestions', 'PartyDetails', CompanyID);
+//     await loadBankNameSuggestions();
+//     await loadDefaultBank();
+//     await loadInvoiceNoSuggestions();
+//     await loadDatalist('departmentList', 'Department');
 
-    // Attach event after suggestions are loaded
-    const bankInput = document.getElementById('inputBankName');
-    const bankIDInput = document.getElementById('bankIDs');
+//     // Attach event after suggestions are loaded
+//     const bankInput = document.getElementById('inputBankName');
+//     const bankIDInput = document.getElementById('bankIDs');
 
-    bankInput.addEventListener('input', function () {
-        const selectedValue = this.value.trim();
+//     bankInput.addEventListener('input', function () {
+//         const selectedValue = this.value.trim();
 
-        if (bankMap[selectedValue]) {
-            bankID = bankMap[selectedValue];
-            bankIDInput.value = bankID;
-            console.log('Selected Bank ID:', bankID);
-        } else {
-            bankID = null;
-            bankIDInput.value = '';
-        }
-    });
-});
+//         if (bankMap[selectedValue]) {
+//             bankID = bankMap[selectedValue];
+//             bankIDInput.value = bankID;
+//             console.log('Selected Bank ID:', bankID);
+//         } else {
+//             bankID = null;
+//             bankIDInput.value = '';
+//         }
+//     });
+// });
 
 document.addEventListener('DOMContentLoaded', async () => {
 
