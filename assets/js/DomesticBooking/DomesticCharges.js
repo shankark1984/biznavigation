@@ -69,7 +69,7 @@ function clearFreightInputs() {
 async function addFreightRow() {
 
     const {
-        awbNo,
+        docketNo,
         chargesTypeInput,
         hsnNumber,
         freightAmount,
@@ -79,8 +79,10 @@ async function addFreightRow() {
 
     const tbody = document.querySelector('#freightTable tbody');
 
-    const awbNoValue = awbNo.value.trim();
+    const docketNoValue = docketNo.value.trim();
+
     const chargesType = chargesTypeInput.value.trim();
+
     const freightAmountValue =
         parseFloat(freightAmount.value) || 0;
 
@@ -93,8 +95,9 @@ async function addFreightRow() {
     // =========================
     // Validation
     // =========================
-    if (!awbNoValue) {
-        return alert('AWB No cannot be empty!');
+
+    if (!docketNoValue) {
+        return alert('Docket No cannot be empty!');
     }
 
     if (!chargesType) {
@@ -108,6 +111,7 @@ async function addFreightRow() {
     // =========================
     // FSC + HSN
     // =========================
+
     const fscData =
         await isFSCApplicable(chargesType);
 
@@ -120,6 +124,7 @@ async function addFreightRow() {
     // =========================
     // Tax
     // =========================
+
     const taxID =
         partyDefaultTax.value.trim() || 1;
 
@@ -132,14 +137,16 @@ async function addFreightRow() {
     // =========================
     // Quantity
     // =========================
+
     const quantityDisplay =
         chargesType.includes('Freight')
             ? `${chargeableWeight} ${uOMType}`
             : '1 Nos';
 
     // =========================
-    // Fuel Surcharge Special Handling
+    // Fuel Surcharge
     // =========================
+
     if (chargesType === 'Fuel Surcharge') {
 
         await recalcFSC();
@@ -152,6 +159,7 @@ async function addFreightRow() {
     // =========================
     // Create Row
     // =========================
+
     const row = document.createElement('tr');
 
     row.dataset.type = 'freight';
@@ -162,6 +170,8 @@ async function addFreightRow() {
     row.dataset.amount =
         freightAmountValue;
 
+    row.dataset.rowState = 'new';
+
     row.innerHTML = `
         <td>${chargesType}</td>
         <td>${freightHSN}</td>
@@ -171,8 +181,12 @@ async function addFreightRow() {
             ${taxCalc.totalRate}%
         </td>
 
-        <td class="text-end">
+        <td class="text-end" data-qty="${chargeableWeight}">
             ${quantityDisplay}
+        </td>
+
+        <td class="text-end">
+            ${freightAmountValue.toFixed(2)}
         </td>
 
         <td class="text-end">
@@ -215,19 +229,10 @@ async function addFreightRow() {
         </td>
     `;
 
-    // =========================
-    // Append Row
-    // =========================
     tbody.appendChild(row);
 
-    // =========================
-    // Recalculate FSC
-    // =========================
     await recalcFSC();
 
-    // =========================
-    // Clear Inputs
-    // =========================
     clearFreightInputs();
 }
 
@@ -375,8 +380,8 @@ async function loadFreightCharges() {
         <td class="text-center">
             <button type="button" class="btn btn-sm btn-danger delete-row">Delete</button>
         </td>
-        <td>${item.TaxID}</td>
-       <td>${isFSC ? 'Yes' : 'No'}</td>
+        <td class="d-none">${item.TaxID}</td>
+       <td class="d-none">${isFSC ? 'Yes' : 'No'}</td>
     `;
 
             freightElements.freightTable.appendChild(row);

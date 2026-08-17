@@ -295,3 +295,12 @@ let infomationData = null;
 let reportType = null;
 let fscPercentManual = 0; // To store manual FSC % if needed
 
+const parseFloatSafe = (value) => parseFloat(value) || 0;
+
+const CHARGE_TYPES = {
+    FREIGHT: 'freight amount',
+    FSC: 'fuel surcharge',
+    FREIGHT_VARIANTS: ['freight amount', 'freight', 'basic freight', 'basic freight amount'],
+    FSC_VARIANTS: ['fuel surcharge', 'fsc', 'fuel charge', 'fuel adjustment']
+};
+const getElementValue = (id) => document.getElementById(id)?.value?.trim() || '';

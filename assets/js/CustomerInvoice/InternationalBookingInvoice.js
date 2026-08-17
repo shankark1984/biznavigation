@@ -17,11 +17,6 @@ const TABLE_CONFIG = {
     ]
 };
 
-const CHARGE_TYPES = {
-    FREIGHT: 'freight amount',
-    FSC: 'fuel surcharge'
-};
-
 // ============================================
 // STATE MANAGEMENT
 // ============================================
@@ -54,10 +49,6 @@ const invoiceState = new InvoiceState();
 // UTILITY FUNCTIONS
 // ============================================
 
-
-const parseFloatSafe = (value) => parseFloat(value) || 0;
-
-const getElementValue = (id) => document.getElementById(id)?.value?.trim() || '';
 
 const updateElementText = (id, value, decimals = 2) => {
     const el = document.getElementById(id);

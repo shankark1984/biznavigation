@@ -1,842 +1,1044 @@
-let currentPage = 1;
-const pageSize = 50;
-const CompanyID = localStorage.getItem('CompanyID');
-let sortColumn = null;
-let sortOrder = 'asc';
-let partyNameCache = {};
+// ============================================
+// CONFIGURATION & STATE
+// ============================================
+const CONFIG = {
+    PAGE_SIZE: 50,
+    MAX_SUGGESTIONS: 50,
+    BATCH_SIZE: 1000,
+    DATE_FORMAT: "Y-m-d",
+    CURRENCY_LOCALE: "en-IN",
+    CURRENCY_MIN_FRACTION: 2,
+    CURRENCY_MAX_FRACTION: 2,
+};
 
-document.addEventListener('DOMContentLoaded', async () => {
+const STATE = {
+    currentPage: 1,
+    sortColumn: null,
+    sortOrder: 'asc',
+    partyNameCache: {},
+    reportSuggestionData: [],
+    filters: {},
+};
 
-    flatpickr("#dateRange", { mode: "range", dateFormat: "Y-m-d" });
+// ============================================
+// DOM REFS (Cache for performance)
+// ============================================
+const DOM = {
+    get tableBody() { return document.querySelector('#bookingTable tbody'); },
+    get pagination() { return document.getElementById('paginationControls'); },
+    get spinner() { return document.getElementById('loadingSpinner'); },
+    get dateRange() { return document.getElementById('dateRange'); },
+    get searchBtn() { return document.getElementById('searchBtn'); },
+    get exportExcelBtn() { return document.getElementById('exportExcelBtn'); },
+    get exportPdfBtn() { return document.getElementById('exportPdfBtn'); },
+    get filterSection() { return document.getElementById('filterSection'); },
+    get paymentStatusBtn() { return document.getElementById('paymentStatusBtn'); },
 
-    document.getElementById("searchBtn").addEventListener("click", async () => {
+    // Input fields
+    get inputs() {
+        return {
+            customerName: document.getElementById('customerName'),
+            invoiceNo: document.getElementById('invoiceNo'),
+            invoiceType: document.getElementById('invoiceType'),
+            invoiceMonth: document.getElementById('invoiceMonth'),
+            invoiceYear: document.getElementById('invoiceYear'),
+            financialYear: document.getElementById('financialYear'),
+        };
+    },
 
-        const filters = getFilters();
+    // Datalists
+    get datalists() {
+        return {
+            invoiceNo: document.getElementById('invoiceNoList'),
+            customerName: document.getElementById('customerNameList'),
+            invoiceType: document.getElementById('invoiceTypeList'),
+            paymentStatus: document.getElementById('paymentStatusBtn'),
+            financialYear: document.getElementById('financialYearList'),
+        };
+    },
 
-        const hasAnyFilter =
-            filters.customerName ||
-            filters.invoiceNo ||
-            filters.invoiceType ||
-            filters.paymentStatus.length > 0 ||
-            filters.startDate ||
-            filters.endDate ||
-            filters.invoiceMonth ||
-            filters.invoiceYear ||
-            filters.financialYear;
+    // Total display elements
+    get totals() {
+        return {
+            BasicAmount: document.getElementById('totalBasicAmount'),
+            OtherAmount: document.getElementById('totalOtherAmount'),
+            CGSTAmount: document.getElementById('totalCGSTAmount'),
+            SGSTAmount: document.getElementById('totalSGSTAmount'),
+            IGSTAmount: document.getElementById('totalIGSTAmount'),
+            TotalGSTAmount: document.getElementById('totalGSTAmount'),
+            GrandTotalAmount: document.getElementById('totalGrandTotal'),
+            PaymentAmount: document.getElementById('totalCollected'),
+            OtherDeductionAmount: document.getElementById('totalOtherDeduction'),
+            TDSDeductionAmount: document.getElementById('totalTDSDeduction'),
+            PaymentTotalAmount: document.getElementById('totalPayment'),
+            BalanceAmount: document.getElementById('totalBalance'),
+        };
+    }
+};
 
-        if (!hasAnyFilter) {
-            const ok = confirm(
-                "No filters selected.\n\nThis will load all company records.\n\nDo you want to continue?"
-            );
+// ============================================
+// UTILITY FUNCTIONS
+// ============================================
+const Utils = {
+    toNumber: (value) => {
+        if (value === null || value === undefined || value === '') return 0;
+        return parseFloat(String(value).replace(/,/g, '')) || 0;
+    },
 
-            if (!ok) return;
+    formatAmount: (value) => {
+        return Utils.toNumber(value).toLocaleString(CONFIG.CURRENCY_LOCALE, {
+            minimumFractionDigits: CONFIG.CURRENCY_MIN_FRACTION,
+            maximumFractionDigits: CONFIG.CURRENCY_MAX_FRACTION
+        });
+    },
+
+    formatDate: (dateStr) => {
+        if (!dateStr) return '';
+        const date = new Date(dateStr);
+        return isNaN(date) ? '' : date.toLocaleDateString();
+    },
+
+    getCurrentFinancialYear: () => {
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = today.getMonth() + 1;
+        return month >= 4 ? `${year}-${year + 1}` : `${year - 1}-${year}`;
+    },
+
+    getFinancialYearRange: (financialYear) => {
+        const [startYear, endYear] = financialYear.split('-').map(Number);
+        return {
+            startDate: `${startYear}-04-01`,
+            endDate: `${endYear}-03-31`
+        };
+    },
+
+    getMonthRange: (yearMonth) => {
+        const [year, month] = yearMonth.split('-').map(Number);
+        if (isNaN(year) || isNaN(month)) return null;
+        const start = new Date(year, month - 1, 1).toISOString().split('T')[0];
+        const end = new Date(year, month, 0).toISOString().split('T')[0];
+        return { startDate: start, endDate: end };
+    },
+
+    getYearRange: (year) => {
+        return {
+            startDate: `${year}-01-01`,
+            endDate: `${year}-12-31`
+        };
+    },
+
+    debounce: (func, delay = 300) => {
+        let timeoutId;
+        return function (...args) {
+            clearTimeout(timeoutId);
+            timeoutId = setTimeout(() => func.apply(this, args), delay);
+        };
+    },
+
+    showError: (message, container = DOM.tableBody) => {
+        if (container) {
+            container.innerHTML = `
+                <tr>
+                    <td colspan="18" class="text-center text-danger py-4">
+                        ${message}
+                    </td>
+                </tr>
+            `;
+        }
+        console.error(message);
+    },
+
+    showLoading: (message = 'Processing data, please wait...') => {
+        if (DOM.tableBody) {
+            DOM.tableBody.innerHTML = `
+                <tr>
+                    <td colspan="18" class="text-center text-primary fw-bold py-4">
+                        <span class="spinner-border spinner-border-sm me-2"></span>
+                        ${message}
+                    </td>
+                </tr>
+            `;
+        }
+    },
+
+    showNoRecords: () => {
+        if (DOM.tableBody) {
+            DOM.tableBody.innerHTML = `
+                <tr>
+                    <td colspan="18" class="text-center text-muted">No records found</td>
+                </tr>
+            `;
+        }
+    }
+};
+
+// ============================================
+// DATABASE HELPERS - COMPLETE
+// ============================================
+const Database = {
+    getCompanyId: () => localStorage.getItem('CompanyID'),
+
+    fetchSuggestions: async () => {
+        const companyId = Database.getCompanyId();
+        if (!companyId) {
+            console.error('Company ID not found');
+            return [];
         }
 
-        currentPage = 1;
-        await loadTable(filters);
+        try {
+            const { data, error } = await supabaseClient
+                .from('InvoicePaymentView')
+                .select('InvoiceNo, PartyCode, PartyName, InvoiceType, PaymentStatus, InvoiceDate')
+                .eq('company_id', companyId);
 
-        const filterSection = document.getElementById("filterSection");
-        bootstrap.Collapse.getOrCreateInstance(filterSection).hide();
-    });
-
-    document.getElementById('exportExcelBtn').addEventListener('click', exportToExcel);
-    document.getElementById('exportPdfBtn').addEventListener('click', exportToPdf);
-
-    await loadReportSuggestions();
-    await loadTable(getFilters());
-
-    enableSortableHeaders();
-});
-
-function getFilters() {
-    const filters = {
-        customerName: document.getElementById("customerName")?.value.trim(),
-        invoiceNo: document.getElementById("invoiceNo")?.value.trim(),
-        invoiceType: document.getElementById("invoiceType")?.value.trim(),
-        invoiceMonth: document.getElementById("invoiceMonth")?.value,
-        invoiceYear: document.getElementById("invoiceYear")?.value.trim(),
-        financialYear: document.getElementById("financialYear")?.value.trim(),
-        paymentStatus: getSelectedPaymentStatus()
-    };
-
-    const dateRange = document.getElementById("dateRange")?.value.trim();
-    if (dateRange) {
-        const [startDate, endDate] = dateRange.split(" to ");
-        filters.startDate = startDate || "";
-        filters.endDate = endDate || startDate || "";
-    }
-
-    return filters;
-}
-
-function enableSortableHeaders() {
-    document.querySelectorAll('#bookingTable thead th[data-key]').forEach(th => {
-        th.style.cursor = 'pointer';
-        th.addEventListener('click', () => {
-            const key = th.getAttribute('data-key');
-            if (sortColumn === key) {
-                sortOrder = sortOrder === 'asc' ? 'desc' : 'asc';
-            } else {
-                sortColumn = key;
-                sortOrder = 'asc';
+            if (error) {
+                console.error('Error fetching suggestions:', error);
+                return [];
             }
-            loadTable(getFilters());
+
+            return data || [];
+        } catch (error) {
+            console.error('Error in fetchSuggestions:', error);
+            return [];
+        }
+    },
+
+    getPartyDetails: async (partyCode) => {
+        if (!partyCode) return null;
+
+        // Check cache first
+        if (STATE.partyNameCache[partyCode]) {
+            return { PartyName: STATE.partyNameCache[partyCode] };
+        }
+
+        try {
+            const { data, error } = await supabaseClient
+                .from('PartyDetails')
+                .select('PartyName')
+                .eq('PartyCode', partyCode)
+                .eq('company_id', Database.getCompanyId())
+                .maybeSingle();
+
+            if (error) {
+                console.error('Error fetching party details:', error);
+                return null;
+            }
+
+            if (data?.PartyName) {
+                STATE.partyNameCache[partyCode] = data.PartyName;
+                return data;
+            }
+
+            // If no data found, cache empty result to avoid repeated queries
+            STATE.partyNameCache[partyCode] = partyCode;
+            return { PartyName: partyCode };
+
+        } catch (error) {
+            console.error('Error fetching party details:', error);
+            STATE.partyNameCache[partyCode] = partyCode;
+            return { PartyName: partyCode };
+        }
+    },
+
+    getBatchPartyDetails: async (partyCodes) => {
+        if (!partyCodes || partyCodes.length === 0) return {};
+
+        // Filter out codes already in cache
+        const uncachedCodes = partyCodes.filter(code =>
+            code && !STATE.partyNameCache[code]
+        );
+
+        if (uncachedCodes.length === 0) {
+            // Return cached values
+            const result = {};
+            partyCodes.forEach(code => {
+                if (code) result[code] = STATE.partyNameCache[code] || code;
+            });
+            return result;
+        }
+
+        try {
+            const { data, error } = await supabaseClient
+                .from('PartyDetails')
+                .select('PartyCode, PartyName')
+                .in('PartyCode', uncachedCodes)
+                .eq('company_id', Database.getCompanyId());
+
+            if (error) {
+                console.error('Error fetching batch party details:', error);
+                // Return fallback values
+                const result = {};
+                uncachedCodes.forEach(code => {
+                    STATE.partyNameCache[code] = code;
+                    result[code] = code;
+                });
+                return result;
+            }
+
+            // Update cache with results
+            const result = {};
+            if (data && data.length > 0) {
+                data.forEach(item => {
+                    if (item.PartyCode && item.PartyName) {
+                        STATE.partyNameCache[item.PartyCode] = item.PartyName;
+                        result[item.PartyCode] = item.PartyName;
+                    }
+                });
+            }
+
+            // Set fallback for any codes not found
+            uncachedCodes.forEach(code => {
+                if (!result[code]) {
+                    STATE.partyNameCache[code] = code;
+                    result[code] = code;
+                }
+            });
+
+            return result;
+
+        } catch (error) {
+            console.error('Error in batch party details fetch:', error);
+            // Cache fallback values
+            const result = {};
+            uncachedCodes.forEach(code => {
+                STATE.partyNameCache[code] = code;
+                result[code] = code;
+            });
+            return result;
+        }
+    },
+
+    buildQuery: (filters = {}) => {
+        const companyId = Database.getCompanyId();
+        let query = supabaseClient
+            .from('InvoicePaymentView')
+            .select('*', { count: 'exact' })
+            .eq('company_id', companyId)
+            .order('InvoiceNo', { ascending: false });
+
+        // Apply text filters
+        if (filters.invoiceNo) {
+            query = query.ilike('InvoiceNo', `%${filters.invoiceNo}%`);
+        }
+        if (filters.customerName) {
+            query = query.ilike('PartyName', `%${filters.customerName}%`);
+        }
+        if (filters.invoiceType) {
+            query = query.ilike('InvoiceType', `%${filters.invoiceType}%`);
+        }
+        if (filters.paymentStatus?.length > 0) {
+            query = query.in('PaymentStatus', filters.paymentStatus);
+        }
+
+        // Apply date filters
+        query = Database.applyDateFilters(query, filters);
+
+        return query;
+    },
+
+    applyDateFilters: (query, filters) => {
+        const hasExplicitDateFilter =
+            filters.startDate || filters.endDate ||
+            filters.invoiceMonth || filters.invoiceYear ||
+            filters.financialYear;
+
+        // Only customer name selected -> current financial year
+        const onlyCustomerNameSelected =
+            filters.customerName && !filters.invoiceNo && !filters.invoiceType &&
+            !filters.paymentStatus?.length && !hasExplicitDateFilter;
+
+        if (onlyCustomerNameSelected) {
+            const [startYear, endYear] = Utils.getCurrentFinancialYear().split('-');
+            return query
+                .gte('InvoiceDate', `${startYear}-04-01`)
+                .lte('InvoiceDate', `${endYear}-03-31`);
+        }
+
+        // Priority: financialYear > invoiceYear > invoiceMonth > dateRange
+        if (filters.financialYear) {
+            const { startDate, endDate } = Utils.getFinancialYearRange(filters.financialYear);
+            return query.gte('InvoiceDate', startDate).lte('InvoiceDate', endDate);
+        }
+
+        if (filters.invoiceYear) {
+            const { startDate, endDate } = Utils.getYearRange(parseInt(filters.invoiceYear));
+            return query.gte('InvoiceDate', startDate).lte('InvoiceDate', endDate);
+        }
+
+        if (filters.invoiceMonth) {
+            const range = Utils.getMonthRange(filters.invoiceMonth);
+            if (range) {
+                return query.gte('InvoiceDate', range.startDate).lte('InvoiceDate', range.endDate);
+            }
+        }
+
+        if (filters.startDate) {
+            query = query.gte('InvoiceDate', filters.startDate);
+        }
+        if (filters.endDate) {
+            query = query.lte('InvoiceDate', filters.endDate);
+        }
+
+        // Default: no date filters -> last 2 months
+        if (!hasExplicitDateFilter) {
+            const twoMonthsAgo = new Date();
+            twoMonthsAgo.setMonth(twoMonthsAgo.getMonth() - 2);
+            const dateStr = twoMonthsAgo.toISOString().split('T')[0];
+            query = query.gte('InvoiceDate', dateStr);
+        }
+
+        return query;
+    },
+
+    fetchPage: async (filters, page, sortColumn, sortOrder) => {
+        const from = (page - 1) * CONFIG.PAGE_SIZE;
+        const to = page * CONFIG.PAGE_SIZE - 1;
+
+        let query = Database.buildQuery(filters);
+
+        if (sortColumn) {
+            query = query.order(sortColumn, { ascending: sortOrder === 'asc' });
+        }
+
+        const result = await query.range(from, to);
+        return result;
+    },
+
+    fetchAllData: async (filters) => {
+        const allData = [];
+        let from = 0;
+        let hasMore = true;
+
+        while (hasMore) {
+            const to = from + CONFIG.BATCH_SIZE - 1;
+            let query = Database.buildQuery(filters);
+            query = query.order('InvoiceNo', { ascending: true });
+
+            const { data, error } = await query.range(from, to);
+
+            if (error) {
+                console.error('Error fetching data for export:', error);
+                break;
+            }
+
+            if (data?.length > 0) {
+                allData.push(...data);
+                from += CONFIG.BATCH_SIZE;
+            } else {
+                hasMore = false;
+            }
+        }
+
+        return allData;
+    }
+};
+// ============================================
+// UI RENDER FUNCTIONS
+// ============================================
+const UI = {
+    renderTable: async (data) => {
+        const tbody = DOM.tableBody;
+        if (!tbody) return;
+
+        if (!data || data.length === 0) {
+            Utils.showNoRecords();
+            return;
+        }
+
+        tbody.innerHTML = '';
+
+        for (let idx = 0; idx < data.length; idx++) {
+            const row = data[idx];
+            const tr = document.createElement('tr');
+
+            let partyName = '';
+            if (row.PartyCode) {
+                const details = await Database.getPartyDetails(row.PartyCode);
+                partyName = details?.PartyName || '';
+            }
+
+            const srNo = (STATE.currentPage - 1) * CONFIG.PAGE_SIZE + idx + 1;
+            const invoiceLink = `../Accounting/CustomerInvoice.html?invoiceNo=${encodeURIComponent(row.InvoiceNo)}`;
+
+            tr.innerHTML = `
+                <td>${srNo}</td>
+                <td>
+                    <a href="${invoiceLink}" class="text-decoration-none fw-bold">
+                        ${row.InvoiceNo}
+                    </a>
+                </td>
+                <td>${Utils.formatDate(row.InvoiceDate)}</td>
+                <td>${row.InvoiceType || ''}</td>
+                <td>${partyName}</td>
+                <td class="text-end">${Utils.formatAmount(row.BasicAmount)}</td>
+                <td class="text-end">${Utils.formatAmount(row.OtherAmount)}</td>
+                <td class="text-end">${Utils.formatAmount(row.CGSTAmount)}</td>
+                <td class="text-end">${Utils.formatAmount(row.SGSTAmount)}</td>
+                <td class="text-end">${Utils.formatAmount(row.IGSTAmount)}</td>
+                <td class="text-end">${Utils.formatAmount(row.TotalGSTAmount)}</td>
+                <td class="text-end">${Utils.formatAmount(row.GrandTotalAmount)}</td>
+                <td class="text-end">${Utils.formatAmount(row.PaymentAmount)}</td>
+                <td class="text-end">${Utils.formatAmount(row.OtherDeductionAmount)}</td>
+                <td class="text-end">${Utils.formatAmount(row.TDSDeductionAmount)}</td>
+                <td class="text-end">${Utils.formatAmount(row.PaymentTotalAmount)}</td>
+                <td class="text-end">${Utils.formatAmount(row.BalanceAmount)}</td>
+                <td>${row.PaymentStatus || ''}</td>
+            `;
+
+            tbody.appendChild(tr);
+        }
+    },
+
+    renderPagination: (totalCount, loadTableFn) => {
+        const pagination = DOM.pagination;
+        if (!pagination) return;
+
+        const totalPages = Math.ceil(totalCount / CONFIG.PAGE_SIZE);
+        pagination.innerHTML = '';
+
+        if (totalPages <= 1) {
+            // Only show single page indicator or nothing
+            return;
+        }
+
+        // Previous button
+        UI.createPaginationButton(pagination, 'Previous', STATE.currentPage > 1, () => {
+            if (STATE.currentPage > 1) {
+                STATE.currentPage--;
+                loadTableFn(UI.getFilters());
+            }
         });
-    });
-}
 
-let reportSuggestionData = [];
+        // Page numbers
+        const maxVisible = 5;
+        let startPage = Math.max(1, STATE.currentPage - 2);
+        let endPage = Math.min(totalPages, startPage + maxVisible - 1);
+        startPage = Math.max(1, endPage - maxVisible + 1);
 
-async function loadReportSuggestions() {
-    const { data, error } = await supabaseClient
-        .from('InvoicePaymentView')
-        .select('InvoiceNo, PartyCode, PartyName, InvoiceType, PaymentStatus, InvoiceDate')
-        .eq('company_id', CompanyID);
+        // First page with dots
+        if (startPage > 1) {
+            UI.createPageNumber(pagination, 1, loadTableFn);
+            if (startPage > 2) {
+                UI.createDots(pagination);
+            }
+        }
 
-    if (error) return console.error('Error fetching suggestions:', error);
+        // Visible pages
+        for (let i = startPage; i <= endPage; i++) {
+            UI.createPageNumber(pagination, i, loadTableFn, i === STATE.currentPage);
+        }
 
-    reportSuggestionData = data || [];
+        // Last page with dots
+        if (endPage < totalPages) {
+            if (endPage < totalPages - 1) {
+                UI.createDots(pagination);
+            }
+            UI.createPageNumber(pagination, totalPages, loadTableFn);
+        }
 
-    populateDatalists(reportSuggestionData, 'InvoiceNo', 'invoiceNoList');
-    populateDatalists(reportSuggestionData, 'PartyName', 'customerNameList');
-    populateDatalists(reportSuggestionData, 'InvoiceType', 'invoiceTypeList');
-    populateDatalists(reportSuggestionData, 'PaymentStatus', 'paymentStatusList');
+        // Next button
+        UI.createPaginationButton(pagination, 'Next', STATE.currentPage < totalPages, () => {
+            if (STATE.currentPage < totalPages) {
+                STATE.currentPage++;
+                loadTableFn(UI.getFilters());
+            }
+        });
+    },
 
-    const financialYears = [...new Set(reportSuggestionData
-        .map(item => item.InvoiceDate)
-        .filter(Boolean)
-        .map(date => {
-            const d = new Date(date);
-            const year = d.getFullYear();
-            const month = d.getMonth() + 1;
-            return month >= 4 ? `${year}-${year + 1}` : `${year - 1}-${year}`;
-        })
-    )].sort();
+    createPaginationButton: (container, text, enabled, onClick) => {
+        const li = document.createElement('li');
+        li.className = `page-item ${!enabled ? 'disabled' : ''}`;
+        li.innerHTML = `<a class="page-link" href="#">${text}</a>`;
+        if (enabled) {
+            li.addEventListener('click', (e) => {
+                e.preventDefault();
+                onClick();
+            });
+        }
+        container.appendChild(li);
+    },
 
-    populateArrayDatalist(financialYears, 'financialYearList');
+    createPageNumber: (container, page, loadTableFn, isActive = false) => {
+        const li = document.createElement('li');
+        li.className = `page-item ${isActive ? 'active' : ''}`;
+        li.innerHTML = `<a class="page-link" href="#">${page}</a>`;
+        li.addEventListener('click', (e) => {
+            e.preventDefault();
+            STATE.currentPage = page;
+            loadTableFn(UI.getFilters());
+        });
+        container.appendChild(li);
+    },
 
-    attachSuggestionFilters();
-}
+    createDots: (container) => {
+        const li = document.createElement('li');
+        li.className = 'page-item disabled';
+        li.innerHTML = `<span class="page-link">...</span>`;
+        container.appendChild(li);
+    },
 
-function populateDatalists(data, field, datalistId) {
-    const uniqueValues = [...new Set(
-        data
-            .map(item => item[field])
-            .filter(Boolean)
-    )].sort((a, b) => a.localeCompare(b)); // A to Z sorting
+    updateCumulativeTotals: (allData) => {
+        const totals = {
+            BasicAmount: 0,
+            OtherAmount: 0,
+            CGSTAmount: 0,
+            SGSTAmount: 0,
+            IGSTAmount: 0,
+            TotalGSTAmount: 0,
+            GrandTotalAmount: 0,
+            PaymentAmount: 0,
+            OtherDeductionAmount: 0,
+            TDSDeductionAmount: 0,
+            PaymentTotalAmount: 0,
+            BalanceAmount: 0
+        };
 
-    const datalist = document.getElementById(datalistId);
+        const endIndex = STATE.currentPage * CONFIG.PAGE_SIZE;
+        const cumulativeRows = allData.slice(0, endIndex);
 
-    datalist.innerHTML = uniqueValues
-        .map(value => `<option value="${value}">`)
-        .join('');
-}
+        cumulativeRows.forEach(row => {
+            Object.keys(totals).forEach(key => {
+                totals[key] += Utils.toNumber(row[key]);
+            });
+        });
 
-function attachSuggestionFilters() {
-    attachDatalistFilter('invoiceNo', 'invoiceNoList', 'InvoiceNo');
-    attachDatalistFilter('customerName', 'customerNameList', 'PartyName');
-    attachDatalistFilter('invoiceType', 'invoiceTypeList', 'InvoiceType');
-    attachDatalistFilter('paymentStatus', 'paymentStatusList', 'PaymentStatus');
-}
+        // Update DOM
+        Object.keys(totals).forEach(key => {
+            const element = DOM.totals[key];
+            if (element) {
+                element.textContent = Utils.formatAmount(totals[key]);
+            }
+        });
+    },
 
-function attachDatalistFilter(inputId, datalistId, field) {
-    const input = document.getElementById(inputId);
-    const datalist = document.getElementById(datalistId);
+    updateHeaderSortIndicators: () => {
+        document.querySelectorAll('#bookingTable thead th[data-key]').forEach(th => {
+            const key = th.getAttribute('data-key');
+            const title = th.getAttribute('data-title') || th.textContent.replace(/\s+[\u25B2\u25BC]/, '');
+            th.textContent = title;
 
-    if (!input || !datalist) return;
+            if (key === STATE.sortColumn) {
+                th.textContent += STATE.sortOrder === 'asc' ? ' ▲' : ' ▼';
+            }
+        });
+    },
 
-    input.addEventListener('input', function () {
-        let searchText = this.value.trim().toLowerCase();
+    updatePaymentStatusDisplay: () => {
+        const selected = [...document.querySelectorAll('.paymentStatus:checked')]
+            .map(cb => cb.nextElementSibling.textContent.trim());
 
-        // optional: remove % if user types Shar%
-        searchText = searchText.replace(/%/g, '');
+        if (DOM.paymentStatusBtn) {
+            DOM.paymentStatusBtn.textContent = selected.length ? selected.join(', ') : 'All Status';
+        }
+    },
+
+    populateDatalists: (data, field, datalistId) => {
+        const datalist = DOM.datalists[Object.keys(DOM.datalists).find(key =>
+            DOM.datalists[key]?.id === datalistId
+        )] || document.getElementById(datalistId);
+
+        if (!datalist) {
+            console.warn(`Datalist with ID "${datalistId}" not found`);
+            return;
+        }
+
+        const uniqueValues = [...new Set(
+            data.map(item => item[field]).filter(Boolean)
+        )].sort((a, b) => a.localeCompare(b));
+
+        datalist.innerHTML = uniqueValues
+            .map(value => `<option value="${value}">`)
+            .join('');
+    },
+
+    populateArrayDatalist: (array, datalistId) => {
+        const datalist = document.getElementById(datalistId);
+        if (!datalist) {
+            console.warn(`Datalist with ID "${datalistId}" not found`);
+            return;
+        }
+        datalist.innerHTML = array.map(value => `<option value="${value}">`).join('');
+    },
+
+    getFilters: () => {
+        const inputs = DOM.inputs;
+        const filters = {
+            customerName: inputs.customerName?.value.trim(),
+            invoiceNo: inputs.invoiceNo?.value.trim(),
+            invoiceType: inputs.invoiceType?.value.trim(),
+            invoiceMonth: inputs.invoiceMonth?.value,
+            invoiceYear: inputs.invoiceYear?.value.trim(),
+            financialYear: inputs.financialYear?.value.trim(),
+            paymentStatus: UI.getSelectedPaymentStatus()
+        };
+
+        const dateRange = DOM.dateRange?.value.trim();
+        if (dateRange) {
+            const [startDate, endDate] = dateRange.split(' to ');
+            filters.startDate = startDate || '';
+            filters.endDate = endDate || startDate || '';
+        }
+
+        STATE.filters = filters;
+        return filters;
+    },
+
+    getSelectedPaymentStatus: () => {
+        return [...document.querySelectorAll('.paymentStatus:checked')]
+            .map(cb => cb.value);
+    }
+};
+
+// ============================================
+// EXPORT FUNCTIONS
+// ============================================
+const Exporter = {
+    toExcel: async () => {
+        const filters = UI.getFilters();
+        const allData = await Database.fetchAllData(filters);
+
+        if (allData.length === 0) {
+            alert('No data to export.');
+            return;
+        }
+
+        let tableHtml = `<table><thead><tr>
+            <th>Sr No</th><th>Invoice No</th><th>Invoice Date</th><th>Invoice Type</th><th>Customer Name</th>
+            <th>Basic Amount</th><th>Other Amount</th><th>CGST Amount</th><th>SGST Amount</th><th>IGST Amount</th>
+            <th>Total GST Amount</th><th>Grand Total Amount</th><th>Collected Amount</th><th>Other Deduction Amount</th>
+            <th>TDS Deduction Amount</th><th>Total Payment Amount</th><th>Balance Amount</th><th>Payment Status</th>
+        </tr></thead><tbody>`;
+
+        for (let i = 0; i < allData.length; i++) {
+            const row = allData[i];
+            let partyName = '';
+
+            if (row.PartyCode) {
+                const details = await Database.getPartyDetails(row.PartyCode);
+                partyName = details?.PartyName || '';
+            }
+
+            tableHtml += `<tr>
+                <td>${i + 1}</td>
+                <td>${row.InvoiceNo || ''}</td>
+                <td>${row.InvoiceDate || ''}</td>
+                <td>${row.InvoiceType || ''}</td>
+                <td>${partyName}</td>
+                <td>${row.BasicAmount || '0'}</td>
+                <td>${row.OtherAmount || '0'}</td>
+                <td>${row.CGSTAmount || '0'}</td>
+                <td>${row.SGSTAmount || '0'}</td>
+                <td>${row.IGSTAmount || '0'}</td>
+                <td>${row.TotalGSTAmount || '0'}</td>
+                <td>${row.GrandTotalAmount || '0'}</td>
+                <td>${row.PaymentAmount || '0'}</td>
+                <td>${row.OtherDeductionAmount || '0'}</td>
+                <td>${row.TDSDeductionAmount || '0'}</td>
+                <td>${row.PaymentTotalAmount || '0'}</td>
+                <td>${row.BalanceAmount || '0'}</td>
+                <td>${row.PaymentStatus || ''}</td>
+            </tr>`;
+        }
+
+        tableHtml += '</tbody></table>';
+
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = tableHtml;
+        const wb = XLSX.utils.table_to_book(tempDiv.querySelector('table'), { sheet: 'Bookings' });
+        XLSX.writeFile(wb, 'InternationalBookings.xlsx');
+    },
+
+    toPdf: async () => {
+        const filters = UI.getFilters();
+        const allData = await Database.fetchAllData(filters);
+
+        if (allData.length === 0) {
+            alert('No data to export.');
+            return;
+        }
+
+        const doc = new window.jspdf.jsPDF({
+            orientation: 'landscape',
+            unit: 'mm',
+            format: 'a4'
+        });
+
+        const headers = [
+            'Sr No', 'Invoice No', 'Invoice Date', 'Invoice Type', 'Customer Name',
+            'Basic Amount', 'Other Amount', 'CGST Amount', 'SGST Amount', 'IGST Amount',
+            'Total GST Amount', 'Grand Total Amount', 'Collected Amount',
+            'Other Deduction Amount', 'TDS Deduction Amount', 'Total Payment Amount',
+            'Balance Amount', 'Payment Status'
+        ];
+
+        // Get party names
+        const uniqueCodes = [...new Set(allData.map(r => r.PartyCode).filter(Boolean))];
+        const partyNameMap = {};
+
+        for (const code of uniqueCodes) {
+            const details = await Database.getPartyDetails(code);
+            partyNameMap[code] = details?.PartyName || code;
+        }
+
+        // Prepare rows
+        const rows = allData.map((row, i) => [
+            i + 1,
+            row.InvoiceNo || '',
+            Utils.formatDate(row.InvoiceDate),
+            row.InvoiceType || '',
+            partyNameMap[row.PartyCode] || row.PartyCode || '',
+            Utils.toNumber(row.BasicAmount).toFixed(2),
+            Utils.toNumber(row.OtherAmount).toFixed(2),
+            Utils.toNumber(row.CGSTAmount).toFixed(2),
+            Utils.toNumber(row.SGSTAmount).toFixed(2),
+            Utils.toNumber(row.IGSTAmount).toFixed(2),
+            Utils.toNumber(row.TotalGSTAmount).toFixed(2),
+            Utils.toNumber(row.GrandTotalAmount).toFixed(2),
+            Utils.toNumber(row.PaymentAmount).toFixed(2),
+            Utils.toNumber(row.OtherDeductionAmount).toFixed(2),
+            Utils.toNumber(row.TDSDeductionAmount).toFixed(2),
+            Utils.toNumber(row.PaymentTotalAmount).toFixed(2),
+            Utils.toNumber(row.BalanceAmount).toFixed(2),
+            row.PaymentStatus || ''
+        ]);
+
+        doc.autoTable({
+            head: [headers],
+            body: rows,
+            startY: 20,
+            margin: { left: 10, right: 10 },
+            styles: { fontSize: 6.5, overflow: 'linebreak', cellPadding: 1.2 },
+            headStyles: { fillColor: [0, 123, 255] },
+            didDrawPage: function (data) {
+                doc.setFontSize(10);
+                doc.text('Customer Invoice Report', data.settings.margin.left, 10);
+            },
+            pageBreak: 'auto'
+        });
+
+        doc.save('CustomerInvoiceReport.pdf');
+    }
+};
+
+// ============================================
+// MAIN FUNCTIONS
+// ============================================
+const App = {
+    init: async () => {
+        try {
+            // Initialize flatpickr
+            if (DOM.dateRange) {
+                flatpickr('#dateRange', {
+                    mode: 'range',
+                    dateFormat: CONFIG.DATE_FORMAT
+                });
+            }
+
+            // Set up event listeners
+            App.setupEventListeners();
+
+            // Load initial data
+            await App.loadReportSuggestions();
+            await App.loadTable(UI.getFilters());
+
+            // Enable sorting
+            App.enableSortableHeaders();
+
+            // Update payment status display
+            UI.updatePaymentStatusDisplay();
+
+        } catch (error) {
+            console.error('Initialization error:', error);
+            Utils.showError('Failed to initialize application');
+        }
+    },
+
+    setupEventListeners: () => {
+        // Search button
+        DOM.searchBtn?.addEventListener('click', async () => {
+            const filters = UI.getFilters();
+            const hasAnyFilter = Object.values(filters).some(value =>
+                value && (Array.isArray(value) ? value.length > 0 : true)
+            );
+
+            if (!hasAnyFilter) {
+                const ok = confirm(
+                    'No filters selected.\n\nThis will load all company records.\n\nDo you want to continue?'
+                );
+                if (!ok) return;
+            }
+
+            STATE.currentPage = 1;
+            await App.loadTable(filters);
+
+            // Hide filter section
+            const filterSection = DOM.filterSection;
+            if (filterSection) {
+                bootstrap.Collapse.getOrCreateInstance(filterSection).hide();
+            }
+        });
+
+        // Export buttons
+        DOM.exportExcelBtn?.addEventListener('click', Exporter.toExcel);
+        DOM.exportPdfBtn?.addEventListener('click', Exporter.toPdf);
+
+        // Payment status checkboxes
+        document.querySelectorAll('.paymentStatus').forEach(cb => {
+            cb.addEventListener('change', UI.updatePaymentStatusDisplay);
+        });
+
+        // Datalist filter with debounce
+        const debouncedFilter = Utils.debounce(App.applyDatalistFilter, 300);
+        ['invoiceNo', 'customerName', 'invoiceType', 'paymentStatus'].forEach(inputId => {
+            const input = document.getElementById(inputId);
+            if (input) {
+                input.addEventListener('input', debouncedFilter);
+            }
+        });
+    },
+
+    enableSortableHeaders: () => {
+        document.querySelectorAll('#bookingTable thead th[data-key]').forEach(th => {
+            th.style.cursor = 'pointer';
+            th.addEventListener('click', () => {
+                const key = th.getAttribute('data-key');
+                if (STATE.sortColumn === key) {
+                    STATE.sortOrder = STATE.sortOrder === 'asc' ? 'desc' : 'asc';
+                } else {
+                    STATE.sortColumn = key;
+                    STATE.sortOrder = 'asc';
+                }
+                App.loadTable(UI.getFilters());
+            });
+        });
+    },
+
+    loadTable: async (filters = {}) => {
+        const tbody = DOM.tableBody;
+        if (!tbody) return;
+
+        if (DOM.spinner) DOM.spinner.style.display = 'block';
+        Utils.showLoading();
+
+        try {
+            const { data: pageData, error: pageError, count } = await Database.fetchPage(
+                filters,
+                STATE.currentPage,
+                STATE.sortColumn,
+                STATE.sortOrder
+            );
+
+            if (pageError) {
+                throw new Error('Failed to load data: ' + pageError.message);
+            }
+
+            // Get cumulative data for totals
+            const totalQuery = Database.buildQuery(filters);
+            if (STATE.sortColumn) {
+                totalQuery.order(STATE.sortColumn, { ascending: STATE.sortOrder === 'asc' });
+            }
+            const cumulativeTo = STATE.currentPage * CONFIG.PAGE_SIZE - 1;
+            const { data: cumulativeData, error: totalError } = await totalQuery.range(0, cumulativeTo);
+
+            if (totalError) {
+                console.error('Error loading cumulative totals:', totalError);
+            }
+
+            await UI.renderTable(pageData || []);
+            UI.updateCumulativeTotals(cumulativeData || []);
+            UI.renderPagination(count || 0, App.loadTable);
+            UI.updateHeaderSortIndicators();
+
+        } catch (error) {
+            console.error('Load table error:', error);
+            Utils.showError('Something went wrong while loading data');
+        } finally {
+            if (DOM.spinner) DOM.spinner.style.display = 'none';
+        }
+    },
+
+    loadReportSuggestions: async () => {
+        try {
+            const data = await Database.fetchSuggestions();
+            STATE.reportSuggestionData = data;
+
+            if (data.length === 0) {
+                console.warn('No suggestion data available');
+                return;
+            }
+
+            // Populate datalists
+            const fieldMapping = {
+                invoiceNoList: 'InvoiceNo',
+                customerNameList: 'PartyName',
+                invoiceTypeList: 'InvoiceType',
+                paymentStatusBtn: 'PaymentStatus'
+            };
+
+            Object.entries(fieldMapping).forEach(([listId, field]) => {
+                UI.populateDatalists(data, field, listId);
+            });
+
+            // Financial years
+            const financialYears = [...new Set(
+                data
+                    .map(item => item.InvoiceDate)
+                    .filter(Boolean)
+                    .map(date => {
+                        const d = new Date(date);
+                        const year = d.getFullYear();
+                        const month = d.getMonth() + 1;
+                        return month >= 4 ? `${year}-${year + 1}` : `${year - 1}-${year}`;
+                    })
+            )].sort();
+
+            UI.populateArrayDatalist(financialYears, 'financialYearList');
+
+        } catch (error) {
+            console.error('Error loading suggestions:', error);
+        }
+    },
+
+    applyDatalistFilter: (event) => {
+        const input = event.target;
+        const inputId = input.id;
+        const datalistId = input.getAttribute('list');
+
+        if (!datalistId) return;
+
+        const fieldMapping = {
+            invoiceNo: 'InvoiceNo',
+            customerName: 'PartyName',
+            invoiceType: 'InvoiceType',
+            paymentStatus: 'PaymentStatus'
+        };
+
+        const field = fieldMapping[inputId];
+        if (!field || !STATE.reportSuggestionData.length) return;
+
+        let searchText = input.value.trim().toLowerCase().replace(/%/g, '');
 
         const matchedValues = [...new Set(
-            reportSuggestionData
+            STATE.reportSuggestionData
                 .map(item => item[field])
                 .filter(Boolean)
                 .filter(value => value.toLowerCase().startsWith(searchText))
         )].sort((a, b) => a.localeCompare(b));
 
-        datalist.innerHTML = matchedValues
-            .slice(0, 50) // limit suggestions
-            .map(value => `<option value="${value}">`)
-            .join('');
-    });
-}
-
-function populateArrayDatalist(array, datalistId) {
-    const datalist = document.getElementById(datalistId);
-    datalist.innerHTML = array.map(value => `<option value="${value}">`).join('');
-}
-
-async function loadTable(filters = {}) {
-    const spinner = document.getElementById('loadingSpinner');
-    const tbody = document.querySelector('#bookingTable tbody');
-
-    spinner.style.display = 'block';
-
-    // Show processing message in table
-    tbody.innerHTML = `
-        <tr>
-            <td colspan="18" class="text-center text-primary fw-bold py-4">
-                <span class="spinner-border spinner-border-sm me-2"></span>
-                Processing data, please wait...
-            </td>
-        </tr>
-    `;
-
-    try {
-        let pageQuery = buildQuery(filters);
-
-        if (sortColumn) {
-            pageQuery = pageQuery.order(sortColumn, { ascending: sortOrder === 'asc' });
-        }
-
-        const from = (currentPage - 1) * pageSize;
-        const to = currentPage * pageSize - 1;
-
-        const { data: pageData, error: pageError, count } = await pageQuery.range(from, to);
-
-        if (pageError) {
-            console.error('Error loading table:', pageError);
-            tbody.innerHTML = `
-                <tr>
-                    <td colspan="18" class="text-center text-danger py-4">
-                        Failed to load data
-                    </td>
-                </tr>
-            `;
-            return;
-        }
-
-        let totalQuery = buildQuery(filters);
-
-        if (sortColumn) {
-            totalQuery = totalQuery.order(sortColumn, { ascending: sortOrder === 'asc' });
-        }
-
-        const cumulativeTo = currentPage * pageSize - 1;
-
-        const { data: cumulativeData, error: totalError } = await totalQuery.range(0, cumulativeTo);
-
-        if (totalError) {
-            console.error('Error loading cumulative totals:', totalError);
-        }
-
-        await renderTable(pageData || []);
-        updateCumulativeTotals(cumulativeData || []);
-        renderPagination(count || 0, loadTable);
-        updateHeaderSortIndicators();
-
-    } catch (err) {
-        console.error("Unexpected loadTable error:", err);
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="18" class="text-center text-danger py-4">
-                    Something went wrong while loading data
-                </td>
-            </tr>
-        `;
-    } finally {
-        spinner.style.display = 'none';
-    }
-}
-
-function buildQuery(filters = {}) {
-    let query = supabaseClient
-        .from('InvoicePaymentView')
-        .select('*', { count: 'exact' })
-        .eq('company_id', CompanyID)
-        .order('InvoiceNo', { ascending: false });
-
-    // -----------------------------
-    // Non-date filters
-    // -----------------------------
-    if (filters.invoiceNo) {
-        query = query.ilike('InvoiceNo', `%${filters.invoiceNo}%`);
-    }
-
-    if (filters.customerName) {
-        query = query.ilike('PartyName', `%${filters.customerName}%`);
-    }
-
-    if (filters.invoiceType) {
-        query = query.ilike('InvoiceType', `%${filters.invoiceType}%`);
-    }
-
-    if (filters.paymentStatus.length > 0) {
-        query = query.in("PaymentStatus", filters.paymentStatus);
-    }
-
-    // -----------------------------
-    // Check date-related filters
-    // -----------------------------
-    const hasExplicitDateFilter =
-        !!filters.startDate ||
-        !!filters.endDate ||
-        !!filters.invoiceMonth ||
-        !!filters.invoiceYear ||
-        !!filters.financialYear;
-
-    // only customer name selected (no explicit date filters)
-    const onlyCustomerNameSelected =
-        !!filters.customerName &&
-        !filters.invoiceNo &&
-        !filters.invoiceType &&
-        !filters.paymentStatus &&
-        !hasExplicitDateFilter;
-
-    // ---------------------------------------------------------
-    // CASE 1: Only customer name selected -> current FY
-    // ---------------------------------------------------------
-    if (onlyCustomerNameSelected) {
-        const today = new Date();
-        const currentYear = today.getFullYear();
-        const currentMonth = today.getMonth() + 1; // 1 to 12
-
-        let fyStartYear, fyEndYear;
-
-        if (currentMonth >= 4) {
-            // Apr to Dec -> current FY starts this year
-            fyStartYear = currentYear;
-            fyEndYear = currentYear + 1;
-        } else {
-            // Jan to Mar -> current FY started last year
-            fyStartYear = currentYear - 1;
-            fyEndYear = currentYear;
-        }
-
-        query = query
-            .gte('InvoiceDate', `${fyStartYear}-04-01`)
-            .lte('InvoiceDate', `${fyEndYear}-03-31`);
-
-        return query;
-    }
-
-    // ---------------------------------------------------------
-    // CASE 2: Explicit date filters given -> use them
-    // Priority:
-    // financialYear > invoiceYear > invoiceMonth > dateRange
-    // ---------------------------------------------------------
-
-    if (filters.financialYear) {
-        const [startYear, endYear] = filters.financialYear.split('-').map(Number);
-
-        if (!isNaN(startYear) && !isNaN(endYear)) {
-            query = query
-                .gte('InvoiceDate', `${startYear}-04-01`)
-                .lte('InvoiceDate', `${endYear}-03-31`);
-        }
-
-        return query;
-    }
-
-    if (filters.invoiceYear) {
-        const year = parseInt(filters.invoiceYear, 10);
-
-        if (!isNaN(year)) {
-            query = query
-                .gte('InvoiceDate', `${year}-01-01`)
-                .lte('InvoiceDate', `${year}-12-31`);
-        }
-
-        return query;
-    }
-
-    if (filters.invoiceMonth) {
-        const [yearStr, monthStr] = filters.invoiceMonth.split('-'); // YYYY-MM
-        const year = parseInt(yearStr, 10);
-        const month = parseInt(monthStr, 10);
-
-        if (!isNaN(year) && !isNaN(month)) {
-            const start = new Date(year, month - 1, 1).toISOString().split('T')[0];
-            const end = new Date(year, month, 0).toISOString().split('T')[0];
-
-            query = query
-                .gte('InvoiceDate', start)
-                .lte('InvoiceDate', end);
-        }
-
-        return query;
-    }
-
-    if (filters.startDate || filters.endDate) {
-        if (filters.startDate) {
-            query = query.gte('InvoiceDate', filters.startDate);
-        }
-
-        if (filters.endDate) {
-            query = query.lte('InvoiceDate', filters.endDate);
-        }
-
-        return query;
-    }
-
-    // ---------------------------------------------------------
-    // CASE 3: No date filters selected
-    // default -> last 2 months
-    // applies to:
-    // - no filters at all
-    // - invoiceType only
-    // - paymentStatus only
-    // - invoiceType + paymentStatus
-    // - invoiceNo only
-    // - customerName + invoiceType
-    // etc.
-    // ---------------------------------------------------------
-
-    return query;
-}
-
-function updateHeaderSortIndicators() {
-    document.querySelectorAll('#bookingTable thead th[data-key]').forEach(th => {
-        const key = th.getAttribute('data-key');
-        th.textContent = th.getAttribute('data-title') || th.textContent.replace(/\s+[\u25B2\u25BC]/, '');
-        if (key === sortColumn) {
-            th.textContent += sortOrder === 'asc' ? ' ▲' : ' ▼';
-        }
-    });
-}
-
-async function renderTable(data) {
-    const tbody = document.querySelector('#bookingTable tbody');
-    tbody.innerHTML = '';
-
-    if (!data || data.length === 0) {
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="18" class="text-center text-muted">No records found</td>
-            </tr>
-        `;
-        return;
-    }
-
-    for (let idx = 0; idx < data.length; idx++) {
-        const row = data[idx];
-        const tr = document.createElement("tr");
-
-        let partyName = '';
-        if (row.PartyCode) {
-            if (partyNameCache[row.PartyCode]) {
-                partyName = partyNameCache[row.PartyCode];
-            } else {
-                const details = await getPartyDetailsByCode(row.PartyCode);
-                if (details?.PartyName) {
-                    partyName = details.PartyName;
-                    partyNameCache[row.PartyCode] = partyName;
-                }
-            }
-        }
-
-        tr.innerHTML = `
-            <td>${(currentPage - 1) * pageSize + idx + 1}</td>
-           <td>
-    <a href="../Accounting/CustomerInvoice.html?invoiceNo=${encodeURIComponent(row.InvoiceNo)}"
-       class="text-decoration-none fw-bold">
-        ${row.InvoiceNo}
-    </a>
-</td>
-            <td>${formatDate(row.InvoiceDate) || ''}</td>
-            <td>${row.InvoiceType || ''}</td>
-            <td>${partyName || ''}</td>
-            <td class="text-end">${formatAmount(row.BasicAmount || '0')}</td>
-            <td class="text-end">${formatAmount(row.OtherAmount || '0')}</td>
-            <td class="text-end">${formatAmount(row.CGSTAmount || '0')}</td>
-            <td class="text-end">${formatAmount(row.SGSTAmount || '0')}</td>
-            <td class="text-end">${formatAmount(row.IGSTAmount || '0')}</td>
-            <td class="text-end">${formatAmount(row.TotalGSTAmount || '0')}</td>
-            <td class="text-end">${formatAmount(row.GrandTotalAmount || '0')}</td>
-            <td class="text-end">${formatAmount(row.PaymentAmount || '0')}</td>
-            <td class="text-end">${formatAmount(row.OtherDeductionAmount || '0')}</td>
-            <td class="text-end">${formatAmount(row.TDSDeductionAmount || '0')}</td>
-            <td class="text-end">${formatAmount(row.PaymentTotalAmount || '0')}</td>
-            <td class="text-end">${formatAmount(row.BalanceAmount || '0')}</td>
-            <td>${row.PaymentStatus || ''}</td>
-        `;
-
-        tbody.appendChild(tr);
-    }
-}
-
-function renderPagination(totalCount, loadTableFn) {
-    const totalPages = Math.ceil(totalCount / pageSize);
-    const pagination = document.getElementById('paginationControls');
-
-    pagination.innerHTML = '';
-
-    const maxVisiblePages = 5;
-
-    // Previous Button
-    const prevLi = document.createElement('li');
-    prevLi.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
-    prevLi.innerHTML = `<a class="page-link" href="#">Previous</a>`;
-
-    prevLi.addEventListener('click', (e) => {
-        e.preventDefault();
-
-        if (currentPage > 1) {
-            currentPage--;
-            loadTableFn(getFilters());
-        }
-    });
-
-    pagination.appendChild(prevLi);
-
-    let startPage = Math.max(1, currentPage - 2);
-    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
-
-    // Adjust start page if near end
-    startPage = Math.max(1, endPage - maxVisiblePages + 1);
-
-    // First page + dots
-    if (startPage > 1) {
-        addPageButton(1);
-
-        if (startPage > 2) {
-            addDots();
+        const datalist = document.getElementById(datalistId);
+        if (datalist) {
+            datalist.innerHTML = matchedValues
+                .slice(0, CONFIG.MAX_SUGGESTIONS)
+                .map(value => `<option value="${value}">`)
+                .join('');
         }
     }
+};
 
-    // Visible Pages
-    for (let i = startPage; i <= endPage; i++) {
-        addPageButton(i);
-    }
-
-    // Last page + dots
-    if (endPage < totalPages) {
-        if (endPage < totalPages - 1) {
-            addDots();
-        }
-
-        addPageButton(totalPages);
-    }
-
-    // Next Button
-    const nextLi = document.createElement('li');
-    nextLi.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
-    nextLi.innerHTML = `<a class="page-link" href="#">Next</a>`;
-
-    nextLi.addEventListener('click', (e) => {
-        e.preventDefault();
-
-        if (currentPage < totalPages) {
-            currentPage++;
-            loadTableFn(getFilters());
-        }
-    });
-
-    pagination.appendChild(nextLi);
-
-    // Helper function
-    function addPageButton(page) {
-        const li = document.createElement('li');
-
-        li.className = `page-item ${page === currentPage ? 'active' : ''}`;
-
-        li.innerHTML = `<a class="page-link" href="#">${page}</a>`;
-
-        li.addEventListener('click', (e) => {
-            e.preventDefault();
-
-            currentPage = page;
-            loadTableFn(getFilters());
-        });
-
-        pagination.appendChild(li);
-    }
-
-    // Dots (...)
-    function addDots() {
-        const li = document.createElement('li');
-
-        li.className = 'page-item disabled';
-
-        li.innerHTML = `<span class="page-link">...</span>`;
-
-        pagination.appendChild(li);
-    }
-}
-
-async function exportToExcel() {
-    const filters = getFilters();
-    const allData = await fetchAllFilteredData(filters);
-    if (allData.length === 0) return alert('No data to export.');
-
-    let tableHtml = `<table><thead><tr>
-        <th>Sr No</th><th>Invoice No</th><th>Invoice Date</th><th>Invoice Type</th><th>Customer Name</th>
-        <th>Basic Amount</th><th>Other Amount</th><th>CGST Amount</th><th>SGST Amount</th><th>IGST Amount</th>
-        <th>Total GST Amount</th><th>Grand Total Amount</th><th>Collected Amount</th><th>Other Deduction Amount</th>
-        <th>TDS Deduction Amount</th><th>Total Payment Amount</th><th>Balance Amount</th><th>Payment Status</th></tr></thead><tbody>`;
-
-    for (let i = 0; i < allData.length; i++) {
-        const row = allData[i];
-        let partyName = '';
-        if (row.PartyCode) {
-            if (partyNameCache[row.PartyCode]) {
-                partyName = partyNameCache[row.PartyCode];
-            } else {
-                const details = await getPartyDetailsByCode(row.PartyCode);
-                partyName = details?.PartyName || '';
-                partyNameCache[row.PartyCode] = partyName;
-            }
-        }
-
-        tableHtml += `<tr>
-            <td>${i + 1}</td>
-           <td>
-    <a href="../Accounting/CustomerInvoice.html?invoiceNo=${encodeURIComponent(row.InvoiceNo)}"
-       class="text-decoration-none fw-bold">
-        ${row.InvoiceNo}
-    </a>
-</td>
-            <td>${row.InvoiceDate || ''}</td>
-            <td>${row.InvoiceType || ''}</td>
-            <td>${partyName}</td>
-            <td>${row.BasicAmount || '0'}</td>
-            <td>${row.OtherAmount || '0'}</td>
-            <td>${row.CGSTAmount || '0'}</td>
-            <td>${row.SGSTAmount || '0'}</td>
-            <td>${row.IGSTAmount || '0'}</td>
-            <td>${row.TotalGSTAmount || '0'}</td>
-            <td>${row.GrandTotalAmount || '0'}</td>
-            <td>${row.PaymentAmount || '0'}</td>
-            <td>${row.OtherDeductionAmount || '0'}</td>
-            <td>${row.TDSDeductionAmount || '0'}</td>
-            <td>${row.PaymentTotalAmount || '0'}</td>
-            <td>${row.BalanceAmount || '0'}</td>
-            <td>${row.PaymentStatus || ''}</td>
-        </tr>`;
-    }
-
-    tableHtml += `</tbody></table>`;
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = tableHtml;
-    const wb = XLSX.utils.table_to_book(tempDiv.querySelector('table'), { sheet: "Bookings" });
-    XLSX.writeFile(wb, 'InternationalBookings.xlsx');
-}
-
-// PDF Export Function with PartyName
-async function exportToPdf() {
-    const filters = getFilters();
-    const allData = await fetchAllFilteredData(filters);
-    if (!allData.length) return alert('No data to export.');
-
-    const doc = new window.jspdf.jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
-
-    const headers = [
-        'Sr No', 'Invoice No', 'Invoice Date', 'Invoice Type', 'Customer Name', 'Basic Amount', 'Other Amount',
-        'CGST Amount', 'SGST Amount', 'IGST Amount', 'Total GST Amount', 'Grand Total Amount', 'Collected Amount',
-        'Other Deduction Amount', 'TDS Deduction Amount', 'Total Payment Amount', 'Balance Amount', 'Payment Status'
-    ];
-
-    const formatNumber = (value) => typeof value === 'number' ? value.toFixed(2) : (parseFloat(value) || 0).toFixed(2);
-    const formatDate = (dateStr) => {
-        const date = new Date(dateStr);
-        return isNaN(date) ? '' : date.toLocaleDateString();
-    };
-
-    // Step 1: Get unique PartyCodes
-    const uniqueCodes = [...new Set(allData.map(r => r.PartyCode).filter(Boolean))];
-
-    // Step 2: Build PartyCode -> PartyName map
-    const partyNameMap = {};
-    for (const code of uniqueCodes) {
-        const details = await getPartyDetailsByCode(code);
-        partyNameMap[code] = details?.PartyName || code;
-    }
-
-    // Step 3: Prepare rows
-    const rows = allData.map((row, i) => [
-        i + 1,
-        row.InvoiceNo || '',
-        formatDate(row.InvoiceDate),
-        row.InvoiceType || '',
-        partyNameMap[row.PartyCode] || row.PartyCode || '',
-        formatNumber(row.BasicAmount),
-        formatNumber(row.OtherAmount),
-        formatNumber(row.CGSTAmount),
-        formatNumber(row.SGSTAmount),
-        formatNumber(row.IGSTAmount),
-        formatNumber(row.TotalGSTAmount),
-        formatNumber(row.GrandTotalAmount),
-        formatNumber(row.PaymentAmount),
-        formatNumber(row.OtherDeductionAmount),
-        formatNumber(row.TDSDeductionAmount),
-        formatNumber(row.PaymentTotalAmount),
-        formatNumber(row.BalanceAmount),
-        row.PaymentStatus || ''
-    ]);
-
-    // Step 4: Export
-    doc.autoTable({
-        head: [headers],
-        body: rows,
-        startY: 20,
-        margin: { left: 10, right: 10 },
-        styles: { fontSize: 6.5, overflow: 'linebreak', cellPadding: 1.2 },
-        headStyles: { fillColor: [0, 123, 255] },
-        didDrawPage: function (data) {
-            doc.setFontSize(10);
-            doc.text("Customer Invoice Report", data.settings.margin.left, 10);
-        },
-        pageBreak: 'auto'
-    });
-
-    doc.save('CustomerInvoiceReport.pdf');
-}
-
-async function fetchAllFilteredData(filters = {}) {
-    let allData = [], batchSize = 1000, from = 0, to = batchSize - 1, hasMore = true;
-
-    while (hasMore) {
-        let query = supabaseClient
-            .from('InvoicePaymentView')
-            .select('*')
-            .eq('company_id', CompanyID)
-            .order('InvoiceNo', { ascending: true });
-
-        if (filters.invoiceNo) query = query.ilike('InvoiceNo', `%${filters.invoiceNo}%`);
-        if (filters.customerName) query = query.ilike('PartyName', filters.customerName);
-        if (filters.invoiceType) query = query.ilike('InvoiceType', filters.invoiceType);
-        if (filters.paymentStatus.length > 0) {
-            query = query.in("PaymentStatus", filters.paymentStatus);
-        }
-        if (filters.startDate) query = query.gte('InvoiceDate', filters.startDate);
-        if (filters.endDate) query = query.lte('InvoiceDate', filters.endDate);
-        //Month filters
-        if (filters.invoiceMonth) {
-            let [monthStr, yearStr] = filters.invoiceMonth.split('-');
-            // Fallback if format is "YYYY-MM"
-            if (parseInt(monthStr) > 12) [yearStr, monthStr] = [monthStr, yearStr];
-
-            const month = parseInt(monthStr);
-            const year = parseInt(yearStr);
-
-            if (!isNaN(year) && !isNaN(month)) {
-                const start = new Date(year, month - 1, 1).toISOString().split('T')[0];
-                const end = new Date(year, month, 0).toISOString().split('T')[0];
-                query = query.gte('InvoiceDate', start).lte('InvoiceDate', end);
-            }
-        }
-        //Year filters
-        // Else fallback to full year range if only invoiceYear is set
-        if (!filters.invoiceMonth && filters.invoiceYear) {
-            const year = parseInt(filters.invoiceYear);
-            if (!isNaN(year)) {
-                const start = new Date(year, 0, 1).toISOString().split('T')[0];   // Jan 1
-                const end = new Date(year, 11, 31).toISOString().split('T')[0];  // Dec 31
-                query = query.gte('InvoiceDate', start).lte('InvoiceDate', end);
-            }
-        }
-
-        if (filters.financialYear) {
-            const [startYear, endYear] = filters.financialYear.split('-').map(Number);
-            query = query.gte('InvoiceDate', `${startYear}-04-01`).lte('InvoiceDate', `${endYear}-03-31`);
-        }
-
-        const { data, error } = await query.range(from, to);
-        if (error) {
-            console.error('Error fetching data for export:', error);
-            break;
-        }
-
-        if (data.length > 0) {
-            allData = allData.concat(data);
-            from += batchSize;
-            to += batchSize;
-        } else {
-            hasMore = false;
-        }
-    }
-
-    return allData;
-}
-
-function toNumber(value) {
-    if (value === null || value === undefined || value === "") return 0;
-    return parseFloat(String(value).replace(/,/g, "")) || 0;
-}
-
-function formatAmount(value) {
-    return toNumber(value).toLocaleString("en-IN", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-    });
-}
-
-function updateCumulativeTotals(allData) {
-    const totals = {
-        BasicAmount: 0,
-        OtherAmount: 0,
-        CGSTAmount: 0,
-        SGSTAmount: 0,
-        IGSTAmount: 0,
-        TotalGSTAmount: 0,
-        GrandTotalAmount: 0,
-        PaymentAmount: 0,
-        OtherDeductionAmount: 0,
-        TDSDeductionAmount: 0,
-        PaymentTotalAmount: 0,
-        BalanceAmount: 0
-    };
-
-    const toNumber = (val) => parseFloat(val || 0) || 0;
-
-    // page 1 to current page rows count
-    const endIndex = currentPage * pageSize;
-
-    const cumulativeRows = allData.slice(0, endIndex);
-
-    cumulativeRows.forEach(row => {
-        totals.BasicAmount += toNumber(row.BasicAmount);
-        totals.OtherAmount += toNumber(row.OtherAmount);
-        totals.CGSTAmount += toNumber(row.CGSTAmount);
-        totals.SGSTAmount += toNumber(row.SGSTAmount);
-        totals.IGSTAmount += toNumber(row.IGSTAmount);
-        totals.TotalGSTAmount += toNumber(row.TotalGSTAmount);
-        totals.GrandTotalAmount += toNumber(row.GrandTotalAmount);
-        totals.PaymentAmount += toNumber(row.PaymentAmount);
-        totals.OtherDeductionAmount += toNumber(row.OtherDeductionAmount);
-        totals.TDSDeductionAmount += toNumber(row.TDSDeductionAmount);
-        totals.PaymentTotalAmount += toNumber(row.PaymentTotalAmount);
-        totals.BalanceAmount += toNumber(row.BalanceAmount);
-    });
-
-    document.getElementById("totalBasicAmount").textContent = formatAmount(totals.BasicAmount);
-    document.getElementById("totalOtherAmount").textContent = formatAmount(totals.OtherAmount);
-    document.getElementById("totalCGSTAmount").textContent = formatAmount(totals.CGSTAmount);
-    document.getElementById("totalSGSTAmount").textContent = formatAmount(totals.SGSTAmount);
-    document.getElementById("totalIGSTAmount").textContent = formatAmount(totals.IGSTAmount);
-    document.getElementById("totalGSTAmount").textContent = formatAmount(totals.TotalGSTAmount);
-    document.getElementById("totalGrandTotal").textContent = formatAmount(totals.GrandTotalAmount);
-    document.getElementById("totalCollected").textContent = formatAmount(totals.PaymentAmount);
-    document.getElementById("totalOtherDeduction").textContent = formatAmount(totals.OtherDeductionAmount);
-    document.getElementById("totalTDSDeduction").textContent = formatAmount(totals.TDSDeductionAmount);
-    document.getElementById("totalPayment").textContent = formatAmount(totals.PaymentTotalAmount);
-    document.getElementById("totalBalance").textContent = formatAmount(totals.BalanceAmount);
-}
-
-
-const paymentStatusBtn = document.getElementById("paymentStatusBtn");
-const paymentStatusCheckboxes = document.querySelectorAll(".paymentStatus");
-
-paymentStatusCheckboxes.forEach(cb => {
-    cb.addEventListener("change", updatePaymentStatus);
+// ============================================
+// INITIALIZATION
+// ============================================
+document.addEventListener('DOMContentLoaded', () => {
+    App.init();
 });
-
-function updatePaymentStatus() {
-    const selected = [...paymentStatusCheckboxes]
-        .filter(cb => cb.checked)
-        .map(cb => cb.nextElementSibling.textContent.trim());
-
-    paymentStatusBtn.textContent = selected.length
-        ? selected.join(", ")
-        : "All Status";
-}
-
-function getSelectedPaymentStatus() {
-    return [...paymentStatusCheckboxes]
-        .filter(cb => cb.checked)
-        .map(cb => cb.value);
-}

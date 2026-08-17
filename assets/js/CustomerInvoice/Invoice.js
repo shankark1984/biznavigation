@@ -1,86 +1,109 @@
 /* =========================================================
-   CONSTANTS
+   CONSTANTS & CONFIGURATION
 ========================================================= */
 const FORWARDING_TYPES = ['Forwarding', 'Import', 'Export'];
-const totalFreight = 0;
-/* =========================================================
-   DOM READY
-========================================================= */
+const INVOICE_TYPE_MAP = {
+    'Forwarding': { loadFn: 'loadInvoiceBookings', createTableFn: 'createPendingShipmentTableHeaderAndFooter_ib' },
+    'Import': { loadFn: 'loadInvoiceBookings', createTableFn: 'createPendingShipmentTableHeaderAndFooter_ib' },
+    'Export': { loadFn: 'loadInvoiceBookings', createTableFn: 'createPendingShipmentTableHeaderAndFooter_ib' },
+    'Customs Clearance': { loadFn: 'loadInvoiceLineItems_cc', createTableFn: 'createPendingShipmentTableHeaderAndFooter' },
+    'Domestic': { loadFn: 'd_loadInvoiceBookings', createTableFn: 'd_createPendingShipmentTableHeaderAndFooter_ib' },
+    'Full Truck Load': { loadFn: 'ftl_loadInvoiceBookings', createTableFn: 'FTL_FCL_createPendingShipmentTableHeaderAndFooter' }
+};
 
-// document.addEventListener('DOMContentLoaded', async () => {
-//     await loadSuggestions('partySuggestions', 'PartyDetails', CompanyID);
-//     await loadBankNameSuggestions();
-//     await loadDefaultBank();
-//     await loadInvoiceNoSuggestions();
-//     await loadDatalist('departmentList', 'Department');
+const TOTAL_ELEMENT_IDS = [
+    'totalFreight', 'totalFSCAmt', 'totalOtherAmt',
+    'totalSGST', 'totalCGST', 'totalIGST',
+    'totalGST', 'totalGrand'
+];
 
-//     // Attach event after suggestions are loaded
-//     const bankInput = document.getElementById('inputBankName');
-//     const bankIDInput = document.getElementById('bankIDs');
+// =========================================================
+// STATE MANAGEMENT
+// =========================================================
+class InvoiceManager {
+    constructor() {
+        this.invoiceData = {};
+        this.invoiceChargesData = {};
+        this.bankID = null;
+        this.bankMap = {};
+        this.lockedBookingIds = [];
+        this.unlockTimers = [];
+    }
 
-//     bankInput.addEventListener('input', function () {
-//         const selectedValue = this.value.trim();
+    reset() {
+        this.invoiceData = {};
+        this.invoiceChargesData = {};
+        this.bankID = null;
+        this.lockedBookingIds = [];
+        this.clearUnlockTimers();
+    }
 
-//         if (bankMap[selectedValue]) {
-//             bankID = bankMap[selectedValue];
-//             bankIDInput.value = bankID;
-//             console.log('Selected Bank ID:', bankID);
-//         } else {
-//             bankID = null;
-//             bankIDInput.value = '';
-//         }
-//     });
-// });
+    clearUnlockTimers() {
+        this.unlockTimers.forEach(timer => clearTimeout(timer));
+        this.unlockTimers = [];
+    }
 
+    setInvoiceData(data) {
+        this.invoiceData = { ...this.invoiceData, ...data };
+    }
+
+    getInvoiceData() {
+        return this.invoiceData;
+    }
+}
+
+const invoiceManager = new InvoiceManager();
+
+// =========================================================
+// DOM READY - OPTIMIZED
+// =========================================================
 document.addEventListener('DOMContentLoaded', async () => {
+    await Promise.all([
+        loadSuggestions('partySuggestions', 'PartyDetails', CompanyID),
+        loadBankNameSuggestions(),
+        loadDefaultBank(),
+        // loadInvoiceNoSuggestions(),
+        loadDatalist('departmentList', 'Department')
+    ]);
 
-    await loadSuggestions('partySuggestions', 'PartyDetails', CompanyID);
-    await loadBankNameSuggestions();
-    await loadDefaultBank();
-    await loadInvoiceNoSuggestions();
-    await loadDatalist('departmentList', 'Department');
+    setupBankSelection();
+    setupInvoiceFromURL();
+});
 
-    // Bank selection
+function setupBankSelection() {
     const bankInput = document.getElementById('inputBankName');
     const bankIDInput = document.getElementById('bankIDs');
 
-    bankInput.addEventListener('input', function () {
+    bankInput?.addEventListener('input', function () {
         const selectedValue = this.value.trim();
-
-        if (bankMap[selectedValue]) {
-            bankID = bankMap[selectedValue];
-            bankIDInput.value = bankID;
-            console.log('Selected Bank ID:', bankID);
+        if (bankMap?.[selectedValue]) {
+            invoiceManager.bankID = bankMap[selectedValue];
+            bankIDInput.value = invoiceManager.bankID;
         } else {
-            bankID = null;
+            invoiceManager.bankID = null;
             bankIDInput.value = '';
         }
     });
+}
 
-    // ==========================
-    // Open Invoice from Report
-    // ==========================
+async function setupInvoiceFromURL() {
     const params = new URLSearchParams(window.location.search);
     const invoiceNo = params.get("invoiceNo");
 
     if (invoiceNo) {
         const invoiceInput = document.getElementById("invoiceNo");
-
         invoiceInput.value = invoiceNo;
-
-        // Trigger your existing change event
         invoiceInput.dispatchEvent(new Event("change"));
         await loadInvoice(invoiceNo);
     }
+}
 
-});
-
-/* =========================================================
-   CUSTOMER SELECTION
-========================================================= */
-document.getElementById('partyName').addEventListener('change', async function () {
+// =========================================================
+// CUSTOMER SELECTION - OPTIMIZED
+// =========================================================
+document.getElementById('partyName')?.addEventListener('change', async function () {
     const selectedPartyName = this.value.trim();
-    const options = Array.from(document.getElementById('partySuggestions').options);
+    const options = Array.from(document.getElementById('partySuggestions')?.options || []);
     const option = options.find(opt => opt.value === selectedPartyName);
 
     if (!option) {
@@ -89,7 +112,6 @@ document.getElementById('partyName').addEventListener('change', async function (
     }
 
     const partyCode = document.getElementById('partyCode').value;
-    console.log('Selected PartyCode:', partyCode);
 
     try {
         const { data, error } = await supabaseClient
@@ -100,233 +122,152 @@ document.getElementById('partyName').addEventListener('change', async function (
 
         if (error) throw error;
 
-        if (!data.length) {
+        if (!data?.length) {
             alert('No active billing address found.');
             return;
         }
 
         data.length === 1
-            ? (fillInvoiceAddress(data[0]), document.getElementById('invoiceDate').focus())
+            ? fillInvoiceAddress(data[0])
             : showAddressSelectionModal(data);
 
+        document.getElementById('invoiceDate')?.focus();
     } catch (err) {
-        console.error(err);
+        console.error('Error loading billing addresses:', err);
+        alert('Error loading billing addresses. Please try again.');
     }
 });
 
-document.getElementById('partyName').addEventListener('input', function () {
+document.getElementById('partyName')?.addEventListener('input', function () {
     const partyValue = this.value.trim();
     const btn = document.getElementById('addShipmentNo');
-
-    if (partyValue) {
-        btn.disabled = false;  // ✅ enable
-    } else {
-        btn.disabled = true;   // ❌ disable
-    }
+    if (btn) btn.disabled = !partyValue;
 });
 
 function fillInvoiceAddress(addr) {
-    document.getElementById('invoiceAddress').value = formatAddress(addr);
+    const addressEl = document.getElementById('invoiceAddress');
+    if (addressEl) {
+        addressEl.value = formatAddress(addr);
+    }
 }
 
 function formatAddress(a) {
     return `${a.Address}, ${a.City}, ${a.PinCode}, ${a.State}, ${a.Country}`;
 }
 
-/* =========================================================
-   INVOICE NUMBER GENERATION
-========================================================= */
+// =========================================================
+// INVOICE NUMBER GENERATION - OPTIMIZED
+// =========================================================
 async function generateInvoiceNumber(invoiceDateValue) {
     if (!invoiceDateValue) return '';
 
     try {
-        const { data: company } = await supabaseClient
-            .from('company_profile')
-            .select('short_code')
-            .eq('company_id', CompanyID)
-            .maybeSingle();
+        const [companyResult, lastResult] = await Promise.all([
+            supabaseClient
+                .from('company_profile')
+                .select('short_code')
+                .eq('company_id', CompanyID)
+                .maybeSingle(),
+            supabaseClient
+                .from('InvoiceDetails')
+                .select('InvoiceNo')
+                .like('InvoiceNo', `${companyResult?.data?.short_code || ''}/${getFinancialYear(invoiceDateValue)}/%`)
+                .eq('company_id', CompanyID)
+                .order('InvoiceNo', { ascending: false })
+                .limit(1)
+                .maybeSingle()
+        ]);
 
-        if (!company) return '';
+        if (companyResult.error) throw companyResult.error;
+        if (!companyResult.data) return '';
 
-        const d = new Date(invoiceDateValue);
-        const fyStart = d.getMonth() >= 3 ? d.getFullYear() % 100 : (d.getFullYear() - 1) % 100;
-        const fyEnd = (fyStart + 1) % 100;
-        const fy = `${fyStart.toString().padStart(2, '0')}-${fyEnd.toString().padStart(2, '0')}`;
+        const shortCode = companyResult.data.short_code;
+        const fy = getFinancialYear(invoiceDateValue);
+        const lastInvoice = lastResult.data;
+        const nextNumber = lastInvoice ? parseInt(lastInvoice.InvoiceNo.split('/').pop()) + 1 : 1;
 
-        const { data: last } = await supabaseClient
-            .from('InvoiceDetails')
-            .select('InvoiceNo')
-            .like('InvoiceNo', `${company.short_code}/${fy}/%`)
-            .eq('company_id', CompanyID)
-            .order('InvoiceNo', { ascending: false })
-            .limit(1)
-            .maybeSingle();
-
-        const next = last ? parseInt(last.InvoiceNo.split('/').pop()) + 1 : 1;
-        return `${company.short_code}/${fy}/${next.toString().padStart(4, '0')}`;
-    } catch {
+        return `${shortCode}/${fy}/${nextNumber.toString().padStart(4, '0')}`;
+    } catch (error) {
+        console.error('Error generating invoice number:', error);
         return '';
     }
 }
 
-/* =========================================================
-   GLOBAL DATA
-========================================================= */
-let invoiceData = {};
-let invoiceChargesData = {};
-// let bankID = null;
+function getFinancialYear(dateStr) {
+    const d = new Date(dateStr);
+    const startYear = d.getMonth() >= 3 ? d.getFullYear() % 100 : (d.getFullYear() - 1) % 100;
+    const endYear = (startYear + 1) % 100;
+    return `${startYear.toString().padStart(2, '0')}-${endYear.toString().padStart(2, '0')}`;
+}
 
-/* =========================================================
-   FETCH PENDING INVOICES
-========================================================= */
-document.getElementById('fetchPendingInvoices').addEventListener('click', async () => {
-    const type = document.getElementById('movementType').value;
+// =========================================================
+// FETCH PENDING INVOICES - OPTIMIZED
+// =========================================================
+document.getElementById('fetchPendingInvoices')?.addEventListener('click', async () => {
+    const type = document.getElementById('movementType')?.value;
+    const actionMap = {
+        'Forwarding': getPendingInvoiceDetails,
+        'Import': getPendingInvoiceDetails,
+        'Export': getPendingInvoiceDetails,
+        'Customs Clearance': CustomsClearanceInvoiceDetails,
+        'Domestic': d_getPendingInvoiceDetails,
+        'Full Truck Load': FTL_FCL_getPendingInvoiceDetails
+    };
 
-    try {
-        if (FORWARDING_TYPES.includes(type)) {
-            await getPendingInvoiceDetails();
-        } else if (type === 'Customs Clearance') {
-            await CustomsClearanceInvoiceDetails();
-        } else if (type === 'Domestic') {
-            await d_getPendingInvoiceDetails();
-        } else if (type === 'Full Truck Load') {
-            await FTL_FCL_getPendingInvoiceDetails();
-        } else {
-            alert('Select valid Movement Type');
+    const action = actionMap[type];
+    if (action) {
+        try {
+            await action();
+        } catch (e) {
+            console.error('Error fetching invoices:', e);
+            alert('Failed to fetch invoices');
         }
-    } catch (e) {
-        alert('Failed to fetch invoices');
+    } else {
+        alert('Select valid Movement Type');
     }
 });
 
-/* =========================================================
-   SAVE INVOICE
-========================================================= */
-document.getElementById('saveButton').addEventListener('click', async () => {
+// =========================================================
+// SAVE INVOICE - OPTIMIZED WITH FIXED TOTALS
+// =========================================================
+document.getElementById('saveButton')?.addEventListener('click', async function () {
+    if (this.disabled) return;
 
-    const saveBtn = document.getElementById('saveButton');
     const spinner = document.getElementById('saveSpinnerBtn');
-
-    // Prevent double click
-    if (saveBtn.disabled) return;
+    const originalText = this.innerHTML;
 
     // Disable button and show processing
-    saveBtn.disabled = true;
-
-    if (spinner) {
-        spinner.classList.remove('d-none');
-    }
-
-    saveBtn.innerHTML = `
+    this.disabled = true;
+    if (spinner) spinner.classList.remove('d-none');
+    this.innerHTML = `
         <span id="saveSpinnerBtn" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
         Processing...
     `;
 
-    const bankID = document.getElementById('bankIDs').value.trim();
-    const partyCode = document.getElementById('partyCode').value.trim();
-    const invoiceDate = document.getElementById('invoiceDate').value;
-    const invoiceType = document.getElementById('movementType').value;
-    const invoiceAddress = document.getElementById('invoiceAddress').value.trim();
-    const isInsert = saveBtn.dataset.mode === 'insert';
-
-    let basicfreight = 0;
-
-    // Validation
-    if (!partyCode || !invoiceDate || !invoiceType || !invoiceAddress) {
-        showToast('Fill all required fields');
-
-        saveBtn.disabled = false;
-        saveBtn.innerHTML = '<i class="bi bi-save"></i> Save';
-        return;
-    }
-
-    // console.log('Bank ID on Save:', bankID);
-
-    if (!bankID) {
-        showToast('Select valid Bank Name');
-
-        saveBtn.disabled = false;
-        saveBtn.innerHTML = '<i class="bi bi-save"></i> Save';
-        return;
-    }
-
-    let invoiceNo = document.getElementById('invoiceNo').value.trim();
-
-    if (isInsert) {
-        invoiceNo = await generateInvoiceNumber(invoiceDate);
-
-        if (!invoiceNo) {
-            showToast('Invoice number generation failed');
-
-            saveBtn.disabled = false;
-            saveBtn.innerHTML = '<i class="bi bi-save"></i> Save';
-            return;
+    try {
+        await saveInvoice(this);
+    } catch (error) {
+        console.error('Save error:', error);
+        showToast(error.message || 'Save failed');
+    } finally {
+        // Only restore if not successfully saved
+        if (!this.disabled) {
+            this.disabled = false;
+            this.innerHTML = originalText;
         }
-
-        document.getElementById('invoiceNo').value = invoiceNo;
     }
+});
 
-    const getValue = (id) => {
-        const el = document.getElementById(id);
-        return el ? parseFloat(el.textContent) || 0 : 0;
-    };
+async function saveInvoice(saveBtn) {
+    const invoiceData = collectInvoiceData(saveBtn.dataset.mode === 'insert');
 
-    const isCustoms = invoiceType === 'Customs Clearance';
+    if (!invoiceData) return;
 
-    if (invoiceType === 'Customs Clearance') {
-        basicfreight = getValue('totalFreight_sc');
-    } else if (invoiceType === 'Domestic') {
-        basicfreight = getValue('totalFreight_d');
-    } else if (invoiceType === 'Full Truck Load') {
-        basicfreight = getValue('totalFreight');
-    } else if (
-        invoiceType === 'Import' ||
-        invoiceType === 'Export' ||
-        invoiceType === 'Forwarding'
-    ) {
-        basicfreight = getValue('totalFreight');
-    } else {
-        basicfreight = getValue('totalFreight');
-    }
-
-    const totals = {
-        freight: basicfreight,
-        fsc: isCustoms ? 0 : getTextValue('totalFSCAmt'),
-        other: isCustoms ? 0 : getTextValue('totalOtherAmt'),
-        sgst: getTextValue('totalSGSTAmt'),
-        cgst: getTextValue('totalCGSTAmt'),
-        igst: getTextValue('totalIGSTAmt'),
-        gst: getTextValue('totalGSTAmt'),
-        grand: getTextValue('totalGrandAmt')
-    };
-
-    // console.log(totals);
-
-    const invoiceData = {
-        InvoiceNo: invoiceNo,
-        InvoiceDate: invoiceDate,
-        InvoiceType: invoiceType,
-        PartyCode: partyCode,
-        InvoiceAddress: invoiceAddress,
-        BankID: bankID,
-        company_id: CompanyID,
-
-        BasicAmount: totals.freight,
-        OtherAmount: totals.fsc + totals.other,
-
-        SGSTAmount: totals.sgst,
-        CGSTAmount: totals.cgst,
-        IGSTAmount: totals.igst,
-        TotalGSTAmount: totals.gst,
-        GrandTotalAmount: Math.round(totals.grand),
-
-        Remarks: document.getElementById('invoiceInformation').value.trim()
-    };
+    const isInsert = saveBtn.dataset.mode === 'insert';
+    const invoiceNo = invoiceData.InvoiceNo;
 
     try {
-
         if (isInsert) {
-
             invoiceData.created_by = UserLoginID;
             invoiceData.created_at = localtimeStamp;
 
@@ -335,9 +276,7 @@ document.getElementById('saveButton').addEventListener('click', async () => {
                 .insert([invoiceData]);
 
             if (error) throw error;
-
         } else {
-
             invoiceData.updated_by = UserLoginID;
             invoiceData.updated_at = localtimeStamp;
 
@@ -351,195 +290,298 @@ document.getElementById('saveButton').addEventListener('click', async () => {
         }
 
         showToast(`Invoice ${isInsert ? 'Saved' : 'Updated'} Successfully`);
+        await updateLinkedBookings(invoiceData.InvoiceType, invoiceNo);
+        finalizeInvoice(saveBtn);
 
-        if (FORWARDING_TYPES.includes(invoiceType)) {
-            await updateInvoiceNumbers(invoiceNo);
-        } else if (invoiceType === 'Customs Clearance') {
-            await updateInvoiceNumbers_cc(invoiceNo);
-        } else if (invoiceType === 'Domestic') {
-            await d_updateInvoiceNumbers(invoiceNo);
-        } else if (invoiceType === 'Full Truck Load') {
-            await ftl_updateInvoiceNumbers(invoiceNo);
-        }
-
-        disableForm();
-
-        // Disable all row delete buttons
-        document.querySelectorAll('.delete-btn').forEach(btn => {
-            btn.disabled = true;
-            btn.classList.add('disabled');
-        });
-
-        // Keep Save disabled after successful save
-        saveBtn.disabled = true;
-        saveBtn.innerHTML = '<i class="bi bi-check-circle"></i> Updated';
-
-        modifyButton.disabled = false;
-        reportButton.disabled = false;
-        fetchPendingInvoices.disabled = true;
-
-    } catch (e) {
-
-        console.error(e);
-        showToast(e.message || 'Save failed');
-
-    } finally {
-
-        // Only restore Save button if save/update failed
-        if (!modifyButton.disabled) {
-            // Save was successful, keep it disabled
-            return;
-        }
-
-        saveBtn.disabled = false;
-        saveBtn.innerHTML = '<i class="bi bi-save"></i> Save';
+    } catch (error) {
+        console.error('Save error:', error);
+        throw error;
     }
-
-});
-
-/* =========================================================
-   BANK SELECTION
-========================================================= */
-// document.getElementById('inputBankName').addEventListener('input', function () {
-//     bankID = bankMap[this.value] || null;
-// });
-
-/* =========================================================
-   SAFE UNLOCK ON EXIT
-========================================================= */
-window.addEventListener('beforeunload', async () => {
-    try {
-        await autoUnlockRecords("FullLoadBookingDetails");
-        await autoUnlockRecords("international_booking");
-        await unlockBooking_ib(UserLoginID);
-        await unlockBooking_cc(UserLoginID);
-        console.log('Unlocking records for user:', UserLoginID);
-    } catch (e) {
-        console.error('Unlock failed:', e);
-    }
-});
-
-document.getElementById('newButton').addEventListener('click', newInvoice);
-
-async function newInvoice() {
-    // 1️⃣ Unlock previous records (STRICT)
-    try {
-        const singleShipmentbtn = document.getElementById('addShipmentNo');
-
-        await autoUnlockRecords("FullLoadBookingDetails");
-        await autoUnlockRecords("international_booking");
-        await unlockBooking_ib(UserLoginID);
-        await unlockBooking_cc(UserLoginID);
-        await d_unlockBooking_db(UserLoginID); // Domestic();
-        await ftl_unlockBooking(UserLoginID); // FTL/FCL();
-        document.getElementById('addShipmentNo').disabled = true; // Disable add shipment button until movement type is selected
-        document.getElementById('fetchPendingInvoices').disabled = true; // Disable party code field until movement type is selected
-        document.getElementById('movementType').value = ''; // Reset movement type
-        document.getElementById('pendingShipmentTable').tBodies[0].innerHTML = ''; // Clear pending shipments table
-        document.getElementById('invoiceInformation').value = ''; // Clear invoice information/remark
-        singleShipmentbtn.disabled = false;
-
-    } catch (e) {
-        console.error('Unlock failed:', e);
-    }
-
-
-
-    // 2️⃣ Reset form
-    const form = document.getElementById('container');
-    if (form) form.reset();
-
-    // 3️⃣ Insert mode
-    const saveBtn = document.getElementById('saveButton');
-    saveBtn.dataset.mode = 'insert';
-    saveBtn.disabled = false;
-    saveBtn.innerHTML = '<i class="bi bi-save"></i> Save';
-    document.getElementById('modifyButton').disabled = true;
-    document.getElementById('deleteButton').disabled = true;
-    document.getElementById('reportButton').disabled = true;
-    document.getElementById('fetchPendingInvoices').disabled = false; // Disable party code field
-    document.getElementById('addShipmentNo').disabled = true;
-
-    document.getElementById('newButton').disabled = false;
-
-    // 4️⃣ Clear fields
-    [
-        'invoiceNo',
-        'partyName',
-        'partyCode',
-        'invoiceAddress',
-        'movementType',
-        'transitType',
-        'department',
-        'modeType',
-        'shipmentNo',
-        'reportType'
-    ].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.value = '';
-    });
-
-    // 5️⃣ Default date
-    document.getElementById('invoiceDate').value =
-        new Date().toISOString().split('T')[0];
-
-    // 6️⃣ Reset globals
-    invoiceData = {};
-    invoiceChargesData = {};
-    bankID = null;
-
-    // 7️⃣ Totals
-    clearInvoiceTotals();
-    clearChargesTable();
-
-    // 8️⃣ Load async data FIRST
-    await loadInvoiceNoSuggestions();
-
-    // 9️⃣ Enable form LAST (IMPORTANT)
-    enableForm();
-
-    // 🔟 Focus + toast
-    document.getElementById('partyName').focus();
-    showToast('🚀 New Invoice Ready');
 }
 
-function clearInvoiceTotals() {
+function collectInvoiceData(isInsert) {
+    const partyCode = getElementValue('partyCode');
+    const invoiceDate = getElementValue('invoiceDate');
+    const invoiceType = getElementValue('movementType');
+    const invoiceAddress = getElementValue('invoiceAddress');
+    const bankID = document.getElementById('bankIDs')?.value.trim();
 
-    const table = document.getElementById('pendingShipmentTable');
-    if (table?.tBodies?.[0]) {
-        table.tBodies[0].innerHTML = '';
+    // Validation
+    if (!partyCode || !invoiceDate || !invoiceType || !invoiceAddress) {
+        showToast('Fill all required fields');
+        return null;
     }
 
-    const totalIds = [
-        'totalFreight',
-        'totalFSCAmt',
-        'totalOtherAmt',
-        'totalSGST',
-        'totalCGST',
-        'totalIGST',
-        'totalGST',
-        'totalGrand'
-    ];
+    if (!bankID) {
+        showToast('Select valid Bank Name');
+        return null;
+    }
 
-    totalIds.forEach(id => {
-        const el = document.getElementById(id);
-        if (el) {
-            el.textContent = '0.00';
+    let invoiceNo = document.getElementById('invoiceNo')?.value.trim();
+
+    if (isInsert) {
+        invoiceNo = generateInvoiceNumber(invoiceDate);
+        if (!invoiceNo) {
+            showToast('Invoice number generation failed');
+            return null;
         }
+        document.getElementById('invoiceNo').value = invoiceNo;
+    }
+
+    const totals = collectTotals(invoiceType);
+
+    // Debug: Log collected totals
+    console.log('Collected totals for invoice:', {
+        invoiceType,
+        totals,
+        BasicAmount: totals.freight,
+        OtherAmount: totals.fsc + totals.other
+    });
+
+    return {
+        InvoiceNo: invoiceNo,
+        InvoiceDate: invoiceDate,
+        InvoiceType: invoiceType,
+        PartyCode: partyCode,
+        InvoiceAddress: invoiceAddress,
+        BankID: bankID,
+        company_id: CompanyID,
+        BasicAmount: totals.freight,
+        OtherAmount: totals.fsc + totals.other,
+        SGSTAmount: totals.sgst,
+        CGSTAmount: totals.cgst,
+        IGSTAmount: totals.igst,
+        TotalGSTAmount: totals.gst,
+        GrandTotalAmount: Math.round(totals.grand),
+        Remarks: getElementValue('invoiceInformation')
+    };
+}
+
+// FIX: collectTotals - Correct element ID mapping
+function collectTotals(invoiceType) {
+    const isCustoms = invoiceType === 'Customs Clearance';
+    const isDomestic = invoiceType === 'Domestic';
+    const isFTL = invoiceType === 'Full Truck Load';
+
+    // Determine which element IDs to use
+    let freightId, fscId, otherId, sgstId, cgstId, igstId, gstId, grandId;
+
+    if (isCustoms) {
+        // Customs uses _sc suffix
+        freightId = 'totalFreight_sc';
+        fscId = 'totalFSCAmt_sc';
+        otherId = 'totalOtherAmt_sc';
+        sgstId = 'totalSGST_sc';
+        cgstId = 'totalCGST_sc';
+        igstId = 'totalIGST_sc';
+        gstId = 'totalGST_sc';
+        grandId = 'totalGrand_sc';
+    } else if (isDomestic) {
+        // Domestic uses standard IDs (no suffix)
+        freightId = 'totalFreight';
+        fscId = 'totalFSCAmt';
+        otherId = 'totalOtherAmt';
+        sgstId = 'totalSGST';
+        cgstId = 'totalCGST';
+        igstId = 'totalIGST';
+        gstId = 'totalGST';
+        grandId = 'totalGrand';
+    } else if (isFTL) {
+        // FTL/FCL uses standard IDs
+        freightId = 'totalFreight';
+        fscId = 'totalFSCAmt';
+        otherId = 'totalOtherAmt';
+        sgstId = 'totalSGST';
+        cgstId = 'totalCGST';
+        igstId = 'totalIGST';
+        gstId = 'totalGST';
+        grandId = 'totalGrand';
+    } else {
+        // Forwarding/Import/Export uses standard IDs
+        freightId = 'totalFreight';
+        fscId = 'totalFSCAmt';
+        otherId = 'totalOtherAmt';
+        sgstId = 'totalSGST';
+        cgstId = 'totalCGST';
+        igstId = 'totalIGST';
+        gstId = 'totalGST';
+        grandId = 'totalGrand';
+    }
+
+    // Get values from the DOM
+    const freight = getTextValue(freightId);
+    const fsc = isCustoms ? 0 : getTextValue(fscId);
+    const other = isCustoms ? 0 : getTextValue(otherId);
+    const sgst = getTextValue(sgstId);
+    const cgst = getTextValue(cgstId);
+    const igst = getTextValue(igstId);
+    const gst = getTextValue(gstId);
+    const grand = getTextValue(grandId);
+
+    console.log('Collecting totals with IDs:', {
+        freightId, freight,
+        fscId, fsc,
+        otherId, other,
+        sgstId, sgst,
+        cgstId, cgst,
+        igstId, igst,
+        gstId, gst,
+        grandId, grand
+    });
+
+    return { freight, fsc, other, sgst, cgst, igst, gst, grand };
+}
+
+async function updateLinkedBookings(invoiceType, invoiceNo) {
+    const updateMap = {
+        'Forwarding': updateInvoiceNumbers,
+        'Import': updateInvoiceNumbers,
+        'Export': updateInvoiceNumbers,
+        'Customs Clearance': updateInvoiceNumbers_cc,
+        'Domestic': d_updateInvoiceNumbers,
+        'Full Truck Load': ftl_updateInvoiceNumbers
+    };
+
+    const updateFn = updateMap[invoiceType];
+    if (updateFn) {
+        await updateFn(invoiceNo);
+    }
+}
+
+function finalizeInvoice(saveBtn) {
+    disableForm();
+
+    // Disable all delete buttons
+    document.querySelectorAll('.delete-btn').forEach(btn => {
+        btn.disabled = true;
+        btn.classList.add('disabled');
+    });
+
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<i class="bi bi-check-circle"></i> Updated';
+
+    document.getElementById('modifyButton').disabled = false;
+    document.getElementById('reportButton').disabled = false;
+    document.getElementById('fetchPendingInvoices').disabled = true;
+}
+
+// =========================================================
+// UNLOCK ON EXIT - OPTIMIZED
+// =========================================================
+window.addEventListener('beforeunload', async () => {
+    try {
+        await Promise.all([
+            autoUnlockRecords("FullLoadBookingDetails"),
+            autoUnlockRecords("international_booking"),
+            unlockBooking_ib(UserLoginID),
+            unlockBooking_cc(UserLoginID),
+            d_unlockBooking_db(UserLoginID),
+            ftl_unlockBooking(UserLoginID)
+        ]);
+    } catch (e) {
+        console.error('Unlock failed:', e);
+    }
+});
+
+// =========================================================
+// NEW INVOICE - OPTIMIZED
+// =========================================================
+document.getElementById('newButton')?.addEventListener('click', newInvoice);
+
+async function newInvoice() {
+    try {
+        // Unlock previous records
+        await Promise.all([
+            autoUnlockRecords("FullLoadBookingDetails"),
+            autoUnlockRecords("international_booking"),
+            unlockBooking_ib(UserLoginID),
+            unlockBooking_cc(UserLoginID),
+            d_unlockBooking_db(UserLoginID),
+            ftl_unlockBooking(UserLoginID)
+        ]);
+
+        // Reset form and state
+        const form = document.getElementById('container');
+        if (form) form.reset();
+
+        // Reset UI elements
+        const elementsToReset = [
+            'invoiceNo', 'partyName', 'partyCode', 'invoiceAddress',
+            'movementType', 'transitType', 'department', 'modeType',
+            'shipmentNo', 'reportType'
+        ];
+        elementsToReset.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.value = '';
+        });
+
+        // Set default date
+        document.getElementById('invoiceDate').value = new Date().toISOString().split('T')[0];
+
+        // Reset buttons
+        const saveBtn = document.getElementById('saveButton');
+        saveBtn.dataset.mode = 'insert';
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = '<i class="bi bi-save"></i> Save';
+
+        document.getElementById('modifyButton').disabled = true;
+        document.getElementById('deleteButton').disabled = true;
+        document.getElementById('reportButton').disabled = true;
+        document.getElementById('fetchPendingInvoices').disabled = false;
+        document.getElementById('addShipmentNo').disabled = true;
+        document.getElementById('newButton').disabled = false;
+
+        // Reset state
+        invoiceManager.reset();
+        bankID = null;
+
+        // Clear tables
+        const table = document.getElementById('pendingShipmentTable');
+        if (table?.tBodies?.[0]) {
+            table.tBodies[0].innerHTML = '';
+        }
+
+        clearInvoiceTotals();
+        clearChargesTable();
+
+        // Load suggestions
+        await loadInvoiceNoSuggestions();
+
+        // Enable form and focus
+        enableForm();
+        document.getElementById('partyName').focus();
+        showToast('🚀 New Invoice Ready');
+
+    } catch (e) {
+        console.error('New invoice error:', e);
+        showToast('Error creating new invoice');
+    }
+}
+
+// =========================================================
+// CLEAR FUNCTIONS - OPTIMIZED
+// =========================================================
+function clearInvoiceTotals() {
+    TOTAL_ELEMENT_IDS.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = '0.00';
     });
 }
 
 function clearChargesTable() {
     const tbody = document.querySelector('#pendingShipmentCharges tbody');
     if (tbody) tbody.innerHTML = '';
-    totalFreightAmt.textContent = '0.00';
-    totalSGSTAmt.textContent = '0.00';
-    totalCGSTAmt.textContent = '0.00';
-    totalIGSTAmt.textContent = '0.00';
-    totalGSTAmt.textContent = '0.00';
-    totalGrandAmt.textContent = '0.00';
+
+    ['totalFreightAmt', 'totalSGSTAmt', 'totalCGSTAmt', 'totalIGSTAmt', 'totalGSTAmt', 'totalGrandAmt']
+        .forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.textContent = '0.00';
+        });
 }
 
+// =========================================================
+// UPDATE TOTALS - OPTIMIZED
+// =========================================================
 function updateTotals(totals) {
     const setValue = (id, value) => {
         const el = document.getElementById(id);
@@ -555,55 +597,41 @@ function updateTotals(totals) {
     setValue('totalGST', totals.totalGST);
     setValue('totalGrand', Math.round(totals.totalGrand));
 
-    // ✅ Still update invoiceData (guard with parseFloat defaults)
-    invoiceData.BasicAmount = formatAmount(totals.totalFreight) || 0;
-    invoiceData.OtherAmount = (formatAmount(totals.totalFSCAmt) || 0) + (formatAmount(totals.totalOtherAmt) || 0);
-    invoiceData.CGSTAmount = formatAmount(totals.totalCGST) || 0;
-    invoiceData.SGSTAmount = formatAmount(totals.totalSGST) || 0;
-    invoiceData.IGSTAmount = formatAmount(totals.totalIGST) || 0;
-    invoiceData.TotalGSTAmount = formatAmount(totals.totalGST) || 0;
-    invoiceData.GrandTotalAmount = formatAmount(Math.round(totals.totalGrand)) || 0;
+    // Update invoiceData
+    invoiceManager.setInvoiceData({
+        BasicAmount: formatAmount(totals.totalFreight) || 0,
+        OtherAmount: (formatAmount(totals.totalFSCAmt) || 0) + (formatAmount(totals.totalOtherAmt) || 0),
+        CGSTAmount: formatAmount(totals.totalCGST) || 0,
+        SGSTAmount: formatAmount(totals.totalSGST) || 0,
+        IGSTAmount: formatAmount(totals.totalIGST) || 0,
+        TotalGSTAmount: formatAmount(totals.totalGST) || 0,
+        GrandTotalAmount: formatAmount(Math.round(totals.totalGrand)) || 0
+    });
 }
 
+// =========================================================
+// RENDER CHARGES TABLE - OPTIMIZED
+// =========================================================
 function renderChargesTable(chargesMap) {
     const tbody = document.querySelector('#pendingShipmentCharges tbody');
+    if (!tbody) return;
+
     tbody.innerHTML = '';
 
-    let totalAmount = 0,
-        totalSGST = 0,
-        totalCGST = 0,
-        totalIGST = 0,
-        totalGSTAmt = 0,
-        totalGrandAmt = 0;
-
-    // Priority order
-    const chargeOrder = [
-        'Freight Amount',
-        'Custom Clearance Charges',
-        'Duty'
-    ];
-
-    // Sort entries based on the order above
+    const chargeOrder = ['Freight Amount', 'Custom Clearance Charges', 'Duty'];
     const sortedEntries = Object.entries(chargesMap).sort(([a], [b]) => {
         const indexA = chargeOrder.indexOf(a);
         const indexB = chargeOrder.indexOf(b);
-
-        // Both found in priority list
-        if (indexA !== -1 && indexB !== -1) {
-            return indexA - indexB;
-        }
-
-        // One found, one not
+        if (indexA !== -1 && indexB !== -1) return indexA - indexB;
         if (indexA !== -1) return -1;
         if (indexB !== -1) return 1;
-
-        // Remaining charge types keep alphabetical order
         return a.localeCompare(b);
     });
 
+    let totals = { TotalAmount: 0, SGSTAmt: 0, CGSTAmt: 0, IGSTAmt: 0, TotalGSTAmt: 0, GrandTotalAmt: 0 };
+
     sortedEntries.forEach(([type, amounts]) => {
         const row = document.createElement('tr');
-
         row.innerHTML = `
             <td>${type}</td>
             <td class="text-end">${formatAmount(amounts.TotalAmount)}</td>
@@ -613,46 +641,44 @@ function renderChargesTable(chargesMap) {
             <td class="text-end">${formatAmount(amounts.TotalGSTAmt)}</td>
             <td class="text-end">${formatAmount(amounts.GrandTotalAmt)}</td>
         `;
-
         tbody.appendChild(row);
 
-        totalAmount += amounts.TotalAmount;
-        totalSGST += amounts.SGSTAmt;
-        totalCGST += amounts.CGSTAmt;
-        totalIGST += amounts.IGSTAmt;
-        totalGSTAmt += amounts.TotalGSTAmt;
-        totalGrandAmt += amounts.GrandTotalAmt;
+        Object.keys(totals).forEach(key => {
+            totals[key] += amounts[key] || 0;
+        });
     });
 
-    document.getElementById('totalFreightAmt').textContent = formatAmount(totalAmount);
-    document.getElementById('totalSGSTAmt').textContent = formatAmount(totalSGST);
-    document.getElementById('totalCGSTAmt').textContent = formatAmount(totalCGST);
-    document.getElementById('totalIGSTAmt').textContent = formatAmount(totalIGST);
-    document.getElementById('totalGSTAmt').textContent = formatAmount(totalGSTAmt);
-    document.getElementById('totalGrandAmt').textContent = formatAmount(Math.round(totalGrandAmt));
+    // Update footer totals
+    document.getElementById('totalFreightAmt').textContent = formatAmount(totals.TotalAmount);
+    document.getElementById('totalSGSTAmt').textContent = formatAmount(totals.SGSTAmt);
+    document.getElementById('totalCGSTAmt').textContent = formatAmount(totals.CGSTAmt);
+    document.getElementById('totalIGSTAmt').textContent = formatAmount(totals.IGSTAmt);
+    document.getElementById('totalGSTAmt').textContent = formatAmount(totals.TotalGSTAmt);
+    document.getElementById('totalGrandAmt').textContent = formatAmount(Math.round(totals.GrandTotalAmt));
 }
 
+// =========================================================
+// GET INVOICE DETAILS - OPTIMIZED
+// =========================================================
 async function getInvoiceDetails(invoiceNo) {
-    showSpinner();
+    if (!invoiceNo) return null;
 
+    showSpinner();
     try {
         const { data, error } = await supabaseClient
             .from('InvoiceDetails')
             .select('*')
             .eq('InvoiceNo', invoiceNo)
             .eq('company_id', CompanyID)
-            .maybeSingle();// Expecting one invoice per number per company
-        if (error) throw error;
+            .maybeSingle();
 
+        if (error) throw error;
         if (!data) {
             showToast('Invoice not found');
             return null;
         }
 
-
-        // console.log('Fetched Invoice Details:', data);
         return data;
-
     } catch (err) {
         console.error('Error fetching invoice details:', err.message);
         alert('Error loading invoice: ' + err.message);
@@ -661,117 +687,79 @@ async function getInvoiceDetails(invoiceNo) {
         hideSpinner();
     }
 }
-document.getElementById('movementType').addEventListener('change', async (e) => {
 
+// =========================================================
+// MOVEMENT TYPE CHANGE - OPTIMIZED
+// =========================================================
+document.getElementById('movementType')?.addEventListener('change', async (e) => {
     const movementType = e.target.value.trim();
-    if (
-        movementType === 'Forwarding' ||
-        movementType === 'Import' ||
-        movementType === 'Export'
-    ) {
-        await createPendingShipmentTableHeaderAndFooter_ib();
+    const tableMap = {
+        'Forwarding': d_createPendingShipmentTableHeaderAndFooter_ib,
+        'Import': d_createPendingShipmentTableHeaderAndFooter_ib,
+        'Export': d_createPendingShipmentTableHeaderAndFooter_ib,
+        'Customs Clearance': createPendingShipmentTableHeaderAndFooter,
+        'Domestic': d_createPendingShipmentTableHeaderAndFooter_ib,
+        'Full Truck Load': FTL_FCL_createPendingShipmentTableHeaderAndFooter
+    };
 
-    } else if (movementType === 'Customs Clearance') {
-        await createPendingShipmentTableHeaderAndFooter();
-
-    } else if (movementType === 'Domestic') {
-        await d_createPendingShipmentTableHeaderAndFooter_ib();
-
-    } else if (movementType === 'Full Truck Load') {
-        await FTL_FCL_createPendingShipmentTableHeaderAndFooter();
-
+    const createTableFn = tableMap[movementType];
+    if (createTableFn) {
+        await createTableFn();
     } else {
         console.warn('Unknown movement type:', movementType);
     }
 });
 
-// document.getElementById('invoiceNo').addEventListener('change', async (e) => {
-//     const invoiceNo = e.target.value.trim();
-//     if (invoiceNo.length === 0) return;
-
-//     const invoiceDetails = await getInvoiceDetails(invoiceNo);
-
-
-//     if (invoiceDetails) {
-//         // Populate your form fields here
-//         document.getElementById('partyCode').value = invoiceDetails.PartyCode || '';
-//         document.getElementById('invoiceDate').value = invoiceDetails.InvoiceDate || '';
-//         document.getElementById('invoiceAddress').value = invoiceDetails.InvoiceAddress || '';
-//         document.getElementById('movementType').value = invoiceDetails.InvoiceType || '';
-//         document.getElementById('bankIDs').value = getBankNameByCode(invoiceDetails.BankID) || '';
-//         document.getElementById('inputBankName').value = invoiceDetails.id || '';
-//         document.getElementById('invoiceInformation').value = invoiceDetails.Remarks || '';
-//         document.getElementById('tempFormID').value = invoiceDetails.id || '';
-
-//         // ✅ Fetch and update Party Name
-//         const partyData = await getPartyDetailsByCode(invoiceDetails.PartyCode);
-//         if (partyData) {
-//             document.getElementById('partyName').value = partyData.PartyName || '';
-//         } else {
-//             alert('Party not found.');
-//         }
-
-//         const paymentInfo = await paymentDetails(invoiceNo);
-
-//         if (paymentInfo.rows.length > 0) {
-//             document.getElementById('modifyButton').disabled = true; // Disable modify button
-//         } else {
-//             document.getElementById('modifyButton').disabled = false; // Enable modify button
-//         }
-//         // Load international_booking records linked to this invoice
-//         disableForm(); // Disable form after loading invoice details
-
-//         saveButton.disabled = true; // Disable save button
-//         document.getElementById('deleteButton').disabled = true; // Disable delete button
-//         document.getElementById('reportButton').disabled = false; // Enable report button
-//         document.getElementById('fetchPendingInvoices').disabled = true; // Disable party code field
-
-//         // Check the value and run the relevant function
-//         if (invoiceDetails.InvoiceType === 'Forwarding' || invoiceDetails.InvoiceType === 'Import' || invoiceDetails.InvoiceType === 'Export') {
-//             // console.log('Fetching pending invoices for Forwarding/Import/Export');
-//             await createPendingShipmentTableHeaderAndFooter_ib();
-//             await loadInvoiceBookings(invoiceNo);
-//         } else if (invoiceDetails.InvoiceType === 'Customs Clearance') {
-//             await createPendingShipmentTableHeaderAndFooter();
-//             await loadInvoiceLineItems_cc(invoiceNo); // Load Customs Clearance bookings if applicable
-//         } else if (invoiceDetails.InvoiceType === 'Domestic') {
-//             await d_createPendingShipmentTableHeaderAndFooter_ib();
-//             await d_loadInvoiceBookings(invoiceNo); // Load Domestic bookings if applicable
-//         } else if (invoiceDetails.InvoiceType === 'Full Truck Load') {
-//             await FTL_FCL_createPendingShipmentTableHeaderAndFooter();
-//             await ftl_loadInvoiceBookings(invoiceNo);
-
-//         } else {
-//             console.warn('Unknown movement type:', invoiceDetails.InvoiceType);
-//         }
-
-//         document.querySelectorAll('.delete-btn').forEach(btn => {
-//             btn.disabled = true; // Disable delete buttons when loading existing invoice
-//         });
-//     }
-// });
-
-document.getElementById("invoiceNo").addEventListener("change", async (e) => {
+// =========================================================
+// LOAD INVOICE - OPTIMIZED
+// =========================================================
+document.getElementById("invoiceNo")?.addEventListener("change", async (e) => {
     await loadInvoice(e.target.value);
 });
-// ===============================
-// Reusable Invoice Loader
-// ===============================
+
 async function loadInvoice(invoiceNo) {
-    if (!invoiceNo || invoiceNo.trim() === "") return;
+    if (!invoiceNo || !invoiceNo.trim()) return;
 
     invoiceNo = invoiceNo.trim();
-
     const invoiceDetails = await getInvoiceDetails(invoiceNo);
     if (!invoiceDetails) {
         alert("Invoice not found.");
         return;
     }
 
-    // -----------------------------
-    // Populate Form
-    // -----------------------------
-    document.getElementById("invoiceNo").value = invoiceNo;
+    // Populate form
+    populateInvoiceForm(invoiceDetails);
+
+    // Get party details
+    const partyData = await getPartyDetailsByCode(invoiceDetails.PartyCode);
+    if (partyData) {
+        document.getElementById("partyName").value = partyData.PartyName || "";
+    } else {
+        alert("Party not found.");
+    }
+
+    // Check payment status
+    const paymentInfo = await paymentDetails(invoiceNo);
+    document.getElementById("modifyButton").disabled = paymentInfo.rows?.length > 0;
+
+    // Disable controls
+    disableForm();
+    document.getElementById('saveButton').disabled = true;
+    document.getElementById('deleteButton').disabled = true;
+    document.getElementById('reportButton').disabled = false;
+    document.getElementById('fetchPendingInvoices').disabled = true;
+
+    // Load linked bookings
+    await loadLinkedBookings(invoiceDetails.InvoiceType, invoiceNo);
+
+    // Disable delete buttons
+    document.querySelectorAll(".delete-btn").forEach(btn => {
+        btn.disabled = true;
+    });
+}
+
+function populateInvoiceForm(invoiceDetails) {
+    document.getElementById("invoiceNo").value = invoiceDetails.InvoiceNo || "";
     document.getElementById("partyCode").value = invoiceDetails.PartyCode || "";
     document.getElementById("invoiceDate").value = invoiceDetails.InvoiceDate || "";
     document.getElementById("invoiceAddress").value = invoiceDetails.InvoiceAddress || "";
@@ -780,258 +768,177 @@ async function loadInvoice(invoiceNo) {
     document.getElementById("inputBankName").value = invoiceDetails.id || "";
     document.getElementById("invoiceInformation").value = invoiceDetails.Remarks || "";
     document.getElementById("tempFormID").value = invoiceDetails.id || "";
-
-    // -----------------------------
-    // Party Details
-    // -----------------------------
-    const partyData = await getPartyDetailsByCode(invoiceDetails.PartyCode);
-
-    if (partyData) {
-        document.getElementById("partyName").value = partyData.PartyName || "";
-    } else {
-        alert("Party not found.");
-    }
-
-    // -----------------------------
-    // Payment Check
-    // -----------------------------
-    const paymentInfo = await paymentDetails(invoiceNo);
-
-    document.getElementById("modifyButton").disabled =
-        paymentInfo.rows.length > 0;
-
-    // -----------------------------
-    // Disable/Enable Controls
-    // -----------------------------
-    disableForm();
-
-    saveButton.disabled = true;
-    document.getElementById("deleteButton").disabled = true;
-    document.getElementById("reportButton").disabled = false;
-    document.getElementById("fetchPendingInvoices").disabled = true;
-
-    // -----------------------------
-    // Load Shipment Details
-    // -----------------------------
-    switch (invoiceDetails.InvoiceType) {
-        case "Forwarding":
-        case "Import":
-        case "Export":
-            await createPendingShipmentTableHeaderAndFooter_ib();
-            await loadInvoiceBookings(invoiceNo);
-            break;
-
-        case "Customs Clearance":
-            await createPendingShipmentTableHeaderAndFooter();
-            await loadInvoiceLineItems_cc(invoiceNo);
-            break;
-
-        case "Domestic":
-            await d_createPendingShipmentTableHeaderAndFooter_ib();
-            await d_loadInvoiceBookings(invoiceNo);
-            break;
-
-        case "Full Truck Load":
-            await FTL_FCL_createPendingShipmentTableHeaderAndFooter();
-            await ftl_loadInvoiceBookings(invoiceNo);
-            break;
-
-        default:
-            console.warn("Unknown Invoice Type:", invoiceDetails.InvoiceType);
-    }
-
-    // -----------------------------
-    // Disable Delete Buttons
-    // -----------------------------
-    document.querySelectorAll(".delete-btn").forEach(btn => {
-        btn.disabled = true;
-    });
 }
-document.getElementById('addShipmentNo').addEventListener('click', async () => {
-    const shipmentNo = document.getElementById('shipmentNo').value.trim();
-    const invoiceNo = document.getElementById('invoiceNo').value.trim();
-    const saveSpinner = document.getElementById('saveSpinner');
-    const movementType = document.getElementById('movementType').value.trim();
 
-    // console.log('Adding Shipment No:', shipmentNo, 'to Invoice No:', invoiceNo, 'for Movement Type:', movementType);
+async function loadLinkedBookings(invoiceType, invoiceNo) {
+    const config = INVOICE_TYPE_MAP[invoiceType];
+    if (!config) {
+        console.warn('Unknown Invoice Type:', invoiceType);
+        return;
+    }
+
+    const createTableFn = window[config.createTableFn];
+    const loadFn = window[config.loadFn];
+
+    if (createTableFn) await createTableFn();
+    if (loadFn) await loadFn(invoiceNo);
+}
+
+// =========================================================
+// ADD SHIPMENT - OPTIMIZED
+// =========================================================
+document.getElementById('addShipmentNo')?.addEventListener('click', async () => {
+    const shipmentNo = document.getElementById('shipmentNo')?.value?.trim();
+    const invoiceNo = document.getElementById('invoiceNo')?.value?.trim();
+    const movementType = document.getElementById('movementType')?.value?.trim();
+    const spinner = document.getElementById('saveSpinner');
+
     if (!shipmentNo) {
         alert('Please enter/select a Shipment Number.');
         return;
     }
 
-    // Show spinner and disable button
-    if (saveSpinner) {
-        saveSpinner.classList.remove('d-none');
-    }
+    if (spinner) spinner.classList.remove('d-none');
 
-    // Check the value and run the relevant function
-    if (movementType === 'Forwarding' || movementType === 'Import' || movementType === 'Export') {
-        // console.log('Fetching pending invoices for Forwarding/Import/Export');
-        await addSingleShipmentToInvoice(shipmentNo, invoiceNo);
-    }
-    else if (movementType === 'Customs Clearance') {
-        // console.log('Adding Shipment No to Customs Clearance Invoice');
-        await addSingleShipmentToInvoice_cc(shipmentNo, invoiceNo);
-    }
-    else if (movementType === 'Domestic') {
-        // console.log('Adding Shipment No to Domestic Invoice');
-        await d_addSingleShipmentToInvoice(shipmentNo, invoiceNo);
-    } else if (movementType === 'Full Truck Load') {
-        // console.log('Adding Shipment No to FTL/FCL Invoice');
-        await ftl_addSingleShipmentToInvoice(shipmentNo, invoiceNo);
-    }
-    else {
-        console.warn('Unknown movement type:', type);
+    const addMap = {
+        'Forwarding': addSingleShipmentToInvoice,
+        'Import': addSingleShipmentToInvoice,
+        'Export': addSingleShipmentToInvoice,
+        'Customs Clearance': addSingleShipmentToInvoice_cc,
+        'Domestic': d_addSingleShipmentToInvoice,
+        'Full Truck Load': ftl_addSingleShipmentToInvoice
+    };
+
+    const addFn = addMap[movementType];
+    if (addFn) {
+        try {
+            await addFn(shipmentNo, invoiceNo);
+        } catch (error) {
+            console.error('Error adding shipment:', error);
+            alert('Failed to add shipment');
+        }
+    } else {
+        console.warn('Unknown movement type:', movementType);
     }
 
     hideSpinner();
 });
 
-document.getElementById('modifyButton').addEventListener('click', () => {
-    // Enable all delete buttons
-    saveButton.disabled = false; // Enable save button
-    saveButton.innerHTML = '<i class="bi bi-save"></i> Update';
-    saveButton.dataset.mode = 'update';
-    document.getElementById('modifyButton').disabled = true; // Disable modify button
-    document.getElementById('deleteButton').disabled = true; // Enable delete button
-    document.getElementById('reportButton').disabled = true; // Enable report button
-    enableForm(); // Enable form for modification
-    document.getElementById('invoiceNo').disabled = true; // Disable invoice number field
-    document.getElementById('movementType').disabled = false; // Disable invoice date field
-    document.getElementById('partyName').disabled = false; // Disable party code field
-    document.getElementById('fetchPendingInvoices').disabled = true; // Disable party code field
+// =========================================================
+// MODIFY BUTTON - OPTIMIZED
+// =========================================================
+document.getElementById('modifyButton')?.addEventListener('click', () => {
+    const saveBtn = document.getElementById('saveButton');
+    saveBtn.disabled = false;
+    saveBtn.innerHTML = '<i class="bi bi-save"></i> Update';
+    saveBtn.dataset.mode = 'update';
+
+    document.getElementById('modifyButton').disabled = true;
+    document.getElementById('deleteButton').disabled = true;
+    document.getElementById('reportButton').disabled = true;
+    document.getElementById('invoiceNo').disabled = true;
+    document.getElementById('movementType').disabled = false;
+    document.getElementById('partyName').disabled = false;
+    document.getElementById('fetchPendingInvoices').disabled = false;
+    document.getElementById('addShipmentNo').disabled = false;
+
+    enableForm();
+
     document.querySelectorAll('.delete-btn').forEach(button => {
         button.disabled = false;
     });
-    document.getElementById('addShipmentNo').disabled = false; // Enable add shipment button
-    document.getElementById('fetchPendingInvoices').disabled = false; // Enable shipment number field
 });
 
-document.getElementById('deleteButton').addEventListener('click', () => {
-    // Logic to delete the invoice
-    alert('Delete functionality not implemented yet.');
-});
-// Listen for input selection
-// document.getElementById('inputBankName').addEventListener('input', function () {
-//     const selectedValue = this.value;
-//     if (bankMap[selectedValue]) {
-//         bankID = bankMap[selectedValue];
-//         const bankIDInput = document.getElementById('bankIDs');
-//         bankIDInput.value = bankID;
-//         console.log('Selected Bank ID:', bankID);
-//     } else {
-//         bankID = null; // Reset if not valid selection
-//     }
-// });
+// =========================================================
+// REPORT BUTTON - OPTIMIZED
+// =========================================================
+document.getElementById('reportButton')?.addEventListener('click', async function () {
+    const originalText = this.innerHTML;
+    const invoiceNo = document.getElementById('invoiceNo')?.value?.trim();
 
-document.getElementById('reportButton').addEventListener('click', async function () {
-
-    const btn = this;
-    const originalText = btn.innerHTML;
+    if (!invoiceNo) {
+        alert('Please enter/select an Invoice Number.');
+        return;
+    }
 
     try {
-        const invoiceNo = document.getElementById('invoiceNo').value.trim();
-
-        if (!invoiceNo) {
-            alert('Please enter/select an Invoice Number.');
-            return;
-        }
-
-        // Show processing state
-        btn.disabled = true;
-        btn.innerHTML = `
+        this.disabled = true;
+        this.innerHTML = `
             <span class="spinner-border spinner-border-sm me-2"></span>
             Processing...
         `;
 
-        reportType = document.getElementById('reportType').value;
-
-        // console.log(
-        //     'Generating report for Invoice No:',
-        //     invoiceNo,
-        //     'with Report Type:',
-        //     reportType
-        // );
-
         const invoiceDetails = await getInvoiceDetails(invoiceNo);
-
         if (!invoiceDetails) return;
 
-        if (FORWARDING_TYPES.includes(invoiceDetails.InvoiceType)) {
+        const reportType = document.getElementById('reportType')?.value || 'Main';
+        const reportMap = {
+            'Forwarding': generate_International_InvoicePDF_Main,
+            'Import': generate_International_InvoicePDF_Main,
+            'Export': generate_International_InvoicePDF_Main,
+            'Customs Clearance': generate_Clear_InvoicePDF_Main,
+            'Domestic': generate_DomesticReports_InvoicePDF,
+            'Full Truck Load': generate_FullTruckReports_InvoicePDF
+        };
 
-            if (reportType === 'Main') {
-                await generate_International_InvoicePDF_Main(invoiceDetails);
-            } else if (reportType === 'Print Annexure') {
-                await generate_International_InvoicePDF_Annexure(invoiceDetails);
+        const reportFn = reportMap[invoiceDetails.InvoiceType];
+        if (reportFn) {
+            if (FORWARDING_TYPES.includes(invoiceDetails.InvoiceType)) {
+                if (reportType === 'Main') {
+                    await generate_International_InvoicePDF_Main(invoiceDetails);
+                } else if (reportType === 'Print Annexure') {
+                    await generate_International_InvoicePDF_Annexure(invoiceDetails);
+                }
+            } else {
+                await reportFn(invoiceDetails);
             }
-
-        } else if (invoiceDetails.InvoiceType === 'Customs Clearance') {
-
-            await generate_Clear_InvoicePDF_Main(invoiceDetails);
-
-        } else if (invoiceDetails.InvoiceType === 'Domestic') {
-
-            await generate_DomesticReports_InvoicePDF(invoiceDetails);
-
-        } else if (invoiceDetails.InvoiceType === 'Full Truck Load') {
-
-            await generate_FullTruckReports_InvoicePDF(invoiceDetails);
-
         } else {
-
             console.warn('Unknown movement type:', invoiceDetails.InvoiceType);
-
         }
-
     } catch (error) {
-
         console.error('Report generation failed:', error);
         alert('Failed to generate report.');
-
     } finally {
-
-        // Restore button
-        btn.disabled = false;
-        btn.innerHTML = originalText;
-
+        this.disabled = false;
+        this.innerHTML = originalText;
     }
 });
 
+// =========================================================
+// ADDRESS SELECTION MODAL - OPTIMIZED
+// =========================================================
 function showAddressSelectionModal(addresses) {
     const container = document.getElementById('addressListContainer');
     const modalEl = document.getElementById('addressSelectionModal');
     const invoiceAddressInput = document.getElementById('invoiceAddress');
 
+    if (!container || !modalEl) return;
+
     container.innerHTML = '';
 
-    // Create or get existing modal instance (prevents duplicates)
     const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
 
-    // Ensure focus is handled properly when modal closes
     modalEl.addEventListener('hide.bs.modal', function () {
         if (modalEl.contains(document.activeElement)) {
-            document.activeElement.blur();   // remove focus inside modal
+            document.activeElement.blur();
         }
     }, { once: true });
 
     modalEl.addEventListener('hidden.bs.modal', function () {
-        invoiceAddressInput?.focus();       // return focus safely
+        invoiceAddressInput?.focus();
     }, { once: true });
 
     addresses.forEach((address) => {
-        const formattedAddress = formatAddress(address);
-
         const button = document.createElement('button');
         button.type = 'button';
         button.className = 'btn btn-outline-primary w-100 mb-2';
-        button.textContent = formattedAddress;
+        button.textContent = formatAddress(address);
 
         button.addEventListener('click', () => {
-            invoiceAddressInput.value = formattedAddress;
-
-            // Blur first to prevent aria-hidden warning
+            if (invoiceAddressInput) {
+                invoiceAddressInput.value = formatAddress(address);
+            }
             button.blur();
-
             modal.hide();
         });
 
@@ -1041,10 +948,33 @@ function showAddressSelectionModal(addresses) {
     modal.show();
 }
 
-function getTextValue(id) {
-    const text = document.getElementById(id)?.textContent || '0';
+// =========================================================
+// UTILITY FUNCTIONS
+// =========================================================
 
-    return parseFloat(
-        text.replace(/,/g, '')
-    ) || 0;
+function getTextValue(id) {
+    const el = document.getElementById(id);
+    if (!el) {
+        console.warn(`Element with id "${id}" not found, returning 0`);
+        return 0;
+    }
+    const text = el.textContent || '0';
+    return parseFloat(text.replace(/,/g, '')) || 0;
 }
+
+function formatAmount(value) {
+    if (value === undefined || value === null || isNaN(value)) return '0.00';
+    return value.toFixed(2);
+}
+
+function showToast(message) {
+    // Implement toast notification
+    alert(message); // Replace with proper toast implementation
+}
+
+// =========================================================
+// EXPOSE FOR LEGACY COMPATIBILITY
+// =========================================================
+window.invoiceData = invoiceManager.getInvoiceData();
+window.invoiceChargesData = invoiceManager.invoiceChargesData;
+window.bankID = invoiceManager.bankID;
