@@ -100,7 +100,7 @@ async function loadReportSuggestions() {
     populateDatalists(reportSuggestionData, 'InvoiceNo', 'invoiceNoList');
     populateDatalists(reportSuggestionData, 'PartyName', 'customerNameList');
     populateDatalists(reportSuggestionData, 'InvoiceType', 'invoiceTypeList');
-    populateDatalists(reportSuggestionData, 'PaymentStatus', 'paymentStatusList');
+    populateDatalists(reportSuggestionData, 'PaymentStatus', 'paymentStatusBtn');
 
     const financialYears = [...new Set(reportSuggestionData
         .map(item => item.InvoiceDate)
@@ -127,6 +127,12 @@ function populateDatalists(data, field, datalistId) {
 
     const datalist = document.getElementById(datalistId);
 
+    // Add null check here
+    if (!datalist) {
+        console.warn(`Datalist with id "${datalistId}" not found`);
+        return;
+    }
+
     datalist.innerHTML = uniqueValues
         .map(value => `<option value="${value}">`)
         .join('');
@@ -136,7 +142,7 @@ function attachSuggestionFilters() {
     attachDatalistFilter('invoiceNo', 'invoiceNoList', 'InvoiceNo');
     attachDatalistFilter('customerName', 'customerNameList', 'PartyName');
     attachDatalistFilter('invoiceType', 'invoiceTypeList', 'InvoiceType');
-    attachDatalistFilter('paymentStatus', 'paymentStatusList', 'PaymentStatus');
+    attachDatalistFilter('paymentStatus', 'paymentStatusBtn', 'PaymentStatus');
 }
 
 function attachDatalistFilter(inputId, datalistId, field) {
