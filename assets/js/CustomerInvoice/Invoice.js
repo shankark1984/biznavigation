@@ -50,6 +50,36 @@ class InvoiceManager {
     getInvoiceData() {
         return this.invoiceData;
     }
+
+    setBankID(id) {
+        this.bankID = id;
+    }
+
+    getBankID() {
+        return this.bankID;
+    }
+
+    setBankMap(map) {
+        this.bankMap = map;
+    }
+
+    getBankMap() {
+        return this.bankMap;
+    }
+
+    addLockedBooking(id) {
+        if (!this.lockedBookingIds.includes(id)) {
+            this.lockedBookingIds.push(id);
+        }
+    }
+
+    getLockedBookings() {
+        return this.lockedBookingIds;
+    }
+
+    clearLockedBookings() {
+        this.lockedBookingIds = [];
+    }
 }
 
 const invoiceManager = new InvoiceManager();
@@ -58,16 +88,26 @@ const invoiceManager = new InvoiceManager();
 // DOM READY - OPTIMIZED
 // =========================================================
 document.addEventListener('DOMContentLoaded', async () => {
-    await Promise.all([
-        loadSuggestions('partySuggestions', 'PartyDetails', CompanyID),
-        loadBankNameSuggestions(),
-        loadDefaultBank(),
-        // loadInvoiceNoSuggestions(),
-        loadDatalist('departmentList', 'Department')
-    ]);
+    try {
+        await Promise.all([
+            loadSuggestions('partySuggestions', 'PartyDetails', CompanyID),
+            loadBankNameSuggestions(),
+            loadDefaultBank(),
+            loadDatalist('departmentList', 'Department')
+        ]);
 
-    setupBankSelection();
-    setupInvoiceFromURL();
+        setupBankSelection();
+        setupInvoiceFromURL();
+
+        // Set default date
+        const invoiceDate = document.getElementById('invoiceDate');
+        if (invoiceDate && !invoiceDate.value) {
+            invoiceDate.value = new Date().toISOString().split('T')[0];
+        }
+    } catch (error) {
+        console.error('Initialization error:', error);
+        showToast('Failed to initialize application');
+    }
 });
 
 function setupBankSelection() {
@@ -76,12 +116,13 @@ function setupBankSelection() {
 
     bankInput?.addEventListener('input', function () {
         const selectedValue = this.value.trim();
-        if (bankMap?.[selectedValue]) {
-            invoiceManager.bankID = bankMap[selectedValue];
-            bankIDInput.value = invoiceManager.bankID;
+        const bankMap = invoiceManager.getBankMap();
+        if (bankMap && bankMap[selectedValue]) {
+            invoiceManager.setBankID(bankMap[selectedValue]);
+            if (bankIDInput) bankIDInput.value = invoiceManager.getBankID();
         } else {
-            invoiceManager.bankID = null;
-            bankIDInput.value = '';
+            invoiceManager.setBankID(null);
+            if (bankIDInput) bankIDInput.value = '';
         }
     });
 }
@@ -92,9 +133,11 @@ async function setupInvoiceFromURL() {
 
     if (invoiceNo) {
         const invoiceInput = document.getElementById("invoiceNo");
-        invoiceInput.value = invoiceNo;
-        invoiceInput.dispatchEvent(new Event("change"));
-        await loadInvoice(invoiceNo);
+        if (invoiceInput) {
+            invoiceInput.value = invoiceNo;
+            invoiceInput.dispatchEvent(new Event("change"));
+            await loadInvoice(invoiceNo);
+        }
     }
 }
 
@@ -127,9 +170,11 @@ document.getElementById('partyName')?.addEventListener('change', async function 
             return;
         }
 
-        data.length === 1
-            ? fillInvoiceAddress(data[0])
-            : showAddressSelectionModal(data);
+        if (data.length === 1) {
+            fillInvoiceAddress(data[0]);
+        } else {
+            showAddressSelectionModal(data);
+        }
 
         document.getElementById('invoiceDate')?.focus();
     } catch (err) {
@@ -152,41 +197,55 @@ function fillInvoiceAddress(addr) {
 }
 
 function formatAddress(a) {
-    return `${a.Address}, ${a.City}, ${a.PinCode}, ${a.State}, ${a.Country}`;
+    if (!a) return '';
+    return `${a.Address || ''}, ${a.City || ''}, ${a.PinCode || ''}, ${a.State || ''}, ${a.Country || ''}`;
 }
 
 // =========================================================
-// INVOICE NUMBER GENERATION - OPTIMIZED
+// INVOICE NUMBER GENERATION - FIXED
 // =========================================================
 async function generateInvoiceNumber(invoiceDateValue) {
     if (!invoiceDateValue) return '';
 
     try {
-        const [companyResult, lastResult] = await Promise.all([
-            supabaseClient
-                .from('company_profile')
-                .select('short_code')
-                .eq('company_id', CompanyID)
-                .maybeSingle(),
-            supabaseClient
-                .from('InvoiceDetails')
-                .select('InvoiceNo')
-                .like('InvoiceNo', `${companyResult?.data?.short_code || ''}/${getFinancialYear(invoiceDateValue)}/%`)
-                .eq('company_id', CompanyID)
-                .order('InvoiceNo', { ascending: false })
-                .limit(1)
-                .maybeSingle()
-        ]);
+        // Get company short code
+        const { data: companyData, error: companyError } = await supabaseClient
+            .from('company_profile')
+            .select('short_code')
+            .eq('company_id', CompanyID)
+            .maybeSingle();
 
-        if (companyResult.error) throw companyResult.error;
-        if (!companyResult.data) return '';
+        if (companyError) {
+            console.error('Error fetching company profile:', companyError);
+            return '';
+        }
 
-        const shortCode = companyResult.data.short_code;
+        if (!companyData) {
+            console.error('No company profile found');
+            return '';
+        }
+
+        const shortCode = companyData.short_code;
         const fy = getFinancialYear(invoiceDateValue);
-        const lastInvoice = lastResult.data;
-        const nextNumber = lastInvoice ? parseInt(lastInvoice.InvoiceNo.split('/').pop()) + 1 : 1;
 
+        // Get last invoice number
+        const { data: lastInvoice, error: lastError } = await supabaseClient
+            .from('InvoiceDetails')
+            .select('InvoiceNo')
+            .like('InvoiceNo', `${shortCode}/${fy}/%`)
+            .eq('company_id', CompanyID)
+            .order('InvoiceNo', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+        if (lastError) {
+            console.error('Error fetching last invoice:', lastError);
+            return '';
+        }
+
+        const nextNumber = lastInvoice ? parseInt(lastInvoice.InvoiceNo.split('/').pop()) + 1 : 1;
         return `${shortCode}/${fy}/${nextNumber.toString().padStart(4, '0')}`;
+
     } catch (error) {
         console.error('Error generating invoice number:', error);
         return '';
@@ -194,7 +253,9 @@ async function generateInvoiceNumber(invoiceDateValue) {
 }
 
 function getFinancialYear(dateStr) {
+    if (!dateStr) return '';
     const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return '';
     const startYear = d.getMonth() >= 3 ? d.getFullYear() % 100 : (d.getFullYear() - 1) % 100;
     const endYear = (startYear + 1) % 100;
     return `${startYear.toString().padStart(2, '0')}-${endYear.toString().padStart(2, '0')}`;
@@ -218,9 +279,10 @@ document.getElementById('fetchPendingInvoices')?.addEventListener('click', async
     if (action) {
         try {
             await action();
+            showToast('Pending invoices loaded successfully');
         } catch (e) {
             console.error('Error fetching invoices:', e);
-            alert('Failed to fetch invoices');
+            alert('Failed to fetch invoices: ' + e.message);
         }
     } else {
         alert('Select valid Movement Type');
@@ -228,7 +290,7 @@ document.getElementById('fetchPendingInvoices')?.addEventListener('click', async
 });
 
 // =========================================================
-// SAVE INVOICE - OPTIMIZED WITH FIXED TOTALS
+// SAVE INVOICE - COMPLETE FIX
 // =========================================================
 document.getElementById('saveButton')?.addEventListener('click', async function () {
     if (this.disabled) return;
@@ -249,21 +311,25 @@ document.getElementById('saveButton')?.addEventListener('click', async function 
     } catch (error) {
         console.error('Save error:', error);
         showToast(error.message || 'Save failed');
-    } finally {
-        // Only restore if not successfully saved
-        if (!this.disabled) {
-            this.disabled = false;
-            this.innerHTML = originalText;
-        }
+        // Restore button on error
+        this.disabled = false;
+        this.innerHTML = originalText;
     }
 });
 
 async function saveInvoice(saveBtn) {
-    const invoiceData = collectInvoiceData(saveBtn.dataset.mode === 'insert');
-
-    if (!invoiceData) return;
-
     const isInsert = saveBtn.dataset.mode === 'insert';
+
+    // Collect invoice data
+    const invoiceData = await collectInvoiceDataAsync(isInsert);
+
+    if (!invoiceData) {
+        // Re-enable button on validation failure
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = '<i class="bi bi-save"></i> Save';
+        return;
+    }
+
     const invoiceNo = invoiceData.InvoiceNo;
 
     try {
@@ -299,7 +365,7 @@ async function saveInvoice(saveBtn) {
     }
 }
 
-function collectInvoiceData(isInsert) {
+async function collectInvoiceDataAsync(isInsert) {
     const partyCode = getElementValue('partyCode');
     const invoiceDate = getElementValue('invoiceDate');
     const invoiceType = getElementValue('movementType');
@@ -320,7 +386,8 @@ function collectInvoiceData(isInsert) {
     let invoiceNo = document.getElementById('invoiceNo')?.value.trim();
 
     if (isInsert) {
-        invoiceNo = generateInvoiceNumber(invoiceDate);
+        // Generate new invoice number
+        invoiceNo = await generateInvoiceNumber(invoiceDate);
         if (!invoiceNo) {
             showToast('Invoice number generation failed');
             return null;
@@ -444,7 +511,11 @@ async function updateLinkedBookings(invoiceType, invoiceNo) {
 
     const updateFn = updateMap[invoiceType];
     if (updateFn) {
-        await updateFn(invoiceNo);
+        try {
+            await updateFn(invoiceNo);
+        } catch (error) {
+            console.error('Error updating linked bookings:', error);
+        }
     }
 }
 
@@ -516,13 +587,18 @@ async function newInvoice() {
         });
 
         // Set default date
-        document.getElementById('invoiceDate').value = new Date().toISOString().split('T')[0];
+        const invoiceDate = document.getElementById('invoiceDate');
+        if (invoiceDate) {
+            invoiceDate.value = new Date().toISOString().split('T')[0];
+        }
 
         // Reset buttons
         const saveBtn = document.getElementById('saveButton');
-        saveBtn.dataset.mode = 'insert';
-        saveBtn.disabled = false;
-        saveBtn.innerHTML = '<i class="bi bi-save"></i> Save';
+        if (saveBtn) {
+            saveBtn.dataset.mode = 'insert';
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = '<i class="bi bi-save"></i> Save';
+        }
 
         document.getElementById('modifyButton').disabled = true;
         document.getElementById('deleteButton').disabled = true;
@@ -533,7 +609,6 @@ async function newInvoice() {
 
         // Reset state
         invoiceManager.reset();
-        bankID = null;
 
         // Clear tables
         const table = document.getElementById('pendingShipmentTable');
@@ -549,12 +624,12 @@ async function newInvoice() {
 
         // Enable form and focus
         enableForm();
-        document.getElementById('partyName').focus();
+        document.getElementById('partyName')?.focus();
         showToast('🚀 New Invoice Ready');
 
     } catch (e) {
         console.error('New invoice error:', e);
-        showToast('Error creating new invoice');
+        showToast('Error creating new invoice: ' + e.message);
     }
 }
 
@@ -588,24 +663,24 @@ function updateTotals(totals) {
         if (el) el.textContent = value.toFixed(2);
     };
 
-    setValue('totalFreight', totals.totalFreight);
-    setValue('totalFSCAmt', totals.totalFSCAmt);
-    setValue('totalOtherAmt', totals.totalOtherAmt);
-    setValue('totalSGST', totals.totalSGST);
-    setValue('totalCGST', totals.totalCGST);
-    setValue('totalIGST', totals.totalIGST);
-    setValue('totalGST', totals.totalGST);
-    setValue('totalGrand', Math.round(totals.totalGrand));
+    setValue('totalFreight', totals.totalFreight || 0);
+    setValue('totalFSCAmt', totals.totalFSCAmt || 0);
+    setValue('totalOtherAmt', totals.totalOtherAmt || 0);
+    setValue('totalSGST', totals.totalSGST || 0);
+    setValue('totalCGST', totals.totalCGST || 0);
+    setValue('totalIGST', totals.totalIGST || 0);
+    setValue('totalGST', totals.totalGST || 0);
+    setValue('totalGrand', Math.round(totals.totalGrand || 0));
 
     // Update invoiceData
     invoiceManager.setInvoiceData({
-        BasicAmount: formatAmount(totals.totalFreight) || 0,
-        OtherAmount: (formatAmount(totals.totalFSCAmt) || 0) + (formatAmount(totals.totalOtherAmt) || 0),
-        CGSTAmount: formatAmount(totals.totalCGST) || 0,
-        SGSTAmount: formatAmount(totals.totalSGST) || 0,
-        IGSTAmount: formatAmount(totals.totalIGST) || 0,
-        TotalGSTAmount: formatAmount(totals.totalGST) || 0,
-        GrandTotalAmount: formatAmount(Math.round(totals.totalGrand)) || 0
+        BasicAmount: totals.totalFreight || 0,
+        OtherAmount: (totals.totalFSCAmt || 0) + (totals.totalOtherAmt || 0),
+        CGSTAmount: totals.totalCGST || 0,
+        SGSTAmount: totals.totalSGST || 0,
+        IGSTAmount: totals.totalIGST || 0,
+        TotalGSTAmount: totals.totalGST || 0,
+        GrandTotalAmount: Math.round(totals.totalGrand || 0)
     });
 }
 
@@ -704,7 +779,11 @@ document.getElementById('movementType')?.addEventListener('change', async (e) =>
 
     const createTableFn = tableMap[movementType];
     if (createTableFn) {
-        await createTableFn();
+        try {
+            await createTableFn();
+        } catch (error) {
+            console.error('Error creating table:', error);
+        }
     } else {
         console.warn('Unknown movement type:', movementType);
     }
@@ -765,7 +844,7 @@ function populateInvoiceForm(invoiceDetails) {
     document.getElementById("invoiceAddress").value = invoiceDetails.InvoiceAddress || "";
     document.getElementById("movementType").value = invoiceDetails.InvoiceType || "";
     document.getElementById("bankIDs").value = getBankNameByCode(invoiceDetails.BankID) || "";
-    document.getElementById("inputBankName").value = invoiceDetails.id || "";
+    document.getElementById("inputBankName").value = getBankNameByCode(invoiceDetails.BankID) || "";
     document.getElementById("invoiceInformation").value = invoiceDetails.Remarks || "";
     document.getElementById("tempFormID").value = invoiceDetails.id || "";
 }
@@ -791,14 +870,18 @@ document.getElementById('addShipmentNo')?.addEventListener('click', async () => 
     const shipmentNo = document.getElementById('shipmentNo')?.value?.trim();
     const invoiceNo = document.getElementById('invoiceNo')?.value?.trim();
     const movementType = document.getElementById('movementType')?.value?.trim();
-    const spinner = document.getElementById('saveSpinner');
 
     if (!shipmentNo) {
         alert('Please enter/select a Shipment Number.');
         return;
     }
 
-    if (spinner) spinner.classList.remove('d-none');
+    if (!invoiceNo) {
+        alert('Please save the invoice first before adding shipments.');
+        return;
+    }
+
+    showSpinner();
 
     const addMap = {
         'Forwarding': addSingleShipmentToInvoice,
@@ -813,12 +896,14 @@ document.getElementById('addShipmentNo')?.addEventListener('click', async () => 
     if (addFn) {
         try {
             await addFn(shipmentNo, invoiceNo);
+            showToast('Shipment added successfully');
         } catch (error) {
             console.error('Error adding shipment:', error);
-            alert('Failed to add shipment');
+            alert('Failed to add shipment: ' + error.message);
         }
     } else {
         console.warn('Unknown movement type:', movementType);
+        alert('Unknown movement type. Please select a valid type.');
     }
 
     hideSpinner();
@@ -829,9 +914,11 @@ document.getElementById('addShipmentNo')?.addEventListener('click', async () => 
 // =========================================================
 document.getElementById('modifyButton')?.addEventListener('click', () => {
     const saveBtn = document.getElementById('saveButton');
-    saveBtn.disabled = false;
-    saveBtn.innerHTML = '<i class="bi bi-save"></i> Update';
-    saveBtn.dataset.mode = 'update';
+    if (saveBtn) {
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = '<i class="bi bi-save"></i> Update';
+        saveBtn.dataset.mode = 'update';
+    }
 
     document.getElementById('modifyButton').disabled = true;
     document.getElementById('deleteButton').disabled = true;
@@ -894,10 +981,11 @@ document.getElementById('reportButton')?.addEventListener('click', async functio
             }
         } else {
             console.warn('Unknown movement type:', invoiceDetails.InvoiceType);
+            alert('Report generation not available for this invoice type.');
         }
     } catch (error) {
         console.error('Report generation failed:', error);
-        alert('Failed to generate report.');
+        alert('Failed to generate report: ' + error.message);
     } finally {
         this.disabled = false;
         this.innerHTML = originalText;
@@ -931,7 +1019,7 @@ function showAddressSelectionModal(addresses) {
     addresses.forEach((address) => {
         const button = document.createElement('button');
         button.type = 'button';
-        button.className = 'btn btn-outline-primary w-100 mb-2';
+        button.className = 'btn btn-outline-primary w-100 mb-2 text-start';
         button.textContent = formatAddress(address);
 
         button.addEventListener('click', () => {
@@ -952,6 +1040,7 @@ function showAddressSelectionModal(addresses) {
 // UTILITY FUNCTIONS
 // =========================================================
 
+
 function getTextValue(id) {
     const el = document.getElementById(id);
     if (!el) {
@@ -969,7 +1058,57 @@ function formatAmount(value) {
 
 function showToast(message) {
     // Implement toast notification
-    alert(message); // Replace with proper toast implementation
+    console.log('Toast:', message);
+    // Use alert as fallback
+    alert(message);
+}
+
+function showSpinner() {
+    const spinner = document.getElementById('saveSpinner');
+    if (spinner) spinner.classList.remove('d-none');
+}
+
+function hideSpinner() {
+    const spinner = document.getElementById('saveSpinner');
+    if (spinner) spinner.classList.add('d-none');
+}
+
+function disableForm() {
+    const inputs = document.querySelectorAll('#container input, #container select, #container textarea');
+    inputs.forEach(input => {
+        if (input.id !== 'invoiceNo' &&
+            input.id !== 'reportType' &&
+            input.id !== 'saveButton' &&
+            input.id !== 'modifyButton' &&
+            input.id !== 'deleteButton' &&
+            input.id !== 'reportButton' &&
+            input.id !== 'newButton') {
+            input.disabled = true;
+        }
+    });
+}
+
+function enableForm() {
+    const inputs = document.querySelectorAll('#container input, #container select, #container textarea');
+    inputs.forEach(input => {
+        if (input.id !== 'invoiceNo' &&
+            input.id !== 'saveButton' &&
+            input.id !== 'modifyButton' &&
+            input.id !== 'deleteButton' &&
+            input.id !== 'reportButton' &&
+            input.id !== 'newButton') {
+            input.disabled = false;
+        }
+    });
+}
+
+function getBankNameByCode(bankID) {
+    const bankMap = invoiceManager.getBankMap();
+    if (!bankMap) return '';
+    for (const [name, id] of Object.entries(bankMap)) {
+        if (id === bankID) return name;
+    }
+    return '';
 }
 
 // =========================================================
@@ -977,4 +1116,5 @@ function showToast(message) {
 // =========================================================
 window.invoiceData = invoiceManager.getInvoiceData();
 window.invoiceChargesData = invoiceManager.invoiceChargesData;
-window.bankID = invoiceManager.bankID;
+window.bankID = invoiceManager.getBankID();
+window.invoiceManager = invoiceManager;

@@ -9,70 +9,77 @@ const CONFIG = {
     CURRENCY_LOCALE: "en-IN",
     CURRENCY_MIN_FRACTION: 2,
     CURRENCY_MAX_FRACTION: 2,
+    DEBOUNCE_DELAY: 300,
+    MAX_VISIBLE_PAGES: 5,
+    TABLE_COLUMNS: 18,
 };
 
 const STATE = {
     currentPage: 1,
     sortColumn: null,
     sortOrder: 'asc',
-    partyNameCache: {},
+    partyNameCache: new Map(), // Use Map for better performance
     reportSuggestionData: [],
     filters: {},
+    isLoading: false,
+    totalRecords: 0,
 };
 
 // ============================================
 // DOM REFS (Cache for performance)
 // ============================================
 const DOM = {
-    get tableBody() { return document.querySelector('#bookingTable tbody'); },
-    get pagination() { return document.getElementById('paginationControls'); },
-    get spinner() { return document.getElementById('loadingSpinner'); },
-    get dateRange() { return document.getElementById('dateRange'); },
-    get searchBtn() { return document.getElementById('searchBtn'); },
-    get exportExcelBtn() { return document.getElementById('exportExcelBtn'); },
-    get exportPdfBtn() { return document.getElementById('exportPdfBtn'); },
-    get filterSection() { return document.getElementById('filterSection'); },
-    get paymentStatusBtn() { return document.getElementById('paymentStatusBtn'); },
+    // Cache DOM elements on initialization
+    elements: {},
 
-    // Input fields
-    get inputs() {
-        return {
+    init() {
+        this.elements = {
+            tableBody: document.querySelector('#bookingTable tbody'),
+            pagination: document.getElementById('paginationControls'),
+            spinner: document.getElementById('loadingSpinner'),
+            dateRange: document.getElementById('dateRange'),
+            searchBtn: document.getElementById('searchBtn'),
+            exportExcelBtn: document.getElementById('exportExcelBtn'),
+            exportPdfBtn: document.getElementById('exportPdfBtn'),
+            filterSection: document.getElementById('filterSection'),
+            paymentStatusBtn: document.getElementById('paymentStatusBtn'),
+
+            // Input fields
             customerName: document.getElementById('customerName'),
             invoiceNo: document.getElementById('invoiceNo'),
             invoiceType: document.getElementById('invoiceType'),
             invoiceMonth: document.getElementById('invoiceMonth'),
             invoiceYear: document.getElementById('invoiceYear'),
             financialYear: document.getElementById('financialYear'),
+
+            // Datalists
+            invoiceNoList: document.getElementById('invoiceNoList'),
+            customerNameList: document.getElementById('customerNameList'),
+            invoiceTypeList: document.getElementById('invoiceTypeList'),
+            paymentStatusList: document.getElementById('paymentStatusBtn'),
+            financialYearList: document.getElementById('financialYearList'),
+
+            // Totals
+            totalBasicAmount: document.getElementById('totalBasicAmount'),
+            totalOtherAmount: document.getElementById('totalOtherAmount'),
+            totalCGSTAmount: document.getElementById('totalCGSTAmount'),
+            totalSGSTAmount: document.getElementById('totalSGSTAmount'),
+            totalIGSTAmount: document.getElementById('totalIGSTAmount'),
+            totalGSTAmount: document.getElementById('totalGSTAmount'),
+            totalGrandTotal: document.getElementById('totalGrandTotal'),
+            totalCollected: document.getElementById('totalCollected'),
+            totalOtherDeduction: document.getElementById('totalOtherDeduction'),
+            totalTDSDeduction: document.getElementById('totalTDSDeduction'),
+            totalPayment: document.getElementById('totalPayment'),
+            totalBalance: document.getElementById('totalBalance'),
         };
+
+        // Store table headers for sorting
+        this.elements.sortHeaders = document.querySelectorAll('#bookingTable thead th[data-key]');
     },
 
-    // Datalists
-    get datalists() {
-        return {
-            invoiceNo: document.getElementById('invoiceNoList'),
-            customerName: document.getElementById('customerNameList'),
-            invoiceType: document.getElementById('invoiceTypeList'),
-            paymentStatus: document.getElementById('paymentStatusBtn'),
-            financialYear: document.getElementById('financialYearList'),
-        };
-    },
-
-    // Total display elements
-    get totals() {
-        return {
-            BasicAmount: document.getElementById('totalBasicAmount'),
-            OtherAmount: document.getElementById('totalOtherAmount'),
-            CGSTAmount: document.getElementById('totalCGSTAmount'),
-            SGSTAmount: document.getElementById('totalSGSTAmount'),
-            IGSTAmount: document.getElementById('totalIGSTAmount'),
-            TotalGSTAmount: document.getElementById('totalGSTAmount'),
-            GrandTotalAmount: document.getElementById('totalGrandTotal'),
-            PaymentAmount: document.getElementById('totalCollected'),
-            OtherDeductionAmount: document.getElementById('totalOtherDeduction'),
-            TDSDeductionAmount: document.getElementById('totalTDSDeduction'),
-            PaymentTotalAmount: document.getElementById('totalPayment'),
-            BalanceAmount: document.getElementById('totalBalance'),
-        };
+    get(key) {
+        return this.elements[key];
     }
 };
 
@@ -82,7 +89,8 @@ const DOM = {
 const Utils = {
     toNumber: (value) => {
         if (value === null || value === undefined || value === '') return 0;
-        return parseFloat(String(value).replace(/,/g, '')) || 0;
+        const num = parseFloat(String(value).replace(/,/g, ''));
+        return isNaN(num) ? 0 : num;
     },
 
     formatAmount: (value) => {
@@ -94,8 +102,12 @@ const Utils = {
 
     formatDate: (dateStr) => {
         if (!dateStr) return '';
-        const date = new Date(dateStr);
-        return isNaN(date) ? '' : date.toLocaleDateString();
+        try {
+            const date = new Date(dateStr);
+            return isNaN(date.getTime()) ? '' : date.toLocaleDateString();
+        } catch {
+            return '';
+        }
     },
 
     getCurrentFinancialYear: () => {
@@ -107,6 +119,7 @@ const Utils = {
 
     getFinancialYearRange: (financialYear) => {
         const [startYear, endYear] = financialYear.split('-').map(Number);
+        if (isNaN(startYear) || isNaN(endYear)) return null;
         return {
             startDate: `${startYear}-04-01`,
             endDate: `${endYear}-03-31`
@@ -114,21 +127,28 @@ const Utils = {
     },
 
     getMonthRange: (yearMonth) => {
+        if (!yearMonth || !yearMonth.includes('-')) return null;
         const [year, month] = yearMonth.split('-').map(Number);
-        if (isNaN(year) || isNaN(month)) return null;
-        const start = new Date(year, month - 1, 1).toISOString().split('T')[0];
-        const end = new Date(year, month, 0).toISOString().split('T')[0];
-        return { startDate: start, endDate: end };
+        if (isNaN(year) || isNaN(month) || month < 1 || month > 12) return null;
+
+        const start = new Date(year, month - 1, 1);
+        const end = new Date(year, month, 0);
+
+        return {
+            startDate: start.toISOString().split('T')[0],
+            endDate: end.toISOString().split('T')[0]
+        };
     },
 
     getYearRange: (year) => {
+        if (isNaN(year)) return null;
         return {
             startDate: `${year}-01-01`,
             endDate: `${year}-12-31`
         };
     },
 
-    debounce: (func, delay = 300) => {
+    debounce: (func, delay = CONFIG.DEBOUNCE_DELAY) => {
         let timeoutId;
         return function (...args) {
             clearTimeout(timeoutId);
@@ -136,11 +156,13 @@ const Utils = {
         };
     },
 
-    showError: (message, container = DOM.tableBody) => {
-        if (container) {
-            container.innerHTML = `
+    showError: (message, container) => {
+        const target = container || DOM.get('tableBody');
+        if (target) {
+            target.innerHTML = `
                 <tr>
-                    <td colspan="18" class="text-center text-danger py-4">
+                    <td colspan="${CONFIG.TABLE_COLUMNS}" class="text-center text-danger py-4">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
                         ${message}
                     </td>
                 </tr>
@@ -150,10 +172,11 @@ const Utils = {
     },
 
     showLoading: (message = 'Processing data, please wait...') => {
-        if (DOM.tableBody) {
-            DOM.tableBody.innerHTML = `
+        const target = DOM.get('tableBody');
+        if (target) {
+            target.innerHTML = `
                 <tr>
-                    <td colspan="18" class="text-center text-primary fw-bold py-4">
+                    <td colspan="${CONFIG.TABLE_COLUMNS}" class="text-center text-primary fw-bold py-4">
                         <span class="spinner-border spinner-border-sm me-2"></span>
                         ${message}
                     </td>
@@ -163,18 +186,40 @@ const Utils = {
     },
 
     showNoRecords: () => {
-        if (DOM.tableBody) {
-            DOM.tableBody.innerHTML = `
+        const target = DOM.get('tableBody');
+        if (target) {
+            target.innerHTML = `
                 <tr>
-                    <td colspan="18" class="text-center text-muted">No records found</td>
+                    <td colspan="${CONFIG.TABLE_COLUMNS}" class="text-center text-muted py-4">
+                        <i class="bi bi-inbox me-2"></i>
+                        No records found
+                    </td>
                 </tr>
             `;
         }
+    },
+
+    escapeHtml: (str) => {
+        if (!str) return '';
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    },
+
+    getPaginationRange: (currentPage, totalPages, maxVisible = CONFIG.MAX_VISIBLE_PAGES) => {
+        let start = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+        let end = Math.min(totalPages, start + maxVisible - 1);
+
+        if (end - start + 1 < maxVisible) {
+            start = Math.max(1, end - maxVisible + 1);
+        }
+
+        return { start, end };
     }
 };
 
 // ============================================
-// DATABASE HELPERS - COMPLETE
+// DATABASE HELPERS
 // ============================================
 const Database = {
     getCompanyId: () => localStorage.getItem('CompanyID'),
@@ -182,7 +227,7 @@ const Database = {
     fetchSuggestions: async () => {
         const companyId = Database.getCompanyId();
         if (!companyId) {
-            console.error('Company ID not found');
+            console.warn('Company ID not found');
             return [];
         }
 
@@ -190,7 +235,9 @@ const Database = {
             const { data, error } = await supabaseClient
                 .from('InvoicePaymentView')
                 .select('InvoiceNo, PartyCode, PartyName, InvoiceType, PaymentStatus, InvoiceDate')
-                .eq('company_id', companyId);
+                .eq('company_id', companyId)
+                .order('InvoiceDate', { ascending: false }) // Most recent first
+                .limit(5000);
 
             if (error) {
                 console.error('Error fetching suggestions:', error);
@@ -208,8 +255,8 @@ const Database = {
         if (!partyCode) return null;
 
         // Check cache first
-        if (STATE.partyNameCache[partyCode]) {
-            return { PartyName: STATE.partyNameCache[partyCode] };
+        if (STATE.partyNameCache.has(partyCode)) {
+            return { PartyName: STATE.partyNameCache.get(partyCode) };
         }
 
         try {
@@ -226,17 +273,17 @@ const Database = {
             }
 
             if (data?.PartyName) {
-                STATE.partyNameCache[partyCode] = data.PartyName;
+                STATE.partyNameCache.set(partyCode, data.PartyName);
                 return data;
             }
 
-            // If no data found, cache empty result to avoid repeated queries
-            STATE.partyNameCache[partyCode] = partyCode;
+            // Cache empty result to avoid repeated queries
+            STATE.partyNameCache.set(partyCode, partyCode);
             return { PartyName: partyCode };
 
         } catch (error) {
             console.error('Error fetching party details:', error);
-            STATE.partyNameCache[partyCode] = partyCode;
+            STATE.partyNameCache.set(partyCode, partyCode);
             return { PartyName: partyCode };
         }
     },
@@ -246,14 +293,14 @@ const Database = {
 
         // Filter out codes already in cache
         const uncachedCodes = partyCodes.filter(code =>
-            code && !STATE.partyNameCache[code]
+            code && !STATE.partyNameCache.has(code)
         );
 
+        // Return cached values if all are cached
         if (uncachedCodes.length === 0) {
-            // Return cached values
             const result = {};
             partyCodes.forEach(code => {
-                if (code) result[code] = STATE.partyNameCache[code] || code;
+                if (code) result[code] = STATE.partyNameCache.get(code) || code;
             });
             return result;
         }
@@ -270,7 +317,7 @@ const Database = {
                 // Return fallback values
                 const result = {};
                 uncachedCodes.forEach(code => {
-                    STATE.partyNameCache[code] = code;
+                    STATE.partyNameCache.set(code, code);
                     result[code] = code;
                 });
                 return result;
@@ -281,7 +328,7 @@ const Database = {
             if (data && data.length > 0) {
                 data.forEach(item => {
                     if (item.PartyCode && item.PartyName) {
-                        STATE.partyNameCache[item.PartyCode] = item.PartyName;
+                        STATE.partyNameCache.set(item.PartyCode, item.PartyName);
                         result[item.PartyCode] = item.PartyName;
                     }
                 });
@@ -290,7 +337,7 @@ const Database = {
             // Set fallback for any codes not found
             uncachedCodes.forEach(code => {
                 if (!result[code]) {
-                    STATE.partyNameCache[code] = code;
+                    STATE.partyNameCache.set(code, code);
                     result[code] = code;
                 }
             });
@@ -299,23 +346,23 @@ const Database = {
 
         } catch (error) {
             console.error('Error in batch party details fetch:', error);
-            // Cache fallback values
             const result = {};
             uncachedCodes.forEach(code => {
-                STATE.partyNameCache[code] = code;
+                STATE.partyNameCache.set(code, code);
                 result[code] = code;
             });
             return result;
         }
     },
 
-    buildQuery: (filters = {}) => {
+    buildQuery: (filters = {}, forCount = false) => {
         const companyId = Database.getCompanyId();
+        const selectFields = forCount ? 'id' : '*';
+
         let query = supabaseClient
             .from('InvoicePaymentView')
-            .select('*', { count: 'exact' })
-            .eq('company_id', companyId)
-            .order('InvoiceNo', { ascending: false });
+            .select(selectFields, forCount ? { count: 'exact', head: true } : { count: 'exact' })
+            .eq('company_id', companyId);
 
         // Apply text filters
         if (filters.invoiceNo) {
@@ -357,13 +404,17 @@ const Database = {
 
         // Priority: financialYear > invoiceYear > invoiceMonth > dateRange
         if (filters.financialYear) {
-            const { startDate, endDate } = Utils.getFinancialYearRange(filters.financialYear);
-            return query.gte('InvoiceDate', startDate).lte('InvoiceDate', endDate);
+            const range = Utils.getFinancialYearRange(filters.financialYear);
+            if (range) {
+                return query.gte('InvoiceDate', range.startDate).lte('InvoiceDate', range.endDate);
+            }
         }
 
         if (filters.invoiceYear) {
-            const { startDate, endDate } = Utils.getYearRange(parseInt(filters.invoiceYear));
-            return query.gte('InvoiceDate', startDate).lte('InvoiceDate', endDate);
+            const range = Utils.getYearRange(parseInt(filters.invoiceYear));
+            if (range) {
+                return query.gte('InvoiceDate', range.startDate).lte('InvoiceDate', range.endDate);
+            }
         }
 
         if (filters.invoiceMonth) {
@@ -433,12 +484,13 @@ const Database = {
         return allData;
     }
 };
+
 // ============================================
 // UI RENDER FUNCTIONS
 // ============================================
 const UI = {
     renderTable: async (data) => {
-        const tbody = DOM.tableBody;
+        const tbody = DOM.get('tableBody');
         if (!tbody) return;
 
         if (!data || data.length === 0) {
@@ -446,18 +498,20 @@ const UI = {
             return;
         }
 
+        // Batch fetch all party names at once
+        const partyCodes = [...new Set(data.map(row => row.PartyCode).filter(Boolean))];
+        const partyNameMap = partyCodes.length > 0
+            ? await Database.getBatchPartyDetails(partyCodes)
+            : {};
+
         tbody.innerHTML = '';
+        const fragment = document.createDocumentFragment();
 
         for (let idx = 0; idx < data.length; idx++) {
             const row = data[idx];
             const tr = document.createElement('tr');
 
-            let partyName = '';
-            if (row.PartyCode) {
-                const details = await Database.getPartyDetails(row.PartyCode);
-                partyName = details?.PartyName || '';
-            }
-
+            const partyName = row.PartyCode ? (partyNameMap[row.PartyCode] || '') : '';
             const srNo = (STATE.currentPage - 1) * CONFIG.PAGE_SIZE + idx + 1;
             const invoiceLink = `../Accounting/CustomerInvoice.html?invoiceNo=${encodeURIComponent(row.InvoiceNo)}`;
 
@@ -465,12 +519,12 @@ const UI = {
                 <td>${srNo}</td>
                 <td>
                     <a href="${invoiceLink}" class="text-decoration-none fw-bold">
-                        ${row.InvoiceNo}
+                        ${Utils.escapeHtml(row.InvoiceNo)}
                     </a>
                 </td>
                 <td>${Utils.formatDate(row.InvoiceDate)}</td>
-                <td>${row.InvoiceType || ''}</td>
-                <td>${partyName}</td>
+                <td>${Utils.escapeHtml(row.InvoiceType || '')}</td>
+                <td>${Utils.escapeHtml(partyName)}</td>
                 <td class="text-end">${Utils.formatAmount(row.BasicAmount)}</td>
                 <td class="text-end">${Utils.formatAmount(row.OtherAmount)}</td>
                 <td class="text-end">${Utils.formatAmount(row.CGSTAmount)}</td>
@@ -483,27 +537,33 @@ const UI = {
                 <td class="text-end">${Utils.formatAmount(row.TDSDeductionAmount)}</td>
                 <td class="text-end">${Utils.formatAmount(row.PaymentTotalAmount)}</td>
                 <td class="text-end">${Utils.formatAmount(row.BalanceAmount)}</td>
-                <td>${row.PaymentStatus || ''}</td>
+                <td>${Utils.escapeHtml(row.PaymentStatus || '')}</td>
             `;
 
-            tbody.appendChild(tr);
+            fragment.appendChild(tr);
         }
+
+        tbody.appendChild(fragment);
     },
 
     renderPagination: (totalCount, loadTableFn) => {
-        const pagination = DOM.pagination;
+        const pagination = DOM.get('pagination');
         if (!pagination) return;
 
         const totalPages = Math.ceil(totalCount / CONFIG.PAGE_SIZE);
         pagination.innerHTML = '';
 
         if (totalPages <= 1) {
-            // Only show single page indicator or nothing
+            // Show single page indicator
+            const li = document.createElement('li');
+            li.className = 'page-item disabled';
+            li.innerHTML = `<span class="page-link">Page 1 of 1</span>`;
+            pagination.appendChild(li);
             return;
         }
 
         // Previous button
-        UI.createPaginationButton(pagination, 'Previous', STATE.currentPage > 1, () => {
+        UI.createPaginationButton(pagination, '«', STATE.currentPage > 1, () => {
             if (STATE.currentPage > 1) {
                 STATE.currentPage--;
                 loadTableFn(UI.getFilters());
@@ -511,34 +571,31 @@ const UI = {
         });
 
         // Page numbers
-        const maxVisible = 5;
-        let startPage = Math.max(1, STATE.currentPage - 2);
-        let endPage = Math.min(totalPages, startPage + maxVisible - 1);
-        startPage = Math.max(1, endPage - maxVisible + 1);
+        const { start, end } = Utils.getPaginationRange(STATE.currentPage, totalPages);
 
         // First page with dots
-        if (startPage > 1) {
+        if (start > 1) {
             UI.createPageNumber(pagination, 1, loadTableFn);
-            if (startPage > 2) {
+            if (start > 2) {
                 UI.createDots(pagination);
             }
         }
 
         // Visible pages
-        for (let i = startPage; i <= endPage; i++) {
+        for (let i = start; i <= end; i++) {
             UI.createPageNumber(pagination, i, loadTableFn, i === STATE.currentPage);
         }
 
         // Last page with dots
-        if (endPage < totalPages) {
-            if (endPage < totalPages - 1) {
+        if (end < totalPages) {
+            if (end < totalPages - 1) {
                 UI.createDots(pagination);
             }
             UI.createPageNumber(pagination, totalPages, loadTableFn);
         }
 
         // Next button
-        UI.createPaginationButton(pagination, 'Next', STATE.currentPage < totalPages, () => {
+        UI.createPaginationButton(pagination, '»', STATE.currentPage < totalPages, () => {
             if (STATE.currentPage < totalPages) {
                 STATE.currentPage++;
                 loadTableFn(UI.getFilters());
@@ -574,7 +631,7 @@ const UI = {
     createDots: (container) => {
         const li = document.createElement('li');
         li.className = 'page-item disabled';
-        li.innerHTML = `<span class="page-link">...</span>`;
+        li.innerHTML = `<span class="page-link">…</span>`;
         container.appendChild(li);
     },
 
@@ -604,8 +661,23 @@ const UI = {
         });
 
         // Update DOM
+        const totalElements = {
+            BasicAmount: 'totalBasicAmount',
+            OtherAmount: 'totalOtherAmount',
+            CGSTAmount: 'totalCGSTAmount',
+            SGSTAmount: 'totalSGSTAmount',
+            IGSTAmount: 'totalIGSTAmount',
+            TotalGSTAmount: 'totalGSTAmount',
+            GrandTotalAmount: 'totalGrandTotal',
+            PaymentAmount: 'totalCollected',
+            OtherDeductionAmount: 'totalOtherDeduction',
+            TDSDeductionAmount: 'totalTDSDeduction',
+            PaymentTotalAmount: 'totalPayment',
+            BalanceAmount: 'totalBalance'
+        };
+
         Object.keys(totals).forEach(key => {
-            const element = DOM.totals[key];
+            const element = DOM.get(totalElements[key]);
             if (element) {
                 element.textContent = Utils.formatAmount(totals[key]);
             }
@@ -613,9 +685,12 @@ const UI = {
     },
 
     updateHeaderSortIndicators: () => {
-        document.querySelectorAll('#bookingTable thead th[data-key]').forEach(th => {
+        const headers = DOM.get('sortHeaders');
+        if (!headers) return;
+
+        headers.forEach(th => {
             const key = th.getAttribute('data-key');
-            const title = th.getAttribute('data-title') || th.textContent.replace(/\s+[\u25B2\u25BC]/, '');
+            const title = th.getAttribute('data-title') || th.textContent.replace(/\s+[▲▼]/, '');
             th.textContent = title;
 
             if (key === STATE.sortColumn) {
@@ -626,43 +701,68 @@ const UI = {
 
     updatePaymentStatusDisplay: () => {
         const selected = [...document.querySelectorAll('.paymentStatus:checked')]
-            .map(cb => cb.nextElementSibling.textContent.trim());
+            .map(cb => cb.nextElementSibling?.textContent.trim() || cb.value);
 
-        if (DOM.paymentStatusBtn) {
-            DOM.paymentStatusBtn.textContent = selected.length ? selected.join(', ') : 'All Status';
+        const btn = DOM.get('paymentStatusBtn');
+        if (btn) {
+            btn.textContent = selected.length ? selected.join(', ') : 'All Status';
         }
     },
 
     populateDatalists: (data, field, datalistId) => {
-        const datalist = DOM.datalists[Object.keys(DOM.datalists).find(key =>
-            DOM.datalists[key]?.id === datalistId
-        )] || document.getElementById(datalistId);
-
+        const datalist = DOM.get(datalistId);
         if (!datalist) {
             console.warn(`Datalist with ID "${datalistId}" not found`);
-            return;
+            return false;
         }
 
-        const uniqueValues = [...new Set(
-            data.map(item => item[field]).filter(Boolean)
-        )].sort((a, b) => a.localeCompare(b));
+        try {
+            const uniqueValues = [...new Set(
+                data
+                    .map(item => item[field])
+                    .filter(value => value && value.trim() !== '')
+            )].sort((a, b) => a.localeCompare(b));
 
-        datalist.innerHTML = uniqueValues
-            .map(value => `<option value="${value}">`)
-            .join('');
+            datalist.innerHTML = uniqueValues
+                .map(value => `<option value="${Utils.escapeHtml(value)}">`)
+                .join('');
+
+            return true;
+        } catch (error) {
+            console.error(`Error populating datalist "${datalistId}":`, error);
+            return false;
+        }
     },
 
     populateArrayDatalist: (array, datalistId) => {
-        const datalist = document.getElementById(datalistId);
+        const datalist = DOM.get(datalistId);
         if (!datalist) {
             console.warn(`Datalist with ID "${datalistId}" not found`);
-            return;
+            return false;
         }
-        datalist.innerHTML = array.map(value => `<option value="${value}">`).join('');
+
+        try {
+            datalist.innerHTML = array
+                .filter(value => value && value.trim() !== '')
+                .map(value => `<option value="${Utils.escapeHtml(value)}">`)
+                .join('');
+            return true;
+        } catch (error) {
+            console.error(`Error populating array datalist "${datalistId}":`, error);
+            return false;
+        }
     },
 
     getFilters: () => {
-        const inputs = DOM.inputs;
+        const inputs = {
+            customerName: DOM.get('customerName'),
+            invoiceNo: DOM.get('invoiceNo'),
+            invoiceType: DOM.get('invoiceType'),
+            invoiceMonth: DOM.get('invoiceMonth'),
+            invoiceYear: DOM.get('invoiceYear'),
+            financialYear: DOM.get('financialYear'),
+        };
+
         const filters = {
             customerName: inputs.customerName?.value.trim(),
             invoiceNo: inputs.invoiceNo?.value.trim(),
@@ -673,7 +773,7 @@ const UI = {
             paymentStatus: UI.getSelectedPaymentStatus()
         };
 
-        const dateRange = DOM.dateRange?.value.trim();
+        const dateRange = DOM.get('dateRange')?.value.trim();
         if (dateRange) {
             const [startDate, endDate] = dateRange.split(' to ');
             filters.startDate = startDate || '';
@@ -686,7 +786,8 @@ const UI = {
 
     getSelectedPaymentStatus: () => {
         return [...document.querySelectorAll('.paymentStatus:checked')]
-            .map(cb => cb.value);
+            .map(cb => cb.value)
+            .filter(Boolean);
     }
 };
 
@@ -703,6 +804,12 @@ const Exporter = {
             return;
         }
 
+        // Batch fetch party names
+        const partyCodes = [...new Set(allData.map(row => row.PartyCode).filter(Boolean))];
+        const partyNameMap = partyCodes.length > 0
+            ? await Database.getBatchPartyDetails(partyCodes)
+            : {};
+
         let tableHtml = `<table><thead><tr>
             <th>Sr No</th><th>Invoice No</th><th>Invoice Date</th><th>Invoice Type</th><th>Customer Name</th>
             <th>Basic Amount</th><th>Other Amount</th><th>CGST Amount</th><th>SGST Amount</th><th>IGST Amount</th>
@@ -712,12 +819,7 @@ const Exporter = {
 
         for (let i = 0; i < allData.length; i++) {
             const row = allData[i];
-            let partyName = '';
-
-            if (row.PartyCode) {
-                const details = await Database.getPartyDetails(row.PartyCode);
-                partyName = details?.PartyName || '';
-            }
+            const partyName = row.PartyCode ? (partyNameMap[row.PartyCode] || '') : '';
 
             tableHtml += `<tr>
                 <td>${i + 1}</td>
@@ -725,18 +827,18 @@ const Exporter = {
                 <td>${row.InvoiceDate || ''}</td>
                 <td>${row.InvoiceType || ''}</td>
                 <td>${partyName}</td>
-                <td>${row.BasicAmount || '0'}</td>
-                <td>${row.OtherAmount || '0'}</td>
-                <td>${row.CGSTAmount || '0'}</td>
-                <td>${row.SGSTAmount || '0'}</td>
-                <td>${row.IGSTAmount || '0'}</td>
-                <td>${row.TotalGSTAmount || '0'}</td>
-                <td>${row.GrandTotalAmount || '0'}</td>
-                <td>${row.PaymentAmount || '0'}</td>
-                <td>${row.OtherDeductionAmount || '0'}</td>
-                <td>${row.TDSDeductionAmount || '0'}</td>
-                <td>${row.PaymentTotalAmount || '0'}</td>
-                <td>${row.BalanceAmount || '0'}</td>
+                <td>${Utils.toNumber(row.BasicAmount).toFixed(2)}</td>
+                <td>${Utils.toNumber(row.OtherAmount).toFixed(2)}</td>
+                <td>${Utils.toNumber(row.CGSTAmount).toFixed(2)}</td>
+                <td>${Utils.toNumber(row.SGSTAmount).toFixed(2)}</td>
+                <td>${Utils.toNumber(row.IGSTAmount).toFixed(2)}</td>
+                <td>${Utils.toNumber(row.TotalGSTAmount).toFixed(2)}</td>
+                <td>${Utils.toNumber(row.GrandTotalAmount).toFixed(2)}</td>
+                <td>${Utils.toNumber(row.PaymentAmount).toFixed(2)}</td>
+                <td>${Utils.toNumber(row.OtherDeductionAmount).toFixed(2)}</td>
+                <td>${Utils.toNumber(row.TDSDeductionAmount).toFixed(2)}</td>
+                <td>${Utils.toNumber(row.PaymentTotalAmount).toFixed(2)}</td>
+                <td>${Utils.toNumber(row.BalanceAmount).toFixed(2)}</td>
                 <td>${row.PaymentStatus || ''}</td>
             </tr>`;
         }
@@ -772,14 +874,11 @@ const Exporter = {
             'Balance Amount', 'Payment Status'
         ];
 
-        // Get party names
-        const uniqueCodes = [...new Set(allData.map(r => r.PartyCode).filter(Boolean))];
-        const partyNameMap = {};
-
-        for (const code of uniqueCodes) {
-            const details = await Database.getPartyDetails(code);
-            partyNameMap[code] = details?.PartyName || code;
-        }
+        // Batch fetch party names
+        const partyCodes = [...new Set(allData.map(r => r.PartyCode).filter(Boolean))];
+        const partyNameMap = partyCodes.length > 0
+            ? await Database.getBatchPartyDetails(partyCodes)
+            : {};
 
         // Prepare rows
         const rows = allData.map((row, i) => [
@@ -787,7 +886,7 @@ const Exporter = {
             row.InvoiceNo || '',
             Utils.formatDate(row.InvoiceDate),
             row.InvoiceType || '',
-            partyNameMap[row.PartyCode] || row.PartyCode || '',
+            row.PartyCode ? (partyNameMap[row.PartyCode] || row.PartyCode) : '',
             Utils.toNumber(row.BasicAmount).toFixed(2),
             Utils.toNumber(row.OtherAmount).toFixed(2),
             Utils.toNumber(row.CGSTAmount).toFixed(2),
@@ -827,11 +926,16 @@ const Exporter = {
 const App = {
     init: async () => {
         try {
+            // Initialize DOM cache
+            DOM.init();
+
             // Initialize flatpickr
-            if (DOM.dateRange) {
+            const dateRange = DOM.get('dateRange');
+            if (dateRange && typeof flatpickr !== 'undefined') {
                 flatpickr('#dateRange', {
                     mode: 'range',
-                    dateFormat: CONFIG.DATE_FORMAT
+                    dateFormat: CONFIG.DATE_FORMAT,
+                    allowInput: true
                 });
             }
 
@@ -856,7 +960,8 @@ const App = {
 
     setupEventListeners: () => {
         // Search button
-        DOM.searchBtn?.addEventListener('click', async () => {
+        const searchBtn = DOM.get('searchBtn');
+        searchBtn?.addEventListener('click', async () => {
             const filters = UI.getFilters();
             const hasAnyFilter = Object.values(filters).some(value =>
                 value && (Array.isArray(value) ? value.length > 0 : true)
@@ -873,15 +978,15 @@ const App = {
             await App.loadTable(filters);
 
             // Hide filter section
-            const filterSection = DOM.filterSection;
-            if (filterSection) {
+            const filterSection = DOM.get('filterSection');
+            if (filterSection && typeof bootstrap !== 'undefined') {
                 bootstrap.Collapse.getOrCreateInstance(filterSection).hide();
             }
         });
 
         // Export buttons
-        DOM.exportExcelBtn?.addEventListener('click', Exporter.toExcel);
-        DOM.exportPdfBtn?.addEventListener('click', Exporter.toPdf);
+        DOM.get('exportExcelBtn')?.addEventListener('click', Exporter.toExcel);
+        DOM.get('exportPdfBtn')?.addEventListener('click', Exporter.toPdf);
 
         // Payment status checkboxes
         document.querySelectorAll('.paymentStatus').forEach(cb => {
@@ -889,19 +994,34 @@ const App = {
         });
 
         // Datalist filter with debounce
-        const debouncedFilter = Utils.debounce(App.applyDatalistFilter, 300);
+        const debouncedFilter = Utils.debounce(App.applyDatalistFilter);
         ['invoiceNo', 'customerName', 'invoiceType', 'paymentStatus'].forEach(inputId => {
             const input = document.getElementById(inputId);
             if (input) {
                 input.addEventListener('input', debouncedFilter);
             }
         });
+
+        // Keyboard shortcut: Enter to search
+        document.querySelectorAll('#filterSection input').forEach(input => {
+            input.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    searchBtn?.click();
+                }
+            });
+        });
     },
 
     enableSortableHeaders: () => {
-        document.querySelectorAll('#bookingTable thead th[data-key]').forEach(th => {
+        const headers = DOM.get('sortHeaders');
+        if (!headers) return;
+
+        headers.forEach(th => {
             th.style.cursor = 'pointer';
             th.addEventListener('click', () => {
+                if (STATE.isLoading) return;
+
                 const key = th.getAttribute('data-key');
                 if (STATE.sortColumn === key) {
                     STATE.sortOrder = STATE.sortOrder === 'asc' ? 'desc' : 'asc';
@@ -915,10 +1035,17 @@ const App = {
     },
 
     loadTable: async (filters = {}) => {
-        const tbody = DOM.tableBody;
-        if (!tbody) return;
+        if (STATE.isLoading) return;
+        STATE.isLoading = true;
 
-        if (DOM.spinner) DOM.spinner.style.display = 'block';
+        const tbody = DOM.get('tableBody');
+        if (!tbody) {
+            STATE.isLoading = false;
+            return;
+        }
+
+        const spinner = DOM.get('spinner');
+        if (spinner) spinner.style.display = 'block';
         Utils.showLoading();
 
         try {
@@ -932,6 +1059,8 @@ const App = {
             if (pageError) {
                 throw new Error('Failed to load data: ' + pageError.message);
             }
+
+            STATE.totalRecords = count || 0;
 
             // Get cumulative data for totals
             const totalQuery = Database.buildQuery(filters);
@@ -952,9 +1081,10 @@ const App = {
 
         } catch (error) {
             console.error('Load table error:', error);
-            Utils.showError('Something went wrong while loading data');
+            Utils.showError('Something went wrong while loading data. Please try again.');
         } finally {
-            if (DOM.spinner) DOM.spinner.style.display = 'none';
+            STATE.isLoading = false;
+            if (spinner) spinner.style.display = 'none';
         }
     },
 
@@ -963,7 +1093,7 @@ const App = {
             const data = await Database.fetchSuggestions();
             STATE.reportSuggestionData = data;
 
-            if (data.length === 0) {
+            if (!data || data.length === 0) {
                 console.warn('No suggestion data available');
                 return;
             }
@@ -976,9 +1106,13 @@ const App = {
                 paymentStatusBtn: 'PaymentStatus'
             };
 
+            let populatedCount = 0;
             Object.entries(fieldMapping).forEach(([listId, field]) => {
-                UI.populateDatalists(data, field, listId);
+                const success = UI.populateDatalists(data, field, listId);
+                if (success) populatedCount++;
             });
+
+            console.log(`Populated ${populatedCount}/${Object.keys(fieldMapping).length} datalists`);
 
             // Financial years
             const financialYears = [...new Set(
@@ -986,11 +1120,17 @@ const App = {
                     .map(item => item.InvoiceDate)
                     .filter(Boolean)
                     .map(date => {
-                        const d = new Date(date);
-                        const year = d.getFullYear();
-                        const month = d.getMonth() + 1;
-                        return month >= 4 ? `${year}-${year + 1}` : `${year - 1}-${year}`;
+                        try {
+                            const d = new Date(date);
+                            if (isNaN(d.getTime())) return null;
+                            const year = d.getFullYear();
+                            const month = d.getMonth() + 1;
+                            return month >= 4 ? `${year}-${year + 1}` : `${year - 1}-${year}`;
+                        } catch {
+                            return null;
+                        }
                     })
+                    .filter(Boolean)
             )].sort();
 
             UI.populateArrayDatalist(financialYears, 'financialYearList');
@@ -1005,7 +1145,7 @@ const App = {
         const inputId = input.id;
         const datalistId = input.getAttribute('list');
 
-        if (!datalistId) return;
+        if (!datalistId || !STATE.reportSuggestionData.length) return;
 
         const fieldMapping = {
             invoiceNo: 'InvoiceNo',
@@ -1015,7 +1155,7 @@ const App = {
         };
 
         const field = fieldMapping[inputId];
-        if (!field || !STATE.reportSuggestionData.length) return;
+        if (!field) return;
 
         let searchText = input.value.trim().toLowerCase().replace(/%/g, '');
 
@@ -1030,7 +1170,7 @@ const App = {
         if (datalist) {
             datalist.innerHTML = matchedValues
                 .slice(0, CONFIG.MAX_SUGGESTIONS)
-                .map(value => `<option value="${value}">`)
+                .map(value => `<option value="${Utils.escapeHtml(value)}">`)
                 .join('');
         }
     }
