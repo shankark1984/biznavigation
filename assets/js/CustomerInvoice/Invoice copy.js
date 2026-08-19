@@ -149,7 +149,7 @@ async function generateInvoiceNumber(invoiceDateValue) {
 ========================================================= */
 let invoiceData = {};
 let invoiceChargesData = {};
-// let bankID = null;
+
 
 /* =========================================================
    FETCH PENDING INVOICES

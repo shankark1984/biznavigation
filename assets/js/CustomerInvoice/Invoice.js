@@ -17,6 +17,9 @@ const TOTAL_ELEMENT_IDS = [
     'totalGST', 'totalGrand'
 ];
 
+// Flag to prevent duplicate loading
+let isLoadingInvoice = false;
+
 // =========================================================
 // STATE MANAGEMENT
 // =========================================================
@@ -85,13 +88,114 @@ class InvoiceManager {
 const invoiceManager = new InvoiceManager();
 
 // =========================================================
+// UTILITY FUNCTIONS
+// =========================================================
+
+function getTextValue(id) {
+    const el = document.getElementById(id);
+    if (!el) {
+        console.warn(`Element with id "${id}" not found, returning 0`);
+        return 0;
+    }
+    const text = el.textContent || '0';
+    return parseFloat(text.replace(/,/g, '')) || 0;
+}
+
+function formatAmount(value) {
+    if (value === undefined || value === null || isNaN(value)) return '0.00';
+    return value.toFixed(2);
+}
+
+function showToast(message) {
+    // Use a proper toast notification if available
+    if (typeof bootstrap !== 'undefined' && bootstrap.Toast) {
+        const toastEl = document.getElementById('liveToast');
+        if (toastEl) {
+            const toastBody = toastEl.querySelector('.toast-body');
+            if (toastBody) toastBody.textContent = message;
+            const toast = new bootstrap.Toast(toastEl);
+            toast.show();
+            return;
+        }
+    }
+    // Fallback to alert
+    console.log('Toast:', message);
+    alert(message);
+}
+
+function showSpinner() {
+    const spinner = document.getElementById('saveSpinner');
+    if (spinner) spinner.classList.remove('d-none');
+}
+
+function hideSpinner() {
+    const spinner = document.getElementById('saveSpinner');
+    if (spinner) spinner.classList.add('d-none');
+}
+
+function disableForm() {
+    const inputs = document.querySelectorAll('#container input, #container select, #container textarea');
+    inputs.forEach(input => {
+        if (input.id !== 'invoiceNo' &&
+            input.id !== 'reportType' &&
+            input.id !== 'saveButton' &&
+            input.id !== 'modifyButton' &&
+            input.id !== 'deleteButton' &&
+            input.id !== 'reportButton' &&
+            input.id !== 'newButton') {
+            input.disabled = true;
+        }
+    });
+}
+
+function enableForm() {
+    const inputs = document.querySelectorAll('#container input, #container select, #container textarea');
+    inputs.forEach(input => {
+        if (input.id !== 'invoiceNo' &&
+            input.id !== 'saveButton' &&
+            input.id !== 'modifyButton' &&
+            input.id !== 'deleteButton' &&
+            input.id !== 'reportButton' &&
+            input.id !== 'newButton') {
+            input.disabled = false;
+        }
+    });
+}
+
+function clearPendingShipmentTable() {
+    const table = document.getElementById('pendingShipmentTable');
+    if (table?.tBodies?.[0]) {
+        table.tBodies[0].innerHTML = '';
+    }
+}
+
+function clearInvoiceTotals() {
+    TOTAL_ELEMENT_IDS.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = '0.00';
+    });
+}
+
+function clearChargesTable() {
+    const tbody = document.querySelector('#pendingShipmentCharges tbody');
+    if (tbody) tbody.innerHTML = '';
+
+    ['totalFreightAmt', 'totalSGSTAmt', 'totalCGSTAmt', 'totalIGSTAmt', 'totalGSTAmt', 'totalGrandAmt']
+        .forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.textContent = '0.00';
+        });
+}
+
+
+// =========================================================
 // DOM READY - OPTIMIZED
 // =========================================================
 document.addEventListener('DOMContentLoaded', async () => {
     try {
         await Promise.all([
             loadSuggestions('partySuggestions', 'PartyDetails', CompanyID),
-            loadBankNameSuggestions(),
+            // loadBankNameSuggestions(),
             loadDefaultBank(),
             loadDatalist('departmentList', 'Department')
         ]);
@@ -127,6 +231,9 @@ function setupBankSelection() {
     });
 }
 
+// =========================================================
+// FIX: SETUP INVOICE FROM URL - PREVENT DUPLICATES
+// =========================================================
 async function setupInvoiceFromURL() {
     const params = new URLSearchParams(window.location.search);
     const invoiceNo = params.get("invoiceNo");
@@ -135,8 +242,13 @@ async function setupInvoiceFromURL() {
         const invoiceInput = document.getElementById("invoiceNo");
         if (invoiceInput) {
             invoiceInput.value = invoiceNo;
-            invoiceInput.dispatchEvent(new Event("change"));
+            // Use a flag to prevent duplicate loading
+            isLoadingInvoice = true;
+
+            // Directly load the invoice without triggering change event
             await loadInvoice(invoiceNo);
+
+            isLoadingInvoice = false;
         }
     }
 }
@@ -262,9 +374,12 @@ function getFinancialYear(dateStr) {
 }
 
 // =========================================================
-// FETCH PENDING INVOICES - OPTIMIZED
+// FIX: FETCH PENDING INVOICES - CLEAR TABLE FIRST
 // =========================================================
 document.getElementById('fetchPendingInvoices')?.addEventListener('click', async () => {
+    // Skip if we're loading from URL
+    if (isLoadingInvoice) return;
+
     const type = document.getElementById('movementType')?.value;
     const actionMap = {
         'Forwarding': getPendingInvoiceDetails,
@@ -278,6 +393,8 @@ document.getElementById('fetchPendingInvoices')?.addEventListener('click', async
     const action = actionMap[type];
     if (action) {
         try {
+            // Clear existing table rows before fetching new data
+            clearPendingShipmentTable();
             await action();
             showToast('Pending invoices loaded successfully');
         } catch (e) {
@@ -290,7 +407,7 @@ document.getElementById('fetchPendingInvoices')?.addEventListener('click', async
 });
 
 // =========================================================
-// SAVE INVOICE - COMPLETE FIX
+// FIX: SAVE INVOICE - COMPLETE FIX
 // =========================================================
 document.getElementById('saveButton')?.addEventListener('click', async function () {
     if (this.disabled) return;
@@ -356,6 +473,10 @@ async function saveInvoice(saveBtn) {
         }
 
         showToast(`Invoice ${isInsert ? 'Saved' : 'Updated'} Successfully`);
+
+        // Clear pending shipment table after saving to prevent duplicates on reload
+        clearPendingShipmentTable();
+
         await updateLinkedBookings(invoiceData.InvoiceType, invoiceNo);
         finalizeInvoice(saveBtn);
 
@@ -537,124 +658,6 @@ function finalizeInvoice(saveBtn) {
 }
 
 // =========================================================
-// UNLOCK ON EXIT - OPTIMIZED
-// =========================================================
-window.addEventListener('beforeunload', async () => {
-    try {
-        await Promise.all([
-            autoUnlockRecords("FullLoadBookingDetails"),
-            autoUnlockRecords("international_booking"),
-            unlockBooking_ib(UserLoginID),
-            unlockBooking_cc(UserLoginID),
-            d_unlockBooking_db(UserLoginID),
-            ftl_unlockBooking(UserLoginID)
-        ]);
-    } catch (e) {
-        console.error('Unlock failed:', e);
-    }
-});
-
-// =========================================================
-// NEW INVOICE - OPTIMIZED
-// =========================================================
-document.getElementById('newButton')?.addEventListener('click', newInvoice);
-
-async function newInvoice() {
-    try {
-        // Unlock previous records
-        await Promise.all([
-            autoUnlockRecords("FullLoadBookingDetails"),
-            autoUnlockRecords("international_booking"),
-            unlockBooking_ib(UserLoginID),
-            unlockBooking_cc(UserLoginID),
-            d_unlockBooking_db(UserLoginID),
-            ftl_unlockBooking(UserLoginID)
-        ]);
-
-        // Reset form and state
-        const form = document.getElementById('container');
-        if (form) form.reset();
-
-        // Reset UI elements
-        const elementsToReset = [
-            'invoiceNo', 'partyName', 'partyCode', 'invoiceAddress',
-            'movementType', 'transitType', 'department', 'modeType',
-            'shipmentNo', 'reportType'
-        ];
-        elementsToReset.forEach(id => {
-            const el = document.getElementById(id);
-            if (el) el.value = '';
-        });
-
-        // Set default date
-        const invoiceDate = document.getElementById('invoiceDate');
-        if (invoiceDate) {
-            invoiceDate.value = new Date().toISOString().split('T')[0];
-        }
-
-        // Reset buttons
-        const saveBtn = document.getElementById('saveButton');
-        if (saveBtn) {
-            saveBtn.dataset.mode = 'insert';
-            saveBtn.disabled = false;
-            saveBtn.innerHTML = '<i class="bi bi-save"></i> Save';
-        }
-
-        document.getElementById('modifyButton').disabled = true;
-        document.getElementById('deleteButton').disabled = true;
-        document.getElementById('reportButton').disabled = true;
-        document.getElementById('fetchPendingInvoices').disabled = false;
-        document.getElementById('addShipmentNo').disabled = true;
-        document.getElementById('newButton').disabled = false;
-
-        // Reset state
-        invoiceManager.reset();
-
-        // Clear tables
-        const table = document.getElementById('pendingShipmentTable');
-        if (table?.tBodies?.[0]) {
-            table.tBodies[0].innerHTML = '';
-        }
-
-        clearInvoiceTotals();
-        clearChargesTable();
-
-        // Load suggestions
-        await loadInvoiceNoSuggestions();
-
-        // Enable form and focus
-        enableForm();
-        document.getElementById('partyName')?.focus();
-        showToast('🚀 New Invoice Ready');
-
-    } catch (e) {
-        console.error('New invoice error:', e);
-        showToast('Error creating new invoice: ' + e.message);
-    }
-}
-
-// =========================================================
-// CLEAR FUNCTIONS - OPTIMIZED
-// =========================================================
-function clearInvoiceTotals() {
-    TOTAL_ELEMENT_IDS.forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.textContent = '0.00';
-    });
-}
-
-function clearChargesTable() {
-    const tbody = document.querySelector('#pendingShipmentCharges tbody');
-    if (tbody) tbody.innerHTML = '';
-
-    ['totalFreightAmt', 'totalSGSTAmt', 'totalCGSTAmt', 'totalIGSTAmt', 'totalGSTAmt', 'totalGrandAmt']
-        .forEach(id => {
-            const el = document.getElementById(id);
-            if (el) el.textContent = '0.00';
-        });
-}
-
-// =========================================================
 // UPDATE TOTALS - OPTIMIZED
 // =========================================================
 function updateTotals(totals) {
@@ -764,9 +767,12 @@ async function getInvoiceDetails(invoiceNo) {
 }
 
 // =========================================================
-// MOVEMENT TYPE CHANGE - OPTIMIZED
+// FIX: MOVEMENT TYPE CHANGE - CHECK FLAG
 // =========================================================
 document.getElementById('movementType')?.addEventListener('change', async (e) => {
+    // Skip if we're loading from URL
+    if (isLoadingInvoice) return;
+
     const movementType = e.target.value.trim();
     const tableMap = {
         'Forwarding': d_createPendingShipmentTableHeaderAndFooter_ib,
@@ -780,6 +786,8 @@ document.getElementById('movementType')?.addEventListener('change', async (e) =>
     const createTableFn = tableMap[movementType];
     if (createTableFn) {
         try {
+            // Clear table before creating new one
+            clearPendingShipmentTable();
             await createTableFn();
         } catch (error) {
             console.error('Error creating table:', error);
@@ -790,9 +798,11 @@ document.getElementById('movementType')?.addEventListener('change', async (e) =>
 });
 
 // =========================================================
-// LOAD INVOICE - OPTIMIZED
+// FIX: LOAD INVOICE - PREVENT DUPLICATE TABLE LOADING
 // =========================================================
 document.getElementById("invoiceNo")?.addEventListener("change", async (e) => {
+    // Skip if we're loading from URL
+    if (isLoadingInvoice) return;
     await loadInvoice(e.target.value);
 });
 
@@ -828,7 +838,32 @@ async function loadInvoice(invoiceNo) {
     document.getElementById('reportButton').disabled = false;
     document.getElementById('fetchPendingInvoices').disabled = true;
 
-    // Load linked bookings
+    // FIX: Load linked bookings - prevent duplicate table creation
+    // First, set the movement type without triggering the change event
+    const movementTypeSelect = document.getElementById('movementType');
+    if (movementTypeSelect && invoiceDetails.InvoiceType) {
+        movementTypeSelect.value = invoiceDetails.InvoiceType;
+        // Manually create table without triggering event
+        const tableMap = {
+            'Forwarding': d_createPendingShipmentTableHeaderAndFooter_ib,
+            'Import': d_createPendingShipmentTableHeaderAndFooter_ib,
+            'Export': d_createPendingShipmentTableHeaderAndFooter_ib,
+            'Customs Clearance': createPendingShipmentTableHeaderAndFooter,
+            'Domestic': d_createPendingShipmentTableHeaderAndFooter_ib,
+            'Full Truck Load': FTL_FCL_createPendingShipmentTableHeaderAndFooter
+        };
+        const createTableFn = tableMap[invoiceDetails.InvoiceType];
+        if (createTableFn) {
+            try {
+                clearPendingShipmentTable();
+                await createTableFn();
+            } catch (error) {
+                console.error('Error creating table:', error);
+            }
+        }
+    }
+
+    // Load the actual data
     await loadLinkedBookings(invoiceDetails.InvoiceType, invoiceNo);
 
     // Disable delete buttons
@@ -843,12 +878,15 @@ function populateInvoiceForm(invoiceDetails) {
     document.getElementById("invoiceDate").value = invoiceDetails.InvoiceDate || "";
     document.getElementById("invoiceAddress").value = invoiceDetails.InvoiceAddress || "";
     document.getElementById("movementType").value = invoiceDetails.InvoiceType || "";
-    document.getElementById("bankIDs").value = getBankNameByCode(invoiceDetails.BankID) || "";
+    document.getElementById("bankIDs").value = invoiceDetails.BankID || "";
     document.getElementById("inputBankName").value = getBankNameByCode(invoiceDetails.BankID) || "";
     document.getElementById("invoiceInformation").value = invoiceDetails.Remarks || "";
     document.getElementById("tempFormID").value = invoiceDetails.id || "";
 }
 
+// =========================================================
+// FIX: LOAD LINKED BOOKINGS - CLEAR TABLE FIRST
+// =========================================================
 async function loadLinkedBookings(invoiceType, invoiceNo) {
     const config = INVOICE_TYPE_MAP[invoiceType];
     if (!config) {
@@ -856,15 +894,21 @@ async function loadLinkedBookings(invoiceType, invoiceNo) {
         return;
     }
 
-    const createTableFn = window[config.createTableFn];
-    const loadFn = window[config.loadFn];
+    // Clear existing table rows before loading new data
+    clearPendingShipmentTable();
 
-    if (createTableFn) await createTableFn();
-    if (loadFn) await loadFn(invoiceNo);
+    const loadFn = window[config.loadFn];
+    if (loadFn) {
+        try {
+            await loadFn(invoiceNo);
+        } catch (error) {
+            console.error('Error loading linked bookings:', error);
+        }
+    }
 }
 
 // =========================================================
-// ADD SHIPMENT - OPTIMIZED
+// FIX: ADD SHIPMENT - CHECK FOR DUPLICATES
 // =========================================================
 document.getElementById('addShipmentNo')?.addEventListener('click', async () => {
     const shipmentNo = document.getElementById('shipmentNo')?.value?.trim();
@@ -879,6 +923,23 @@ document.getElementById('addShipmentNo')?.addEventListener('click', async () => 
     if (!invoiceNo) {
         alert('Please save the invoice first before adding shipments.');
         return;
+    }
+
+    // Check if shipment already exists in table
+    const table = document.getElementById('pendingShipmentTable');
+    if (table?.tBodies?.[0]) {
+        const existingRows = table.tBodies[0].querySelectorAll('tr');
+        for (const row of existingRows) {
+            const cells = row.querySelectorAll('td');
+            if (cells.length > 0) {
+                // Assuming shipment number is in the second column (index 1)
+                const existingShipment = cells[1]?.textContent?.trim();
+                if (existingShipment === shipmentNo) {
+                    alert(`Shipment ${shipmentNo} is already added to this invoice.`);
+                    return;
+                }
+            }
+        }
     }
 
     showSpinner();
@@ -1037,79 +1098,178 @@ function showAddressSelectionModal(addresses) {
 }
 
 // =========================================================
-// UTILITY FUNCTIONS
+// UNLOCK ON EXIT - OPTIMIZED
 // =========================================================
-
-
-function getTextValue(id) {
-    const el = document.getElementById(id);
-    if (!el) {
-        console.warn(`Element with id "${id}" not found, returning 0`);
-        return 0;
+window.addEventListener('beforeunload', async () => {
+    try {
+        await Promise.all([
+            autoUnlockRecords("FullLoadBookingDetails"),
+            autoUnlockRecords("international_booking"),
+            unlockBooking_ib(UserLoginID),
+            unlockBooking_cc(UserLoginID),
+            d_unlockBooking_db(UserLoginID),
+            ftl_unlockBooking(UserLoginID)
+        ]);
+    } catch (e) {
+        console.error('Unlock failed:', e);
     }
-    const text = el.textContent || '0';
-    return parseFloat(text.replace(/,/g, '')) || 0;
-}
+});
 
-function formatAmount(value) {
-    if (value === undefined || value === null || isNaN(value)) return '0.00';
-    return value.toFixed(2);
-}
+// =========================================================
+// FIX: NEW INVOICE - RESET TABLE
+// =========================================================
+document.getElementById('newButton')?.addEventListener('click', newInvoice);
 
-function showToast(message) {
-    // Implement toast notification
-    console.log('Toast:', message);
-    // Use alert as fallback
-    alert(message);
-}
+async function newInvoice() {
+    try {
+        // Unlock previous records
+        await Promise.all([
+            autoUnlockRecords("FullLoadBookingDetails"),
+            autoUnlockRecords("international_booking"),
+            unlockBooking_ib(UserLoginID),
+            unlockBooking_cc(UserLoginID),
+            d_unlockBooking_db(UserLoginID),
+            ftl_unlockBooking(UserLoginID)
+        ]);
 
-function showSpinner() {
-    const spinner = document.getElementById('saveSpinner');
-    if (spinner) spinner.classList.remove('d-none');
-}
+        // Reset form and state
+        const form = document.getElementById('container');
+        if (form) form.reset();
 
-function hideSpinner() {
-    const spinner = document.getElementById('saveSpinner');
-    if (spinner) spinner.classList.add('d-none');
-}
+        // Reset UI elements
+        const elementsToReset = [
+            'invoiceNo', 'partyName', 'partyCode', 'invoiceAddress',
+            'movementType', 'transitType', 'department', 'modeType',
+            'shipmentNo', 'reportType'
+        ];
+        elementsToReset.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.value = '';
+        });
 
-function disableForm() {
-    const inputs = document.querySelectorAll('#container input, #container select, #container textarea');
-    inputs.forEach(input => {
-        if (input.id !== 'invoiceNo' &&
-            input.id !== 'reportType' &&
-            input.id !== 'saveButton' &&
-            input.id !== 'modifyButton' &&
-            input.id !== 'deleteButton' &&
-            input.id !== 'reportButton' &&
-            input.id !== 'newButton') {
-            input.disabled = true;
+        // Set default date
+        const invoiceDate = document.getElementById('invoiceDate');
+        if (invoiceDate) {
+            invoiceDate.value = new Date().toISOString().split('T')[0];
         }
-    });
-}
 
-function enableForm() {
-    const inputs = document.querySelectorAll('#container input, #container select, #container textarea');
-    inputs.forEach(input => {
-        if (input.id !== 'invoiceNo' &&
-            input.id !== 'saveButton' &&
-            input.id !== 'modifyButton' &&
-            input.id !== 'deleteButton' &&
-            input.id !== 'reportButton' &&
-            input.id !== 'newButton') {
-            input.disabled = false;
+        // Reset buttons
+        const saveBtn = document.getElementById('saveButton');
+        if (saveBtn) {
+            saveBtn.dataset.mode = 'insert';
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = '<i class="bi bi-save"></i> Save';
         }
-    });
-}
 
-function getBankNameByCode(bankID) {
-    const bankMap = invoiceManager.getBankMap();
-    if (!bankMap) return '';
-    for (const [name, id] of Object.entries(bankMap)) {
-        if (id === bankID) return name;
+        document.getElementById('modifyButton').disabled = true;
+        document.getElementById('deleteButton').disabled = true;
+        document.getElementById('reportButton').disabled = true;
+        document.getElementById('fetchPendingInvoices').disabled = false;
+        document.getElementById('addShipmentNo').disabled = true;
+        document.getElementById('newButton').disabled = false;
+
+        // Reset state
+        invoiceManager.reset();
+
+        // Clear tables
+        clearPendingShipmentTable();
+        clearChargesTable();
+        clearInvoiceTotals();
+
+        // Load suggestions
+        await loadInvoiceNoSuggestions();
+
+        // Enable form and focus
+        enableForm();
+        document.getElementById('partyName')?.focus();
+
+        // =========================================================
+        // FIX: CLEAR URL PARAMETERS WHEN CREATING NEW INVOICE
+        // =========================================================
+        // Remove the invoiceNo parameter from URL without page reload
+        const url = new URL(window.location.href);
+        if (url.searchParams.has('invoiceNo')) {
+            url.searchParams.delete('invoiceNo');
+            // Update the browser's URL without reloading the page
+            window.history.replaceState({}, document.title, url.toString());
+        }
+
+        showToast('🚀 New Invoice Ready');
+
+    } catch (e) {
+        console.error('New invoice error:', e);
+        showToast('Error creating new invoice: ' + e.message);
     }
-    return '';
 }
+
+// =========================================================
+// TABLE CREATION WRAPPER - PREVENT DUPLICATES
+// =========================================================
+function createTableWithCleanup(createFn) {
+    return async function () {
+        // Clear existing rows before creating new table
+        clearPendingShipmentTable();
+        // Call the original creation function
+        if (typeof createFn === 'function') {
+            await createFn();
+        }
+    };
+}
+
+// Apply the fix to existing table creation functions
+// Override the global functions with wrapped versions
+if (typeof d_createPendingShipmentTableHeaderAndFooter_ib === 'function') {
+    const originalFn = d_createPendingShipmentTableHeaderAndFooter_ib;
+    d_createPendingShipmentTableHeaderAndFooter_ib = createTableWithCleanup(originalFn);
+}
+
+if (typeof createPendingShipmentTableHeaderAndFooter === 'function') {
+    const originalFn = createPendingShipmentTableHeaderAndFooter;
+    createPendingShipmentTableHeaderAndFooter = createTableWithCleanup(originalFn);
+}
+
+if (typeof FTL_FCL_createPendingShipmentTableHeaderAndFooter === 'function') {
+    const originalFn = FTL_FCL_createPendingShipmentTableHeaderAndFooter;
+    FTL_FCL_createPendingShipmentTableHeaderAndFooter = createTableWithCleanup(originalFn);
+}
+
+// =========================================================
+// DELETE BUTTON HANDLER - OPTIMIZED
+// =========================================================
+document.getElementById('deleteButton')?.addEventListener('click', async function () {
+    const invoiceNo = document.getElementById('invoiceNo')?.value?.trim();
+
+    if (!invoiceNo) {
+        alert('No invoice to delete.');
+        return;
+    }
+
+    const confirmed = confirm(`Are you sure you want to delete invoice ${invoiceNo}?`);
+    if (!confirmed) return;
+
+    try {
+        this.disabled = true;
+        this.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Deleting...';
+
+        const { error } = await supabaseClient
+            .from('InvoiceDetails')
+            .delete()
+            .eq('InvoiceNo', invoiceNo)
+            .eq('company_id', CompanyID);
+
+        if (error) throw error;
+
+        showToast('Invoice deleted successfully');
+        await newInvoice();
+
+    } catch (error) {
+        console.error('Delete error:', error);
+        alert('Failed to delete invoice: ' + error.message);
+    } finally {
+        this.disabled = false;
+        this.innerHTML = '<i class="bi bi-trash"></i> Delete';
+    }
+});
 
 // =========================================================
 // EXPOSE FOR LEGACY COMPATIBILITY
@@ -1118,3 +1278,5 @@ window.invoiceData = invoiceManager.getInvoiceData();
 window.invoiceChargesData = invoiceManager.invoiceChargesData;
 window.bankID = invoiceManager.getBankID();
 window.invoiceManager = invoiceManager;
+window.isLoadingInvoice = isLoadingInvoice;
+window.clearPendingShipmentTable = clearPendingShipmentTable;

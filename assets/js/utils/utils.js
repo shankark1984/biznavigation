@@ -1209,7 +1209,7 @@ async function loadDatalist(datalistId, valueType) {
     }
 
     if (!data || data.length === 0) {
-        console.warn(`No values found for ${valueType}`);
+        // console.warn(`No values found for ${valueType}`);
         return;
     }
 

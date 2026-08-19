@@ -55,7 +55,7 @@ class DomesticBookingState {
     }
 
     updateTotals(charges, quantity = 0) {
-        console.log('Updating totals with charges:', charges);
+        // console.log('Updating totals with charges:', charges);
 
         this.totals.totalFreight += charges.BasicFrightAmt || 0;
         this.totals.totalFSCAmt += charges.FSCAmt || 0;
@@ -67,7 +67,7 @@ class DomesticBookingState {
         this.totals.totalGrand += charges.grandTotal || 0;
         this.totals.totalQuantity += quantity || 0;
 
-        console.log('Updated totals:', this.totals);
+        // console.log('Updated totals:', this.totals);
     }
 
     mergeCharges(chargesMap) {
@@ -304,7 +304,7 @@ async function d_getBookingCharges(bookingID) {
             return null;
         }
 
-        console.log('Raw charges data for booking', bookingID, ':', data);
+        // console.log('Raw charges data for booking', bookingID, ':', data);
 
         const chargesMap = {};
         let totals = {
@@ -317,7 +317,7 @@ async function d_getBookingCharges(bookingID) {
             const type = (charge.ChargesType || 'Other').trim();
             const typeLower = type.toLowerCase();
 
-            console.log(`Processing charge: "${type}" (${typeLower}), Amount: ${charge.TotalAmount}`);
+            // console.log(`Processing charge: "${type}" (${typeLower}), Amount: ${charge.TotalAmount}`);
 
             // Initialize chargesMap entry with original type name
             if (!chargesMap[type]) {
@@ -346,7 +346,7 @@ async function d_getBookingCharges(bookingID) {
                 typeLower === 'basic freight amount') {
                 totals.BasicFrightAmt += amount;
                 categorized = true;
-                console.log(`✅ "${type}" categorized as FREIGHT, added ${amount} to BasicFrightAmt`);
+                // console.log(`✅ "${type}" categorized as FREIGHT, added ${amount} to BasicFrightAmt`);
             }
 
             // Check for FSC - multiple variations
@@ -357,13 +357,13 @@ async function d_getBookingCharges(bookingID) {
                 typeLower === 'fuel adjustment')) {
                 totals.FSCAmt += amount;
                 categorized = true;
-                console.log(`✅ "${type}" categorized as FSC, added ${amount} to FSCAmt`);
+                // console.log(`✅ "${type}" categorized as FSC, added ${amount} to FSCAmt`);
             }
 
             // Everything else goes to Other
             if (!categorized) {
                 totals.OtherAmt += amount;
-                console.log(`📦 "${type}" categorized as OTHER, added ${amount} to OtherAmt`);
+                // console.log(`📦 "${type}" categorized as OTHER, added ${amount} to OtherAmt`);
             }
 
             // Add GST amounts
@@ -374,8 +374,8 @@ async function d_getBookingCharges(bookingID) {
             totals.grandTotal += parseFloatSafe(charge.GrandTotalAmt);
         });
 
-        console.log('Final calculated totals:', totals);
-        console.log('Charges Map:', chargesMap);
+        // console.log('Final calculated totals:', totals);
+        // console.log('Charges Map:', chargesMap);
 
         return { ...totals, chargesMap };
     } catch (error) {
@@ -388,7 +388,7 @@ async function d_getBookingCharges(bookingID) {
 // UPDATE TOTALS (FIXED - Ensures BasicAmount is set)
 // ============================================
 function updateDBTotalsDisplay() {
-    console.log('Updating totals display with state:', dbState.totals);
+    // console.log('Updating totals display with state:', dbState.totals);
 
     const totalElements = {
         totalQuantity: dbState.totals.totalQuantity,
@@ -408,7 +408,7 @@ function updateDBTotalsDisplay() {
         if (el) {
             const formattedValue = parseFloatSafe(value).toFixed(2);
             el.textContent = formattedValue;
-            console.log(`Updated ${id}: ${formattedValue}`);
+            // console.log(`Updated ${id}: ${formattedValue}`);
         }
     });
 
@@ -421,15 +421,15 @@ function updateDBTotalsDisplay() {
     const totalGstAmount = parseFloatSafe(dbState.totals.totalGST);
     const grandTotalAmount = parseFloatSafe(dbState.totals.totalGrand);
 
-    console.log('Setting invoiceData values:', {
-        BasicAmount: basicAmount,
-        OtherAmount: otherAmount,
-        CGSTAmount: cgstAmount,
-        SGSTAmount: sgstAmount,
-        IGSTAmount: igstAmount,
-        TotalGSTAmount: totalGstAmount,
-        GrandTotalAmount: grandTotalAmount
-    });
+    // console.log('Setting invoiceData values:', {
+    //     BasicAmount: basicAmount,
+    //     OtherAmount: otherAmount,
+    //     CGSTAmount: cgstAmount,
+    //     SGSTAmount: sgstAmount,
+    //     IGSTAmount: igstAmount,
+    //     TotalGSTAmount: totalGstAmount,
+    //     GrandTotalAmount: grandTotalAmount
+    // });
 
     // Update invoiceData with explicit values
     if (typeof invoiceData !== 'undefined') {
@@ -441,7 +441,7 @@ function updateDBTotalsDisplay() {
         invoiceData.TotalGSTAmount = totalGstAmount;
         invoiceData.GrandTotalAmount = grandTotalAmount;
 
-        console.log('✅ invoiceData updated:', invoiceData);
+        // console.log('✅ invoiceData updated:', invoiceData);
     } else {
         console.error('❌ invoiceData is not defined!');
         // Try to set it on window

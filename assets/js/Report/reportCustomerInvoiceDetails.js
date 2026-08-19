@@ -438,11 +438,11 @@ async function renderTable(data) {
         tr.innerHTML = `
             <td>${(currentPage - 1) * pageSize + idx + 1}</td>
            <td>
-    <a href="../Accounting/CustomerInvoice.html?invoiceNo=${encodeURIComponent(row.InvoiceNo)}"
-       class="text-decoration-none fw-bold">
-        ${row.InvoiceNo}
-    </a>
-</td>
+                <a href="../Accounting/CustomerInvoice.html?invoiceNo=${encodeURIComponent(row.InvoiceNo)}"
+                class="text-decoration-none fw-bold">
+                    ${row.InvoiceNo}
+                </a>
+            </td>
             <td>${formatDate(row.InvoiceDate) || ''}</td>
             <td>${row.InvoiceType || ''}</td>
             <td>${partyName || ''}</td>
@@ -822,7 +822,6 @@ function updateCumulativeTotals(allData) {
     document.getElementById("totalPayment").textContent = formatAmount(totals.PaymentTotalAmount);
     document.getElementById("totalBalance").textContent = formatAmount(totals.BalanceAmount);
 }
-
 
 const paymentStatusBtn = document.getElementById("paymentStatusBtn");
 const paymentStatusCheckboxes = document.querySelectorAll(".paymentStatus");
