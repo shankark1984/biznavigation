@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BizNavigation · Register</title>
+
+    <!-- Preload Bootstrap (same as login) -->
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" as="style"
+        onload="this.onload=null;this.rel='stylesheet'">
+    <noscript>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    </noscript>
+
+    <!-- Google Font & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+
+    <style>
+        /* ----- same variables & base as login ----- */
+        :root {
+            --background-color: linear-gradient(135deg, #74ebd5, #ACB6E5);
+            --card-background: #ffffff;
+            --text-color: #333333;
+            --subtext-color: #666666;
+            --input-background: #f9f9f9;
+            --input-border: #ddd;
+            --button-color: #6c63ff;
+            --button-hover: #574b90;
+            --link-color: #6c63ff;
+            --error-color: #dc3545;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Poppins', sans-serif;
+            background: var(--background-color);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+        }
+
+        @keyframes gradientBG {
+            0% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+
+        .registration-card {
+            background: var(--card-background);
+            padding: 1rem;
+            border-radius: 1rem;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 600px;
+            animation: fadeIn 0.8s ease;
+            color: var(--text-color);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            margin: 1rem;
+        }
+
+        .registration-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .registration-header {
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        .registration-header img {
+            max-width: 100px;
+            filter: drop-shadow(0 0 8px rgba(0, 0, 0, 0.2));
+        }
+
+        .registration-header h1 {
+            font-weight: 500;
+            margin-top: 0.2rem;
+            color: var(--text-color);
+        }
+
+        .registration-header p {
+            color: var(--subtext-color);
+            font-size: 0.9rem;
+        }
+
+        .form-control {
+            border-radius: 8px;
+            padding: 0.5rem;
+            border: 1px solid var(--input-border);
+            background-color: var(--input-background);
+            color: var(--text-color);
+            transition: background 0.3s ease, color 0.3s ease;
+        }
+
+        .form-control:focus {
+            box-shadow: 0 0 0 0.25rem rgba(108, 99, 255, 0.3);
+            border-color: var(--button-color);
+            background-color: #fff;
+        }
+
+        .input-group-text {
+            background-color: var(--input-background);
+            border: 1px solid var(--input-border);
+            color: var(--subtext-color);
+            border-radius: 8px 0 0 8px;
+        }
+
+        .input-group .form-control {
+            border-radius: 0 8px 8px 0;
+            border-left: none;
+        }
+
+        .input-group .form-control:focus {
+            border-left: none;
+        }
+
+        .btn-primary {
+            background-color: var(--button-color);
+            border: none;
+            border-radius: 8px;
+            padding: 0.75rem;
+            font-weight: 600;
+            width: 100%;
+            transition: background-color 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--button-hover);
+        }
+
+        .btn-success {
+            background-color: #2e7d32;
+            border: none;
+            border-radius: 8px;
+            padding: 0.75rem;
+            font-weight: 600;
+            width: 100%;
+            transition: background-color 0.3s ease;
+        }
+
+        .btn-success:hover {
+            background-color: #1b5e20;
+        }
+
+        .btn-outline-primary {
+            border-color: var(--button-color);
+            color: var(--button-color);
+            border-radius: 0 8px 8px 0;
+        }
+
+        .btn-outline-primary:hover {
+            background-color: var(--button-color);
+            color: #fff;
+        }
+
+        .form-links {
+            margin-top: 1rem;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+
+        .form-links a {
+            color: var(--link-color);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .form-links a:hover {
+            text-decoration: underline;
+        }
+
+        .verification-status {
+            font-size: 0.85rem;
+            color: var(--subtext-color);
+            margin-top: 0.3rem;
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .verification-panel {
+            background: #f8f9fe;
+            padding: 1rem;
+            border-radius: 12px;
+            margin: 0.5rem 0;
+            border: 1px solid #e9ecf5;
+        }
+
+        .verification-header {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            margin-bottom: 0.8rem;
+        }
+
+        .verification-header i {
+            font-size: 1.6rem;
+            color: var(--button-color);
+        }
+
+        .verification-header h5 {
+            margin: 0;
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .verification-header small {
+            color: var(--subtext-color);
+            font-size: 0.8rem;
+        }
+
+        .otp-box label {
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        .otp-input {
+            border-radius: 8px 0 0 8px !important;
+        }
+
+        .otp-message {
+            font-size: 0.8rem;
+            margin-top: 0.2rem;
+            min-height: 1.2rem;
+        }
+
+        .registration-footer {
+            margin-top: 0.5rem;
+            text-align: center;
+            font-size: 0.9rem;
+            color: var(--subtext-color);
+        }
+
+        .registration-footer a {
+            color: var(--link-color);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .registration-footer a:hover {
+            text-decoration: underline;
+        }
+
+        .required {
+            color: var(--error-color);
+            margin-left: 0.1rem;
+        }
+
+        .logo-circle {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 70px;
+            height: 70px;
+            background: var(--button-color);
+            border-radius: 50%;
+            color: #fff;
+            font-size: 2.2rem;
+            box-shadow: 0 8px 16px rgba(108, 99, 255, 0.25);
+            margin-bottom: 0.5rem;
+        }
+
+        #countdown {
+            font-weight: 600;
+            min-width: 1.8rem;
+            display: inline-block;
+        }
+
+        .btn-link {
+            color: var(--link-color);
+            text-decoration: none;
+        }
+
+        .btn-link:hover {
+            text-decoration: underline;
+        }
+
+        .version-info {
+            text-align: center;
+            margin-top: 1.2rem;
+            font-size: 0.75rem;
+            color: var(--subtext-color);
+        }
+
+        /* tax field group */
+        .tax-group {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .tax-group .form-control {
+            flex: 1;
+            min-width: 120px;
+        }
+
+        .tax-helper {
+            font-size: 0.8rem;
+            color: var(--subtext-color);
+            margin-top: 0.2rem;
+            text-align: center;
+        }
+
+        .tax-helper.valid {
+            color: #2e7d32;
+        }
+
+        .tax-helper.invalid {
+            color: var(--error-color);
+        }
+    </style>
+</head>
+
+<body>
+
+    <main class="registration-card" role="main">
+        <!-- header -->
+        <div class="registration-header">
+            <img src="assets/img/applogo.png" alt="BizNavigation Logo" />
+            <h1>BizNavigation</h1>
+            <p>Register your company &amp; get started</p>
+        </div>
+
+        <!-- alert box -->
+        <div id="messageBox" class="alert d-none" role="alert"></div>
+
+        <form id="registrationForm" novalidate>
+            <!-- User Name -->
+            <div class="mb-3 position-relative">
+                <input type="text" class="form-control ps-5" id="userName" placeholder="User Name" autocomplete="name"
+                    required>
+                <span class="position-absolute top-50 start-0 translate-middle-y ps-3">
+                    <i class="bi bi-person"></i>
+                </span>
+            </div>
+
+            <!-- Company -->
+            <div class="mb-3 position-relative">
+                <input type="text" class="form-control ps-5" id="companyName" placeholder="Company full name" required>
+                <span class="position-absolute top-50 start-0 translate-middle-y ps-3">
+                    <i class="bi bi-building"></i>
+                </span>
+            </div>
+
+            <!-- PAN + GST (at least one required) -->
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Tax Identification <span class="text-danger">*</span></label>
+                <div class="tax-group">
+                    <input type="text" class="form-control" id="panNumber" placeholder="PAN (e.g. ABCDE1234F)"
+                        maxlength="10" style="text-transform:uppercase">
+                    <span class="align-self-center text-muted">or</span>
+                    <input type="text" class="form-control" id="gstNumber" placeholder="GST (e.g. 22AAAAA0000A1Z5)"
+                        maxlength="15" style="text-transform:uppercase">
+                </div>
+                <div id="taxHelper" class="tax-helper">Enter PAN or GST (at least one required)</div>
+            </div>
+
+            <!-- Email -->
+            <div class="mb-3 position-relative">
+                <input type="email" class="form-control ps-5" id="email" placeholder="Email ID" autocomplete="email"
+                    required>
+                <span class="position-absolute top-50 start-0 translate-middle-y ps-3">
+                    <i class="bi bi-envelope"></i>
+                </span>
+                <div class="verification-status" id="emailStatus">
+                    <i class="bi bi-clock"></i> Email not verified
+                </div>
+            </div>
+
+            <!-- Phone -->
+            <div class="mb-3 position-relative">
+                <input type="tel" class="form-control ps-5" id="phone" placeholder="Phone number" maxlength="10"
+                    inputmode="numeric" autocomplete="tel" required>
+                <span class="position-absolute top-50 start-0 translate-middle-y ps-3">
+                    <i class="bi bi-phone"></i>
+                </span>
+                <div class="verification-status" id="phoneStatus">
+                    <i class="bi bi-clock"></i> Phone not verified
+                </div>
+            </div>
+
+            <!-- Send OTP -->
+            <button type="button" id="sendOtpBtn" class="btn btn-primary w-100 mb-3">
+                <i class="bi bi-shield-check"></i> Send Verification OTP
+            </button>
+
+            <!-- Verification panel -->
+            <div id="verificationSection" class="verification-panel d-none">
+                <div class="verification-header">
+                    <i class="bi bi-shield-lock"></i>
+                    <div>
+                        <h5>Verify Contact Details</h5>
+                        <small>Enter OTP received on email and phone</small>
+                    </div>
+                </div>
+
+                <!-- Email OTP -->
+                <div class="otp-box mb-3">
+                    <label class="form-label">Email OTP</label>
+                    <div class="input-group">
+                        <input type="text" id="emailOtp" class="form-control otp-input" maxlength="6"
+                            inputmode="numeric" placeholder="6-digit OTP">
+                        <button type="button" id="verifyEmailBtn" class="btn btn-outline-primary">Verify</button>
+                    </div>
+                    <div class="otp-message" id="emailOtpMessage"></div>
+                </div>
+
+                <!-- Phone OTP -->
+                <div class="otp-box mb-3">
+                    <label class="form-label">Phone OTP</label>
+                    <div class="input-group">
+                        <input type="text" id="phoneOtp" class="form-control otp-input" maxlength="6"
+                            inputmode="numeric" placeholder="6-digit OTP">
+                        <button type="button" id="verifyPhoneBtn" class="btn btn-outline-primary">Verify</button>
+                    </div>
+                    <div class="otp-message" id="phoneOtpMessage"></div>
+                </div>
+
+                <!-- Resend + countdown -->
+                <div class="text-center">
+                    <button type="button" id="resendOtpBtn" class="btn btn-link" disabled>Resend OTP</button>
+                    <span id="countdown">60</span> seconds
+                </div>
+            </div>
+
+            <!-- Register -->
+            <button type="submit" id="registerBtn" class="btn btn-success w-100 mt-3" disabled>
+                <i class="bi bi-check-circle"></i> Complete Registration
+            </button>
+
+
+            <!-- Footer -->
+
+            <div class="registration-footer"> Already registered?
+                <a href="login.html"> Login </a>
+
+            </div>
+
+            <div class="version-info">
+                &copy; AllEdge @ 2018 | v1.4.3 | Build: 04-02-2026
+            </div>
+        </form>
+    </main>
+
+    <!-- Bootstrap bundle & deps -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/js-sha256@0.9.0/build/sha256.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bcryptjs@2.4.3/dist/bcrypt.min.js"></script>
+
+    <!-- External login handling script -->
+    <script src="assets/js/utils/server.js"></script>
+    <script src="assets/js/utils/registration.js"></script>
+
+</body>
+
+</html>
