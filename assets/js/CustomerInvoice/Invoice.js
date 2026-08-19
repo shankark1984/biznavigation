@@ -1193,6 +1193,7 @@ async function newInvoice() {
             // Update the browser's URL without reloading the page
             window.history.replaceState({}, document.title, url.toString());
         }
+        document.getElementById('invoiceNo').disabled = false;
 
         showToast('🚀 New Invoice Ready');
 

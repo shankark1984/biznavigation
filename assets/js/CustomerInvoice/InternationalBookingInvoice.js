@@ -1,7 +1,7 @@
 // ============================================
 // CONSTANTS & CONFIGURATION
 // ============================================
-const TABLE_CONFIG = {
+const TABLE_CONFIG_IB = {
     HEADER_COLS: [
         "Docket<br>No", "Booked<br>Date", "Movement<br>Type", "Transit<br>Type",
         "Mode<br>Type", "Origin", "Destination", "No.<br>of Units",
@@ -216,7 +216,6 @@ function addInvoiceRow(tableBody, invoice, charges) {
         invoice.BookedDate || '',
         invoice.MovementType || '',
         invoice.TransitType || '',
-        invoice.ModeType || '',
         invoice.Origin || '',
         invoice.Destination || '',
         `${invoice.NoofUnit || ''} ${invoice.UOMType || ''}`,
@@ -379,10 +378,10 @@ async function updateInvoiceNumbers(invNo) {
         .map(row => parseInt(row.dataset.shipId))
         .filter(id => !isNaN(id));
 
-    if (!shipmentIds.length) {
-        console.warn('No shipment IDs found for invoice update.');
-        return;
-    }
+    // if (!shipmentIds.length) {
+    //     console.warn('No shipment IDs found for invoice update.');
+    //     return;
+    // }
 
     try {
         // Clear previous assignments
@@ -611,7 +610,7 @@ async function createPendingShipmentTableHeaderAndFooter_ib() {
     const thead = document.createElement("thead");
     thead.className = "table-light";
     const headRow = document.createElement("tr");
-    TABLE_CONFIG.HEADER_COLS.forEach(text => {
+    TABLE_CONFIG_IB.HEADER_COLS.forEach(text => {
         const th = document.createElement("th");
         th.innerHTML = text;
         headRow.appendChild(th);
@@ -625,7 +624,7 @@ async function createPendingShipmentTableHeaderAndFooter_ib() {
     const footRow = document.createElement("tr");
     footRow.id = "totalsRow";
 
-    TABLE_CONFIG.TOTALS_COLUMNS.forEach(item => {
+    TABLE_CONFIG_IB.TOTALS_COLUMNS.forEach(item => {
         const th = document.createElement("th");
         if (item.colspan) th.colSpan = item.colspan;
         if (item.label) th.textContent = item.label;
