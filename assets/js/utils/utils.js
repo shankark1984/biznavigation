@@ -440,6 +440,7 @@ async function validatePANInput(
 
 let bankMap = {}; // Global mapping: DisplayName -> BankID
 let bankID = null; // Selected Bank ID
+let bankIDs = null; // Selected Bank ID
 
 // Load bank suggestions from Supabase
 async function loadBankNameSuggestions() {
@@ -472,14 +473,54 @@ async function loadBankNameSuggestions() {
             option.value = displayName;
             datalist.appendChild(option);
         });
+
     } catch (err) {
         console.error('Unexpected error:', err);
     }
 }
 
+// Function to handle bank selection
+function handleBankSelection() {
+    const bankInput = document.getElementById('inputBankName');
+    const bankIDInput = document.getElementById('bankIDs');
+
+    if (!bankInput || !bankIDInput) {
+        // console.warn('Required elements not found');
+        return;
+    }
+
+    // Input event - fires when user types or selects from datalist
+    bankInput.addEventListener('input', function () {
+        const selectedBankName = this.value.trim();
+        // console.log('Selected Bank Name:', selectedBankName, bankMap);
+
+        // Set the bank ID
+        if (bankMap[selectedBankName] !== undefined) {
+            bankIDInput.value = bankMap[selectedBankName];
+            // console.log('Bank ID set to:', bankMap[selectedBankName]);
+        } else {
+            bankIDInput.value = '';
+            // console.log('No matching bank ID found');
+        }
+    });
+
+    // Change event - fires when input loses focus
+    bankInput.addEventListener('change', function () {
+        const selectedBankName = this.value.trim();
+
+        if (bankMap[selectedBankName] !== undefined) {
+            bankIDInput.value = bankMap[selectedBankName];
+            // console.log('Bank ID confirmed:', bankMap[selectedBankName]);
+        }
+    });
+}
+
+// Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
     loadBankNameSuggestions();
+    setTimeout(handleBankSelection, 300);
 });
+
 
 // Load the default bank and set the input values
 async function loadDefaultBank() {
@@ -520,6 +561,7 @@ async function loadDefaultBank() {
         if (bankIDInput) bankIDInput.value = id;
 
         bankID = id; // ✅ Store in global variable
+        bankIDs = id;
 
         return id;
     } catch (err) {

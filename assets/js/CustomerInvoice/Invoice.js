@@ -195,7 +195,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
         await Promise.all([
             loadSuggestions('partySuggestions', 'PartyDetails', CompanyID),
-            // loadBankNameSuggestions(),
             loadDefaultBank(),
             loadDatalist('departmentList', 'Department')
         ]);
@@ -217,7 +216,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 function setupBankSelection() {
     const bankInput = document.getElementById('inputBankName');
     const bankIDInput = document.getElementById('bankIDs');
-
     bankInput?.addEventListener('input', function () {
         const selectedValue = this.value.trim();
         const bankMap = invoiceManager.getBankMap();
@@ -873,6 +871,7 @@ async function loadInvoice(invoiceNo) {
 }
 
 function populateInvoiceForm(invoiceDetails) {
+    console.log('invoiceDetails.BankID', invoiceDetails.BankID);
     document.getElementById("invoiceNo").value = invoiceDetails.InvoiceNo || "";
     document.getElementById("partyCode").value = invoiceDetails.PartyCode || "";
     document.getElementById("invoiceDate").value = invoiceDetails.InvoiceDate || "";
