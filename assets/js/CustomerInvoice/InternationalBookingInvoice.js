@@ -216,6 +216,7 @@ function addInvoiceRow(tableBody, invoice, charges) {
         invoice.BookedDate || '',
         invoice.MovementType || '',
         invoice.TransitType || '',
+        invoice.ModeType || '',
         invoice.Origin || '',
         invoice.Destination || '',
         `${invoice.NoofUnit || ''} ${invoice.UOMType || ''}`,
@@ -434,6 +435,7 @@ async function loadInvoiceBookings(invoiceNo) {
 
         if (!data?.length) {
             alert('No shipments found for this invoice.');
+            document.getElementById('fetchPendingInvoices').disabled = false;
             return;
         }
 
@@ -519,14 +521,14 @@ async function addSingleShipmentToInvoice(shipmentNo, invoiceNo) {
             alert('Table not found.');
             return;
         }
-
+        createPendingShipmentTableHeaderAndFooter_ib();
         addInvoiceRow(tableBody, data, charges);
         accumulateTotals(charges);
         mergeCharges(charges.chargesMap);
         updateTotalsDisplay(invoiceState.totals);
         renderChargesTable(invoiceState.mergedChargesMap);
 
-        alert('Shipment added successfully!');
+        alert('Shipment added successfully! 2');
     } catch (error) {
         console.error('Error adding shipment:', error.message);
         alert('Error adding shipment: ' + error.message);

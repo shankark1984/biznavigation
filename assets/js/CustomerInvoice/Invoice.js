@@ -957,7 +957,7 @@ document.getElementById('addShipmentNo')?.addEventListener('click', async () => 
     if (addFn) {
         try {
             await addFn(shipmentNo, invoiceNo);
-            showToast('Shipment added successfully');
+            // showToast('Shipment added successfully 3');
         } catch (error) {
             console.error('Error adding shipment:', error);
             alert('Failed to add shipment: ' + error.message);
