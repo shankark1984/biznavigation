@@ -886,3 +886,17 @@ function toggleSettlementMode() {
         referenceLabel.textContent = "Reference No";
     }
 }
+
+document.getElementById("billNumberInput").addEventListener("input", async () => {
+
+    const partyCode = document.getElementById("partyCode").value.trim();
+
+    console.log("Party Code:", partyCode);
+
+    if (!partyCode) {
+        console.warn("Party Code is empty");
+        return;
+    }
+
+    await getPendingInvoiceDetails(partyCode);
+});

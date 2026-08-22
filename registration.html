@@ -355,10 +355,10 @@
         <!-- alert box -->
         <div id="messageBox" class="alert d-none" role="alert"></div>
 
-        <form id="registrationForm" novalidate>
+        <form id="registrationForm" novalidate autocomplete="off">
             <!-- User Name -->
             <div class="mb-3 position-relative">
-                <input type="text" class="form-control ps-5" id="userName" placeholder="User Name" autocomplete="name"
+                <input type="text" class="form-control ps-5" id="userName" placeholder="User Name" autocomplete="off"
                     required>
                 <span class="position-absolute top-50 start-0 translate-middle-y ps-3">
                     <i class="bi bi-person"></i>
@@ -367,7 +367,8 @@
 
             <!-- Company -->
             <div class="mb-3 position-relative">
-                <input type="text" class="form-control ps-5" id="companyName" placeholder="Company full name" required>
+                <input type="text" class="form-control ps-5" id="companyName" placeholder="Company full name" required
+                    autocomplete="new-company">
                 <span class="position-absolute top-50 start-0 translate-middle-y ps-3">
                     <i class="bi bi-building"></i>
                 </span>
@@ -388,12 +389,12 @@
 
             <!-- Email -->
             <div class="mb-3 position-relative">
-                <input type="email" class="form-control ps-5" id="email" placeholder="Email ID" autocomplete="email"
+                <input type="email" class="form-control ps-5" id="email" placeholder="Email ID" autocomplete="new-email"
                     required>
                 <span class="position-absolute top-50 start-0 translate-middle-y ps-3">
                     <i class="bi bi-envelope"></i>
                 </span>
-                <div class="verification-status" id="emailStatus">
+                <div class="verification-status d-none" id="emailStatus">
                     <i class="bi bi-clock"></i> Email not verified
                 </div>
             </div>
@@ -401,17 +402,17 @@
             <!-- Phone -->
             <div class="mb-3 position-relative">
                 <input type="tel" class="form-control ps-5" id="phone" placeholder="Phone number" maxlength="10"
-                    inputmode="numeric" autocomplete="tel" required>
+                    inputmode="numeric" autocomplete="new-tel" autocapitalize="none" required>
                 <span class="position-absolute top-50 start-0 translate-middle-y ps-3">
                     <i class="bi bi-phone"></i>
                 </span>
-                <div class="verification-status" id="phoneStatus">
+                <div class="verification-status d-none" id="phoneStatus">
                     <i class="bi bi-clock"></i> Phone not verified
                 </div>
             </div>
 
             <!-- Send OTP -->
-            <button type="button" id="sendOtpBtn" class="btn btn-primary w-100 mb-3">
+            <button type="button" id="sendOtpBtn" class="btn btn-primary w-100 mb-3 d-none">
                 <i class="bi bi-shield-check"></i> Send Verification OTP
             </button>
 
@@ -426,7 +427,7 @@
                 </div>
 
                 <!-- Email OTP -->
-                <div class="otp-box mb-3">
+                <div class="otp-box mb-3 d-none">
                     <label class="form-label">Email OTP</label>
                     <div class="input-group">
                         <input type="text" id="emailOtp" class="form-control otp-input" maxlength="6"
@@ -437,7 +438,7 @@
                 </div>
 
                 <!-- Phone OTP -->
-                <div class="otp-box mb-3">
+                <div class="otp-box mb-3 d-none">
                     <label class="form-label">Phone OTP</label>
                     <div class="input-group">
                         <input type="text" id="phoneOtp" class="form-control otp-input" maxlength="6"
@@ -448,20 +449,18 @@
                 </div>
 
                 <!-- Resend + countdown -->
-                <div class="text-center">
+                <div class="text-center d-none">
                     <button type="button" id="resendOtpBtn" class="btn btn-link" disabled>Resend OTP</button>
                     <span id="countdown">60</span> seconds
                 </div>
             </div>
 
             <!-- Register -->
-            <button type="submit" id="registerBtn" class="btn btn-success w-100 mt-3" disabled>
+            <button type="submit" id="registerBtn" class="btn btn-success w-100 mt-3">
                 <i class="bi bi-check-circle"></i> Complete Registration
             </button>
 
-
             <!-- Footer -->
-
             <div class="registration-footer"> Already registered?
                 <a href="login.html"> Login </a>
 
