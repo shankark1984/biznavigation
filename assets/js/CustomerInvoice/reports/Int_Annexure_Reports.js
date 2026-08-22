@@ -855,7 +855,7 @@ async function getShipmentData_int_Annexure(
             Array.isArray(shipmentRes.data)
                 ? shipmentRes.data
                 : [];
-
+        console.log('Shipment Details ', shipments);
         // ==========================================
         // NO SHIPMENTS
         // ==========================================
@@ -994,7 +994,7 @@ async function drawShipmentTable_int_Annexure(
         "Freight Amount": 1,
         "Other Amount": 2
     };
-
+    console.log('Row Details ', rows);
     // =========================
     // REUSABLE STYLES
     // =========================
@@ -1097,33 +1097,20 @@ async function drawShipmentTable_int_Annexure(
 
         const transitType = [
             row.MovementType,
-            row.ModeType
+            row.ModeType,
         ]
             .filter(Boolean)
             .join("\n");
 
+        console.log(transitType)
         // =========================
         // TOTALS
         // =========================
-        freightAmount += safeNumber(
-            row.FreightAmount
-        );
-
-        fuelSurcharge += safeNumber(
-            row.FuelSurcharge
-        );
-
-        otherAmount += safeNumber(
-            row.OtherAmount
-        );
-
-        taxableAmount += safeNumber(
-            row.TaxableAmount
-        );
-
-        nonTaxableAmount += safeNumber(
-            row.NonTaxableAmount
-        );
+        freightAmount += safeNumber(row.FreightAmount);
+        fuelSurcharge += safeNumber(row.FuelSurcharge);
+        otherAmount += safeNumber(row.OtherAmount);
+        taxableAmount += safeNumber(row.TaxableAmount);
+        nonTaxableAmount += safeNumber(row.NonTaxableAmount);
 
         // =========================
         // SHIPMENT ROW
@@ -1150,24 +1137,17 @@ async function drawShipmentTable_int_Annexure(
         let shipmentTotal = 0;
 
         for (let j = 0; j < charges.length; j++) {
-
             const charge = charges[j];
-
-            const amount =
-                safeNumber(charge.TotalAmount);
-
+            const amount = safeNumber(charge.TotalAmount);
             shipmentTotal += amount;
-
             body.push([
                 {
-                    content:
-                        charge.ChargesType || "",
+                    content: charge.ChargesType || "",
                     colSpan: 8,
                     styles: chargeLabelStyle
                 },
                 {
-                    content:
-                        formatAmount(amount),
+                    content: formatAmount(amount),
                     colSpan: 2,
                     styles: chargeAmountStyle
                 }
