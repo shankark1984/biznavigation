@@ -3,13 +3,6 @@
 ========================================================= */
 const FORWARDING_TYPES = ['Forwarding', 'Import', 'Export'];
 const totalFreight = 0;
-
-/* =========================================================
-   GLOBAL DATA
-========================================================= */
-let invoiceData = {};
-let invoiceChargesData = {};
-
 /* =========================================================
    DOM READY
 ========================================================= */
@@ -152,6 +145,13 @@ async function generateInvoiceNumber(invoiceDateValue) {
 }
 
 /* =========================================================
+   GLOBAL DATA
+========================================================= */
+let invoiceData = {};
+let invoiceChargesData = {};
+
+
+/* =========================================================
    FETCH PENDING INVOICES
 ========================================================= */
 document.getElementById('fetchPendingInvoices').addEventListener('click', async () => {
@@ -185,9 +185,7 @@ document.getElementById('saveButton').addEventListener('click', async () => {
     // Prevent double click
     if (saveBtn.disabled) return;
 
-    const originalButtonHTML = '<i class="bi bi-save"></i> Save';
-
-    // Disable button immediately
+    // Disable button and show processing
     saveBtn.disabled = true;
 
     if (spinner) {
@@ -195,537 +193,191 @@ document.getElementById('saveButton').addEventListener('click', async () => {
     }
 
     saveBtn.innerHTML = `
-        <span class="spinner-border spinner-border-sm me-2"
-              role="status"
-              aria-hidden="true"></span>
+        <span id="saveSpinnerBtn" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
         Processing...
     `;
 
-    try {
+    const bankID = document.getElementById('bankIDs').value.trim();
+    const partyCode = document.getElementById('partyCode').value.trim();
+    const invoiceDate = document.getElementById('invoiceDate').value;
+    const invoiceType = document.getElementById('movementType').value;
+    const invoiceAddress = document.getElementById('invoiceAddress').value.trim();
+    const isInsert = saveBtn.dataset.mode === 'insert';
 
-        // ============================================================
-        // 1. READ BASIC FORM VALUES
-        // ============================================================
+    let basicfreight = 0;
 
-        const bankID =
-            document.getElementById('bankIDs')?.value.trim() || '';
+    // Validation
+    if (!partyCode || !invoiceDate || !invoiceType || !invoiceAddress) {
+        showToast('Fill all required fields');
 
-        const partyCode =
-            document.getElementById('partyCode')?.value.trim() || '';
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = '<i class="bi bi-save"></i> Save';
+        return;
+    }
 
-        const invoiceDate =
-            document.getElementById('invoiceDate')?.value || '';
+    // console.log('Bank ID on Save:', bankID);
 
-        const invoiceType =
-            document.getElementById('movementType')?.value || '';
+    if (!bankID) {
+        showToast('Select valid Bank Name');
 
-        const invoiceAddress =
-            document.getElementById('invoiceAddress')?.value.trim() || '';
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = '<i class="bi bi-save"></i> Save';
+        return;
+    }
 
-        const remarks =
-            document.getElementById('invoiceInformation')?.value.trim() || '';
+    let invoiceNo = document.getElementById('invoiceNo').value.trim();
 
-        const isInsert =
-            saveBtn.dataset.mode === 'insert';
-
-
-        // ============================================================
-        // 2. VALIDATION
-        // ============================================================
-
-        if (!partyCode || !invoiceDate || !invoiceType || !invoiceAddress) {
-
-            showToast('Fill all required fields');
-
-            saveBtn.disabled = false;
-            saveBtn.innerHTML = originalButtonHTML;
-
-            return;
-        }
-
-        if (!bankID) {
-
-            showToast('Select valid Bank Name');
-
-            saveBtn.disabled = false;
-            saveBtn.innerHTML = originalButtonHTML;
-
-            return;
-        }
-
-        if (!CompanyID) {
-
-            showToast('Company ID is missing');
-
-            saveBtn.disabled = false;
-            saveBtn.innerHTML = originalButtonHTML;
-
-            return;
-        }
-
-
-        // ============================================================
-        // 3. INVOICE NUMBER
-        // ============================================================
-
-        let invoiceNo =
-            document.getElementById('invoiceNo')?.value.trim() || '';
-
-        if (isInsert) {
-
-            invoiceNo = await generateInvoiceNumber(invoiceDate);
-
-            if (!invoiceNo) {
-
-                showToast('Invoice number generation failed');
-
-                saveBtn.disabled = false;
-                saveBtn.innerHTML = originalButtonHTML;
-
-                return;
-            }
-
-            document.getElementById('invoiceNo').value = invoiceNo;
-        }
+    if (isInsert) {
+        invoiceNo = await generateInvoiceNumber(invoiceDate);
 
         if (!invoiceNo) {
-
-            showToast('Invoice number is required');
+            showToast('Invoice number generation failed');
 
             saveBtn.disabled = false;
-            saveBtn.innerHTML = originalButtonHTML;
-
+            saveBtn.innerHTML = '<i class="bi bi-save"></i> Save';
             return;
         }
 
-
-        // ============================================================
-        // 4. SAFE NUMBER READER
-        // ============================================================
-
-        const getAmount = (id) => {
-
-            const el = document.getElementById(id);
-
-            if (!el) {
-                console.warn(`Invoice amount element not found: ${id}`);
-                return 0;
-            }
-
-            const rawValue =
-                el.textContent ??
-                el.value ??
-                '0';
-
-            const value = parseFloat(
-                String(rawValue).replace(/,/g, '').trim()
-            );
-
-            return Number.isFinite(value) ? value : 0;
-        };
-
-
-        // ============================================================
-        // 5. GET BASIC AMOUNT
-        // ============================================================
-
-        let basicAmount = 0;
-
-        if (invoiceType === 'Customs Clearance') {
-
-            basicAmount = getAmount('totalFreight_sc');
-
-        } else if (invoiceType === 'Domestic') {
-
-            basicAmount = getAmount('totalFreight_d');
-
-        } else {
-
-            basicAmount = getAmount('totalFreight');
-        }
-
-
-        // ============================================================
-        // 6. GET OTHER AMOUNTS
-        // ============================================================
-
-        let fscAmount = 0;
-        let otherCharges = 0;
-
-        if (invoiceType !== 'Customs Clearance') {
-
-            fscAmount = getAmount('totalFSCAmt');
-
-            otherCharges = getAmount('totalOtherAmt');
-        }
-
-        const otherAmount =
-            fscAmount + otherCharges;
-
-
-        // ============================================================
-        // 7. GET GST
-        // ============================================================
-
-        let cgstAmount = 0;
-        let sgstAmount = 0;
-        let igstAmount = 0;
-
-        if (invoiceType === 'Customs Clearance') {
-
-            // Use Customs-specific totals only if those elements exist.
-            // Otherwise use the normal totals.
-            cgstAmount =
-                document.getElementById('totalCGST_sc')
-                    ? getAmount('totalCGST_sc')
-                    : getAmount('totalCGST');
-
-            sgstAmount =
-                document.getElementById('totalSGST_sc')
-                    ? getAmount('totalSGST_sc')
-                    : getAmount('totalSGST');
-
-            igstAmount =
-                document.getElementById('totalIGST_sc')
-                    ? getAmount('totalIGST_sc')
-                    : getAmount('totalIGST');
-
-        } else {
-
-            cgstAmount = getAmount('totalCGST');
-            sgstAmount = getAmount('totalSGST');
-            igstAmount = getAmount('totalIGST');
-        }
-
-
-        // ============================================================
-        // 8. ALWAYS CALCULATE TOTAL GST
-        // ============================================================
-
-        const totalGSTAmount =
-            cgstAmount +
-            sgstAmount +
-            igstAmount;
-
-
-        // ============================================================
-        // 9. ALWAYS CALCULATE GRAND TOTAL
-        // ============================================================
-
-        const calculatedGrandTotal =
-            basicAmount +
-            otherAmount +
-            totalGSTAmount;
-
-
-        // ============================================================
-        // 10. ROUND ONLY TO 2 DECIMAL PLACES
-        //     DO NOT Math.round() TO WHOLE RUPEES
-        // ============================================================
-
-        const amounts = {
-
-            BasicAmount:
-                Number(basicAmount.toFixed(2)),
-
-            OtherAmount:
-                Number(otherAmount.toFixed(2)),
-
-            CGSTAmount:
-                Number(cgstAmount.toFixed(2)),
-
-            SGSTAmount:
-                Number(sgstAmount.toFixed(2)),
-
-            IGSTAmount:
-                Number(igstAmount.toFixed(2)),
-
-            TotalGSTAmount:
-                Number(totalGSTAmount.toFixed(2)),
-
-            GrandTotalAmount:
-                Number(calculatedGrandTotal.toFixed(2))
-        };
-
-
-        // ============================================================
-        // 11. VALIDATE ACCOUNTING TOTALS
-        // ============================================================
-
-        const validationGrandTotal =
-            Number(
-                (
-                    amounts.BasicAmount +
-                    amounts.OtherAmount +
-                    amounts.TotalGSTAmount
-                ).toFixed(2)
-            );
-
-        if (
-            Math.abs(
-                validationGrandTotal -
-                amounts.GrandTotalAmount
-            ) > 0.01
-        ) {
-
-            console.error('Invoice total mismatch:', {
-                BasicAmount: amounts.BasicAmount,
-                OtherAmount: amounts.OtherAmount,
-                CGSTAmount: amounts.CGSTAmount,
-                SGSTAmount: amounts.SGSTAmount,
-                IGSTAmount: amounts.IGSTAmount,
-                TotalGSTAmount: amounts.TotalGSTAmount,
-                GrandTotalAmount: amounts.GrandTotalAmount,
-                CalculatedGrandTotal: validationGrandTotal
-            });
-
-            throw new Error(
-                `Invoice total mismatch. ` +
-                `Calculated Grand Total: ${validationGrandTotal.toFixed(2)}`
-            );
-        }
-
-
-        // ============================================================
-        // 12. DEBUG - SHOW EXACT VALUES GOING TO DATABASE
-        // ============================================================
-
-        console.log('========================================');
-        console.log(
-            isInsert
-                ? 'INSERT InvoiceDetails'
-                : 'UPDATE InvoiceDetails'
-        );
-        console.log('========================================');
-
-        console.table({
-            InvoiceNo: invoiceNo,
-            InvoiceType: invoiceType,
-
-            BasicAmount: amounts.BasicAmount,
-            FSCAmount: Number(fscAmount.toFixed(2)),
-            OtherCharges: Number(otherCharges.toFixed(2)),
-            OtherAmount: amounts.OtherAmount,
-
-            CGSTAmount: amounts.CGSTAmount,
-            SGSTAmount: amounts.SGSTAmount,
-            IGSTAmount: amounts.IGSTAmount,
-
-            TotalGSTAmount: amounts.TotalGSTAmount,
-            GrandTotalAmount: amounts.GrandTotalAmount
-        });
-
-
-        // ============================================================
-        // 13. BUILD InvoiceDetails DATA
-        // ============================================================
-
-        const invoiceData = {
-
-            InvoiceNo: invoiceNo,
-
-            InvoiceDate: invoiceDate,
-
-            InvoiceType: invoiceType,
-
-            PartyCode: partyCode,
-
-            InvoiceAddress: invoiceAddress,
-
-            BankID: bankID,
-
-            company_id: CompanyID,
-
-            BasicAmount: amounts.BasicAmount,
-
-            OtherAmount: amounts.OtherAmount,
-
-            CGSTAmount: amounts.CGSTAmount,
-
-            SGSTAmount: amounts.SGSTAmount,
-
-            IGSTAmount: amounts.IGSTAmount,
-
-            TotalGSTAmount: amounts.TotalGSTAmount,
-
-            GrandTotalAmount: amounts.GrandTotalAmount,
-
-            Remarks: remarks
-        };
-
-
-        // ============================================================
-        // 14. INSERT
-        // ============================================================
+        document.getElementById('invoiceNo').value = invoiceNo;
+    }
+
+    const getValue = (id) => {
+        const el = document.getElementById(id);
+        return el ? parseFloat(el.textContent) || 0 : 0;
+    };
+
+    const isCustoms = invoiceType === 'Customs Clearance';
+
+    if (invoiceType === 'Customs Clearance') {
+        basicfreight = getValue('totalFreight_sc');
+    } else if (invoiceType === 'Domestic') {
+        basicfreight = getValue('totalFreight_d');
+    } else if (invoiceType === 'Full Truck Load') {
+        basicfreight = getValue('totalFreight');
+    } else if (
+        invoiceType === 'Import' ||
+        invoiceType === 'Export' ||
+        invoiceType === 'Forwarding'
+    ) {
+        basicfreight = getValue('totalFreight');
+    } else {
+        basicfreight = getValue('totalFreight');
+    }
+
+    const totals = {
+        freight: basicfreight,
+        fsc: isCustoms ? 0 : getTextValue('totalFSCAmt'),
+        other: isCustoms ? 0 : getTextValue('totalOtherAmt'),
+        sgst: getTextValue('totalSGSTAmt'),
+        cgst: getTextValue('totalCGSTAmt'),
+        igst: getTextValue('totalIGSTAmt'),
+        gst: getTextValue('totalGSTAmt'),
+        grand: getTextValue('totalGrandAmt')
+    };
+
+    // console.log(totals);
+
+    const invoiceData = {
+        InvoiceNo: invoiceNo,
+        InvoiceDate: invoiceDate,
+        InvoiceType: invoiceType,
+        PartyCode: partyCode,
+        InvoiceAddress: invoiceAddress,
+        BankID: bankID,
+        company_id: CompanyID,
+
+        BasicAmount: totals.freight,
+        OtherAmount: totals.fsc + totals.other,
+
+        SGSTAmount: totals.sgst,
+        CGSTAmount: totals.cgst,
+        IGSTAmount: totals.igst,
+        TotalGSTAmount: totals.gst,
+        GrandTotalAmount: Math.round(totals.grand),
+
+        Remarks: document.getElementById('invoiceInformation').value.trim()
+    };
+
+    try {
 
         if (isInsert) {
 
             invoiceData.created_by = UserLoginID;
             invoiceData.created_at = localtimeStamp;
 
-            console.log(
-                'InvoiceDetails INSERT:',
-                invoiceData
-            );
-
-            const { data, error } = await supabaseClient
+            const { error } = await supabaseClient
                 .from('InvoiceDetails')
-                .insert([invoiceData])
-                .select()
-                .single();
+                .insert([invoiceData]);
 
-            if (error) {
-                throw error;
-            }
+            if (error) throw error;
 
-            console.log(
-                'InvoiceDetails INSERT SUCCESS:',
-                data
-            );
-        }
-
-
-        // ============================================================
-        // 15. UPDATE
-        // ============================================================
-
-        else {
+        } else {
 
             invoiceData.updated_by = UserLoginID;
             invoiceData.updated_at = localtimeStamp;
 
-            console.log(
-                'InvoiceDetails UPDATE:',
-                invoiceData
-            );
-
-            const { data, error } = await supabaseClient
+            const { error } = await supabaseClient
                 .from('InvoiceDetails')
                 .update(invoiceData)
                 .eq('InvoiceNo', invoiceNo)
-                .eq('company_id', CompanyID)
-                .select()
-                .single();
+                .eq('company_id', CompanyID);
 
-            if (error) {
-                throw error;
-            }
-
-            console.log(
-                'InvoiceDetails UPDATE SUCCESS:',
-                data
-            );
+            if (error) throw error;
         }
 
-
-        // ============================================================
-        // 16. SUCCESS MESSAGE
-        // ============================================================
-
-        showToast(
-            `Invoice ${isInsert ? 'Saved' : 'Updated'} Successfully`
-        );
-
-
-        // ============================================================
-        // 17. UPDATE SOURCE SHIPMENT RECORDS
-        // ============================================================
+        showToast(`Invoice ${isInsert ? 'Saved' : 'Updated'} Successfully`);
 
         if (FORWARDING_TYPES.includes(invoiceType)) {
-
             await updateInvoiceNumbers(invoiceNo);
-
         } else if (invoiceType === 'Customs Clearance') {
-
             await updateInvoiceNumbers_cc(invoiceNo);
-
         } else if (invoiceType === 'Domestic') {
-
             await d_updateInvoiceNumbers(invoiceNo);
-
         } else if (invoiceType === 'Full Truck Load') {
-
             await ftl_updateInvoiceNumbers(invoiceNo);
         }
 
-
-        // ============================================================
-        // 18. DISABLE FORM AFTER SUCCESS
-        // ============================================================
-
         disableForm();
 
+        // Disable all row delete buttons
+        document.querySelectorAll('.delete-btn').forEach(btn => {
+            btn.disabled = true;
+            btn.classList.add('disabled');
+        });
 
-        // Disable row delete buttons
-        document
-            .querySelectorAll('.delete-btn')
-            .forEach(btn => {
-
-                btn.disabled = true;
-                btn.classList.add('disabled');
-            });
-
-
-        // ============================================================
-        // 19. KEEP SAVE DISABLED
-        // ============================================================
-
+        // Keep Save disabled after successful save
         saveBtn.disabled = true;
+        saveBtn.innerHTML = '<i class="bi bi-check-circle"></i> Updated';
 
-        saveBtn.innerHTML =
-            '<i class="bi bi-check-circle"></i> Updated';
+        modifyButton.disabled = false;
+        reportButton.disabled = false;
+        fetchPendingInvoices.disabled = true;
 
-        if (typeof modifyButton !== 'undefined') {
-            modifyButton.disabled = false;
-        }
+    } catch (e) {
 
-        if (typeof reportButton !== 'undefined') {
-            reportButton.disabled = false;
-        }
-
-        if (typeof fetchPendingInvoices !== 'undefined') {
-            fetchPendingInvoices.disabled = true;
-        }
-
-
-    } catch (error) {
-
-        // ============================================================
-        // ERROR
-        // ============================================================
-
-        console.error(
-            'Invoice save/update failed:',
-            error
-        );
-
-        showToast(
-            error?.message ||
-            'Invoice save failed'
-        );
-
-        // Re-enable Save
-        saveBtn.disabled = false;
-
-        saveBtn.innerHTML =
-            '<i class="bi bi-save"></i> Save';
+        console.error(e);
+        showToast(e.message || 'Save failed');
 
     } finally {
 
-        // ============================================================
-        // RESTORE SPINNER
-        // ============================================================
-
-        const currentSpinner =
-            document.getElementById('saveSpinnerBtn');
-
-        if (currentSpinner) {
-            currentSpinner.classList.add('d-none');
+        // Only restore Save button if save/update failed
+        if (!modifyButton.disabled) {
+            // Save was successful, keep it disabled
+            return;
         }
+
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = '<i class="bi bi-save"></i> Save';
     }
 
 });
 
+/* =========================================================
+   BANK SELECTION
+========================================================= */
+// document.getElementById('inputBankName').addEventListener('input', function () {
+//     bankID = bankMap[this.value] || null;
+// });
 
 /* =========================================================
    SAFE UNLOCK ON EXIT
@@ -984,7 +636,6 @@ async function getInvoiceDetails(invoiceNo) {
         hideSpinner();
     }
 }
-
 document.getElementById('movementType').addEventListener('change', async (e) => {
 
     const movementType = e.target.value.trim();
@@ -1012,7 +663,6 @@ document.getElementById('movementType').addEventListener('change', async (e) => 
 document.getElementById("invoiceNo").addEventListener("change", async (e) => {
     await loadInvoice(e.target.value);
 });
-
 // ===============================
 // Reusable Invoice Loader
 // ===============================
