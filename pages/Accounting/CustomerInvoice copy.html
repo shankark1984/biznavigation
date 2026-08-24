@@ -1,3 +1,4 @@
+// pages/Accounting/CustomerInvoice.html
 <!DOCTYPE html>
 <html lang="en">
 
@@ -5,71 +6,43 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Customer Invoice</title>
-
-    <!-- Resource Hints for faster loading -->
-    <link rel="preconnect" href="https://cdn.jsdelivr.net">
-    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
-
-    <!-- CSS Libraries -->
+    <!-- Bootstrap CSS & Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
-    <link href="../../assets/css/navbar.css" rel="stylesheet" />
 
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <!-- Sidebar CSS -->
+    <link rel="stylesheet" href="../../assets/css/navbar.css" />
     <style>
         .invoice-bg {
             background-color: #d8e26b !important;
         }
     </style>
-
-    <!-- Deferred JS Libraries (Downloads in parallel, executes in order) -->
-    <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js" defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js" defer></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/2.3.10/purify.min.js" defer></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"
-        defer></script>
-    <script src="https://unpkg.com/@supabase/supabase-js" defer></script>
-
-    <!-- App Scripts -->
-    <script src="../../assets/js/utils/server.js" defer></script>
-    <script src="../../assets/js/utils/navbar.js" defer></script>
-    <script src="../../assets/js/utils/utils.js" defer></script>
-    <script src="../../assets/js/utils/GlobalShortcut.js" defer></script>
-    <script src="../../assets/js/utils/api.js" defer></script>
-    <script src="../../assets/js/CustomerInvoice/Invoice.js" defer></script>
-    <script src="../../assets/js/CustomerInvoice/InternationalBookingInvoice.js" defer></script>
-    <script src="../../assets/js/CustomerInvoice/CustomsClearanceInvoice.js" defer></script>
-    <script src="../../assets/js/CustomerInvoice/DomisticBookingInvoice.js" defer></script>
-    <script src="../../assets/js/CustomerInvoice/FTL_BookingInvoice.js" defer></script>
-    <script src="../../assets/js/utils/logout.js" defer></script>
-
-    <!-- Report Scripts -->
-    <script src="../../assets/js/CustomerInvoice/reports/report.js" defer></script>
-    <script src="../../assets/js/CustomerInvoice/reports/int_Main_Reports.js" defer></script>
-    <script src="../../assets/js/CustomerInvoice/reports/Int_Annexure_Reports.js" defer></script>
-    <script src="../../assets/js/CustomerInvoice/reports/Clear_Main_Reports.js" defer></script>
-    <script src="../../assets/js/CustomerInvoice/reports/DomesticReports.js" defer></script>
-    <script src="../../assets/js/CustomerInvoice/reports/FTL_FCL_Reports.js" defer></script>
 </head>
 
 <body class="bg-light">
-    <!-- APP LAYOUT -->
+    <!-- 🔥 APP LAYOUT -->
     <div class="app-wrapper">
 
         <!-- Sidebar -->
         <div id="sidebar">
+            <!-- fallback -->
             <div class="text-center text-white p-3">Loading...</div>
         </div>
 
         <!-- Main Content -->
         <div class="main-content">
 
-            <!-- PAGE CONTENT -->
+            <!-- 🔥 PAGE CONTENT -->
             <div class="page-content">
+
+                <!-- YOUR EXISTING UI (UNCHANGED) -->
                 <div class="container-fluid mt-2">
                     <div class="card shadow-lg rounded">
+
                         <div class="card-body">
                             <form class="invoiceForm">
                                 <!-- Action Buttons -->
@@ -87,8 +60,7 @@
                                         <i class="bi bi-trash"></i> Delete
                                     </button>
                                     <button type="button" class="btn btn-info btn-sm" id="reportButton" disabled>
-                                        <i class="bi bi-printer"></i> Print
-                                    </button>
+                                        <i class="bi bi-printer"></i> Print </button>
                                     <button id="saveButton" class="btn btn-primary btn-sm" type="button"
                                         data-mode="insert">
                                         <span id="saveSpinnerBtn"
@@ -98,7 +70,6 @@
                                     <div id="saveSpinnerOverlay" class="spinner-border text-primary d-none"></div>
                                     <input type="text" class="form-control bg-light d-none" id="status" value="New"
                                         readonly>
-
                                     <!-- Hidden Fields -->
                                     <input type="hidden" id="tempFormID">
                                     <input type="hidden" id="partyCode">
@@ -188,6 +159,7 @@
                                                 <label for="invoiceInformation" class="form-label">Information</label>
                                                 <input type="text" class="form-control" id="invoiceInformation">
                                             </div>
+
 
                                             <div class="col-md-3 d-grid align-items-end">
                                                 <button type="button" class="btn btn-primary mt-4"
@@ -303,29 +275,28 @@
                                         </div>
                                     </div>
                                 </div>
-
-                                <!-- Bottom Actions -->
-                                <div class="row g-2 mt-2">
+                                <div class="row g-2">
+                                    <!-- Bank Name Input -->
                                     <div class="col-md-4">
                                         <label for="inputBankName" class="form-label">Bank Name</label>
                                         <input list="bankNameSuggestions" class="form-control bg-light-input"
-                                            id="inputBankName" required autocomplete="off">
+                                            id="inputBankName" required autocomplete="off" required>
                                         <datalist id="bankNameSuggestions"></datalist>
                                     </div>
 
+                                    <!-- Shipment Number Input -->
                                     <div class="col-md-4">
                                         <label for="shipmentNo" class="form-label">Shipment Number</label>
                                         <input list="shipmentNoSuggestions" class="form-control bg-light-input"
                                             id="shipmentNo" required autocomplete="off">
                                         <datalist id="shipmentNoSuggestions"></datalist>
                                     </div>
-
+                                    <!-- Add Button -->
                                     <div class="col-md-1 d-grid align-items-end">
                                         <button type="button" class="btn btn-primary mt-4" id="addShipmentNo">
                                             <i class="bi bi-plus-circle"></i>
                                         </button>
                                     </div>
-
                                     <div class="col-md-3">
                                         <label for="reportType" class="form-label">Report Type</label>
                                         <select class="form-select" id="reportType">
@@ -333,8 +304,12 @@
                                             <option value="Letter Head">Letter Head</option>
                                             <option value="Print Annexure">Print Annexure</option>
                                             <option value="Duty Invoice">Duty Invoice</option>
+                                            <!-- <option value="Domestic Booking">R3</option>
+                                <option value="FTL or FCL Booking">R4</option>
+                                <option value="Import Booking">R5</option> -->
                                         </select>
                                     </div>
+
                                 </div>
                             </form>
 
@@ -345,6 +320,7 @@
                                     <span class="visually-hidden">Loading...</span>
                                 </div>
                             </div>
+
 
                             <!-- Address Selection Modal -->
                             <div class="modal fade" id="addressSelectionModal" tabindex="-1"
@@ -366,7 +342,6 @@
             </div>
         </div>
     </div>
-
     <!-- Toast Container -->
     <div class="position-fixed top-0 end-0 p-3" style="z-index: 9999">
         <div id="errorToast" class="toast align-items-center text-white bg-danger border-0" role="alert">
@@ -378,6 +353,35 @@
             </div>
         </div>
     </div>
+
+    <!-- Optimized Script Loading -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" defer></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/2.3.10/purify.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js" defer></script>
+
+    <script src="../../assets/js/utils/server.js" defer></script>
+    <script src="../../assets/js/utils/navbar.js" defer></script>
+    <script src="../../assets/js/utils/utils.js" defer></script>
+    <script src="../../assets/js/utils/GlobalShortcut.js" defer></script>
+    <script src="../../assets/js/utils/api.js" defer></script>
+    <script src="../../assets/js/CustomerInvoice/Invoice.js" defer></script>
+    <script src="../../assets/js/CustomerInvoice/InternationalBookingInvoice.js" defer></script>
+    <script src="../../assets/js/CustomerInvoice/CustomsClearanceInvoice.js" defer></script>
+    <script src="../../assets/js/CustomerInvoice/DomisticBookingInvoice.js" defer></script>
+    <script src="../../assets/js/CustomerInvoice/FTL_BookingInvoice.js" defer></script>
+    <script src="../../assets/js/utils/logout.js" defer></script>
+
+    // Report Scripts
+    <script src="../../assets/js/CustomerInvoice/reports/report.js" defer></script>
+    <script src="../../assets/js/CustomerInvoice/reports/int_Main_Reports.js" defer></script>
+    <script src="../../assets/js/CustomerInvoice/reports/Int_Annexure_Reports.js" defer></script>
+    <script src="../../assets/js/CustomerInvoice/reports/Clear_Main_Reports.js" defer></script>
+    <script src="../../assets/js/CustomerInvoice/reports/DomesticReports.js" defer></script>
+
+    <script src="../../assets/js/CustomerInvoice/reports/FTL_FCL_Reports.js" defer></script>
 
 </body>
 

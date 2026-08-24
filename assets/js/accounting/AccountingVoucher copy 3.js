@@ -16,6 +16,7 @@ let companyProfile = null;
 let voucherMaster = [];
 let voucherModal;
 
+
 let voucherPage = 1;
 const voucherPageSize = 10;
 let voucherTotalRecords = 0;
@@ -50,7 +51,6 @@ const accountCode = document.getElementById("accountCode");
 const accountModalEl = document.getElementById("accountModal");
 const accountSearchInput = document.getElementById("accountSearch");
 const accountListBody = document.getElementById("accountListBody");
-const accountCountBadge = document.getElementById("accountCount");
 
 /*=========================================================
     PARTY CONTROLS
@@ -63,7 +63,6 @@ const partyGST = document.getElementById("partyGSTIN");
 const partyModalEl = document.getElementById("partyModal");
 const partySearchInput = document.getElementById("partySearch");
 const partyListBody = document.getElementById("partyListBody");
-const partyCountBadge = document.getElementById("partyCountBadge");
 
 /*=========================================================
     INITIAL LOAD
@@ -71,9 +70,12 @@ const partyCountBadge = document.getElementById("partyCountBadge");
 
 document.addEventListener("DOMContentLoaded", async () => {
     const today = new Date();
-    document.getElementById("voucherDate").value = today.toLocaleDateString("en-CA");
+    document.getElementById("voucherDate").value =
+        today.toLocaleDateString("en-CA");
 
-    voucherModal = new bootstrap.Modal(document.getElementById("voucherModal"));
+    voucherModal = new bootstrap.Modal(
+        document.getElementById("voucherModal")
+    );
 
     try {
         await Promise.all([
@@ -84,13 +86,17 @@ document.addEventListener("DOMContentLoaded", async () => {
             loadParties(CompanyID),
             loadVoucherList()
         ]);
-
-        document.getElementById("voucherSearch").addEventListener("input", filterVoucherList);
+        document
+            .getElementById("voucherSearch")
+            .addEventListener("input", filterVoucherList);
         companyProfile = await getCompanyProfile(CompanyID);
         toggleTransactionFields();
         await loadVoucherNumber();
-    } catch (err) {
+    }
+    catch (err) {
+
         console.error("Initialization Error :", err);
+
     }
 });
 
@@ -99,11 +105,11 @@ document.addEventListener("DOMContentLoaded", async () => {
 =========================================================*/
 
 async function loadAccounts() {
+
     const { data, error } = await supabaseClient
         .from("ChartOfAccountsView")
         .select("*")
         .order("AccountName");
-
     if (error) {
         console.error(error);
         return;
@@ -112,18 +118,15 @@ async function loadAccounts() {
     renderAccounts(accountMaster);
 }
 
+
 /*=========================================================
     RENDER ACCOUNT LIST
 =========================================================*/
 
 function renderAccounts(accounts) {
+
     filteredAccounts = accounts;
     selectedAccountIndex = accounts.length ? 0 : -1;
-
-    if (accountCountBadge) {
-        accountCountBadge.innerText = `${accounts.length} Records`;
-    }
-
     accountListBody.innerHTML = accounts.map((acc, index) => `
         <tr data-code="${acc.AccountCode}"
             class="${index === selectedAccountIndex ? "table-primary" : ""}">
@@ -131,10 +134,11 @@ function renderAccounts(accounts) {
             <td>${acc.AccountName}</td>
             <td>${acc.AccountType || ""}</td>
         </tr>
-    `).join("");
 
+    `).join("");
     highlightSelectedAccount();
 }
+
 
 /*=========================================================
     HIGHLIGHT ACCOUNT
@@ -143,10 +147,16 @@ function renderAccounts(accounts) {
 function highlightSelectedAccount() {
     const rows = accountListBody.querySelectorAll("tr");
     rows.forEach((row, index) => {
-        row.classList.toggle("table-primary", index === selectedAccountIndex);
+        row.classList.toggle(
+            "table-primary",
+            index === selectedAccountIndex
+        );
     });
-    rows[selectedAccountIndex]?.scrollIntoView({ block: "nearest" });
+    rows[selectedAccountIndex]?.scrollIntoView({
+        block: "nearest"
+    });
 }
+
 
 /*=========================================================
     OPEN ACCOUNT SEARCH
@@ -156,20 +166,32 @@ function openAccountSearch() {
     accountSearchInput.value = "";
     renderAccounts(accountMaster);
     const modal = bootstrap.Modal.getOrCreateInstance(accountModalEl);
+    accountModalEl.addEventListener(
+        "shown.bs.modal",
+        function onShown() {
+            accountSearchInput.focus();
+            accountSearchInput.select();
+            accountModalEl.removeEventListener(
 
-    accountModalEl.addEventListener("shown.bs.modal", function onShown() {
-        accountSearchInput.focus();
-        accountSearchInput.select();
-    }, { once: true });
+                "shown.bs.modal",
 
+                onShown
+
+            );
+        }
+    );
     modal.show();
 }
 
 /*=========================================================
-    ACCOUNT EVENTS
+    ACCOUNT BUTTON
 =========================================================*/
 
 document.getElementById("btnAccountSearch").addEventListener("click", openAccountSearch);
+
+/*=========================================================
+    ACCOUNT TEXTBOX
+=========================================================*/
 
 accountName.addEventListener("keydown", function (e) {
     if (e.key === "Enter" || e.key === "F2") {
@@ -178,8 +200,37 @@ accountName.addEventListener("keydown", function (e) {
     }
 });
 
+/*=========================================================
+    SELECT ACCOUNT
+=========================================================*/
+
+function selectAccount(code) {
+    const account = accountMaster.find(
+        x => String(x.AccountCode) === String(code)
+    );
+
+    if (!account)
+        return;
+    accountName.value = account.AccountName;
+    accountCode.value = account.AccountCode;
+    document.getElementById("gstRate").value = account.GSTRate || 0;
+
+    bootstrap.Modal
+        .getOrCreateInstance(accountModalEl)
+        .hide();
+    updateGST();
+    partyName.focus();
+}
+
+/*=========================================================
+    ACCOUNT SEARCH
+=========================================================*/
+
 accountSearchInput.addEventListener("input", function () {
-    const keyword = this.value.trim().toLowerCase();
+
+    const keyword = this.value
+        .trim()
+        .toLowerCase();
 
     if (!keyword) {
         renderAccounts(accountMaster);
@@ -187,67 +238,87 @@ accountSearchInput.addEventListener("input", function () {
     }
 
     renderAccounts(accountMaster.filter(acc =>
-        String(acc.AccountCode).toLowerCase().includes(keyword) ||
-        String(acc.AccountName).toLowerCase().includes(keyword) ||
-        String(acc.AccountType || "").toLowerCase().includes(keyword)
+        String(acc.AccountCode)
+            .toLowerCase()
+            .includes(keyword)
+        ||
+        String(acc.AccountName)
+            .toLowerCase()
+            .includes(keyword)
+        ||
+
+        String(acc.AccountType || "")
+            .toLowerCase()
+            .includes(keyword)
     ));
 });
 
+/*=========================================================
+    ACCOUNT KEYBOARD
+=========================================================*/
+
 accountSearchInput.addEventListener("keydown", function (e) {
+
     const rows = accountListBody.querySelectorAll("tr");
-    if (!rows.length) return;
+
+    if (!rows.length)
+        return;
 
     switch (e.key) {
         case "ArrowDown":
             e.preventDefault();
-            if (selectedAccountIndex < rows.length - 1) selectedAccountIndex++;
+            if (
+                selectedAccountIndex
+                < rows.length - 1
+            )
+                selectedAccountIndex++;
             highlightSelectedAccount();
             break;
+
         case "ArrowUp":
             e.preventDefault();
-            if (selectedAccountIndex > 0) selectedAccountIndex--;
+            if (selectedAccountIndex > 0)
+                selectedAccountIndex--;
             highlightSelectedAccount();
             break;
         case "Enter":
             e.preventDefault();
             if (selectedAccountIndex >= 0) {
-                selectAccount(rows[selectedAccountIndex].dataset.code);
+                selectAccount(
+                    rows[selectedAccountIndex]
+                        .dataset.code
+                );
             }
             break;
     }
 });
 
-accountListBody.addEventListener("click", function (e) {
-    const row = e.target.closest("tr");
-    if (!row) return;
-    selectAccount(row.dataset.code);
-});
-
 /*=========================================================
-    SELECT ACCOUNT
+    ACCOUNT GRID CLICK
 =========================================================*/
 
-function selectAccount(code) {
-    const account = accountMaster.find(x => String(x.AccountCode) === String(code));
-    if (!account) return;
+accountListBody.addEventListener("click", function (e) {
 
-    accountName.value = account.AccountName;
-    accountCode.value = account.AccountCode;
-    document.getElementById("gstRate").value = account.GSTRate || 0;
-
-    bootstrap.Modal.getOrCreateInstance(accountModalEl).hide();
-    updateGST();
-    partyName.focus();
-}
+    const row = e.target.closest("tr");
+    if (!row) return;
+    selectAccount(
+        row.dataset.code
+    );
+});
 
 /*=========================================================
     LOAD PARTIES
 =========================================================*/
-
 async function loadParties(companyId) {
+
     const { data, error } = await supabaseClient
         .from("AccountMasterView")
-        .select(`AccountCode, AccountName, GSTNumber, State`)
+        .select(`
+            AccountCode,
+            AccountName,
+            GSTNumber,
+            State
+        `)
         .eq("company_id", companyId)
         .order("AccountName");
 
@@ -258,19 +329,17 @@ async function loadParties(companyId) {
 
     partyMaster = data || [];
     renderPartyList(partyMaster);
+
 }
 
 /*=========================================================
     RENDER PARTY LIST
 =========================================================*/
-
 function renderPartyList(parties) {
-    filteredParty = parties;
-    selectedPartyIndex = parties.length ? 0 : -1;
 
-    if (partyCountBadge) {
-        partyCountBadge.innerText = `${parties.length} Records`;
-    }
+    filteredParty = parties;
+
+    selectedPartyIndex = parties.length ? 0 : -1;
 
     partyListBody.innerHTML = parties.map((party, index) => `
         <tr data-code="${party.AccountCode}"
@@ -288,49 +357,97 @@ function renderPartyList(parties) {
 /*=========================================================
     HIGHLIGHT PARTY
 =========================================================*/
-
 function highlightSelectedParty() {
+
     const rows = partyListBody.querySelectorAll("tr");
     rows.forEach((row, index) => {
-        row.classList.toggle("table-primary", index === selectedPartyIndex);
+        row.classList.toggle(
+            "table-primary",
+            index === selectedPartyIndex
+        );
     });
 
-    rows[selectedPartyIndex]?.scrollIntoView({ block: "nearest" });
+    rows[selectedPartyIndex]?.scrollIntoView({
+        block: "nearest"
+    });
 }
 
 /*=========================================================
     OPEN PARTY SEARCH
 =========================================================*/
-
 function openPartySearch() {
+
     partySearchInput.value = "";
     renderPartyList(partyMaster);
     const modal = bootstrap.Modal.getOrCreateInstance(partyModalEl);
     accountModalEl?.blur();
-
-    partyModalEl.addEventListener("shown.bs.modal", function onShown() {
-        partySearchInput.focus();
-        partySearchInput.select();
-    }, { once: true });
-
+    partyModalEl.addEventListener(
+        "shown.bs.modal",
+        function onShown() {
+            partySearchInput.focus();
+            partySearchInput.select();
+            partyModalEl.removeEventListener(
+                "shown.bs.modal",
+                onShown
+            );
+        },
+        { once: true }
+    );
     modal.show();
 }
 
 /*=========================================================
-    PARTY EVENTS
+    PARTY BUTTON
 =========================================================*/
-
 document.getElementById("btnPartySearch").addEventListener("click", openPartySearch);
 
+/*=========================================================
+    PARTY TEXTBOX
+=========================================================*/
 partyName.addEventListener("keydown", function (e) {
+
     if (e.key === "Enter" || e.key === "F3") {
         e.preventDefault();
         openPartySearch();
     }
 });
 
+/*=========================================================
+    SELECT PARTY
+=========================================================*/
+function selectParty(code) {
+
+    const party = partyMaster.find(
+        x => String(x.AccountCode) === String(code)
+    );
+
+    if (!party) return;
+
+    partyName.value = party.AccountName;
+    partyCode.value = party.AccountCode;
+    partyGST.value = party.GSTNumber || "";
+    const stateControl = document.getElementById("partyState");
+    if (stateControl) {
+        stateControl.value = party.State || "";
+    }
+
+    bootstrap.Modal
+        .getOrCreateInstance(partyModalEl)
+        .hide();
+
+    updateGST();
+
+    document.getElementById("debit").focus();
+}
+
+/*=========================================================
+    PARTY SEARCH
+=========================================================*/
 partySearchInput.addEventListener("input", function () {
-    const keyword = this.value.trim().toLowerCase();
+
+    const keyword = this.value
+        .trim()
+        .toLowerCase();
 
     if (!keyword) {
         renderPartyList(partyMaster);
@@ -338,68 +455,74 @@ partySearchInput.addEventListener("input", function () {
     }
 
     renderPartyList(partyMaster.filter(p =>
-        String(p.AccountCode).toLowerCase().includes(keyword) ||
-        String(p.AccountName).toLowerCase().includes(keyword) ||
-        String(p.GSTNumber ?? "").toLowerCase().includes(keyword) ||
-        String(p.State ?? "").toLowerCase().includes(keyword)
-    ));
+        String(p.AccountCode)
+            .toLowerCase()
+            .includes(keyword)
+        ||
+        String(p.AccountName)
+            .toLowerCase()
+            .includes(keyword)
+
+        ||
+        String(p.GSTNumber ?? "")
+            .toLowerCase()
+            .includes(keyword)
+        ||
+        String(p.State ?? "")
+            .toLowerCase()
+            .includes(keyword)
+    )
+    );
 });
 
+/*=========================================================
+    PARTY KEYBOARD
+=========================================================*/
 partySearchInput.addEventListener("keydown", function (e) {
     const rows = partyListBody.querySelectorAll("tr");
+
     if (!rows.length) return;
 
     switch (e.key) {
         case "ArrowDown":
             e.preventDefault();
-            if (selectedPartyIndex < rows.length - 1) selectedPartyIndex++;
+            if (selectedPartyIndex < rows.length - 1)
+                selectedPartyIndex++;
             highlightSelectedParty();
             break;
         case "ArrowUp":
             e.preventDefault();
-            if (selectedPartyIndex > 0) selectedPartyIndex--;
+            if (selectedPartyIndex > 0)
+                selectedPartyIndex--;
             highlightSelectedParty();
             break;
         case "Enter":
             e.preventDefault();
             if (selectedPartyIndex >= 0) {
-                selectParty(rows[selectedPartyIndex].dataset.code);
+                selectParty(
+                    rows[selectedPartyIndex]
+                        .dataset.code
+                );
             }
             break;
     }
 });
 
+/*=========================================================
+    PARTY GRID CLICK
+=========================================================*/
 partyListBody.addEventListener("click", function (e) {
+
     const row = e.target.closest("tr");
     if (!row) return;
     selectParty(row.dataset.code);
 });
 
 /*=========================================================
-    SELECT PARTY
+    DELETE KEY SUPPORT
 =========================================================*/
-
-function selectParty(code) {
-    const party = partyMaster.find(x => String(x.AccountCode) === String(code));
-    if (!party) return;
-
-    partyName.value = party.AccountName;
-    partyCode.value = party.AccountCode;
-    partyGST.value = party.GSTNumber || "";
-
-    const stateControl = document.getElementById("partyState");
-    if (stateControl) stateControl.value = party.State || "";
-
-    bootstrap.Modal.getOrCreateInstance(partyModalEl).hide();
-    updateGST();
-    document.getElementById("debit").focus();
-}
-
-/*=========================================================
-    DELETE KEY SUPPORT (CLEAR FIELDS)
-=========================================================*/
-
 document.addEventListener("keydown", function (e) {
+
     if (e.key !== "Delete") return;
 
     if (document.activeElement === accountName) {
@@ -414,7 +537,9 @@ document.addEventListener("keydown", function (e) {
         partyCode.value = "";
         partyGST.value = "";
         const stateControl = document.getElementById("partyState");
-        if (stateControl) stateControl.value = "";
+        if (stateControl) {
+            stateControl.value = "";
+        }
         updateGST();
         e.preventDefault();
     }
@@ -426,26 +551,40 @@ document.addEventListener("keydown", function (e) {
 
 const debit = document.getElementById("debit");
 const credit = document.getElementById("credit");
+
 const gstType = document.getElementById("gstType");
 const gstRate = document.getElementById("gstRate");
 
 const cgstAmount = document.getElementById("cgstAmount");
 const sgstAmount = document.getElementById("sgstAmount");
 const igstAmount = document.getElementById("igstAmount");
+
 const gstAmount = document.getElementById("gstAmount");
 const totalAmount = document.getElementById("totalAmount");
+
 
 /*=========================================================
     TRANSACTION MODE
 =========================================================*/
 
-const BANK_MODES = new Set(["Bank", "Cheque", "NEFT", "RTGS", "IMPS", "UPI", "Card"]);
+const BANK_MODES = new Set([
+    "Bank",
+    "Cheque",
+    "NEFT",
+    "RTGS",
+    "IMPS",
+    "UPI",
+    "Card"
+]);
 
 function toggleTransactionFields() {
     const showBank = BANK_MODES.has(transactionMode.value);
     bankSection.classList.toggle("d-none", !showBank);
     instrumentSection.classList.toggle("d-none", !showBank);
-    narrationSection.className = showBank ? "col-12 col-lg-6" : "col-10";
+    narrationSection.className =
+        showBank
+            ? "col-12 col-lg-6"
+            : "col-10";
 
     if (!showBank) {
         bankAccount.value = "";
@@ -456,13 +595,13 @@ function toggleTransactionFields() {
 transactionMode.addEventListener("change", toggleTransactionFields);
 
 /*=========================================================
-    DEBIT / CREDIT TOGGLE
+    DEBIT / CREDIT
 =========================================================*/
 
 function toggleDebitCredit() {
+
     const dr = Number(debit.value) || 0;
     const cr = Number(credit.value) || 0;
-
     if (dr > 0) {
         credit.value = "";
         credit.disabled = true;
@@ -480,21 +619,32 @@ function toggleDebitCredit() {
 }
 
 debit.addEventListener("input", toggleDebitCredit);
+
 credit.addEventListener("input", toggleDebitCredit);
 
 /*=========================================================
-    GST EVENTS & CALCULATION
+    GST EVENTS
 =========================================================*/
 
 gstRate.addEventListener("change", updateGST);
+
 gstType.addEventListener("change", updateGST);
 
+/*=========================================================
+    GST CALCULATION
+=========================================================*/
+
 function calculateGST(amount, rate, type) {
+
     amount = Number(amount) || 0;
     rate = Number(rate) || 0;
 
     if (rate <= 0) {
-        return { taxable: amount, gst: 0, total: amount };
+        return {
+            taxable: amount,
+            gst: 0,
+            total: amount
+        };
     }
 
     if (type === "Inclusive") {
@@ -507,7 +657,7 @@ function calculateGST(amount, rate, type) {
         };
     }
 
-    const gst = amount * (rate / 100);
+    const gst = amount * rate / 100;
     return {
         taxable: amount,
         gst: Number(gst.toFixed(2)),
@@ -515,13 +665,19 @@ function calculateGST(amount, rate, type) {
     };
 }
 
+/*=========================================================
+    UPDATE GST
+=========================================================*/
+
 function updateGST() {
+
     const amount = (Number(debit.value) || 0) + (Number(credit.value) || 0);
     const rate = Number(gstRate.value) || 0;
     const type = gstType.value;
     const result = calculateGST(amount, rate, type);
 
     const companyState = (companyProfile?.gst_number || "").substring(0, 2);
+
     const partyState = (partyGST.value || companyState).substring(0, 2);
 
     if (companyState === partyState) {
@@ -531,7 +687,8 @@ function updateGST() {
     } else {
         cgstAmount.value = "0.00";
         sgstAmount.value = "0.00";
-        igstAmount.value = result.gst.toFixed(2);
+        igstAmount.value =
+            result.gst.toFixed(2);
     }
 
     gstAmount.value = result.gst.toFixed(2);
@@ -543,30 +700,37 @@ function updateGST() {
 =========================================================*/
 
 document.addEventListener("keydown", function (e) {
-    // Ctrl+S
+
+    /* Ctrl+S */
     if (e.ctrlKey && e.key === "s") {
         e.preventDefault();
         saveUpdateAccountingVoucher();
     }
-    // Ctrl+N
+
+    /* Ctrl+N */
     if (e.ctrlKey && e.key === "n") {
         e.preventDefault();
         clearVoucher();
     }
-    // Function Keys
-    switch (e.key) {
-        case "F2":
-            e.preventDefault();
-            openAccountSearch();
-            break;
-        case "F3":
-            e.preventDefault();
-            openPartySearch();
-            break;
-        case "F4":
-            e.preventDefault();
-            openVoucherSearch();
-            break;
+
+    /* F2 */
+
+    if (e.key === "F2") {
+        e.preventDefault();
+        openAccountSearch();
+    }
+
+    /* F3 */
+
+    if (e.key === "F3") {
+        e.preventDefault();
+        openPartySearch();
+    }
+    /* F4 */
+
+    if (e.key === "F4") {
+        e.preventDefault();
+        openVoucherSearch();
     }
 });
 
@@ -575,23 +739,33 @@ document.addEventListener("keydown", function (e) {
 =========================================================*/
 
 document.addEventListener("keydown", function (e) {
-    if (e.key !== "Enter" || e.target.tagName === "TEXTAREA") return;
 
+    if (e.key !== "Enter")
+        return;
+    if (
+        e.target.tagName === "TEXTAREA"
+    )
+        return;
+    e.preventDefault();
     const controls = [accountName, partyName, debit, credit, gstType, gstRate, narration];
+
     const index = controls.indexOf(document.activeElement);
 
-    if (index >= 0 && index < controls.length - 1) {
-        e.preventDefault();
+    if (
+        index >= 0 && index < controls.length - 1
+    ) {
         controls[index + 1].focus();
     }
 });
-
 /*=========================================================
     LOAD VOUCHER NUMBER
 =========================================================*/
-
 async function loadVoucherNumber() {
-    if (saveButton.dataset.mode === "update") return;
+
+    if (saveButton.dataset.mode === "update") {
+        console.log("Skipped because Update mode");
+        return;
+    }
 
     const { data, error } = await supabaseClient.rpc(
         "generate_voucher_no",
@@ -606,6 +780,7 @@ async function loadVoucherNumber() {
         console.error(error);
         return;
     }
+
     voucherNo.value = data;
 }
 
@@ -614,21 +789,25 @@ async function loadVoucherNumber() {
 =========================================================*/
 
 function validateVoucher() {
+
     if (!voucherDate.value) {
         showAlert("Select Voucher Date");
         voucherDate.focus();
         return false;
     }
+
     if (!branch.value) {
         showAlert("Select Branch");
         branch.focus();
         return false;
     }
+
     if (!costCenter.value) {
         showAlert("Select Cost Center");
         costCenter.focus();
         return false;
     }
+
     if (!accountCode.value) {
         showAlert("Select Account");
         accountName.focus();
@@ -645,6 +824,7 @@ function validateVoucher() {
     }
 
     return true;
+
 }
 
 /*=========================================================
@@ -652,8 +832,9 @@ function validateVoucher() {
 =========================================================*/
 
 async function saveUpdateAccountingVoucher() {
-    if (!validateVoucher()) return;
 
+    if (!validateVoucher())
+        return;
     const mode = saveButton.dataset.mode;
     const gstAmountValue = Number(gstAmount.value) || 0;
 
@@ -662,10 +843,14 @@ async function saveUpdateAccountingVoucher() {
 
     // If GST is Inclusive, store the amount excluding GST
     if (gstType.value === "Inclusive" && mode === "insert") {
-        if (debitValue > 0) debitValue -= gstAmountValue;
-        if (creditValue > 0) creditValue -= gstAmountValue;
-    }
+        if (debitValue > 0) {
+            debitValue -= gstAmountValue;
+        }
 
+        if (creditValue > 0) {
+            creditValue -= gstAmountValue;
+        }
+    }
     const data = {
         VoucherNo: voucherNo.value,
         VoucherDate: voucherDate.value,
@@ -693,23 +878,31 @@ async function saveUpdateAccountingVoucher() {
         TotalAmount: Number(totalAmount.value)
     };
 
+
     let response;
     const payload = JSON.parse(JSON.stringify(data));
 
+    console.log(payload);
     if (mode === "insert") {
+
         response = await supabaseClient
             .from("AccountingVoucher")
             .insert([payload])
             .select();
     } else {
+
         response = await supabaseClient
             .from("AccountingVoucher")
             .update({
                 ...data,
                 update_by: UserLoginID,
-                update_at: new Date().toISOString()
+                update_at: localtimeStamp
             })
-            .eq("VoucherID", voucherID.value);
+
+            .eq(
+                "VoucherID",
+                voucherID.value
+            );
     }
 
     if (response.error) {
@@ -718,7 +911,11 @@ async function saveUpdateAccountingVoucher() {
         return;
     }
 
-    showAlert(mode === "insert" ? "Voucher Saved" : "Voucher Updated");
+    showAlert(
+        mode === "insert"
+            ? "Voucher Saved"
+            : "Voucher Updated"
+    );
     saveButton.dataset.mode = "insert";
     clearVoucher();
 }
@@ -728,6 +925,7 @@ async function saveUpdateAccountingVoucher() {
 =========================================================*/
 
 async function loadVoucher(voucherId) {
+
     const { data, error } = await supabaseClient
         .from("AccountingVoucher")
         .select("*")
@@ -761,21 +959,25 @@ async function loadVoucher(voucherId) {
     gstAmount.value = data.TotalGSTAmount;
     totalAmount.value = data.TotalAmount;
 
-    const acc = accountMaster.find(x => x.AccountCode === data.AccountCode);
-    if (acc) accountName.value = acc.AccountName;
+    const acc = accountMaster.find(
+        x => x.AccountCode === data.AccountCode
+    );
+    if (acc)
+        accountName.value = acc.AccountName;
 
-    const party = partyMaster.find(x => x.AccountCode === data.PartyCode);
+    const party = partyMaster.find(
+        x => x.AccountCode === data.PartyCode
+    );
+
     if (party) {
         partyName.value = party.AccountName;
         partyGST.value = party.GSTNumber;
     }
-
     modifyButton.disabled = false;
     saveButton.dataset.mode = "update";
     saveButton.disabled = true;
     saveButton.innerHTML = '<i class="bi bi-save"></i> Update';
-
-    disableForm(); // Assuming defined globally
+    disableForm();
     toggleTransactionFields();
 }
 
@@ -784,14 +986,20 @@ async function loadVoucher(voucherId) {
 =========================================================*/
 
 async function deleteVoucher() {
-    if (!voucherID.value || !confirm("Delete Voucher ?")) return;
+
+    if (!voucherID.value)
+        return;
+
+    if (!confirm("Delete Voucher ?"))
+        return;
 
     const { error } = await supabaseClient
         .from("AccountingVoucher")
         .update({
             Status: false,
             update_by: UserLoginID,
-            update_at: new Date().toISOString()
+            update_at:
+                new Date()
         })
         .eq("VoucherID", voucherID.value);
 
@@ -810,34 +1018,27 @@ async function deleteVoucher() {
 
 async function clearVoucher() {
     saveButton.dataset.mode = "insert";
-    document.getElementById("voucherForm").reset(); // Reset form explicitly 
-
+    voucherForm.reset();
     voucherID.value = "";
     accountCode.value = "";
     partyCode.value = "";
     partyGST.value = "";
-
     debit.disabled = false;
     credit.disabled = false;
-
     cgstAmount.value = "0.00";
     sgstAmount.value = "0.00";
     igstAmount.value = "0.00";
     gstAmount.value = "0.00";
     totalAmount.value = "0.00";
-
     voucherDate.value = new Date().toISOString().substring(0, 10);
     toggleTransactionFields();
     await loadVoucherNumber();
-
     accountName.focus();
     voucherNoSearch.disabled = false;
     modifyButton.disabled = true;
-
     saveButton.disabled = false;
     saveButton.innerHTML = '<i class="bi bi-save"></i> Save';
-
-    enableForm(); // Assuming defined globally
+    enableForm();
 }
 
 /*=========================================================
@@ -845,25 +1046,47 @@ async function clearVoucher() {
 =========================================================*/
 
 saveButton.addEventListener("click", saveUpdateAccountingVoucher);
-newButton.addEventListener("click", async () => await clearVoucher());
+
+newButton.addEventListener("click", async () => {
+    await clearVoucher();
+});
+
 deleteButton.addEventListener("click", deleteVoucher);
+
 voucherType.addEventListener("change", loadVoucherNumber);
+
 voucherDate.addEventListener("change", loadVoucherNumber);
 
-/*=========================================================
-    VOUCHER SEARCH & PAGINATION
-=========================================================*/
+
+// =====================================================
+// VOUCHER SEARCH
+// =====================================================
+
+
+//======================================================
+// LOAD VOUCHERS
+//======================================================
 
 async function loadVoucherList(page = 1) {
+
     voucherPage = page;
+
     const from = (page - 1) * voucherPageSize;
     const to = from + voucherPageSize - 1;
 
     const { data, error, count } = await supabaseClient
         .from("AccountingVoucherView")
         .select(`
-            VoucherID, VoucherNo, VoucherDate, VoucherType, BranchID, 
-            BranchName, CostCenterName, BankAccountName, Amount, AmountType
+            VoucherID,
+            VoucherNo,
+            VoucherDate,
+            VoucherType,
+            BranchID,
+            BranchName,
+            CostCenterName,
+            BankAccountName,
+            Amount,
+            AmountType
         `, { count: "exact" })
         .eq("CompanyID", CompanyID)
         .eq("Status", true)
@@ -882,48 +1105,68 @@ async function loadVoucherList(page = 1) {
     renderVoucherPagination();
 }
 
+//======================================================
+// RENDER LIST
+//======================================================
+
 function renderVoucherList(list) {
+
     const tbody = document.getElementById("voucherListBody");
+
     tbody.innerHTML = "";
 
-    // Syncing targeted DOM element with HTML updates
-    const countBadge = document.getElementById("voucherCountBadge") || document.getElementById("voucherCount");
-    if (countBadge) countBadge.innerText = `${list.length} Records`;
+    document.getElementById("partyCount").innerText =
+        `${list.length} Records`;
 
     if (!list.length) {
+
         tbody.innerHTML = `
         <tr>
-            <td colspan="6" class="text-center text-muted py-3">
+            <td colspan="8" class="text-center text-muted py-3">
                 No Voucher Found
             </td>
-        </tr>`;
+        </tr>
+        `;
+
         return;
     }
 
     list.forEach(v => {
-        const amtClass = v.AmountType === 'Dr' ? 'text-danger fw-bold' : 'text-success fw-bold';
-        const formattedDate = v.VoucherDate ? new Date(v.VoucherDate).toLocaleDateString("en-GB") : "";
 
         tbody.insertAdjacentHTML("beforeend", `
-        <tr class="voucher-row" data-id="${v.VoucherID}">
+
+        <tr class="voucher-row"
+            data-id="${v.VoucherID}">
             <td>${v.VoucherNo ?? ""}</td>
-            <td>${formattedDate}</td>
+            <td>
+                ${v.VoucherDate
+                ? new Date(v.VoucherDate).toLocaleDateString("en-GB")
+                : ""}
+            </td>
             <td>${v.BranchID ?? ""}</td>
             <td>${v.CostCenterName ?? ""}</td>
             <td>${v.BankAccountName ?? ""}</td>
-            <td class="text-end ${amtClass}">
-                ${Number(v.Amount || 0).toFixed(2)} ${v.AmountType || ""}
-            </td>
-        </tr>`);
+<td class="text-end ${v.AmountType === 'Dr' ? 'text-danger fw-bold' : 'text-success fw-bold'}">
+    ${Number(v.Amount || 0).toFixed(2)} ${v.AmountType || ""}
+</td>
+        </tr>
+
+        `);
+
     });
+
 }
 
 function renderVoucherPagination() {
+
     const totalPages = Math.ceil(voucherTotalRecords / voucherPageSize);
+
     const container = document.getElementById("voucherPagination");
+
     if (!container) return;
 
     container.innerHTML = "";
+
     if (totalPages <= 1) return;
 
     container.insertAdjacentHTML("beforeend", `
@@ -932,7 +1175,11 @@ function renderVoucherPagination() {
             onclick="loadVoucherList(${voucherPage - 1})">
             Previous
         </button>
-        <span class="mx-2">Page ${voucherPage} of ${totalPages}</span>
+
+        <span class="mx-2">
+            Page ${voucherPage} of ${totalPages}
+        </span>
+
         <button class="btn btn-sm btn-outline-secondary ms-2"
             ${voucherPage === totalPages ? "disabled" : ""}
             onclick="loadVoucherList(${voucherPage + 1})">
@@ -940,11 +1187,20 @@ function renderVoucherPagination() {
         </button>
     `);
 }
+//======================================================
+// SEARCH
+//======================================================
 
 function filterVoucherList() {
-    const text = document.getElementById("voucherSearch").value.toLowerCase().trim();
+
+    const text = document
+        .getElementById("voucherSearch")
+        .value
+        .toLowerCase()
+        .trim();
 
     if (!text) {
+
         renderVoucherList(voucherMaster);
         return;
     }
@@ -958,6 +1214,10 @@ function filterVoucherList() {
     renderVoucherList(filtered);
 }
 
+//======================================================
+// OPEN MODAL
+//======================================================
+
 function openVoucherSearch() {
     document.getElementById("voucherSearch").value = "";
     renderVoucherList(voucherMaster);
@@ -967,22 +1227,35 @@ function openVoucherSearch() {
     }, 200);
 }
 
-/*=========================================================
-    VOUCHER ROW / MODAL EVENTS
-=========================================================*/
+//======================================================
+// ROW CLICK
+//======================================================
 
 document.addEventListener("click", function (e) {
     const row = e.target.closest(".voucher-row");
     if (!row) return;
-    selectVoucher(row.dataset.id);
+    const voucherId = row.dataset.id;
+    selectVoucher(voucherId);
 });
 
+//======================================================
+// SELECT VOUCHER
+//======================================================
+
 async function selectVoucher(voucherId) {
+
     voucherModal.hide();
+
+    // console.log("Selected Voucher :", voucherId);
+
+    // Load voucher for editing
     await loadVoucher(voucherId);
+
 }
 
-document.getElementById("voucherNoSearch").addEventListener("click", openVoucherSearch);
+document.getElementById("voucherNoSearch").addEventListener("click", () => {
+    openVoucherSearch();
+});
 
 voucherNo.addEventListener("keydown", function (e) {
     if (e.key === "Enter" || e.key === "F4") {
@@ -992,26 +1265,12 @@ voucherNo.addEventListener("keydown", function (e) {
 });
 
 modifyButton.addEventListener("click", async () => {
-    enableForm(); // Assuming defined globally
+    enableForm();
     saveButton.disabled = false;
     voucherNoSearch.disabled = true;
     modifyButton.disabled = true;
     deleteButton.disabled = false;
 });
-
-/*=========================================================
-    FINANCIAL YEAR TRACKING
-=========================================================*/
-let currentDisplayedFY = null;
-
-// Helper: Returns the starting year of the Financial Year (e.g., 2023 for March 2024)
-function getFinancialYear(dateString) {
-    if (!dateString) return null;
-    const d = new Date(dateString);
-    const year = d.getFullYear();
-    const month = d.getMonth() + 1; // JavaScript months are 0-11
-
-    // If month is April (4) or later, FY starts in the current year. 
-    // If Jan-Mar, FY started in the previous year.
-    return month >= 4 ? year : year - 1;
-}
+voucherNoSearch.addEventListener("click", () => {
+    openVoucherSearch();
+});

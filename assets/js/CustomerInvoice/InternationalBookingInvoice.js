@@ -1,3 +1,4 @@
+//InternationalBookingInvoice.js
 // ============================================
 // CONSTANTS & CONFIGURATION
 // ============================================
@@ -404,7 +405,7 @@ async function updateInvoiceNumbers(invNo) {
             .in('id', shipmentIds);
 
         if (error) throw error;
-        console.log(`Invoice numbers updated for ${shipmentIds.length} shipments`);
+        // console.log(`Invoice numbers updated for ${shipmentIds.length} shipments`);
     } catch (error) {
         console.error('Error updating invoice numbers:', error.message);
         throw error;
@@ -435,7 +436,6 @@ async function loadInvoiceBookings(invoiceNo) {
 
         if (!data?.length) {
             alert('No shipments found for this invoice.');
-            document.getElementById('fetchPendingInvoices').disabled = false;
             return;
         }
 
