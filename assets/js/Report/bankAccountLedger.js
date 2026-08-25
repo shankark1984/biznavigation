@@ -134,23 +134,55 @@ function buildBaseQuery(selectStr = '*', options = {}) {
 async function loadTable(filters = {}) {
     els.spinner.classList.remove("d-none");
 
-    const [openingBalance] = await Promise.all([getOpeningBalance(filters)]);
+    const offset = (currentPage - 1) * pageSize;
 
-    // PASS the select parameters INTO the builder
+    // 1. Fetch standard Opening Balance (prior to date filters)
+    const baseOpeningBalancePromise = getOpeningBalance(filters);
+
+    // 2. Fetch all transactions inside the filter, but BEFORE the current page
+    const prevPagesPromise = offset > 0
+        ? applyFilters(buildBaseQuery('Debit, Credit'), filters).range(0, offset - 1)
+        : Promise.resolve({ data: [] });
+
+    // 3. Fetch the actual current page data
     let query = buildBaseQuery('*', { count: 'exact' });
     query = applyFilters(query, filters);
+    const pageDataPromise = query.range(offset, offset + pageSize - 1);
 
-    const { data, error, count } = await query.range(
-        (currentPage - 1) * pageSize,
-        currentPage * pageSize - 1
-    );
+    const [baseOb, prevPagesRes, pageRes] = await Promise.all([
+        baseOpeningBalancePromise,
+        prevPagesPromise,
+        pageDataPromise
+    ]);
 
+    const { data, error, count } = pageRes;
     els.spinner.classList.add("d-none");
 
     if (error) return console.error(error);
 
-    renderTable(data, openingBalance, filters);
-    loadGrandTotals(filters, openingBalance);
+    // Calculate Brought Forward Balance (Base OB + Previous Pages Net)
+    const prevPagesDebit = (prevPagesRes.data || []).reduce((sum, row) => sum + Number(row.Debit || 0), 0);
+    const prevPagesCredit = (prevPagesRes.data || []).reduce((sum, row) => sum + Number(row.Credit || 0), 0);
+
+    const totalBfDebit = baseOb.debit + prevPagesDebit;
+    const totalBfCredit = baseOb.credit + prevPagesCredit;
+    const netBf = totalBfCredit - totalBfDebit;
+
+    const broughtForwardBalance = {
+        debit: totalBfDebit,
+        credit: totalBfCredit,
+        balance: Math.abs(netBf),
+        balanceType: netBf < 0 ? "Dr" : netBf > 0 ? "Cr" : "",
+        debitBalance: netBf < 0 ? Math.abs(netBf) : 0,
+        creditBalance: netBf > 0 ? netBf : 0,
+        isBroughtForward: currentPage > 1 // Flag for the UI
+    };
+
+    // Pass the Brought Forward balance to the table
+    renderTable(data, broughtForwardBalance, filters);
+
+    // Grand totals should still use the base opening balance
+    loadGrandTotals(filters, baseOb);
     renderPagination(count, loadTable);
     updateHeaderSortIndicators();
 }
@@ -199,11 +231,14 @@ function renderTable(data, openingBalance = {}, filters = {}) {
 }
 
 function buildOpeningBalanceRow(openingDate, ob, obValue) {
+    const label = ob.isBroughtForward ? "Brought Forward" : "Opening Balance";
+    const displayDate = ob.isBroughtForward ? "" : (openingDate ? formatDate(openingDate) : "");
+
     return `
     <tr class="table-warning fw-bold">
         <td class="text-center">-</td>
-        <td>${openingDate ? formatDate(openingDate) : ""}</td>
-        <td>Opening Balance</td>
+        <td>${displayDate}</td>
+        <td>${label}</td>
         <td></td>
         <td class="text-end">${ob.balanceType === "Dr" ? formatAmount(obValue) : ""}</td>
         <td class="text-end">${ob.balanceType === "Cr" ? formatAmount(obValue) : ""}</td>
