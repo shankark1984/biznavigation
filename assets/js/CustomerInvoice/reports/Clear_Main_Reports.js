@@ -973,7 +973,8 @@ async function drawShipmentTable_Clear_Main(
     FONT,
     rows = [],
     startY,
-    allCharges = []
+    allCharges = [],
+    reportType
 ) {
 
     allCharges = Array.isArray(allCharges)
@@ -999,20 +1000,19 @@ async function drawShipmentTable_Clear_Main(
         function getPriority(chargeType = "") {
             const txt = String(chargeType).trim().toLowerCase();
 
-            if (reportType === "Duty Invoice") {
-                if (txt.includes("import duty")) return 1;
-                if (txt.includes("duty")) return 2;
-            } else {
-                if (
-                    txt.includes("customs clearance charges") ||
-                    txt.includes("custom clearance charges") ||
-                    txt.includes("customs clearance") ||
-                    txt.includes("custom clearance")
-                ) {
-                    return 1;
-                }
-            }
+            // 1. Highest priority: Import Duty
+            if (txt.includes("import duty")) return 1;
 
+            // 2. Next: Other Custom Duties
+            if (txt.includes("custom duty") || txt.includes("customs duty")) return 2;
+
+            // 3. Next: Any other duty
+            if (txt.includes("duty")) return 3;
+
+            // 4. Next: Customs Clearance charges
+            if (txt.includes("customs clearance") || txt.includes("custom clearance")) return 4;
+
+            // 5. Default priority for everything else (like Handling Charges)
             return 999;
         }
 
@@ -1021,7 +1021,7 @@ async function drawShipmentTable_Clear_Main(
 
         if (p1 !== p2) return p1 - p2;
 
-        // Keep remaining charges alphabetically sorted
+        // Keep remaining charges alphabetically sorted (e.g., Handling comes before Transportation)
         return (a.ChargesType || "").localeCompare(b.ChargesType || "");
     });
     // ==========================================
