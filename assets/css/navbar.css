@@ -3,7 +3,7 @@
 ========================= */
 :root {
     /* LAYOUT & COLORS */
-    --sidebar-width: 340px;
+    --sidebar-width: 300px;
     --sidebar-collapsed-width: 70px;
     --sidebar-bg: rgba(30, 41, 59, 0.92);
     --primary-color: #2563eb;
