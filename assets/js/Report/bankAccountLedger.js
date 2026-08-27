@@ -254,7 +254,9 @@ async function getOpeningBalance(filters = {}) {
     if (filters.bankAccountName) query = query.ilike("BankAccountNo", `%${filters.bankAccountName}%`);
 
     const openingDate = getOpeningBalanceDate(filters);
-    if (openingDate) query = query.lt("TransactionDate", openingDate);
+
+    // FIX: Changed .lt to .lte so it INCLUDES the 31st of March (or the day prior to start date)
+    if (openingDate) query = query.lte("TransactionDate", openingDate);
 
     const { data, error } = await query;
 
@@ -277,17 +279,29 @@ async function getOpeningBalance(filters = {}) {
 }
 
 function getOpeningBalanceDate(filters = {}) {
+    // Helper to format date safely in local time
+    const formatDateLocal = (date) => {
+        const yyyy = date.getFullYear();
+        const mm = String(date.getMonth() + 1).padStart(2, '0');
+        const dd = String(date.getDate()).padStart(2, '0');
+        return `${yyyy}-${mm}-${dd}`;
+    };
+
     if (filters.startDate) {
-        const d = new Date(filters.startDate);
-        d.setDate(d.getDate() - 1);
-        return d.toISOString().split("T")[0];
+        // Explicitly split and parse to avoid timezone shifting during Date creation
+        const [y, m, d] = filters.startDate.split('-').map(Number);
+        const dateObj = new Date(y, m - 1, d);
+        dateObj.setDate(dateObj.getDate() - 1);
+        return formatDateLocal(dateObj);
     }
+
     if (filters.financialYear) {
         const [startYear] = filters.financialYear.split("-").map(Number);
-        const d = new Date(startYear, 3, 1);
-        d.setDate(d.getDate() - 1);
-        return d.toISOString().split("T")[0];
+        // The day before a financial year (April 1st) is ALWAYS March 31st of the startYear.
+        // We can just return the string directly and skip the Date object math!
+        return `${startYear}-03-31`;
     }
+
     return "";
 }
 
@@ -547,3 +561,4 @@ async function exportToPdf() {
 
     doc.save("AccountingLedger.pdf");
 }
+

@@ -1,12 +1,17 @@
 {
+  "id": "/",
   "name": "BizNavigation",
   "short_name": "BizNav",
   "start_url": "/index.html",
   "scope": "/",
   "display": "standalone",
+  "orientation": "portrait-primary",
   "background_color": "#0d6efd",
   "theme_color": "#0d6efd",
   "description": "Smart logistics software for transportation, warehousing & freight forwarding.",
+  "lang": "en",
+  "dir": "ltr",
+  "categories": ["business", "productivity", "logistics"],
   "icons": [
     {
       "src": "assets/img/applogo-72x72.png",
@@ -36,16 +41,16 @@
     {
       "src": "assets/img/applogo-192x192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
       "src": "assets/img/applogo-512x512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
-  ]
-,
-
+  ],
   "shortcuts": [
     {
       "name": "New Booking",
@@ -74,20 +79,20 @@
       ]
     }
   ],
-
   "screenshots": [
     {
       "src": "assets/screenshots/screenshot1.png",
       "sizes": "1080x1920",
-      "type": "image/png"
+      "type": "image/png",
+      "form_factor": "narrow"
     },
     {
       "src": "assets/screenshots/screenshot2.png",
       "sizes": "1080x1920",
-      "type": "image/png"
+      "type": "image/png",
+      "form_factor": "narrow"
     }
   ],
-
   "share_target": {
     "action": "/share.html",
     "method": "POST",
@@ -98,7 +103,6 @@
       "url": "link"
     }
   },
-
   "related_applications": [
     {
       "platform": "play",

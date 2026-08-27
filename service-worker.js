@@ -1,5 +1,7 @@
-const CACHE_NAME = 'biznavigation-cache-v3.04.08.03';
-const MAX_CACHE_ITEMS = 50;
+const VERSION = 'v3.04.08.03';
+const STATIC_CACHE = `biznav-static-${VERSION}`;
+const DYNAMIC_CACHE = `biznav-dynamic-${VERSION}`;
+const MAX_DYNAMIC_ITEMS = 50;
 
 const PRECACHE_URLS = [
     '/',
@@ -9,308 +11,145 @@ const PRECACHE_URLS = [
     '/assets/img/applogo-192x192.png'
 ];
 
-/* ================= CACHE LIMIT ================= */
+/* ================= CACHE LIMIT (Optimized) ================= */
+// Uses a while loop instead of recursion to prevent stack overflow
 async function limitCacheSize(cacheName, maxItems) {
-
     const cache = await caches.open(cacheName);
-    const keys = await cache.keys();
+    let keys = await cache.keys();
 
-    if (keys.length > maxItems) {
+    while (keys.length > maxItems) {
         await cache.delete(keys[0]);
-        await limitCacheSize(cacheName, maxItems);
+        keys = await cache.keys(); // Re-evaluate keys
     }
 }
 
 /* ================= INSTALL ================= */
 self.addEventListener('install', event => {
-
-    // console.log('[SW] Installing...');
-
     event.waitUntil(
-        caches.open(CACHE_NAME).then(async cache => {
-
+        caches.open(STATIC_CACHE).then(async cache => {
             for (const url of PRECACHE_URLS) {
-
                 try {
-
                     const response = await fetch(url);
-
-                    if (!response.ok) {
-                        throw new Error(`Failed: ${response.status}`);
-                    }
-
+                    if (!response.ok) throw new Error(`Failed: ${response.status}`);
                     await cache.put(url, response);
-
-                    // console.log('[SW] Cached:', url);
-
                 } catch (err) {
-
-                    console.warn('[SW] Failed to cache:', url, err);
+                    console.warn('[SW] Failed to cache precache URL:', url, err);
                 }
             }
         })
     );
-
-    self.skipWaiting();
+    self.skipWaiting(); // Forces the waiting service worker to become the active one
 });
 
 /* ================= ACTIVATE ================= */
 self.addEventListener('activate', event => {
-
-    // console.log('[SW] Activating...');
-
     event.waitUntil(
         (async () => {
-
             const keys = await caches.keys();
-
-            // delete old caches
+            // Delete old caches (both static and dynamic) that don't match current version
             await Promise.all(
-                keys
-                    .filter(key => key !== CACHE_NAME)
+                keys.filter(key => key.startsWith('biznav-') && key !== STATIC_CACHE && key !== DYNAMIC_CACHE)
                     .map(key => caches.delete(key))
             );
 
-            // notify all tabs
-            const clients = await self.clients.matchAll({
-                type: 'window'
-            });
-
-            clients.forEach(client => {
-                client.postMessage({
-                    type: 'SW_UPDATED'
-                });
-            });
+            const clients = await self.clients.matchAll({ type: 'window' });
+            clients.forEach(client => client.postMessage({ type: 'SW_UPDATED' }));
 
             await self.clients.claim();
-
-            // console.log('[SW] Activated');
-
         })()
     );
 });
 
 /* ================= MESSAGE ================= */
 self.addEventListener('message', event => {
-
     if (event.data?.action === 'skipWaiting') {
-
-        // console.log('[SW] Skip waiting triggered');
-
         self.skipWaiting();
     }
 });
 
 /* ================= FETCH ================= */
 self.addEventListener('fetch', event => {
-
     const request = event.request;
-
-    // only GET requests
     if (request.method !== 'GET') return;
 
     const url = new URL(request.url);
 
-    // block localhost requests completely
-    if (
-        url.hostname === '127.0.0.1' ||
-        url.hostname === 'localhost'
-    ) {
-
-        // console.warn(
-        //     '[SW] Blocked localhost request:',
-        //     request.url
-        // );
-
+    // Block localhost and non-http(s) requests
+    if (url.hostname === '127.0.0.1' || url.hostname === 'localhost' || !url.protocol.startsWith('http')) {
         return;
     }
 
-    // only http/https
-    if (
-        url.protocol !== 'http:' &&
-        url.protocol !== 'https:'
-    ) {
+    // Ignore specific external APIs completely
+    if (url.hostname.includes('api.postalpincode.in')) {
         return;
     }
 
-    /* =========================================================
-       EXTERNAL APIs
-    ========================================================= */
-    if (
-        url.hostname.includes('api.postalpincode.in')
-    ) {
-        return;
-    }
-
-    /* =========================================================
-       SUPABASE API
-    ========================================================= */
-    if (
-        url.hostname.includes('supabase.co')
-    ) {
-
+    /* 1. SUPABASE API (Network First -> Dynamic Cache -> Offline JSON) */
+    if (url.hostname.includes('supabase.co')) {
         event.respondWith(
-
             fetch(request)
-
                 .then(response => {
-
-                    if (
-                        response &&
-                        response.status === 200
-                    ) {
-
+                    if (response && response.status === 200) {
                         const clone = response.clone();
-
-                        caches.open(CACHE_NAME)
-                            .then(cache => {
-
-                                cache.put(request, clone);
-
-                                limitCacheSize(
-                                    CACHE_NAME,
-                                    MAX_CACHE_ITEMS
-                                );
-                            });
+                        caches.open(DYNAMIC_CACHE).then(cache => {
+                            cache.put(request, clone);
+                            limitCacheSize(DYNAMIC_CACHE, MAX_DYNAMIC_ITEMS);
+                        });
                     }
-
                     return response;
                 })
-
                 .catch(async () => {
+                    const cached = await caches.match(request);
+                    return cached || new Response(
+                        JSON.stringify({ error: 'Offline', message: 'No cached data available' }),
+                        { status: 503, headers: { 'Content-Type': 'application/json' } }
+                    );
+                })
+        );
+        return;
+    }
 
-                    const cached =
-                        await caches.match(request);
+    /* 2. HTML NAVIGATION (Network First -> Static Cache -> Offline HTML) */
+    if (request.mode === 'navigate') {
+        event.respondWith(
+            fetch(request)
+                .catch(async () => {
+                    // Try to get the requested page from cache first
+                    const cachedPage = await caches.match(request);
+                    if (cachedPage) return cachedPage;
 
-                    if (cached) {
-                        return cached;
+                    // Fallback to offline page
+                    return caches.match('/pages/Tools/offline.html');
+                })
+        );
+        return;
+    }
+
+    /* 3. STATIC FILES (Cache First -> Network -> Static Cache -> Image Fallback) */
+    event.respondWith(
+        caches.match(request).then(cachedResponse => {
+            if (cachedResponse) return cachedResponse;
+
+            return fetch(request)
+                .then(networkResponse => {
+                    if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
+                        return networkResponse;
                     }
 
-                    return new Response(
-                        JSON.stringify({
-                            error: 'Offline'
-                        }),
-                        {
-                            status: 503,
-                            headers: {
-                                'Content-Type':
-                                    'application/json'
-                            }
-                        }
-                    );
+                    // Only cache assets from our own origin
+                    if (url.origin === self.location.origin) {
+                        const responseClone = networkResponse.clone();
+                        caches.open(STATIC_CACHE).then(cache => cache.put(request, responseClone));
+                    }
+                    return networkResponse;
                 })
-        );
-
-        return;
-    }
-
-    /* =========================================================
-       HTML NAVIGATION
-    ========================================================= */
-    if (request.mode === 'navigate') {
-
-        event.respondWith(
-
-            fetch(request)
-
                 .catch(async () => {
-
-                    return await caches.match(
-                        '/pages/Tools/offline.html'
-                    );
-                })
-        );
-
-        return;
-    }
-
-    /* =========================================================
-       STATIC FILES
-    ========================================================= */
-    event.respondWith(
-
-        caches.match(request)
-
-            .then(cachedResponse => {
-
-                if (cachedResponse) {
-                    return cachedResponse;
-                }
-
-                return fetch(request)
-
-                    .then(networkResponse => {
-
-                        if (
-                            !networkResponse ||
-                            networkResponse.status !== 200
-                        ) {
-                            return networkResponse;
-                        }
-
-                        const responseClone =
-                            networkResponse.clone();
-
-                        // cache only production assets
-                        if (
-                            url.origin === self.location.origin &&
-                            !request.url.includes('127.0.0.1') &&
-                            !request.url.includes('localhost')
-                        ) {
-
-                            caches.open(CACHE_NAME)
-                                .then(cache => {
-
-                                    cache.put(
-                                        request,
-                                        responseClone
-                                    );
-
-                                    limitCacheSize(
-                                        CACHE_NAME,
-                                        MAX_CACHE_ITEMS
-                                    );
-                                });
-                        }
-
-                        return networkResponse;
-                    })
-
-                    .catch(async err => {
-
-                        console.warn(
-                            '[SW] Fetch failed:',
-                            request.url,
-                            err
-                        );
-
-                        // image fallback
-                        if (
-                            request.destination === 'image'
-                        ) {
-
-                            return await caches.match(
-                                '/assets/img/applogo-192x192.png'
-                            );
-                        }
-
-                        // offline page
-                        if (
-                            request.mode === 'navigate'
-                        ) {
-
-                            return await caches.match(
-                                '/pages/Tools/offline.html'
-                            );
-                        }
-
-                        return new Response(
-                            'Offline',
-                            {
-                                status: 503
-                            }
-                        );
-                    });
-            })
+                    // Image fallback
+                    if (request.destination === 'image') {
+                        return caches.match('/assets/img/applogo-192x192.png');
+                    }
+                    return new Response('Offline', { status: 503 });
+                });
+        })
     );
 });
