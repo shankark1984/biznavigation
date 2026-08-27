@@ -1,12 +1,18 @@
+/* =========================
+   TABLE VARIABLES
+========================= */
 :root {
     --table-header-bg: #212529;
     --table-header-color: #fff;
     --table-hover: #eef4ff;
     --table-even: #f8f9fa;
     --table-footer-bg: #e9ecef;
-    --border-radius: 8px;
+    --table-border-radius: 8px;
 }
 
+/* =========================
+   WRAPPER
+========================= */
 #root {
     flex: 1;
 }
@@ -15,23 +21,34 @@
     height: 70vh;
     overflow: auto;
     background: #fff;
-    border-radius: var(--border-radius);
+    border-radius: var(--table-border-radius);
+    /* Prevents background bleed on rounded corners */
+    clip-path: inset(0 round var(--table-border-radius));
 }
 
+/* =========================
+   MAIN TABLE
+========================= */
 #ledgerTable {
     width: 100%;
     table-layout: auto;
     min-width: 900px;
+    border-collapse: collapse;
+    /* Ensures clean, flat borders */
+    font-size: var(--fs-base, 14px);
+    /* Links to your global typography */
 }
 
-/* 1. Grouped common properties */
+/* Grouped common properties */
 #ledgerTable th,
 #ledgerTable td {
     white-space: nowrap;
     vertical-align: middle;
+    padding: 10px;
+    /* Ensures consistent spacing */
 }
 
-/* 2. Header specific styles */
+/* Header */
 #ledgerTable th {
     position: sticky;
     top: 0;
@@ -41,22 +58,24 @@
     text-align: center;
 }
 
-/* 3. Footer specific styles */
+/* Footer */
 #ledgerTable tfoot td {
     position: sticky;
     bottom: 0;
     z-index: 5;
     background: var(--table-footer-bg);
+    font-weight: 600;
+    /* Make footer totals stand out */
 }
 
+/* Cell constraints */
 #ledgerTable td {
     overflow: hidden;
     text-overflow: ellipsis;
-    /* NOTE: ellipsis requires a max-width to work on auto-layout tables */
     max-width: 250px;
 }
 
-/* 4. Zebra striping & hover */
+/* Zebra striping & hover */
 #ledgerTable tbody tr:nth-child(even) {
     background: var(--table-even);
 }
@@ -65,11 +84,14 @@
     background: var(--table-hover);
 }
 
-/* 5. Modern syntax for targeting multiple specific columns (6, 7, and 8) */
+/* Right-align numeric columns (6, 7, and 8) */
 #ledgerTable :is(th, td):is(:nth-child(6), :nth-child(7), :nth-child(8)) {
     text-align: right;
 }
 
+/* =========================
+   CONTROLS & SPINNER
+========================= */
 #paginationControls {
     gap: 4px;
 }
@@ -78,10 +100,33 @@
     min-height: 80px;
 }
 
-/* 6. Media query cleaned of all redundant rules */
+/* =========================
+   DARK MODE INTEGRATION
+========================= */
+.dark-mode .table-responsive {
+    background: #1e293b;
+}
+
+.dark-mode #ledgerTable tbody tr:nth-child(even) {
+    background: #111827;
+}
+
+.dark-mode #ledgerTable tbody tr:hover {
+    background: #334155;
+}
+
+.dark-mode #ledgerTable tfoot td {
+    background: #0f172a;
+    color: #fff;
+}
+
+/* =========================
+   MOBILE RESPONSIVE
+========================= */
 @media (max-width: 768px) {
     #ledgerTable {
-        font-size: 12px;
+        font-size: var(--fs-sm, 12px);
+        /* Links to your global small font size */
     }
 
     #ledgerTable td,
@@ -89,5 +134,6 @@
         overflow: visible;
         text-overflow: clip;
         padding: 6px;
+        /* Tighter padding for mobile */
     }
 }
