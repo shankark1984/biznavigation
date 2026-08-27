@@ -2,14 +2,29 @@
    CSS VARIABLES
 ========================= */
 :root {
+    /* LAYOUT & COLORS */
     --sidebar-width: 340px;
     --sidebar-collapsed-width: 70px;
     --sidebar-bg: rgba(30, 41, 59, 0.92);
     --primary-color: #2563eb;
     --primary-dark: #1e40af;
+
+    /* EFFECTS */
     --transition-speed: 0.25s;
     --border-radius: 8px;
+
+    /* TYPOGRAPHY */
     --font-family: "Inter", "Segoe UI", sans-serif;
+    --fs-sm: 12px;
+    /* Tooltips */
+    --fs-base: 14px;
+    /* Global body, footer */
+    --fs-md: 16px;
+    /* Mobile headers */
+    --fs-lg: 18px;
+    /* Logos, icons, theme button */
+    --fs-xl: 1.25rem;
+    /* Logout button (~20px) */
 }
 
 /* =========================
@@ -26,7 +41,15 @@ body {
     height: 100%;
     margin: 0;
     font-family: var(--font-family);
+    font-size: var(--fs-base);
+    /* Global Base Size Applied */
     background: linear-gradient(135deg, #f8fafc, #eef2ff);
+    opacity: 1;
+    transition: opacity var(--transition-speed) ease;
+}
+
+body.page-exit {
+    opacity: 0;
 }
 
 /* =========================
@@ -45,17 +68,13 @@ body {
     top: 0;
     left: 0;
     z-index: 1000;
-
     width: var(--sidebar-width);
     height: 100vh;
-
     display: flex;
     flex-direction: column;
-
     background: var(--sidebar-bg);
     backdrop-filter: blur(12px);
     color: #fff;
-
     overflow-x: hidden;
     overflow-y: auto;
     transition: width var(--transition-speed) ease;
@@ -119,7 +138,8 @@ body {
     color: white;
     padding: 6px 10px;
     border-radius: 6px;
-    font-size: 12px;
+    font-size: var(--fs-sm);
+    /* Using CSS Variable */
     white-space: nowrap;
     z-index: 9999;
 }
@@ -154,7 +174,8 @@ body {
 }
 
 .logo-text {
-    font-size: 18px;
+    font-size: var(--fs-lg);
+    /* Using CSS Variable */
     font-weight: 600;
     color: white;
 }
@@ -193,7 +214,8 @@ body {
 }
 
 .menu-title i {
-    font-size: 18px;
+    font-size: var(--fs-lg);
+    /* Using CSS Variable */
     margin-right: 10px;
     color: #60a5fa;
 }
@@ -260,7 +282,8 @@ body {
 
 .menu-item i {
     flex-shrink: 0;
-    font-size: 18px;
+    font-size: var(--fs-lg);
+    /* Using CSS Variable */
     width: 22px;
     min-width: 22px;
     margin-top: 2px;
@@ -286,27 +309,27 @@ body {
     color: #10b981;
 }
 
-/* Master */
+/* Dashboard */
 .menu-group:nth-child(2) .menu-title i {
     color: #3b82f6;
 }
 
-/* Operations */
+/* Master */
 .menu-group:nth-child(3) .menu-title i {
     color: #f59e0b;
 }
 
-/* Accounts */
+/* Operations */
 .menu-group:nth-child(4) .menu-title i {
     color: #8b5cf6;
 }
 
-/* Reports */
+/* Accounts */
 .menu-group:nth-child(5) .menu-title i {
     color: #ef4444;
 }
 
-/* Tools */
+/* Reports */
 
 /* =========================
    MAIN CONTENT
@@ -347,15 +370,14 @@ body.sidebar-collapsed .main-content {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
-.navbar-left {
+.navbar-left,
+.navbar-right {
     display: flex;
     align-items: center;
     gap: 10px;
 }
 
 .navbar-right {
-    display: flex;
-    align-items: center;
     gap: 12px;
 }
 
@@ -379,19 +401,45 @@ body.sidebar-collapsed .main-content {
     justify-content: center;
 }
 
-.logout-btn,
 .theme-btn {
     background: none;
     border: none;
     color: inherit;
     cursor: pointer;
-    font-size: 18px;
+    font-size: var(--fs-lg);
+    /* Using CSS Variable */
     transition: transform var(--transition-speed) ease;
 }
 
-.logout-btn:hover {
-    color: #ef4444;
+.theme-btn:hover {
     transform: scale(1.1);
+}
+
+.logout-btn {
+    background-color: transparent;
+    color: #dc3545;
+    border: 2px solid #dc3545;
+    border-radius: 20px;
+    padding: 10px 14px;
+    font-size: var(--fs-xl);
+    /* Using CSS Variable */
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.25s ease-in-out;
+}
+
+.logout-btn:hover {
+    background-color: #dc3545;
+    color: #ffffff;
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+    transform: translateY(-2px);
+}
+
+.logout-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 6px rgba(220, 53, 69, 0.3);
 }
 
 /* =========================
@@ -424,20 +472,9 @@ footer {
     margin-top: auto;
     padding: 8px;
     text-align: center;
-    font-size: 14px;
+    font-size: var(--fs-base);
+    /* Using CSS Variable */
     color: #64748b;
-}
-
-/* =========================
-   PAGE TRANSITIONS
-========================= */
-body {
-    opacity: 1;
-    transition: opacity var(--transition-speed) ease;
-}
-
-body.page-exit {
-    opacity: 0;
 }
 
 /* =========================
@@ -576,15 +613,13 @@ body.page-exit {
     }
 
     .navbar-left {
-        display: flex;
-        align-items: center;
-        gap: 10px;
         width: 100%;
     }
 
     .navbar-left h5 {
         margin: 0;
-        font-size: 16px;
+        font-size: var(--fs-md);
+        /* Using CSS Variable */
         flex: 1;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -612,16 +647,6 @@ body.page-exit {
 
     .collapse-btn {
         display: none;
-    }
-
-    .menu-item span {
-        flex: 1;
-        white-space: normal;
-        overflow-wrap: anywhere;
-        word-break: normal;
-        overflow: visible;
-        text-overflow: unset;
-        line-height: 1.4;
     }
 
     /* Mobile user panel */
@@ -682,7 +707,7 @@ body.page-exit {
 }
 
 /* =========================
-   STICKY TABLE HEADER
+   UTILITIES & COMPONENTS
 ========================= */
 .sticky-header thead th {
     position: sticky;
@@ -695,15 +720,6 @@ body.page-exit {
     background: #1e293b;
 }
 
-body {
-    opacity: 1;
-    transition: opacity 0.15s ease;
-}
-
-body.page-exit {
-    opacity: 0;
-}
-
 .cgstAmount,
 .sgstAmount,
 .igstAmount,
@@ -711,44 +727,4 @@ body.page-exit {
 .totalAmount {
     background-color: #fff3cd;
     font-weight: 600;
-}
-
-/* Base button styles */
-.logout-btn {
-    background-color: transparent;
-    color: #dc3545;
-    /* Crimson red color for the power icon */
-    border: 2px solid #dc3545;
-    /* Creates the box outline */
-    border-radius: 20px;
-    /* Slightly rounds the corners */
-    padding: 10px 14px;
-    /* Spaces out the box around the icon */
-    font-size: 1.25rem;
-    /* Adjusts icon size */
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.25s ease-in-out;
-    /* Smooth transition animation */
-}
-
-/* Hover state effect */
-.logout-btn:hover {
-    background-color: #dc3545;
-    /* Fills the box with red */
-    color: #ffffff;
-    /* Changes the power icon to white */
-    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
-    /* Adds a subtle red glow */
-    transform: translateY(-2px);
-    /* Lifts the button slightly */
-}
-
-/* Active state (when clicked) */
-.logout-btn:active {
-    transform: translateY(0);
-    /* Pushes the button back down */
-    box-shadow: 0 2px 6px rgba(220, 53, 69, 0.3);
 }

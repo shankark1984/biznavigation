@@ -3,6 +3,7 @@
     --table-header-color: #fff;
     --table-hover: #eef4ff;
     --table-even: #f8f9fa;
+    --table-footer-bg: #e9ecef;
     --border-radius: 8px;
 }
 
@@ -23,35 +24,39 @@
     min-width: 900px;
 }
 
-#ledgerTable thead th {
+/* 1. Grouped common properties */
+#ledgerTable th,
+#ledgerTable td {
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+/* 2. Header specific styles */
+#ledgerTable th {
     position: sticky;
     top: 0;
     z-index: 10;
     background: var(--table-header-bg);
     color: var(--table-header-color);
-    white-space: nowrap;
     text-align: center;
-    vertical-align: middle;
 }
 
+/* 3. Footer specific styles */
 #ledgerTable tfoot td {
     position: sticky;
     bottom: 0;
     z-index: 5;
-    background: #e9ecef;
-}
-
-#ledgerTable td,
-#ledgerTable th {
-    white-space: nowrap;
-    vertical-align: middle;
+    background: var(--table-footer-bg);
 }
 
 #ledgerTable td {
     overflow: hidden;
     text-overflow: ellipsis;
+    /* NOTE: ellipsis requires a max-width to work on auto-layout tables */
+    max-width: 250px;
 }
 
+/* 4. Zebra striping & hover */
 #ledgerTable tbody tr:nth-child(even) {
     background: var(--table-even);
 }
@@ -60,12 +65,8 @@
     background: var(--table-hover);
 }
 
-#ledgerTable th:nth-child(6),
-#ledgerTable th:nth-child(7),
-#ledgerTable th:nth-child(8),
-#ledgerTable td:nth-child(6),
-#ledgerTable td:nth-child(7),
-#ledgerTable td:nth-child(8) {
+/* 5. Modern syntax for targeting multiple specific columns (6, 7, and 8) */
+#ledgerTable :is(th, td):is(:nth-child(6), :nth-child(7), :nth-child(8)) {
     text-align: right;
 }
 
@@ -77,24 +78,16 @@
     min-height: 80px;
 }
 
+/* 6. Media query cleaned of all redundant rules */
 @media (max-width: 768px) {
-
     #ledgerTable {
-        table-layout: auto;
-        min-width: 900px;
         font-size: 12px;
     }
 
     #ledgerTable td,
     #ledgerTable th {
-        white-space: nowrap;
         overflow: visible;
         text-overflow: clip;
         padding: 6px;
-    }
-
-    .table-responsive {
-        overflow-x: auto;
-        overflow-y: auto;
     }
 }

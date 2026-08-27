@@ -561,4 +561,3 @@ async function exportToPdf() {
 
     doc.save("AccountingLedger.pdf");
 }
-
