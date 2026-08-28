@@ -53,7 +53,7 @@ const Navbar = (() => {
                 { label: "Payment Details", icon: "bi-wallet2", href: "/pages/Reports/PaymentDetails.html" },
                 { label: "Vendor Billing Report", icon: "bi-file-bar-graph", href: "/pages/Reports/reportVendorBillingDetails.html" },
                 { label: "Payment Receivable", icon: "bi-cash-coin", href: "#" },
-                { label: "Payment Payable", icon: "bi-currency-rupee", href: "#" },
+                { label: "Outstanding Details", icon: "bi-currency-rupee", href: "/pages/Reports/outstandingDetails.html" },
                 { label: "Tax Details", icon: "bi-percent", href: "/pages/Reports/reportGSTDetails.html" },
                 { label: "Accounting Ledger", icon: "bi-journal-bookmark", href: "/pages/Reports/accountingLedger.html" },
                 { label: "Bank Account Ledger", icon: "bi-wallet2", href: "/pages/Reports/bankAccountLedger.html" }

@@ -996,7 +996,7 @@ async function drawShipmentTable_Clear_Main(
     // Duty / Import Duty first
     // ==========================================
     allCharges.sort((a, b) => {
-
+        console.log('loading duty invoice')
         function getPriority(chargeType = "") {
             const txt = String(chargeType).trim().toLowerCase();
 

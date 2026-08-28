@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Outstanding Report</title>
+
+    <!-- Bootstrap -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+
+    <!-- Flatpickr -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+
+    <!-- Sidebar -->
+    <link rel="stylesheet" href="../../assets/css/navbar.css">
+    <link rel="stylesheet" href="../../assets/css/accountingLedger.css">
+</head>
+
+<body class="bg-light">
+
+    <div class="app-wrapper">
+
+        <!-- Sidebar -->
+        <aside id="sidebar">
+            <div class="text-center text-white p-3">
+                Loading...
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+
+            <div class="page-content">
+
+                <div class="container-fluid py-3" id="root">
+
+                    <h4 class="mb-4">Outstanding Report</h4>
+
+                    <!-- Tabs Navigation -->
+                    <ul class="nav nav-tabs mb-3" id="outstandingTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active fw-bold" id="customer-tab" data-bs-toggle="tab"
+                                data-bs-target="#customer-pane" type="button" role="tab" aria-controls="customer-pane"
+                                aria-selected="true">Customer</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link fw-bold" id="vendor-tab" data-bs-toggle="tab"
+                                data-bs-target="#vendor-pane" type="button" role="tab" aria-controls="vendor-pane"
+                                aria-selected="false">Vendor</button>
+                        </li>
+                    </ul>
+
+                    <!-- Tab Content -->
+                    <div class="tab-content" id="outstandingTabsContent">
+
+                        <!-- Customer Tab -->
+                        <div class="tab-pane fade show active" id="customer-pane" role="tabpanel"
+                            aria-labelledby="customer-tab" tabindex="0">
+                            <div class="card shadow-sm">
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-hover align-middle mb-0 text-nowrap">
+                                        <thead class="table-light text-center align-middle">
+                                            <tr>
+                                                <th rowspan="2">Customer Name</th>
+                                                <th rowspan="2">Invoice No</th>
+                                                <th rowspan="2">Invoice Date</th>
+                                                <th colspan="6">Pending Day's</th>
+                                                <th rowspan="2">Grand Total</th>
+                                            </tr>
+                                            <tr>
+                                                <th>0-10</th>
+                                                <th>11-20</th>
+                                                <th>21-30</th>
+                                                <th>41-50</th>
+                                                <th>51-60</th>
+                                                <th>71-80</th>
+                                                <th>91-100</th>
+                                                <th>111-120</th>
+                                                <th>&gt;151</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="customerTableBody">
+                                            <!-- Dynamic Customer Data Will Load Here -->
+                                        </tbody>
+                                        <tfoot class="table-light fw-bold">
+                                            <tr>
+                                                <td colspan="4" class="text-end">Grand Total</td>
+                                                <td class="text-end">0.00</td>
+                                                <td class="text-end">0.00</td>
+                                                <td class="text-end">0.00</td>
+                                                <td class="text-end">0.00</td>
+                                                <td class="text-end">0.00</td>
+                                                <td class="text-end">0.00</td>
+                                                <td class="text-end">0.00</td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Vendor Tab -->
+                        <div class="tab-pane fade" id="vendor-pane" role="tabpanel" aria-labelledby="vendor-tab"
+                            tabindex="0">
+                            <div class="card shadow-sm">
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-hover align-middle mb-0 text-nowrap">
+                                        <thead class="table-light text-center align-middle">
+                                            <tr>
+                                                <th rowspan="2">Vendor Name</th>
+                                                <th rowspan="2">Bill Date</th>
+                                                <th rowspan="2">Bill No</th>
+                                                <th colspan="6">Pending Day's</th>
+                                                <th rowspan="2">Grand Total</th>
+                                            </tr>
+                                            <tr>
+                                                <th>41-50</th>
+                                                <th>51-60</th>
+                                                <th>71-80</th>
+                                                <th>91-100</th>
+                                                <th>111-120</th>
+                                                <th>&gt;151</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="vendorTableBody">
+                                            <!-- Dynamic Vendor Data Will Load Here -->
+                                        </tbody>
+                                        <tfoot class="table-light fw-bold">
+                                            <tr>
+                                                <td colspan="4" class="text-end">Grand Total</td>
+                                                <td class="text-end">0.00</td>
+                                                <td class="text-end">0.00</td>
+                                                <td class="text-end">0.00</td>
+                                                <td class="text-end">0.00</td>
+                                                <td class="text-end">0.00</td>
+                                                <td class="text-end">0.00</td>
+                                                <td class="text-end">0.00</td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- Footer Actions -->
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mt-4">
+                        <!-- Pagination -->
+                        <nav aria-label="Ledger Pagination">
+                            <ul id="paginationControls" class="pagination mb-0 d-flex flex-wrap">
+                            </ul>
+                        </nav>
+
+                        <!-- Export Buttons -->
+                        <div class="btn-group">
+                            <button id="exportExcelBtn" class="btn btn-success">
+                                <i class="bi bi-file-earmark-excel"></i> Export Excel
+                            </button>
+                            <button id="exportPdfBtn" class="btn btn-danger">
+                                <i class="bi bi-file-earmark-pdf"></i> Export PDF
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+        </main>
+
+    </div>
+
+    <!-- Bootstrap -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" defer></script>
+
+    <!-- Flatpickr -->
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr" defer></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"
+        defer></script>
+
+    <!-- Supabase -->
+    <script src="https://unpkg.com/@supabase/supabase-js" defer></script>
+
+    <!-- Application Scripts -->
+    <script src="../../assets/js/utils/server.js" defer></script>
+    <script src="../../assets/js/utils/navbar.js" defer></script>
+    <script src="../../assets/js/utils/utils.js" defer></script>
+    <script src="../../assets/js/Report/outstandingDetails.js" defer></script>
+    <script src="../../assets/js/utils/logout.js" defer></script>
+
+</body>
+
+</html>
