@@ -2,7 +2,6 @@ let paymentIDTimer = null;
 let allInvoices = [];
 let invoiceMap = {};
 let deletedPaymentLines = [];
-let editingLineRow = null;
 
 const creditPayInput = {
     paymentID: document.getElementById("paymentID"),
@@ -29,7 +28,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     toggleSettlementMode();
     const transactionTypeEl = document.getElementById('transactionType');
     if (transactionTypeEl) transactionTypeEl.value = "Credit";
-    addInvoiceDetailsButton.disabled = false;
 });
 
 document.getElementById("saveButton").addEventListener("click", async () => {
@@ -131,9 +129,6 @@ async function saveUpdatedCreditPayments() {
         disableForm();
         saveButton.disabled = true;
         modifyButton.disabled = false;
-
-        // ADD THIS HERE
-        disableTableButtons();
         return result;
 
     } catch (err) {
@@ -303,9 +298,6 @@ async function loadPaymentDetails(paymentID) {
     calculateTotals();
     refreshBillDatalist();
     addInvoiceDetailsButton.disabled = true;
-
-    // ADD THIS HERE
-    disableTableButtons();
 }
 
 
@@ -343,9 +335,6 @@ if (modifyButton) {
         creditPayInput.paymentID.disabled = true;
         saveButton.disabled = false;
         addInvoiceDetailsButton.disabled = false;
-
-        // ADD THIS HERE
-        enableTableButtons();
     });
 }
 
@@ -492,6 +481,7 @@ function addInvoiceDetailRow() {
     const narration = document.getElementById("narration").value.trim();
     const allocatedAmount = parseFloat(document.getElementById("accountedAmount").value) || 0;
 
+    // Fallback to older IDs if HTML hasn't been updated yet
     const otherDeductionInput = document.getElementById("otherDeductionAmount") || document.getElementById("otherDeuctionAmount");
     const tdsDeductionInput = document.getElementById("tdsDeductionAmount") || document.getElementById("tDSDeuctionAmount");
 
@@ -501,59 +491,31 @@ function addInvoiceDetailRow() {
     const totalPayment = allocatedAmount + otherDeduction + tdsDeduction;
     const tbody = document.querySelector("#paymentDetails tbody");
 
-    if (editingLineRow) {
-        // --- UPDATE EXISTING ROW ---
-        // Ensure they didn't change the invoice to one that already exists in a DIFFERENT row
-        const exists = [...tbody.rows].some(r => r !== editingLineRow && r.cells[1]?.textContent.trim() === invoiceNo);
-        if (exists) {
-            alert("Invoice already added in another row.");
-            return;
-        }
-
-        // Update the table cells
-        editingLineRow.cells[1].textContent = invoiceNo;
-        editingLineRow.cells[2].textContent = narration;
-        editingLineRow.cells[3].textContent = allocatedAmount.toFixed(2);
-        editingLineRow.cells[4].textContent = otherDeduction.toFixed(2);
-        editingLineRow.cells[5].textContent = tdsDeduction.toFixed(2);
-        editingLineRow.cells[6].textContent = totalPayment.toFixed(2);
-
-        // Mark as modified if it was an existing record from DB
-        if (editingLineRow.dataset.status === "Old") {
-            editingLineRow.dataset.status = "Modified";
-        }
-
-    } else {
-        // --- ADD NEW ROW ---
-        const exists = [...tbody.rows].some(row => row.cells[1]?.textContent.trim() === invoiceNo);
-        if (exists) {
-            alert("Invoice already added.");
-            return;
-        }
-
-        const row = document.createElement("tr");
-        row.dataset.status = "New";
-        row.dataset.id = "";
-
-        row.innerHTML = `
-            <td></td>
-            <td>${invoiceNo}</td>
-            <td>${narration}</td>
-            <td class="text-end">${allocatedAmount.toFixed(2)}</td>
-            <td class="text-end">${otherDeduction.toFixed(2)}</td>
-            <td class="text-end">${tdsDeduction.toFixed(2)}</td>
-            <td class="text-end">${totalPayment.toFixed(2)}</td>
-            <td>
-                <button type="button" class="btn btn-sm btn-primary edit-row me-1" title="Edit">
-                    <i class="bi bi-pencil-square"></i>
-                </button>
-                <button type="button" class="btn btn-sm btn-danger remove-row" title="Delete">
-                    <i class="bi bi-trash"></i>
-                </button>
-            </td>
-        `;
-        tbody.appendChild(row);
+    const exists = [...tbody.rows].some(row => row.cells[1]?.textContent.trim() === invoiceNo);
+    if (exists) {
+        alert("Invoice already added.");
+        return;
     }
+
+    const row = document.createElement("tr");
+    row.dataset.status = "New";
+    row.dataset.id = "";
+
+    row.innerHTML = `
+        <td></td>
+        <td>${invoiceNo}</td>
+        <td>${narration}</td>
+        <td class="text-end">${allocatedAmount.toFixed(2)}</td>
+        <td class="text-end">${otherDeduction.toFixed(2)}</td>
+        <td class="text-end">${tdsDeduction.toFixed(2)}</td>
+        <td class="text-end">${totalPayment.toFixed(2)}</td>
+        <td>
+            <button type="button" class="btn btn-sm btn-danger remove-row" title="Delete">
+                <i class="bi bi-trash"></i>
+            </button>
+        </td>
+    `;
+    tbody.appendChild(row);
 
     renumberRows();
     calculateTotals();
@@ -564,74 +526,22 @@ function addInvoiceDetailRow() {
 const paymentDetailsTbody = document.querySelector("#paymentDetails tbody");
 if (paymentDetailsTbody) {
     paymentDetailsTbody.addEventListener("click", function (e) {
+        const btn = e.target.closest(".remove-row");
+        if (!btn) return;
 
-        // --- Handle Edit Button Click ---
-        const editBtn = e.target.closest(".edit-row");
-        if (editBtn) {
-            const row = editBtn.closest("tr");
+        const row = btn.closest("tr");
+        const status = row.dataset.status;
+        const id = row.dataset.id;
 
-            // Set global variable so the Add function knows we are updating
-            editingLineRow = row;
-
-            // Extract values
-            const invoiceNo = row.cells[1].textContent.trim();
-            const narration = row.cells[2].textContent.trim();
-            const allocatedAmount = row.cells[3].textContent.trim();
-            const otherDeduction = row.cells[4].textContent.trim();
-            const tdsDeduction = row.cells[5].textContent.trim();
-
-            // Populate input fields
-            document.getElementById("invoiceNumberInput").value = invoiceNo;
-            document.getElementById("narration").value = narration;
-            document.getElementById("accountedAmount").value = allocatedAmount;
-
-            const otherDeductionInput = document.getElementById("otherDeductionAmount") || document.getElementById("otherDeuctionAmount");
-            if (otherDeductionInput) otherDeductionInput.value = otherDeduction;
-
-            const tdsDeductionInput = document.getElementById("tdsDeductionAmount") || document.getElementById("tDSDeuctionAmount");
-            if (tdsDeductionInput) tdsDeductionInput.value = tdsDeduction;
-
-            // Change button style to indicate "Update Mode"
-            if (addInvoiceDetailsButton) {
-                addInvoiceDetailsButton.innerHTML = '<i class="bi bi-check-circle"></i> Update';
-                addInvoiceDetailsButton.classList.replace("btn-primary", "btn-warning");
-            }
-
-            // Trigger change event to fetch invoice details seamlessly
-            const changeEvent = new Event("change");
-            document.getElementById("invoiceNumberInput").dispatchEvent(changeEvent);
-
-            // Notice we are NO LONGER removing the row here!
-            return;
+        if (status === "Old" && id) {
+            deletedPaymentLines.push(id);
         }
 
-        // --- Handle Delete Button Click ---
-        const removeBtn = e.target.closest(".remove-row");
-        if (removeBtn) {
-            const row = removeBtn.closest("tr");
-
-            // If the user deletes the row they were actively editing, cancel the edit mode
-            if (editingLineRow === row) {
-                clearInvoiceInputs();
-            }
-            removeRowData(row);
-        }
+        row.remove();
+        renumberRows();
+        calculateTotals();
+        refreshBillDatalist();
     });
-}
-
-// Helper function to handle row removal logic consistently
-function removeRowData(row) {
-    const status = row.dataset.status;
-    const id = row.dataset.id;
-
-    if (status === "Old" && id) {
-        deletedPaymentLines.push(id);
-    }
-
-    row.remove();
-    renumberRows();
-    calculateTotals();
-    refreshBillDatalist();
 }
 
 function renumberRows() {
@@ -678,72 +588,39 @@ function clearInvoiceInputs() {
         if (el) el.value = "";
     });
 
-    // Reset Editing State
-    editingLineRow = null;
-    if (addInvoiceDetailsButton) {
-        addInvoiceDetailsButton.innerHTML = "Add"; // Replace with your original button text/icon
-        addInvoiceDetailsButton.classList.remove("btn-warning");
-        addInvoiceDetailsButton.classList.add("btn-primary");
-    }
-
     refreshBillDatalist();
 }
 
 async function savePaymentLineItems(paymentID) {
     const rows = document.querySelectorAll("#paymentDetails tbody tr");
-    const newRecords = [];
-    const modifiedRecords = [];
+    const records = [];
 
     rows.forEach(row => {
-        const status = row.dataset.status;
-        if (status === "Old") return; // Ignore unchanged rows
-
-        const record = {
+        if (row.dataset.status !== "New") return;
+        records.push({
             PaymentID: paymentID,
             InvoiceNo: row.cells[1].textContent.trim(),
             Narration: row.cells[2].textContent.trim(),
             PaymentAmount: parseFloat(row.cells[3].textContent) || 0,
             OtherDeductionAmount: parseFloat(row.cells[4].textContent) || 0,
             TDSDeductionAmount: parseFloat(row.cells[5].textContent) || 0,
-            company_id: CompanyID
-        };
-
-        if (status === "New") {
-            // Only add created_at for brand new records
-            record.created_by = UserLoginID;
-            record.created_at = localtimeStamp;
-            newRecords.push(record);
-        } else if (status === "Modified") {
-            record.id = row.dataset.id; // Include the Primary Key
-            modifiedRecords.push(record);
-        }
+            company_id: CompanyID,
+            created_by: UserLoginID,
+            created_at: localtimeStamp
+        });
     });
 
-    // 1. Insert New Records
-    if (newRecords.length > 0) {
-        const { error: insertError } = await supabaseClient
-            .from("PaymentLineItems")
-            .insert(newRecords);
-        if (insertError) throw insertError;
-    }
+    if (records.length === 0) return;
 
-    // 2. Update Modified Records using .update() instead of .upsert()
-    if (modifiedRecords.length > 0) {
-        for (const record of modifiedRecords) {
-            // Separate the ID from the rest of the data
-            const { id, ...updateData } = record;
+    const { error } = await supabaseClient
+        .from("PaymentLineItems")
+        .insert(records)
+        .select();
 
-            const { error: updateError } = await supabaseClient
-                .from("PaymentLineItems")
-                .update(updateData)
-                .eq("id", id); // Target the specific row
-
-            if (updateError) throw updateError;
-        }
-    }
-
+    if (error) throw error;
     await loadPaymentLineItems(paymentID);
 }
+
 async function deleteRemovedLineItems() {
     if (deletedPaymentLines.length === 0) return;
 
@@ -796,9 +673,6 @@ function addRowFromDB(item) {
         <td class="text-end">${safeNumber(item.TDSDeductionAmount).toFixed(2)}</td>
         <td class="text-end">${(safeNumber(item.PaymentAmount) + safeNumber(item.OtherDeductionAmount) + safeNumber(item.TDSDeductionAmount)).toFixed(2)}</td>
         <td>
-            <button type="button" class="btn btn-sm btn-primary edit-row me-1" title="Edit">
-                <i class="bi bi-pencil-square"></i>
-            </button>
             <button type="button" class="btn btn-sm btn-danger remove-row" title="Delete">
                 <i class="bi bi-trash"></i>
             </button>
@@ -1096,15 +970,4 @@ async function searchSavedPayments() {
         `;
         searchPaymentTableBody.appendChild(tr);
     });
-}
-
-// --- NEW HELPER FUNCTIONS ---
-function disableTableButtons() {
-    const buttons = document.querySelectorAll("#paymentDetails tbody .edit-row, #paymentDetails tbody .remove-row");
-    buttons.forEach(btn => btn.disabled = true);
-}
-
-function enableTableButtons() {
-    const buttons = document.querySelectorAll("#paymentDetails tbody .edit-row, #paymentDetails tbody .remove-row");
-    buttons.forEach(btn => btn.disabled = false);
 }
