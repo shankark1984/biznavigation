@@ -5,13 +5,9 @@ let deletedPaymentLines = [];
 let editingLineRow = null;
 
 // ==========================================
-// CACHE DOM ELEMENTS (Prevents Reference Errors)
+// 1. CACHE DOM ELEMENTS (Optimized Performance & Safety)
 // ==========================================
-const addInvoiceDetailsButton = document.getElementById("addInvoiceDetailsButton");
-const pModeEl = document.getElementById("paymentMode");
-const invoiceNumInputEl = document.getElementById("invoiceNumberInput");
-
-const creditPayInput = {
+const UI = {
     paymentID: document.getElementById("paymentID"),
     receiptOn: document.getElementById("receiptOn"),
     partyCode: document.getElementById("partyCode"),
@@ -24,235 +20,186 @@ const creditPayInput = {
     information: document.getElementById("information"),
     paymentAmount: document.getElementById("paymentAmount"),
     deductionAmount: document.getElementById("deductionAmount"),
+
+    // Buttons
+    saveBtn: document.getElementById("saveButton"),
+    modifyBtn: document.getElementById("modifyButton"),
+    newBtn: document.getElementById("newButton"),
+    addInvoiceBtn: document.getElementById("addInvoiceDetailsButton"),
+
+    // Invoice Line Inputs
+    invoiceNumInput: document.getElementById("invoiceNumberInput"),
+    invoiceDate: document.getElementById("invoiceDate"),
+    invoiceAmount: document.getElementById("invoiceAmount"),
+    invoiceBalance: document.getElementById("invoiceBalance"),
+    accountedAmount: document.getElementById("accountedAmount"),
+    otherDeduction: document.getElementById("otherDeductionAmount") || document.getElementById("otherDeuctionAmount"),
+    tdsDeduction: document.getElementById("tdsDeductionAmount") || document.getElementById("tDSDeuctionAmount"),
+    narration: document.getElementById("narration"),
+
+    // Table
+    tbody: document.querySelector("#paymentDetails tbody")
 };
 
 // ==========================================
-// INITIALIZATION & EVENT LISTENERS
+// 2. INITIALIZATION
 // ==========================================
 document.addEventListener("DOMContentLoaded", async () => {
     await loadSuggestions("partySuggestions", "PartyDetails", CompanyID);
 
-    if (creditPayInput.receiptOn) {
-        creditPayInput.receiptOn.value = new Date().toISOString().split("T")[0];
-    }
+    if (UI.receiptOn) UI.receiptOn.value = new Date().toISOString().split("T")[0];
+    if (UI.transactionType) UI.transactionType.value = "Credit";
+    if (UI.addInvoiceBtn) UI.addInvoiceBtn.disabled = false;
 
     loadDefaultBank();
     toggleSettlementMode();
-
-    if (creditPayInput.transactionType) {
-        creditPayInput.transactionType.value = "Credit";
-    }
-
-    if (addInvoiceDetailsButton) {
-        addInvoiceDetailsButton.disabled = false;
-    }
 });
 
-if (saveButton) saveButton.addEventListener("click", async () => { await saveUpdatedCreditPayments(); });
-if (pModeEl) pModeEl.addEventListener("change", toggleSettlementMode);
-if (creditPayInput.paymentAmount) creditPayInput.paymentAmount.addEventListener("input", calculateSuspenseAmount);
-if (creditPayInput.deductionAmount) creditPayInput.deductionAmount.addEventListener("input", calculateSuspenseAmount);
+// ==========================================
+// 3. EVENT LISTENERS
+// ==========================================
+if (UI.saveBtn) UI.saveBtn.addEventListener("click", saveUpdatedCreditPayments);
+if (UI.paymentMode) UI.paymentMode.addEventListener("change", toggleSettlementMode);
+if (UI.paymentAmount) UI.paymentAmount.addEventListener("input", calculateSuspenseAmount);
+if (UI.deductionAmount) UI.deductionAmount.addEventListener("input", calculateSuspenseAmount);
 
-// Payment ID listeners
-if (creditPayInput.paymentID) {
-    creditPayInput.paymentID.addEventListener("input", e => {
+// Payment ID Watchers
+if (UI.paymentID) {
+    UI.paymentID.addEventListener("input", e => {
         clearTimeout(paymentIDTimer);
-        paymentIDTimer = setTimeout(() => {
-            loadPaymentIDSuggestions(CompanyID, e.target.value.trim());
-        }, 300);
+        paymentIDTimer = setTimeout(() => loadPaymentIDSuggestions(CompanyID, e.target.value.trim()), 300);
     });
 
-    creditPayInput.paymentID.addEventListener("change", async e => {
+    UI.paymentID.addEventListener("change", async e => {
         const paymentID = e.target.value.trim();
-        if (paymentID) {
-            await loadPaymentDetails(paymentID);
-        }
+        if (paymentID) await loadPaymentDetails(paymentID);
     });
 }
 
-// Party Name Listener (Optimized)
-if (creditPayInput.partyName) {
-    creditPayInput.partyName.addEventListener("change", async () => {
-        const partyCode = creditPayInput.partyCode.value.trim();
-
+// Party Name Watcher
+if (UI.partyName) {
+    UI.partyName.addEventListener("change", async () => {
+        const partyCode = UI.partyCode.value.trim();
         if (!partyCode) {
             allInvoices = [];
             invoiceMap = {};
             refreshBillDatalist();
             return;
         }
-
         await getPendingInvoiceDetails(partyCode);
 
-        // Only check for suspense payments if we are inserting a NEW payment
-        if (saveButton && saveButton.dataset.mode !== "update") {
+        // Only check suspense if inserting a new record
+        if (UI.saveBtn && UI.saveBtn.dataset.mode !== "update") {
             await checkSuspensePayments(partyCode);
         }
     });
 }
 
 // New Button
-if (newButton) {
-    newButton.addEventListener("click", () => {
+if (UI.newBtn) {
+    UI.newBtn.addEventListener("click", () => {
         enableForm();
         clearForm();
-        if (creditPayInput.receiptOn) {
-            creditPayInput.receiptOn.value = new Date().toISOString().split("T")[0];
-        }
+        if (UI.receiptOn) UI.receiptOn.value = new Date().toISOString().split("T")[0];
+        if (UI.transactionType) UI.transactionType.value = "Credit";
         loadDefaultBank();
-        if (creditPayInput.transactionType) creditPayInput.transactionType.value = "Credit";
 
-        saveButton.dataset.mode = "insert";
-        saveButton.innerHTML = '<i class="bi bi-save"></i> Save';
-        saveButton.disabled = false;
-        if (modifyButton) modifyButton.disabled = true;
+        UI.saveBtn.dataset.mode = "insert";
+        UI.saveBtn.innerHTML = '<i class="bi bi-save"></i> Save';
+        UI.saveBtn.disabled = false;
+        if (UI.modifyBtn) UI.modifyBtn.disabled = true;
 
-        const tbody = document.querySelector("#paymentDetails tbody");
-        if (tbody) tbody.innerHTML = "";
-
-        calculateTotals();
-        calculateSuspenseAmount();
+        if (UI.tbody) UI.tbody.innerHTML = "";
         deletedPaymentLines = [];
-        enableTableButtons(); // Ensure table buttons are unlocked
+
+        syncTableUpdates();
+        enableTableButtons();
     });
 }
 
 // Modify Button
-if (modifyButton) {
-    modifyButton.addEventListener("click", () => {
+if (UI.modifyBtn) {
+    UI.modifyBtn.addEventListener("click", () => {
         enableForm();
-        modifyButton.disabled = true;
-        creditPayInput.transactionType.disabled = true;
-        creditPayInput.paymentID.disabled = true;
+        UI.modifyBtn.disabled = true;
+        if (UI.transactionType) UI.transactionType.disabled = true;
+        if (UI.paymentID) UI.paymentID.disabled = true;
 
-        if (saveButton) saveButton.disabled = false;
-        if (addInvoiceDetailsButton) addInvoiceDetailsButton.disabled = false;
+        if (UI.saveBtn) UI.saveBtn.disabled = false;
+        if (UI.addInvoiceBtn) UI.addInvoiceBtn.disabled = false;
 
         enableTableButtons();
     });
 }
 
-// Invoice Listeners
-if (invoiceNumInputEl) {
-    // Filter datalist while typing
-    invoiceNumInputEl.addEventListener("input", function () {
-        const searchText = this.value.toLowerCase();
-        const datalist = document.getElementById("invoiceNumberList");
-        if (!datalist) return;
-
-        datalist.innerHTML = "";
-        const addedInvoices = new Set();
-
-        document.querySelectorAll("#paymentDetails tbody tr").forEach(row => {
-            const invoiceNo = row.cells[1]?.textContent?.trim();
-            if (invoiceNo) addedInvoices.add(invoiceNo);
-        });
-
-        allInvoices
-            .filter(inv => inv.InvoiceNo.toLowerCase().includes(searchText))
-            .forEach(inv => {
-                if (!addedInvoices.has(inv.InvoiceNo)) {
-                    const option = document.createElement("option");
-                    option.value = inv.InvoiceNo;
-                    datalist.appendChild(option);
-                }
-            });
-    });
-
-    // Populate details on selection
-    invoiceNumInputEl.addEventListener("change", function () {
-        const invoiceNo = this.value.trim();
-        const invoice = invoiceMap[invoiceNo];
-
-        if (!invoice) return;
-
-        document.getElementById("invoiceDate").value = invoice.InvoiceDate ? invoice.InvoiceDate.split("T")[0] : "";
-        document.getElementById("invoiceAmount").value = Number(invoice.GrandTotalAmount || 0).toFixed(2);
-        document.getElementById("invoiceBalance").value = Number(invoice.BalanceAmount || 0).toFixed(2);
-    });
-}
-
-if (addInvoiceDetailsButton) {
-    addInvoiceDetailsButton.addEventListener("click", addInvoiceDetailRow);
+// Add Invoice Details Button
+if (UI.addInvoiceBtn) {
+    UI.addInvoiceBtn.addEventListener("click", addInvoiceDetailRow);
 }
 
 // ==========================================
-// CORE FUNCTIONS
+// 4. CORE PAYMENT LOGIC
 // ==========================================
-
 async function generatePaymentID(companyID) {
     const { data, error } = await supabaseClient.rpc("generate_payment_id", { p_company_id: companyID });
-    if (error) {
-        console.error("PaymentID generation failed:", error);
-        throw error;
-    }
+    if (error) throw error;
     return data;
 }
 
 async function saveUpdatedCreditPayments() {
-    if (!saveButton) return;
-    const originalText = saveButton.innerHTML;
+    if (!UI.saveBtn) return;
+    const originalText = UI.saveBtn.innerHTML;
 
     try {
         if (!validatePaymentForm()) return;
 
         const suspenseAmount = calculateSuspenseAmount();
-        if (suspenseAmount < 0) {
-            alert("Allocated amount exceeds Payment Amount.");
-            return;
-        }
+        if (suspenseAmount < 0) return alert("Allocated amount exceeds Payment Amount.");
 
-        saveButton.disabled = true;
-        saveButton.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Saving...';
+        UI.saveBtn.disabled = true;
+        UI.saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Saving...';
 
         const paymentPayload = {
-            ReceiptOn: creditPayInput.receiptOn.value,
+            ReceiptOn: UI.receiptOn.value,
             SuspenseAmount: suspenseAmount || 0,
-            PartyCode: creditPayInput.partyCode.value.trim(),
-            TransactionType: creditPayInput.transactionType.value,
-            PaymentMode: creditPayInput.paymentMode.value,
-            BankName: creditPayInput.inputBankName.value,
-            BankID: creditPayInput.bankID.value,
-            ReferenceNo: creditPayInput.referenceNo.value,
-            PaymentAmount: parseFloat(creditPayInput.paymentAmount.value) || 0,
-            DeductionAmount: parseFloat(creditPayInput.deductionAmount.value) || 0,
-            Narration: creditPayInput.information.value,
+            PartyCode: UI.partyCode.value.trim(),
+            TransactionType: UI.transactionType.value,
+            PaymentMode: UI.paymentMode.value,
+            BankName: UI.inputBankName.value,
+            BankID: UI.bankID.value,
+            ReferenceNo: UI.referenceNo.value,
+            PaymentAmount: parseFloat(UI.paymentAmount.value) || 0,
+            DeductionAmount: parseFloat(UI.deductionAmount.value) || 0,
+            Narration: UI.information.value,
             company_id: CompanyID
         };
 
-        let result, error;
+        let error;
 
-        if (saveButton.dataset.mode === "insert") {
+        if (UI.saveBtn.dataset.mode === "insert") {
             const paymentID = await generatePaymentID(CompanyID);
-            creditPayInput.paymentID.value = paymentID;
+            UI.paymentID.value = paymentID;
             paymentPayload.PaymentID = paymentID;
             paymentPayload.created_by = UserLoginID;
             paymentPayload.created_at = localtimeStamp;
 
-            ({ data: result, error } = await supabaseClient
-                .from("PaymentDetails")
-                .insert(paymentPayload)
-                .select());
-
+            ({ error } = await supabaseClient.from("PaymentDetails").insert(paymentPayload));
             if (error) throw error;
-            saveButton.dataset.mode = "update";
-            if (modifyButton) modifyButton.disabled = false;
-            disableForm();
 
-        } else if (saveButton.dataset.mode === "update") {
-            paymentPayload.PaymentID = creditPayInput.paymentID.value.trim();
+            UI.saveBtn.dataset.mode = "update";
+
+        } else if (UI.saveBtn.dataset.mode === "update") {
+            paymentPayload.PaymentID = UI.paymentID.value.trim();
             paymentPayload.update_by = UserLoginID;
             paymentPayload.update_at = localtimeStamp;
 
-            ({ data: result, error } = await supabaseClient
+            ({ error } = await supabaseClient
                 .from("PaymentDetails")
                 .update(paymentPayload)
                 .eq("PaymentID", paymentPayload.PaymentID)
-                .eq("company_id", CompanyID)
-                .select());
+                .eq("company_id", CompanyID));
+            if (error) throw error;
         }
-
-        if (error) throw error;
 
         await savePaymentLineItems(paymentPayload.PaymentID);
         await deleteRemovedLineItems();
@@ -260,221 +207,54 @@ async function saveUpdatedCreditPayments() {
 
         deletedPaymentLines = [];
         disableForm();
-        saveButton.disabled = true;
-        if (modifyButton) modifyButton.disabled = false;
-
+        UI.saveBtn.disabled = true;
+        if (UI.modifyBtn) UI.modifyBtn.disabled = false;
         disableTableButtons();
-        return result;
 
     } catch (err) {
         console.error("Save failed:", err);
         alert(`Save failed: ${err.message}`);
-        saveButton.disabled = false;
-        return null;
     } finally {
-        saveButton.innerHTML = originalText;
-        if (saveButton.dataset.mode === "insert") {
-            saveButton.disabled = false;
-        }
+        UI.saveBtn.innerHTML = originalText;
+        if (UI.saveBtn.dataset.mode === "insert") UI.saveBtn.disabled = false;
     }
 }
 
 function validatePaymentForm() {
-    if (!creditPayInput.receiptOn.value) {
-        alert("Receipt On is required");
-        creditPayInput.receiptOn.focus();
-        return false;
-    }
-    if (!creditPayInput.partyCode.value.trim()) {
-        alert("Customer is required");
-        creditPayInput.partyName.focus();
-        return false;
-    }
-    if (!creditPayInput.transactionType.value) {
-        alert("Transaction Type is required");
-        creditPayInput.transactionType.focus();
-        return false;
-    }
-    if (!creditPayInput.paymentMode.value) {
-        alert("Payment Mode is required");
-        creditPayInput.paymentMode.focus();
-        return false;
-    }
-    if (creditPayInput.paymentMode.value !== "Cash" && !creditPayInput.inputBankName.value.trim()) {
-        alert("Bank Name is required");
-        creditPayInput.inputBankName.focus();
-        return false;
-    }
-    if ((parseFloat(creditPayInput.paymentAmount.value) || 0) <= 0) {
-        alert("Payment Amount must be greater than zero");
-        creditPayInput.paymentAmount.focus();
-        return false;
-    }
+    if (!UI.receiptOn.value) return (alert("Receipt On is required"), UI.receiptOn.focus(), false);
+    if (!UI.partyCode.value.trim()) return (alert("Customer is required"), UI.partyName.focus(), false);
+    if (!UI.transactionType.value) return (alert("Transaction Type is required"), UI.transactionType.focus(), false);
+    if (!UI.paymentMode.value) return (alert("Payment Mode is required"), UI.paymentMode.focus(), false);
+    if (UI.paymentMode.value !== "Cash" && !UI.inputBankName.value.trim()) return (alert("Bank Name is required"), UI.inputBankName.focus(), false);
+    if ((parseFloat(UI.paymentAmount.value) || 0) <= 0) return (alert("Payment Amount must be greater than zero"), UI.paymentAmount.focus(), false);
     return true;
 }
 
-function calculateSuspenseAmount() {
-    const paymentAmount = safeNumber(creditPayInput.paymentAmount.value);
-    const deductionAmount = safeNumber(creditPayInput.deductionAmount.value);
-
-    const totalAllocatedEl = document.getElementById("totalAllocatedAmount");
-    const totalOtherEl = document.getElementById("totalOtherDeductionAmount");
-    const totalTDSEl = document.getElementById("totalTDSDeductionAmount");
-
-    const totalAllocated = totalAllocatedEl ? safeNumber(totalAllocatedEl.textContent) : 0;
-    const totalOther = totalOtherEl ? safeNumber(totalOtherEl.textContent) : 0;
-    const totalTDS = totalTDSEl ? safeNumber(totalTDSEl.textContent) : 0;
-
-    const suspense = (paymentAmount + deductionAmount) - (totalAllocated + totalOther + totalTDS);
-
-    const suspenseEl = document.getElementById("suspenseAmount");
-    if (suspenseEl) {
-        suspenseEl.textContent = suspense.toFixed(2);
-        suspenseEl.classList.toggle("text-danger", suspense > 0);
-        suspenseEl.classList.toggle("text-success", suspense <= 0);
-    }
-    return suspense;
-}
-
-async function loadPaymentIDSuggestions(companyID, inputVal = "") {
-    const datalist = document.getElementById("paymentIDSuggestions");
-    if (!datalist) return;
-    datalist.innerHTML = "";
-
-    const { data, error } = await supabaseClient
-        .from("PaymentDetails")
-        .select("PaymentID")
-        .eq("company_id", companyID)
-        .eq("TransactionType", "Credit")
-        .ilike("PaymentID", `%${inputVal}%`)
-        .order("PaymentID", { ascending: true })
-        .limit(50);
-
-    if (error) return console.error(error);
-
-    data?.forEach((d) => {
-        const opt = document.createElement("option");
-        opt.value = d.PaymentID;
-        datalist.appendChild(opt);
-    });
-}
-
-async function loadPaymentDetails(paymentID) {
-    if (!paymentID) return;
-
-    const { data, error } = await supabaseClient
-        .from("PaymentDetails")
-        .select("*")
-        .eq("company_id", CompanyID)
-        .eq("PaymentID", paymentID)
-        .eq("TransactionType", "Credit")
-        .maybeSingle();
-
-    if (error) return console.error("Load Payment Error:", error);
-    if (!data) return console.log("Payment not found:", paymentID);
-
-    const party = await getPartyDetailsByCode(data.PartyCode);
-
-    creditPayInput.receiptOn.value = data.ReceiptOn ?? "";
-    creditPayInput.partyCode.value = data.PartyCode ?? "";
-    creditPayInput.partyName.value = party.PartyName || "";
-    creditPayInput.transactionType.value = data.TransactionType ?? "";
-    creditPayInput.paymentMode.value = data.PaymentMode ?? "";
-    creditPayInput.inputBankName.value = data.BankName ?? "";
-    creditPayInput.referenceNo.value = data.ReferenceNo ?? "";
-    creditPayInput.paymentAmount.value = data.PaymentAmount ?? 0;
-    creditPayInput.deductionAmount.value = data.DeductionAmount ?? 0;
-    creditPayInput.information.value = data.Narration ?? "";
-
-    if (saveButton) {
-        saveButton.dataset.mode = "update";
-        saveButton.innerHTML = '<i class="bi bi-pencil-square"></i> Update';
-        saveButton.disabled = true;
-    }
-
-    if (modifyButton) modifyButton.disabled = false;
-
-    disableForm();
-    calculateSuspenseAmount();
-    await loadPaymentLineItems(data.PaymentID);
+// ==========================================
+// 5. LINE ITEMS & TABLE LOGIC
+// ==========================================
+function syncTableUpdates() {
     renumberRows();
     calculateTotals();
     refreshBillDatalist();
-
-    if (addInvoiceDetailsButton) addInvoiceDetailsButton.disabled = true;
-    disableTableButtons();
-}
-
-async function getPendingInvoiceDetails(partyCode) {
-    if (!partyCode) {
-        allInvoices = [];
-        invoiceMap = {};
-        refreshBillDatalist();
-        return;
-    }
-
-    const { data, error } = await supabaseClient
-        .from("InvoicePaymentView")
-        .select(`InvoiceNo, InvoiceDate, GrandTotalAmount, BalanceAmount`)
-        .neq("PaymentStatus", "Paid")
-        .eq("PartyCode", partyCode)
-        .eq("company_id", CompanyID)
-        .order("InvoiceDate", { ascending: false });
-
-    if (error) return console.error("Invoice Load Error:", error);
-
-    allInvoices = data || [];
-    invoiceMap = {};
-    allInvoices.forEach(invoice => invoiceMap[invoice.InvoiceNo] = invoice);
-
-    refreshBillDatalist();
-}
-
-function refreshBillDatalist() {
-    const datalist = document.getElementById("invoiceNumberList");
-    if (!datalist) return;
-    datalist.innerHTML = "";
-
-    const addedInvoices = new Set();
-    document.querySelectorAll("#paymentDetails tbody tr").forEach(row => {
-        const invoiceNo = row.cells[1]?.textContent.trim();
-        if (invoiceNo) addedInvoices.add(invoiceNo);
-    });
-
-    allInvoices.forEach(invoice => {
-        if (!addedInvoices.has(invoice.InvoiceNo)) {
-            const option = document.createElement("option");
-            option.value = invoice.InvoiceNo;
-            datalist.appendChild(option);
-        }
-    });
 }
 
 function addInvoiceDetailRow() {
-    const invoiceNoEl = document.getElementById("invoiceNumberInput");
-    const narrationEl = document.getElementById("narration");
-    const accountedAmountEl = document.getElementById("accountedAmount");
+    if (!UI.invoiceNumInput) return;
 
-    if (!invoiceNoEl) return console.error("Error: 'invoiceNumberInput' not found.");
-
-    const invoiceNo = invoiceNoEl.value.trim();
+    const invoiceNo = UI.invoiceNumInput.value.trim();
     if (!invoiceNo) return alert("Please select an Invoice");
 
-    const narration = narrationEl ? narrationEl.value.trim() : "";
-    const allocatedAmount = accountedAmountEl ? (parseFloat(accountedAmountEl.value) || 0) : 0;
-
-    const otherDeductionInput = document.getElementById("otherDeductionAmount") || document.getElementById("otherDeuctionAmount");
-    const tdsDeductionInput = document.getElementById("tdsDeductionAmount") || document.getElementById("tDSDeuctionAmount");
-
-    const otherDeduction = parseFloat(otherDeductionInput?.value) || 0;
-    const tdsDeduction = parseFloat(tdsDeductionInput?.value) || 0;
-
+    const narration = UI.narration ? UI.narration.value.trim() : "";
+    const allocatedAmount = parseFloat(UI.accountedAmount?.value) || 0;
+    const otherDeduction = parseFloat(UI.otherDeduction?.value) || 0;
+    const tdsDeduction = parseFloat(UI.tdsDeduction?.value) || 0;
     const totalPayment = allocatedAmount + otherDeduction + tdsDeduction;
-    const tbody = document.querySelector("#paymentDetails tbody");
-    if (!tbody) return;
+
+    if (!UI.tbody) return;
 
     if (editingLineRow) {
-        const exists = [...tbody.rows].some(r => r !== editingLineRow && r.cells[1]?.textContent.trim() === invoiceNo);
+        const exists = [...UI.tbody.rows].some(r => r !== editingLineRow && r.cells[1]?.textContent.trim() === invoiceNo);
         if (exists) return alert("Invoice already added in another row.");
 
         editingLineRow.cells[1].textContent = invoiceNo;
@@ -486,7 +266,7 @@ function addInvoiceDetailRow() {
 
         if (editingLineRow.dataset.status === "Old") editingLineRow.dataset.status = "Modified";
     } else {
-        const exists = [...tbody.rows].some(row => row.cells[1]?.textContent.trim() === invoiceNo);
+        const exists = [...UI.tbody.rows].some(row => row.cells[1]?.textContent.trim() === invoiceNo);
         if (exists) return alert("Invoice already added.");
 
         const row = document.createElement("tr");
@@ -510,62 +290,60 @@ function addInvoiceDetailRow() {
                 </button>
             </td>
         `;
-        tbody.appendChild(row);
+        UI.tbody.appendChild(row);
     }
 
-    renumberRows();
-    calculateTotals();
-    refreshBillDatalist();
+    syncTableUpdates();
     clearInvoiceInputs();
 }
 
-const paymentDetailsTbody = document.querySelector("#paymentDetails tbody");
-if (paymentDetailsTbody) {
-    paymentDetailsTbody.addEventListener("click", function (e) {
+if (UI.tbody) {
+    UI.tbody.addEventListener("click", function (e) {
+        // Edit Button Click
         const editBtn = e.target.closest(".edit-row");
         if (editBtn) {
             const row = editBtn.closest("tr");
             editingLineRow = row;
 
-            document.getElementById("invoiceNumberInput").value = row.cells[1].textContent.trim();
-            document.getElementById("narration").value = row.cells[2].textContent.trim();
-            document.getElementById("accountedAmount").value = row.cells[3].textContent.trim();
+            UI.invoiceNumInput.value = row.cells[1].textContent.trim();
+            if (UI.narration) UI.narration.value = row.cells[2].textContent.trim();
+            if (UI.accountedAmount) UI.accountedAmount.value = row.cells[3].textContent.trim();
+            if (UI.otherDeduction) UI.otherDeduction.value = row.cells[4].textContent.trim();
+            if (UI.tdsDeduction) UI.tdsDeduction.value = row.cells[5].textContent.trim();
 
-            const otherDeductionInput = document.getElementById("otherDeductionAmount") || document.getElementById("otherDeuctionAmount");
-            if (otherDeductionInput) otherDeductionInput.value = row.cells[4].textContent.trim();
-
-            const tdsDeductionInput = document.getElementById("tdsDeductionAmount") || document.getElementById("tDSDeuctionAmount");
-            if (tdsDeductionInput) tdsDeductionInput.value = row.cells[5].textContent.trim();
-
-            if (addInvoiceDetailsButton) {
-                addInvoiceDetailsButton.innerHTML = '<i class="bi bi-check-circle"></i> Update';
-                addInvoiceDetailsButton.classList.replace("btn-primary", "btn-warning");
+            if (UI.addInvoiceBtn) {
+                UI.addInvoiceBtn.innerHTML = '<i class="bi bi-check-circle"></i> Update';
+                UI.addInvoiceBtn.classList.replace("btn-primary", "btn-warning");
             }
-
-            document.getElementById("invoiceNumberInput").dispatchEvent(new Event("change"));
+            UI.invoiceNumInput.dispatchEvent(new Event("change"));
             return;
         }
 
+        // Remove Button Click
         const removeBtn = e.target.closest(".remove-row");
         if (removeBtn) {
             const row = removeBtn.closest("tr");
             if (editingLineRow === row) clearInvoiceInputs();
+            if (row.dataset.status === "Old" && row.dataset.id) deletedPaymentLines.push(row.dataset.id);
 
-            if (row.dataset.status === "Old" && row.dataset.id) {
-                deletedPaymentLines.push(row.dataset.id);
-            }
             row.remove();
-            renumberRows();
-            calculateTotals();
-            refreshBillDatalist();
+            syncTableUpdates();
         }
     });
 }
 
-function renumberRows() {
-    document.querySelectorAll("#paymentDetails tbody tr").forEach((row, index) => {
-        if (row.cells[0]) row.cells[0].textContent = index + 1;
-    });
+function clearInvoiceInputs() {
+    [UI.invoiceNumInput, UI.invoiceDate, UI.invoiceAmount, UI.invoiceBalance,
+    UI.accountedAmount, UI.otherDeduction, UI.tdsDeduction, UI.narration]
+        .forEach(el => { if (el) el.value = ""; });
+
+    editingLineRow = null;
+    if (UI.addInvoiceBtn) {
+        UI.addInvoiceBtn.innerHTML = "Add";
+        UI.addInvoiceBtn.classList.remove("btn-warning");
+        UI.addInvoiceBtn.classList.add("btn-primary");
+    }
+    refreshBillDatalist();
 }
 
 function calculateTotals() {
@@ -579,43 +357,67 @@ function calculateTotals() {
     });
 
     const els = {
-        allocatedEl: document.getElementById("totalAllocatedAmount"),
-        otherEl: document.getElementById("totalOtherDeductionAmount"),
-        tdsEl: document.getElementById("totalTDSDeductionAmount"),
-        totalEl: document.getElementById("totalPaymentAmount")
+        alloc: document.getElementById("totalAllocatedAmount"),
+        other: document.getElementById("totalOtherDeductionAmount"),
+        tds: document.getElementById("totalTDSDeductionAmount"),
+        tot: document.getElementById("totalPaymentAmount")
     };
 
-    if (els.allocatedEl) els.allocatedEl.textContent = allocated.toFixed(2);
-    if (els.otherEl) els.otherEl.textContent = other.toFixed(2);
-    if (els.tdsEl) els.tdsEl.textContent = tds.toFixed(2);
-    if (els.totalEl) els.totalEl.textContent = total.toFixed(2);
+    if (els.alloc) els.alloc.textContent = allocated.toFixed(2);
+    if (els.other) els.other.textContent = other.toFixed(2);
+    if (els.tds) els.tds.textContent = tds.toFixed(2);
+    if (els.tot) els.tot.textContent = total.toFixed(2);
 
     calculateSuspenseAmount();
 }
 
-function clearInvoiceInputs() {
-    ["invoiceNumberInput", "invoiceDate", "invoiceAmount", "invoiceBalance",
-        "accountedAmount", "otherDeductionAmount", "otherDeuctionAmount",
-        "tdsDeductionAmount", "tDSDeuctionAmount", "narration"].forEach(id => {
-            const el = document.getElementById(id);
-            if (el) el.value = "";
-        });
+function calculateSuspenseAmount() {
+    const paymentAmount = safeNumber(UI.paymentAmount?.value);
+    const deductionAmount = safeNumber(UI.deductionAmount?.value);
 
-    editingLineRow = null;
-    if (addInvoiceDetailsButton) {
-        addInvoiceDetailsButton.innerHTML = "Add";
-        addInvoiceDetailsButton.classList.remove("btn-warning");
-        addInvoiceDetailsButton.classList.add("btn-primary");
+    const allocEl = document.getElementById("totalAllocatedAmount");
+    const otherEl = document.getElementById("totalOtherDeductionAmount");
+    const tdsEl = document.getElementById("totalTDSDeductionAmount");
+
+    const totalAllocated = allocEl ? safeNumber(allocEl.textContent) : 0;
+    const totalOther = otherEl ? safeNumber(otherEl.textContent) : 0;
+    const totalTDS = tdsEl ? safeNumber(tdsEl.textContent) : 0;
+
+    const suspense = (paymentAmount + deductionAmount) - (totalAllocated + totalOther + totalTDS);
+    const suspenseEl = document.getElementById("suspenseAmount");
+
+    if (suspenseEl) {
+        suspenseEl.textContent = suspense.toFixed(2);
+        suspenseEl.classList.toggle("text-danger", suspense > 0);
+        suspenseEl.classList.toggle("text-success", suspense <= 0);
     }
-    refreshBillDatalist();
+    return suspense;
 }
 
+function disableTableButtons() {
+    document.querySelectorAll("#paymentDetails tbody .edit-row, #paymentDetails tbody .remove-row")
+        .forEach(btn => btn.disabled = true);
+}
+
+function enableTableButtons() {
+    document.querySelectorAll("#paymentDetails tbody .edit-row, #paymentDetails tbody .remove-row")
+        .forEach(btn => btn.disabled = false);
+}
+
+function renumberRows() {
+    document.querySelectorAll("#paymentDetails tbody tr").forEach((row, index) => {
+        if (row.cells[0]) row.cells[0].textContent = index + 1;
+    });
+}
+
+// ==========================================
+// 6. DB OPERATIONS (Line Items & Load)
+// ==========================================
 async function savePaymentLineItems(paymentID) {
-    const rows = document.querySelectorAll("#paymentDetails tbody tr");
     const newRecords = [];
     const modifiedRecords = [];
 
-    rows.forEach(row => {
+    document.querySelectorAll("#paymentDetails tbody tr").forEach(row => {
         const status = row.dataset.status;
         if (status === "Old") return;
 
@@ -662,9 +464,8 @@ async function deleteRemovedLineItems() {
 }
 
 async function loadPaymentLineItems(paymentID) {
-    const tbody = document.querySelector("#paymentDetails tbody");
-    if (!tbody) return;
-    tbody.innerHTML = "";
+    if (!UI.tbody) return;
+    UI.tbody.innerHTML = "";
 
     const { data, error } = await supabaseClient
         .from("PaymentLineItems")
@@ -674,43 +475,203 @@ async function loadPaymentLineItems(paymentID) {
 
     if (error) return console.error(error);
 
-    data?.forEach(addRowFromDB);
-    renumberRows();
-    calculateTotals();
+    data?.forEach(item => {
+        const row = document.createElement("tr");
+        row.dataset.status = "Old";
+        row.dataset.id = item.id;
+        row.innerHTML = `
+            <td></td>
+            <td>${item.InvoiceNo}</td>
+            <td>${item.Narration || ""}</td>
+            <td class="text-end">${safeNumber(item.PaymentAmount).toFixed(2)}</td>
+            <td class="text-end">${safeNumber(item.OtherDeductionAmount).toFixed(2)}</td>
+            <td class="text-end">${safeNumber(item.TDSDeductionAmount).toFixed(2)}</td>
+            <td class="text-end">${(safeNumber(item.PaymentAmount) + safeNumber(item.OtherDeductionAmount) + safeNumber(item.TDSDeductionAmount)).toFixed(2)}</td>
+            <td>
+                <button type="button" class="btn btn-sm btn-primary edit-row me-1" title="Edit">
+                    <i class="bi bi-pencil-square"></i>
+                </button>
+                <button type="button" class="btn btn-sm btn-danger remove-row" title="Delete">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </td>
+        `;
+        UI.tbody.appendChild(row);
+    });
+
+    syncTableUpdates();
+}
+
+async function loadPaymentDetails(paymentID) {
+    const { data, error } = await supabaseClient
+        .from("PaymentDetails")
+        .select("*")
+        .eq("company_id", CompanyID)
+        .eq("PaymentID", paymentID)
+        .eq("TransactionType", "Credit")
+        .maybeSingle();
+
+    if (error || !data) return console.error("Payment load error or not found.");
+
+    const party = await getPartyDetailsByCode(data.PartyCode);
+
+    if (UI.receiptOn) UI.receiptOn.value = data.ReceiptOn ?? "";
+    if (UI.partyCode) UI.partyCode.value = data.PartyCode ?? "";
+    if (UI.partyName) UI.partyName.value = party.PartyName || "";
+    if (UI.transactionType) UI.transactionType.value = data.TransactionType ?? "";
+    if (UI.paymentMode) UI.paymentMode.value = data.PaymentMode ?? "";
+    if (UI.inputBankName) UI.inputBankName.value = data.BankName ?? "";
+    if (UI.referenceNo) UI.referenceNo.value = data.ReferenceNo ?? "";
+    if (UI.paymentAmount) UI.paymentAmount.value = data.PaymentAmount ?? 0;
+    if (UI.deductionAmount) UI.deductionAmount.value = data.DeductionAmount ?? 0;
+    if (UI.information) UI.information.value = data.Narration ?? "";
+
+    if (UI.saveBtn) {
+        UI.saveBtn.dataset.mode = "update";
+        UI.saveBtn.innerHTML = '<i class="bi bi-pencil-square"></i> Update';
+        UI.saveBtn.disabled = true;
+    }
+    if (UI.modifyBtn) UI.modifyBtn.disabled = false;
+
+    disableForm();
+    calculateSuspenseAmount();
+    await loadPaymentLineItems(data.PaymentID);
+
+    if (UI.addInvoiceBtn) UI.addInvoiceBtn.disabled = true;
+    disableTableButtons();
+}
+
+async function loadPaymentIDSuggestions(companyID, inputVal = "") {
+    const datalist = document.getElementById("paymentIDSuggestions");
+    if (!datalist) return;
+    datalist.innerHTML = "";
+
+    const { data } = await supabaseClient.from("PaymentDetails")
+        .select("PaymentID").eq("company_id", companyID).eq("TransactionType", "Credit")
+        .ilike("PaymentID", `%${inputVal}%`).order("PaymentID", { ascending: true }).limit(50);
+
+    data?.forEach(d => {
+        const opt = document.createElement("option");
+        opt.value = d.PaymentID;
+        datalist.appendChild(opt);
+    });
+}
+
+// ==========================================
+// 7. INVOICE DROPDOWN & FILTERING
+// ==========================================
+if (UI.invoiceNumInput) {
+    UI.invoiceNumInput.addEventListener("input", function () {
+        const searchText = this.value.toLowerCase();
+        const datalist = document.getElementById("invoiceNumberList");
+        if (!datalist) return;
+
+        datalist.innerHTML = "";
+        const addedInvoices = new Set();
+
+        document.querySelectorAll("#paymentDetails tbody tr").forEach(row => {
+            const invoiceNo = row.cells[1]?.textContent?.trim();
+            if (invoiceNo) addedInvoices.add(invoiceNo);
+        });
+
+        allInvoices
+            .filter(inv => inv.InvoiceNo.toLowerCase().includes(searchText))
+            .forEach(inv => {
+                if (!addedInvoices.has(inv.InvoiceNo)) {
+                    const option = document.createElement("option");
+                    option.value = inv.InvoiceNo;
+                    datalist.appendChild(option);
+                }
+            });
+    });
+
+    UI.invoiceNumInput.addEventListener("change", function () {
+        const invoice = invoiceMap[this.value.trim()];
+        if (!invoice) return;
+
+        if (UI.invoiceDate) UI.invoiceDate.value = invoice.InvoiceDate ? invoice.InvoiceDate.split("T")[0] : "";
+        if (UI.invoiceAmount) UI.invoiceAmount.value = Number(invoice.GrandTotalAmount || 0).toFixed(2);
+        if (UI.invoiceBalance) UI.invoiceBalance.value = Number(invoice.BalanceAmount || 0).toFixed(2);
+    });
+}
+
+async function getPendingInvoiceDetails(partyCode) {
+    if (!partyCode) return (allInvoices = [], invoiceMap = {}, refreshBillDatalist());
+
+    const { data } = await supabaseClient
+        .from("InvoicePaymentView")
+        .select(`InvoiceNo, InvoiceDate, GrandTotalAmount, BalanceAmount`)
+        .neq("PaymentStatus", "Paid").eq("PartyCode", partyCode).eq("company_id", CompanyID)
+        .order("InvoiceDate", { ascending: false });
+
+    allInvoices = data || [];
+    invoiceMap = {};
+    allInvoices.forEach(inv => invoiceMap[inv.InvoiceNo] = inv);
     refreshBillDatalist();
 }
 
-function addRowFromDB(item) {
-    const tbody = document.querySelector("#paymentDetails tbody");
-    if (!tbody) return;
+function refreshBillDatalist() {
+    const datalist = document.getElementById("invoiceNumberList");
+    if (!datalist) return;
+    datalist.innerHTML = "";
 
-    const row = document.createElement("tr");
-    row.dataset.status = "Old";
-    row.dataset.id = item.id;
+    const addedInvoices = new Set();
+    document.querySelectorAll("#paymentDetails tbody tr").forEach(row => {
+        const invoiceNo = row.cells[1]?.textContent.trim();
+        if (invoiceNo) addedInvoices.add(invoiceNo);
+    });
 
-    row.innerHTML = `
-        <td></td>
-        <td>${item.InvoiceNo}</td>
-        <td>${item.Narration || ""}</td>
-        <td class="text-end">${safeNumber(item.PaymentAmount).toFixed(2)}</td>
-        <td class="text-end">${safeNumber(item.OtherDeductionAmount).toFixed(2)}</td>
-        <td class="text-end">${safeNumber(item.TDSDeductionAmount).toFixed(2)}</td>
-        <td class="text-end">${(safeNumber(item.PaymentAmount) + safeNumber(item.OtherDeductionAmount) + safeNumber(item.TDSDeductionAmount)).toFixed(2)}</td>
-        <td>
-            <button type="button" class="btn btn-sm btn-primary edit-row me-1" title="Edit">
-                <i class="bi bi-pencil-square"></i>
-            </button>
-            <button type="button" class="btn btn-sm btn-danger remove-row" title="Delete">
-                <i class="bi bi-trash"></i>
-            </button>
-        </td>
-    `;
-    tbody.appendChild(row);
+    allInvoices.forEach(inv => {
+        if (!addedInvoices.has(inv.InvoiceNo)) {
+            const option = document.createElement("option");
+            option.value = inv.InvoiceNo;
+            datalist.appendChild(option);
+        }
+    });
 }
 
 // ==========================================
-// SUSPENSE MODAL LOGIC
+// 8. UTILS & MODALS
 // ==========================================
+function toggleSettlementMode() {
+    if (!UI.paymentMode) return;
+    const mode = UI.paymentMode.value;
+    const refLabel = document.getElementById("referenceNoLabel");
+
+    if (mode === "Net Settlement") {
+        if (UI.inputBankName) {
+            UI.inputBankName.value = "";
+            UI.inputBankName.disabled = true;
+            UI.inputBankName.required = false;
+        }
+        if (refLabel) refLabel.textContent = "Settlement Ref No";
+    } else {
+        if (UI.inputBankName) {
+            UI.inputBankName.disabled = false;
+            UI.inputBankName.required = true;
+        }
+        if (refLabel) refLabel.textContent = "Reference No";
+    }
+}
+
+async function checkSuspensePayments(partyCode) {
+    if (!partyCode) return;
+    const { data } = await supabaseClient.from("PaymentDetails")
+        .select(`PaymentID, ReceiptOn, ReferenceNo, PaymentAmount, DeductionAmount, SuspenseAmount`)
+        .eq("PartyCode", partyCode).eq("TransactionType", "Credit").eq("company_id", CompanyID)
+        .gt("SuspenseAmount", 0).order("ReceiptOn", { ascending: false });
+
+    if (data && data.length > 0) {
+        showSuspenseModal(data);
+        if (UI.saveBtn) UI.saveBtn.disabled = true;
+        if (UI.addInvoiceBtn) UI.addInvoiceBtn.disabled = true;
+    } else {
+        closeSuspenseModal();
+        if (UI.saveBtn) UI.saveBtn.disabled = false;
+        if (UI.addInvoiceBtn) UI.addInvoiceBtn.disabled = false;
+    }
+}
+
 function showSuspenseModal(rows) {
     const tbody = document.getElementById("suspenseTableBody");
     if (!tbody) return;
@@ -726,225 +687,105 @@ function showSuspenseModal(rows) {
             <td class="text-end">${safeNumber(r.PaymentAmount).toFixed(2)}</td>
             <td class="text-end">${safeNumber(r.DeductionAmount).toFixed(2)}</td>
             <td class="text-end fw-bold text-danger">${safeNumber(r.SuspenseAmount).toFixed(2)}</td>
-            <td>
-                <button class="btn btn-sm btn-primary">Modify</button>
-            </td>
+            <td><button class="btn btn-sm btn-primary">Modify</button></td>
         `;
-        tr.querySelector("button").onclick = () => selectSuspensePayment(r.PaymentID);
+        tr.querySelector("button").onclick = () => {
+            window.suspensePaymentSelected = true;
+            closeSuspenseModal();
+            UI.paymentID.value = r.PaymentID;
+            UI.paymentID.dispatchEvent(new Event("change", { bubbles: true }));
+            showToast("Modify existing payment to clear suspense");
+        };
         tbody.appendChild(tr);
     });
 
-    const suspenseModalEl = document.getElementById("suspenseModal");
-    if (suspenseModalEl) {
-        let modalInstance = bootstrap.Modal.getInstance(suspenseModalEl);
-        if (!modalInstance) {
-            modalInstance = new bootstrap.Modal(suspenseModalEl, { backdrop: "static", keyboard: false });
-        }
-        modalInstance.show();
-    }
-}
-
-function selectSuspensePayment(paymentID) {
-    window.suspensePaymentSelected = true;
-    closeSuspenseModal();
-    creditPayInput.paymentID.value = paymentID;
-    creditPayInput.paymentID.dispatchEvent(new Event("change", { bubbles: true }));
-    showToast("Modify existing payment to clear suspense");
-}
-
-async function checkSuspensePayments(partyCode) {
-    if (!partyCode) return;
-
-    const { data, error } = await supabaseClient
-        .from("PaymentDetails")
-        .select(`PaymentID, ReceiptOn, ReferenceNo, PaymentAmount, DeductionAmount, SuspenseAmount`)
-        .eq("PartyCode", partyCode)
-        .eq("TransactionType", "Credit")
-        .eq("company_id", CompanyID)
-        .gt("SuspenseAmount", 0)
-        .order("ReceiptOn", { ascending: false });
-
-    if (error) return console.error(error);
-
-    if (data && data.length > 0) {
-        showSuspenseModal(data);
-        disableNewEntry();
-    } else {
-        closeSuspenseModal();
-        enableNewEntry();
-    }
-}
-
-function disableNewEntry() {
-    if (saveButton) saveButton.disabled = true;
-    if (addInvoiceDetailsButton) addInvoiceDetailsButton.disabled = true;
-}
-
-function enableNewEntry() {
-    if (saveButton) saveButton.disabled = false;
-    if (addInvoiceDetailsButton) addInvoiceDetailsButton.disabled = false;
+    const modalEl = document.getElementById("suspenseModal");
+    if (modalEl) (bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl, { backdrop: "static", keyboard: false })).show();
 }
 
 function closeSuspenseModal() {
     const modalEl = document.getElementById("suspenseModal");
-    if (!modalEl) return;
-    const modal = bootstrap.Modal.getInstance(modalEl);
-    if (modal) modal.hide();
+    if (modalEl) bootstrap.Modal.getInstance(modalEl)?.hide();
 }
 
 const suspenseModalEl = document.getElementById("suspenseModal");
 if (suspenseModalEl) {
     suspenseModalEl.addEventListener("hidden.bs.modal", () => {
-        if (window.suspensePaymentSelected) {
-            disableNewEntry();
-        } else {
-            enableNewEntry();
+        if (!window.suspensePaymentSelected) {
+            if (UI.saveBtn) UI.saveBtn.disabled = false;
+            if (UI.addInvoiceBtn) UI.addInvoiceBtn.disabled = false;
         }
-        creditPayInput.paymentID.focus();
+        if (UI.paymentID) UI.paymentID.focus();
     });
 }
 
-function toggleSettlementMode() {
-    if (!pModeEl) return;
-    const paymentMode = pModeEl.value;
-    const bankInput = document.getElementById("inputBankName");
-    const referenceLabel = document.getElementById("referenceNoLabel");
-
-    if (paymentMode === "Net Settlement") {
-        if (bankInput) {
-            bankInput.value = "";
-            bankInput.disabled = true;
-            bankInput.required = false;
-        }
-        if (referenceLabel) referenceLabel.textContent = "Settlement Ref No";
-    } else {
-        if (bankInput) {
-            bankInput.disabled = false;
-            bankInput.required = true;
-        }
-        if (referenceLabel) referenceLabel.textContent = "Reference No";
-    }
-}
-
-// ==========================================
-// SEARCH MODAL & TABLE UTILS
-// ==========================================
-
-function disableTableButtons() {
-    const buttons = document.querySelectorAll("#paymentDetails tbody .edit-row, #paymentDetails tbody .remove-row");
-    buttons.forEach(btn => btn.disabled = true);
-}
-
-function enableTableButtons() {
-    const buttons = document.querySelectorAll("#paymentDetails tbody .edit-row, #paymentDetails tbody .remove-row");
-    buttons.forEach(btn => btn.disabled = false);
-}
-
+// Search Modal Setup
 document.addEventListener("DOMContentLoaded", () => {
-    const searchPaymentInput = document.getElementById("searchSavedPaymentInput");
-    const btnTriggerSearch = document.getElementById("btnTriggerSearch");
-    const searchPaymentTableBody = document.getElementById("searchPaymentTableBody");
-    const searchPaymentModalEl = document.getElementById("searchPaymentModal");
+    const modalEl = document.getElementById("searchPaymentModal");
+    const inputEl = document.getElementById("searchSavedPaymentInput");
+    const tbodyEl = document.getElementById("searchPaymentTableBody");
+    const btnSearch = document.getElementById("btnTriggerSearch");
 
-    if (searchPaymentModalEl && searchPaymentTableBody && searchPaymentInput) {
-        searchPaymentModalEl.addEventListener('show.bs.modal', () => {
-            searchPaymentInput.value = "";
-            searchPaymentTableBody.innerHTML = `
-                <tr>
-                    <td colspan="6" class="text-center text-muted fst-italic py-3">
-                        Enter search criteria to find payments...
-                    </td>
-                </tr>`;
+    if (modalEl && tbodyEl && inputEl) {
+        modalEl.addEventListener('show.bs.modal', () => {
+            inputEl.value = "";
+            tbodyEl.innerHTML = `<tr><td colspan="6" class="text-center text-muted fst-italic py-3">Enter search criteria to find payments...</td></tr>`;
             searchSavedPayments();
         });
-    }
 
-    if (btnTriggerSearch) btnTriggerSearch.addEventListener("click", searchSavedPayments);
-    if (searchPaymentInput) {
-        searchPaymentInput.addEventListener("keypress", (e) => {
-            if (e.key === "Enter") {
-                e.preventDefault();
-                searchSavedPayments();
-            }
+        if (btnSearch) btnSearch.addEventListener("click", searchSavedPayments);
+        inputEl.addEventListener("keypress", (e) => {
+            if (e.key === "Enter") { e.preventDefault(); searchSavedPayments(); }
         });
-    }
 
-    if (searchPaymentTableBody) {
-        searchPaymentTableBody.addEventListener("click", async (e) => {
+        tbodyEl.addEventListener("click", async (e) => {
             const btn = e.target.closest(".select-payment-btn");
             if (!btn) return;
-
-            const paymentID = btn.dataset.id;
-            if (searchPaymentModalEl) {
-                const modalInstance = bootstrap.Modal.getInstance(searchPaymentModalEl);
-                if (modalInstance) modalInstance.hide();
+            bootstrap.Modal.getInstance(modalEl)?.hide();
+            if (UI.paymentID) {
+                UI.paymentID.value = btn.dataset.id;
+                await loadPaymentDetails(btn.dataset.id);
             }
-
-            if (creditPayInput.paymentID) creditPayInput.paymentID.value = paymentID;
-            await loadPaymentDetails(paymentID);
         });
     }
 });
 
 async function searchSavedPayments() {
-    const searchPaymentInput = document.getElementById("searchSavedPaymentInput");
-    const searchPaymentTableBody = document.getElementById("searchPaymentTableBody");
-    if (!searchPaymentInput || !searchPaymentTableBody) return;
+    const inputEl = document.getElementById("searchSavedPaymentInput");
+    const tbodyEl = document.getElementById("searchPaymentTableBody");
+    if (!inputEl || !tbodyEl) return;
 
-    const query = searchPaymentInput.value.trim();
+    const query = inputEl.value.trim();
+    tbodyEl.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-3"><span class="spinner-border spinner-border-sm"></span> Searching...</td></tr>`;
 
-    searchPaymentTableBody.innerHTML = `
-        <tr>
-            <td colspan="6" class="text-center text-muted py-3">
-                <span class="spinner-border spinner-border-sm"></span> Searching...
-            </td>
-        </tr>`;
-
-    const { data: paymentData, error } = await supabaseClient
-        .from("PaymentDetails")
+    const { data: payData, error } = await supabaseClient.from("PaymentDetails")
         .select("PaymentID, ReceiptOn, PartyCode, PaymentMode, PaymentAmount, ReferenceNo")
-        .eq("company_id", CompanyID)
-        .eq("TransactionType", "Credit")
+        .eq("company_id", CompanyID).eq("TransactionType", "Credit")
         .or(`PaymentID.ilike.%${query}%,ReferenceNo.ilike.%${query}%,PartyCode.ilike.%${query}%`)
-        .order("ReceiptOn", { ascending: false })
-        .limit(50);
+        .order("ReceiptOn", { ascending: false }).limit(50);
 
-    if (error) {
-        searchPaymentTableBody.innerHTML = `<tr><td colspan="6" class="text-center text-danger fw-bold py-3">Error fetching data.</td></tr>`;
-        return;
+    if (error) return (tbodyEl.innerHTML = `<tr><td colspan="6" class="text-center text-danger fw-bold py-3">Error fetching data.</td></tr>`);
+    if (!payData?.length) return (tbodyEl.innerHTML = `<tr><td colspan="6" class="text-center text-muted fst-italic py-3">No payments found.</td></tr>`);
+
+    const pCodes = [...new Set(payData.map(i => i.PartyCode))];
+    let pMap = {};
+    if (pCodes.length) {
+        const { data: pData } = await supabaseClient.from("PartyDetails").select("PartyCode, PartyName").eq("company_id", CompanyID).in("PartyCode", pCodes);
+        pData?.forEach(p => pMap[p.PartyCode] = p.PartyName);
     }
 
-    if (!paymentData || paymentData.length === 0) {
-        searchPaymentTableBody.innerHTML = `<tr><td colspan="6" class="text-center text-muted fst-italic py-3">No payments found matching "${query}".</td></tr>`;
-        return;
-    }
-
-    const partyCodes = [...new Set(paymentData.map(item => item.PartyCode))];
-    let partyNameMap = {};
-
-    if (partyCodes.length > 0) {
-        const { data: partyData } = await supabaseClient.from("PartyDetails").select("PartyCode, PartyName").eq("company_id", CompanyID).in("PartyCode", partyCodes);
-        if (partyData) partyData.forEach(p => partyNameMap[p.PartyCode] = p.PartyName);
-    }
-
-    searchPaymentTableBody.innerHTML = "";
-    paymentData.forEach(p => {
-        const tr = document.createElement("tr");
-        const partyNameDisplay = partyNameMap[p.PartyCode] || p.PartyCode;
+    tbodyEl.innerHTML = "";
+    payData.forEach(p => {
         const displayDate = typeof formatDate === 'function' ? formatDate(p.ReceiptOn) : p.ReceiptOn;
-
+        const tr = document.createElement("tr");
         tr.innerHTML = `
             <td><span class="badge bg-secondary">${p.PaymentID}</span></td>
             <td>${displayDate || "-"}</td>
-            <td class="text-start fw-bold">${partyNameDisplay}</td>
+            <td class="text-start fw-bold">${pMap[p.PartyCode] || p.PartyCode}</td>
             <td>${p.PaymentMode || "-"}</td>
             <td class="text-end fw-bold text-success">${safeNumber(p.PaymentAmount).toFixed(2)}</td>
-            <td>
-                <button type="button" class="btn btn-sm btn-success select-payment-btn" data-id="${p.PaymentID}">
-                    <i class="bi bi-check2-circle"></i> Select
-                </button>
-            </td>
+            <td><button type="button" class="btn btn-sm btn-success select-payment-btn" data-id="${p.PaymentID}"><i class="bi bi-check2-circle"></i> Select</button></td>
         `;
-        searchPaymentTableBody.appendChild(tr);
+        tbodyEl.appendChild(tr);
     });
 }

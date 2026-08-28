@@ -80,7 +80,7 @@
                                         </div>
 
                                         <div class="col-md-2">
-                                            <label class="form-label" for="receiptOn">Payment Date</label>
+                                            <label class="form-label" for="receiptOn">Receipt On</label>
                                             <input type="date" id="receiptOn" class="form-control" required>
                                         </div>
 
@@ -231,27 +231,28 @@
                                                 <thead class="table-light">
                                                     <tr>
                                                         <th>Sr No</th>
+                                                        <th>Bill Reference</th>
                                                         <th>Bill No</th>
                                                         <th>Narration</th>
-                                                        <th class="text-end">Allocated Amount</th>
-                                                        <th class="text-end">Other Deduction</th>
-                                                        <th class="text-end">TDS Deduction</th>
-                                                        <th class="text-end">Total Payment</th>
+                                                        <th>Allocated Amount</th>
+                                                        <th>Other Deduction</th>
+                                                        <th>TDS Deduction</th>
+                                                        <th>Total Payment</th>
                                                         <th>Actions</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody></tbody>
                                                 <tfoot>
                                                     <tr class="table-secondary fw-bold">
-                                                        <td colspan="3" class="text-end">Total:</td>
+                                                        <td colspan="4" class="text-end">Total:</td>
                                                         <td id="totalAllocatedAmount" class="text-end">0.00</td>
                                                         <td id="totalOtherDeductionAmount" class="text-end">0.00</td>
                                                         <td id="totalTDSDeductionAmount" class="text-end">0.00</td>
-                                                        <td id="totalPaymentAmount" class="text-end">0.00</td>
+                                                        <td id="totalPayments" class="text-end">0.00</td>
                                                         <td></td>
                                                     </tr>
                                                     <tr class="fw-bold text-danger">
-                                                        <td colspan="6" class="text-end">Suspense Amount :</td>
+                                                        <td colspan="7" class="text-end">Suspense Amount :</td>
                                                         <td id="suspenseAmount" class="text-end">0.00</td>
                                                         <td></td>
                                                     </tr>
@@ -321,7 +322,7 @@
                 <div class="modal-body">
                     <div class="input-group mb-3">
                         <input type="text" id="searchSavedPaymentInput" class="form-control"
-                            placeholder="Search by Payment ID, Vendor Name, or Reference No..." autocomplete="off"
+                            placeholder="Search by Payment ID, Customer Name, or Reference No..." autocomplete="off"
                             aria-label="Search Saved Payments">
                         <button class="btn btn-outline-primary" type="button" id="btnTriggerSearch">
                             <i class="bi bi-search"></i> Search
@@ -333,8 +334,8 @@
                             <thead class="table-light">
                                 <tr>
                                     <th>Payment ID</th>
-                                    <th>Payment Date</th>
-                                    <th class="text-start">Vendor Name</th>
+                                    <th>Receipt Date</th>
+                                    <th class="text-start">Customer Name</th>
                                     <th>Mode</th>
                                     <th class="text-end">Amount</th>
                                     <th>Action</th>
