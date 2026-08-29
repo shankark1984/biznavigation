@@ -1,4 +1,4 @@
-const VERSION = 'v3.04.08.03';
+const VERSION = 'v3.04.08.04';
 const STATIC_CACHE = `biznav-static-${VERSION}`;
 const DYNAMIC_CACHE = `biznav-dynamic-${VERSION}`;
 const MAX_DYNAMIC_ITEMS = 50;
