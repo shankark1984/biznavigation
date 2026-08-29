@@ -9,12 +9,7 @@ async function generate_Clear_InvoicePDF_Main(
     try {
 
         const { jsPDF } = window.jspdf;
-
-        const doc = new jsPDF(
-            "p",
-            "mm",
-            "a4"
-        );
+        const doc = new jsPDF("p", "mm", "a4");
 
         const { PAGE, FONT } =
             PDF_CONFIG;
@@ -59,46 +54,23 @@ async function generate_Clear_InvoicePDF_Main(
         // PAYMENT RECEIVED
         // ==========================================
         const totalPaymentReceived =
-            round2(
-                safeNumber(
-                    totalsPayment?.totalPayment
-                ) +
-                safeNumber(
-                    totalsPayment?.totalOtherDeduction
-                ) +
-                safeNumber(
-                    totalsPayment?.totalTDS
-                )
+            round2(safeNumber(totalsPayment?.totalPayment) +
+                safeNumber(totalsPayment?.totalOtherDeduction) +
+                safeNumber(totalsPayment?.totalTDS)
             );
 
         // ==========================================
         // HEADER
         // ==========================================
-        y = await drawHeader(
-            doc,
-            PAGE,
-            FONT,
-            company,
-            y
-        );
+        y = await drawHeader(doc, PAGE, FONT, company, y);
 
         // ==========================================
         // TITLE
         // ==========================================
         y =
             reportType === "Duty Invoice"
-                ? drawTitle_Duty_Invoice(
-                    doc,
-                    PAGE,
-                    FONT,
-                    y
-                )
-                : drawTitle(
-                    doc,
-                    PAGE,
-                    FONT,
-                    y
-                );
+                ? drawTitle_Duty_Invoice(doc, PAGE, FONT, y)
+                : drawTitle(doc, PAGE, FONT, y);
 
         // ==========================================
         // PARTY DETAILS
