@@ -22,36 +22,33 @@
     <!-- Flatpickr CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" defer></script>
+
     <!-- Custom CSS -->
     <link rel="stylesheet" href="../../assets/css/navbar.css">
     <link rel="stylesheet" href="../../assets/css/accountingLedger.css">
 
-    <!-- Sticky Header & Font Size CSS -->
+    <!-- Sticky Header & Table Styling -->
     <style>
-        /* Set a max height so the table area itself scrolls */
         .table-sticky-wrapper {
             max-height: 60vh;
             overflow-y: auto;
         }
 
-        /* Make table text slightly smaller (14px) for better data density */
         .table-sticky-wrapper table {
             font-size: 0.875rem;
         }
 
-        /* Make the entire table header sticky */
+        /* Sticky Table Header */
         .table-sticky-wrapper thead {
             position: sticky;
             top: 0;
             z-index: 1020;
         }
 
-        /* CUSTOM HEADER COLOR: Change background-color and text-color below */
         .table-sticky-wrapper thead th {
             background-color: #343a40 !important;
-            /* Dark theme header (Change this hex code for any color) */
             color: #ffffff !important;
-            /* Header text color */
             box-shadow: inset 0 -1px 0 #dee2e6;
             border-bottom: none;
             border-top: none;
@@ -59,17 +56,22 @@
             font-weight: 600;
         }
 
-        /* Keep the footer sticky at the bottom */
+        /* Sticky Table Footer */
         .table-sticky-wrapper tfoot {
             position: sticky;
             bottom: 0;
             z-index: 1010;
         }
 
+        .table-sticky-wrapper tfoot tr {
+            background-color: #0a5cc6 !important;
+        }
+
         .table-sticky-wrapper tfoot th,
         .table-sticky-wrapper tfoot td {
-            background-color: #f8f9fa;
-            box-shadow: inset 0 1px 0 #dee2e6;
+            background-color: transparent !important;
+            color: #f0f3f0 !important;
+            font-weight: 700;
             border-top: none;
             border-bottom: none;
             font-size: 0.9rem;
@@ -94,7 +96,7 @@
             <div class="page-content">
                 <div class="container-fluid py-3" id="root">
 
-                    <!-- Filter Section (NEW) -->
+                    <!-- Filter Section -->
                     <div class="row mb-3 align-items-center">
                         <div class="col-md-5 col-lg-4">
                             <div class="input-group shadow-sm">
@@ -108,9 +110,7 @@
                                 </select>
                             </div>
                         </div>
-                        <div class="col-md-7 col-lg-8 text-end">
-                            <!-- Placeholder for future filters like date ranges -->
-                        </div>
+                        <div class="col-md-7 col-lg-8 text-end"></div>
                     </div>
 
                     <!-- Tabs Navigation -->
@@ -164,7 +164,7 @@
                                         </thead>
                                         <tbody id="customerTableBody" aria-live="polite">
                                             <tr id="customer-loading-row">
-                                                <td colspan="11" class="text-center text-muted py-4">
+                                                <td colspan="14" class="text-center text-muted py-4">
                                                     <div class="spinner-border spinner-border-sm me-2" role="status">
                                                     </div>
                                                     Loading customer data...
@@ -173,7 +173,7 @@
                                         </tbody>
                                         <tfoot class="fw-bold">
                                             <tr>
-                                                <th scope="row" colspan="3" class="text-end">Grand Total</th>
+                                                <th scope="row" colspan="3" class="text-center">Grand Total</th>
                                                 <td class="text-end">0.00</td>
                                                 <td class="text-end">0.00</td>
                                                 <td class="text-end">0.00</td>
@@ -222,7 +222,7 @@
                                         </thead>
                                         <tbody id="vendorTableBody" aria-live="polite">
                                             <tr id="vendor-loading-row">
-                                                <td colspan="11" class="text-center text-muted py-4">
+                                                <td colspan="14" class="text-center text-muted py-4">
                                                     <div class="spinner-border spinner-border-sm me-2" role="status">
                                                     </div>
                                                     Loading vendor data...
@@ -231,7 +231,7 @@
                                         </tbody>
                                         <tfoot class="fw-bold">
                                             <tr>
-                                                <th scope="row" colspan="3" class="text-end">Grand Total</th>
+                                                <th scope="row" colspan="3" class="text-center">Grand Total</th>
                                                 <td class="text-end">0.00</td>
                                                 <td class="text-end">0.00</td>
                                                 <td class="text-end">0.00</td>
@@ -272,7 +272,7 @@
         </main>
     </div>
 
-    <!-- Scripts remain unchanged -->
+    <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"
         defer></script>

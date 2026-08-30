@@ -6,6 +6,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         loadVendorOutstanding()
     ]);
 
+    const excelBtn = document.getElementById('exportExcelBtn');
+    const pdfBtn = document.getElementById('exportPdfBtn');
+
+    if (excelBtn) excelBtn.addEventListener('click', exportToExcel);
+    if (pdfBtn) pdfBtn.addEventListener('click', exportToPDF);
+
     // Tab Event Listeners: Update dropdown filter when switching tabs
     document.getElementById('customer-tab').addEventListener('click', () => {
         populatePartyFilter('Customer');
@@ -54,12 +60,11 @@ function resetAndApplyFilter(tbodyId, selectedParty = '') {
     if (!tbody) return;
 
     const allSummaryRows = tbody.querySelectorAll('[class*="summary-row-"]');
-    const allChildRows = tbody.querySelectorAll('[class*="group-child-"]');
+    tbody.querySelectorAll('[class*="group-child-"]').forEach(row => row.style.display = 'none');
 
-    // 1. Hide all expanded children by default
-    allChildRows.forEach(row => row.style.display = 'none');
+    // Track filtered grand totals
+    const filteredGrandTotals = Object.fromEntries([...BUCKET_KEYS, 'overall'].map(k => [k, 0]));
 
-    // 2. Process rows based on the filter
     allSummaryRows.forEach(row => {
         const partyName = row.getAttribute('data-party');
         const match = row.className.match(/summary-row-(\d+)/);
@@ -72,15 +77,56 @@ function resetAndApplyFilter(tbodyId, selectedParty = '') {
                 btn.dataset.collapsed = 'true';
                 btn.innerHTML = '<i class="bi bi-plus-square text-secondary"></i>';
             }
+            // When "All Parties" is selected, add summary row totals to grand total
+            addSummaryRowTotalsToGrandTotal(row, filteredGrandTotals);
+
         } else if (partyName === selectedParty) {
-            row.style.display = 'none'; // Auto-Expand mode
+            row.style.display = 'none';
             if (groupIndex) {
-                tbody.querySelectorAll(`.group-child-${groupIndex}`).forEach(child => child.style.display = '');
+                const childRows = tbody.querySelectorAll(`.group-child-${groupIndex}`);
+                childRows.forEach(child => {
+                    child.style.display = '';
+                    // If it's the subtotal row of this group, extract its numbers for the grand total
+                    if (child.classList.value.includes('table-info')) {
+                        addSubtotalRowTotalsToGrandTotal(child, filteredGrandTotals);
+                    }
+                });
             }
         } else {
-            row.style.display = 'none'; // Hide non-matching
+            row.style.display = 'none';
         }
     });
+
+    // Update the table footer with the newly calculated totals
+    updateFooterTotals(tbodyId, filteredGrandTotals);
+}
+
+// Helper to extract totals from a collapsed summary row
+function addSummaryRowTotalsToGrandTotal(row, totalsObj) {
+    const cells = row.querySelectorAll('td');
+    // Bucket columns start from index 3 up to 11 (9 buckets), and index 12 is overall total
+    BUCKET_KEYS.forEach((key, index) => {
+        const cellValue = parseCurrencyValue(cells[3 + index].textContent);
+        totalsObj[key] += cellValue;
+    });
+    totalsObj['overall'] += parseCurrencyValue(cells[12].textContent);
+}
+
+// Helper to extract totals from an expanded subtotal row
+function addSubtotalRowTotalsToGrandTotal(row, totalsObj) {
+    const cells = row.querySelectorAll('td');
+    // In subtotal rows, because colspan="3" shifts cells: buckets start at index 1 to 9, overall at index 10
+    BUCKET_KEYS.forEach((key, index) => {
+        const cellValue = parseCurrencyValue(cells[1 + index].textContent);
+        totalsObj[key] += cellValue;
+    });
+    totalsObj['overall'] += parseCurrencyValue(cells[10].textContent);
+}
+
+function parseCurrencyValue(text) {
+    if (!text || text === '-') return 0;
+    // Remove commas and convert to float
+    return parseFloat(text.replace(/,/g, '')) || 0;
 }
 
 // ==========================================
@@ -152,7 +198,6 @@ function renderTableData(data, tbodyId, type) {
     }
 
     const grandTotals = Object.fromEntries([...BUCKET_KEYS, 'overall'].map(k => [k, 0]));
-
     const currentDate = new Date();
     currentDate.setHours(0, 0, 0, 0);
 
@@ -184,7 +229,6 @@ function renderTableData(data, tbodyId, type) {
             grandTotals[bucketKey] += balanceAmount;
             grandTotals['overall'] += balanceAmount;
 
-            // OPTIMIZATION: Extract Rowspan Cell to avoid duplicating the entire HTML string
             const rowspanCell = index === 0 ? `
                 <td class="align-top fw-bold border-end" rowspan="${invoiceRowsCount}" style="width: 250px;">
                     <div class="d-flex align-items-start text-wrap">
@@ -358,4 +402,86 @@ function formatCurrency(amount) {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2
     });
+}
+
+function getActiveTableAndType() {
+    const activeTabPane = document.querySelector('.tab-pane.active');
+    if (!activeTabPane) return null;
+    const table = activeTabPane.querySelector('table');
+    const type = activeTabPane.id.includes('customer') ? 'Customer' : 'Vendor';
+    return { table, type };
+}
+
+// ==========================================
+// Export Functionality (Filtered, Expanded & Cleaned)
+// ==========================================
+
+function getFilteredExportTable() {
+    const { table, type } = getActiveTableAndType() || {};
+    if (!table) return null;
+
+    const filterDropdown = document.getElementById('partyFilter');
+    const selectedParty = filterDropdown ? filterDropdown.value : '';
+
+    const tableClone = table.cloneNode(true);
+
+    // Remove top summary rows and filter out unselected parties simultaneously
+    tableClone.querySelectorAll('tr').forEach(row => {
+        if (row.classList.value.includes('summary-row-')) {
+            row.remove();
+            return;
+        }
+        const partyAttr = row.getAttribute('data-party');
+        if (selectedParty && partyAttr && partyAttr !== selectedParty) {
+            row.remove();
+        }
+    });
+
+    // Force expand all remaining rows
+    tableClone.querySelectorAll('tr[style*="display: none"]').forEach(row => row.style.display = '');
+
+    return { table: tableClone, type };
+}
+
+function exportToExcel() {
+    const exportData = getFilteredExportTable();
+    if (!exportData) return;
+    const { table, type } = exportData;
+
+    const wb = XLSX.utils.table_to_book(table, { raw: true });
+    const filename = `${type}_Outstanding_Report_${formatDate(new Date())}.xlsx`;
+    XLSX.writeFile(wb, filename);
+}
+
+function exportToPDF() {
+    const { jsPDF } = window.jspdf;
+    const exportData = getFilteredExportTable();
+    if (!exportData) return;
+    const { table, type } = exportData;
+
+    const doc = new jsPDF('l', 'pt', 'a4');
+
+    doc.setFontSize(16);
+    doc.text(`${type} Outstanding Report`, 40, 40);
+    doc.setFontSize(10);
+    doc.text(`Generated on: ${formatDate(new Date())}`, 40, 60);
+
+    doc.autoTable({
+        html: table,
+        startY: 75,
+        theme: 'grid',
+        styles: { fontSize: 8, cellPadding: 4 },
+        headStyles: { fillColor: [52, 58, 64] },
+        footStyles: { fillColor: [226, 232, 240], textColor: [30, 41, 59], fontStyle: 'bold' },
+        didParseCell: function (data) {
+            const firstCellText = data.cell.text && data.cell.text[0] ? data.cell.text[0] : '';
+            if (data.row.section === 'body' && firstCellText.includes('Total')) {
+                data.cell.styles.fillColor = [207, 244, 252];
+                data.cell.styles.textColor = [13, 202, 240];
+                data.cell.styles.fontStyle = 'bold';
+            }
+        }
+    });
+
+    doc.save(`${type}_Outstanding_Report_${formatDate(new Date())}.pdf`);
 }
