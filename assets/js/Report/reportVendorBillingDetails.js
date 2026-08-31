@@ -419,12 +419,13 @@ async function renderTable(data) {
             <td class="text-end">${formatAmount(row.SGSTAmount || '0')}</td>
             <td class="text-end">${formatAmount(row.IGSTAmount || '0')}</td>
             <td class="text-end">${formatAmount(row.TotalGSTAmount || '0')}</td>
-            <td class="text-end">${formatAmount(row.TotalAmount || '0')}</td>
+            <td class="text-end text-success">${formatAmount(row.ChargeTotalAmount || '0')}</td>
             <td class="text-end">${formatAmount(row.PaymentAmount || '0')}</td>
             <td class="text-end">${formatAmount(row.OtherDeductionAmount || '0')}</td>
             <td class="text-end">${formatAmount(row.TDSDeductionAmount || '0')}</td>
+            <td class="text-end">${formatAmount(row.CreditDebitNoteAmount || '0')}</td>
             <td class="text-end">${formatAmount(row.PaymentTotalAmount || '0')}</td>
-            <td class="text-end">${formatAmount(row.BalanceAmount || '0')}</td>
+            <td class="text-end text-text-danger">${formatAmount(row.BalanceAmount || '0')}</td>
             <td>${row.PaymentStatus || ''}</td>
         `;
         tbody.appendChild(tr);
@@ -539,7 +540,7 @@ async function exportToExcel() {
         <th>Sr No</th><th>Bill Reference No</th><th>Accounted Date</th><th>Expense Type</th><th>Expense For</th>
         <th>Vendor Name</th><th>Non-Taxable Amount/th><th>Taxable Amount</th><th>CGST Amount</th><th>SGST Amount</th>
         <th>IGST Amount</th><th>Total GST Amount</th><th>Grand Total Amount</th><th>Collected Amount</th>
-        <th>Other Deduction Amount</th><th>TDS Deduction Amount</th><th>Total Payment Amount</th>
+        <th>Other Deduction Amount</th><th>TDS Deduction Amount</th><th>Credit Debit Note Amount</th><th>Total Payment Amount</th>
         <th>Balance Amount</th><th>Payment Status</th></tr></thead><tbody>`;
 
     for (let i = 0; i < allData.length; i++) {
@@ -565,6 +566,7 @@ async function exportToExcel() {
             <td>${row.PaymentAmount || '0'}</td>
             <td>${row.OtherDeductionAmount || '0'}</td>
             <td>${row.TDSDeductionAmount || '0'}</td>
+            <td>${row.CreditDebitNoteAmount || '0'}</td>
             <td>${row.PaymentTotalAmount || '0'}</td>
             <td>${row.BalanceAmount || '0'}</td>
             <td>${row.PaymentStatus || ''}</td>
@@ -589,7 +591,7 @@ async function exportToPdf() {
     const headers = [
         'Sr No', 'Invoice No', 'Invoice Date', 'Invoice Type', 'Customer Name', 'Basic Amount', 'Other Amount',
         'CGST Amount', 'SGST Amount', 'IGST Amount', 'Total GST Amount', 'Grand Total Amount', 'Collected Amount',
-        'Other Deduction Amount', 'TDS Deduction Amount', 'Total Payment Amount', 'Balance Amount', 'Payment Status'
+        'Other Deduction Amount', 'TDS Deduction Amount', 'Credit Debit Note Amount', 'Total Payment Amount', 'Balance Amount', 'Payment Status'
     ];
 
     const formatNumber = (value) => typeof value === 'number' ? value.toFixed(2) : (parseFloat(value) || 0).toFixed(2);
@@ -625,6 +627,7 @@ async function exportToPdf() {
         formatNumber(row.PaymentAmount),
         formatNumber(row.OtherDeductionAmount),
         formatNumber(row.TDSDeductionAmount),
+        formatNumber(row.CreditDebitNoteAmount),
         formatNumber(row.PaymentTotalAmount),
         formatNumber(row.BalanceAmount),
         row.PaymentStatus || ''
@@ -737,10 +740,11 @@ function updateCumulativeTotals(allData) {
         SGSTAmount: 0,
         IGSTAmount: 0,
         TotalGSTAmount: 0,
-        TotalAmount: 0,
+        ChargeTotalAmount: 0,
         PaymentAmount: 0,
         OtherDeductionAmount: 0,
         TDSDeductionAmount: 0,
+        CreditDebitNoteAmount: 0,
         PaymentTotalAmount: 0,
         BalanceAmount: 0
     };
@@ -759,10 +763,11 @@ function updateCumulativeTotals(allData) {
         totals.SGSTAmount += toNumber(row.SGSTAmount);
         totals.IGSTAmount += toNumber(row.IGSTAmount);
         totals.TotalGSTAmount += toNumber(row.TotalGSTAmount);
-        totals.TotalAmount += toNumber(row.TotalAmount);
+        totals.ChargeTotalAmount += toNumber(row.ChargeTotalAmount);
         totals.PaymentAmount += toNumber(row.PaymentAmount);
         totals.OtherDeductionAmount += toNumber(row.OtherDeductionAmount);
         totals.TDSDeductionAmount += toNumber(row.TDSDeductionAmount);
+        totals.CreditDebitNoteAmount += toNumber(row.CreditDebitNoteAmount);
         totals.PaymentTotalAmount += toNumber(row.PaymentTotalAmount);
         totals.BalanceAmount += toNumber(row.BalanceAmount);
     });
@@ -773,10 +778,11 @@ function updateCumulativeTotals(allData) {
     document.getElementById("totalSGSTAmount").textContent = formatAmount(totals.SGSTAmount);
     document.getElementById("totalIGSTAmount").textContent = formatAmount(totals.IGSTAmount);
     document.getElementById("totalGSTAmount").textContent = formatAmount(totals.TotalGSTAmount);
-    document.getElementById("totalGrandTotal").textContent = formatAmount(totals.TotalAmount);
+    document.getElementById("totalGrandTotal").textContent = formatAmount(totals.ChargeTotalAmount);
     document.getElementById("totalCollected").textContent = formatAmount(totals.PaymentAmount);
     document.getElementById("totalOtherDeduction").textContent = formatAmount(totals.OtherDeductionAmount);
     document.getElementById("totalTDSDeduction").textContent = formatAmount(totals.TDSDeductionAmount);
+    document.getElementById("totalCreditDebitNoteAmount").textContent = formatAmount(totals.CreditDebitNoteAmount);
     document.getElementById("totalPayment").textContent = formatAmount(totals.PaymentTotalAmount);
     document.getElementById("totalBalance").textContent = formatAmount(totals.BalanceAmount);
 }

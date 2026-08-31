@@ -1,308 +1,308 @@
+// ==========================================
+// Cache DOM Elements for Performance
+// ==========================================
+const els = {
+    noteNo: document.getElementById("noteNo"),
+    noteDate: document.getElementById("noteDate"),
+    noteType: document.getElementById("noteType"),
+    partyName: document.getElementById("partyName"),
+    partyCode: document.getElementById("partyCode"),
+    referenceType: document.getElementById("referenceType"),
+    referenceInvoice: document.getElementById("referenceInvoice"),
+    suggestionBox: document.getElementById("referenceSuggestions"),
+    reason: document.getElementById("reason"),
+    remarks: document.getElementById("remarks"),
+    item: document.getElementById("item"),
+    description: document.getElementById("description"),
+    hsnCode: document.getElementById("hsnCode"),
+    quantity: document.getElementById("quantity"),
+    fullAmount: document.getElementById("fullAmount"),
+    partyDefaultTax: document.getElementById("partyDefaultTax"),
+    totalAmount: document.getElementById("totalAmount"),
+    addCreditDebitRow: document.getElementById("addCreditDebitRow"),
+    tbody: document.querySelector("#creditDebitTable tbody"),
+    saveButton: document.getElementById("saveButton"),
+    noteNoSuggestions: document.getElementById("noteNoSuggestions"),
+    tempFormID: document.getElementById("tempFormID"),
+
+    // Action Buttons
+    newButton: document.getElementById("newButton"),
+    modifyButton: document.getElementById("modifyButton"),
+    deleteButton: document.getElementById("deleteButton"),
+    reportButton: document.getElementById("reportButton"),
+
+    // Modal Elements
+    searchPaymentInput: document.getElementById("searchSavedPaymentInput"),
+    btnTriggerSearch: document.getElementById("btnTriggerSearch"),
+    searchPaymentTableBody: document.getElementById("searchPaymentTableBody"),
+    searchPaymentModal: document.getElementById("searchPaymentModal")
+};
+
+let currentTable = "", currentColumn = "";
+let referenceDebounceTimer, noteDebounceTimer;
+
 document.addEventListener("DOMContentLoaded", async () => {
-    await loadSuggestions("partySuggestions", "PartyDetails", CompanyID);
-    loadTaxData();
+    try {
+        if (typeof loadSuggestions === "function") await loadSuggestions("partySuggestions", "PartyDetails", CompanyID);
+        if (typeof loadTaxData === "function") loadTaxData();
+    } catch (error) {
+        console.error("Initialization error:", error);
+    }
 });
 
-const referenceType = document.getElementById("referenceType");
-const referenceInvoice = document.getElementById("referenceInvoice");
-const suggestionBox = document.getElementById("referenceSuggestions");
+// ==========================================
+// Form Action Buttons (New, Modify)
+// ==========================================
 
-const fullAmount = document.getElementById("fullAmount");
-const partyDefaultTax = document.getElementById("partyDefaultTax");
-const totalAmount = document.getElementById("totalAmount");
+els.newButton.addEventListener("click", () => {
+    document.getElementById("creditDebitForm").reset();
+    els.tempFormID.value = "";
+    els.tbody.innerHTML = "";
+    els.noteNo.disabled = false;
+    updateCreditDebitTotals();
+    enableForm();
+    els.saveButton.innerHTML = '<i class="bi bi-save" aria-hidden="true"></i> Save';
 
-const addCreditDebitRow = document.getElementById("addCreditDebitRow");
-const creditDebitTable = document.getElementById("creditDebitTable");
+    // Reset Full Amount Label
+    document.querySelector('label[for="fullAmount"]').innerHTML = 'Amount <span class="text-danger">*</span>';
+});
 
-let currentTable = "";
-let currentColumn = "";
+els.modifyButton.addEventListener("click", () => {
+    enableForm();
+    els.saveButton.innerHTML = '<i class="bi bi-save" aria-hidden="true"></i> Update';
+});
 
-// Change Reference Type
-referenceType.addEventListener("change", function () {
 
-    referenceInvoice.value = "";
-    suggestionBox.innerHTML = "";
-    suggestionBox.style.display = "none";
+// ==========================================
+// Event Listeners
+// ==========================================
+
+els.referenceType.addEventListener("change", function () {
+    els.referenceInvoice.value = "";
+    els.suggestionBox.innerHTML = "";
+    els.suggestionBox.style.display = "none";
 
     switch (this.value) {
-
         case "Customer Invoice":
             currentTable = "InvoicePaymentView";
             currentColumn = "InvoiceNo";
             break;
-
         case "Vendor Bill":
             currentTable = "VendorBillPaymentView";
             currentColumn = "BillReferenceNo";
             break;
-
         default:
             currentTable = "";
             currentColumn = "";
     }
 });
 
-// Search while typing
-referenceInvoice.addEventListener("input", function () {
-
-    clearTimeout(debounceTimer);
-
+els.referenceInvoice.addEventListener("input", function () {
+    clearTimeout(referenceDebounceTimer);
     const search = this.value.trim();
 
     if (!currentTable || search.length < 2) {
-        suggestionBox.style.display = "none";
+        els.suggestionBox.style.display = "none";
         return;
     }
-
-    debounceTimer = setTimeout(() => {
-        searchReferences(search);
-    }, 300);
-
+    referenceDebounceTimer = setTimeout(() => searchReferences(search), 300);
 });
 
 async function searchReferences(searchText) {
-    const PartyCode = document.getElementById("partyCode").value;
-    const { data, error } = await supabaseClient
-        .from(currentTable)
-        .select(currentColumn)
-        .eq("PartyCode", PartyCode)
-        .eq("company_id", CompanyID)
-        .neq("PaymentStatus", "Paid")
-        .ilike(currentColumn, `%${searchText}%`)
-        .order(currentColumn)
-        .limit(20);
+    try {
+        const { data, error } = await supabaseClient
+            .from(currentTable)
+            .select(currentColumn)
+            .eq("PartyCode", els.partyCode.value)
+            .eq("company_id", CompanyID)
+            .neq("PaymentStatus", "Paid")
+            .ilike(currentColumn, `%${searchText}%`)
+            .order(currentColumn)
+            .limit(20);
 
-    if (error) {
-        console.error(error);
-        return;
+        if (error) throw error;
+        renderSuggestions(data);
+    } catch (error) {
+        console.error("Error fetching references:", error);
     }
-
-    renderSuggestions(data);
 }
 
 function renderSuggestions(data) {
+    els.suggestionBox.innerHTML = "";
 
-    suggestionBox.innerHTML = "";
-
-    if (!data.length) {
-        suggestionBox.style.display = "none";
+    if (!data || !data.length) {
+        els.suggestionBox.style.display = "none";
         return;
     }
+
+    const fragment = document.createDocumentFragment();
 
     data.forEach(row => {
-
         const value = row[currentColumn];
+        const itemBtn = document.createElement("button");
+        itemBtn.type = "button";
+        itemBtn.className = "list-group-item list-group-item-action";
+        itemBtn.textContent = value;
 
-        const item = document.createElement("button");
-        item.type = "button";
-        item.className = "list-group-item list-group-item-action";
-        item.textContent = value;
-
-        item.onclick = () => {
-            referenceInvoice.value = value;
-            suggestionBox.style.display = "none";
+        itemBtn.onclick = () => {
+            els.referenceInvoice.value = value;
+            els.suggestionBox.style.display = "none";
         };
-
-        suggestionBox.appendChild(item);
-
+        fragment.appendChild(itemBtn);
     });
 
-    suggestionBox.style.display = "block";
+    els.suggestionBox.appendChild(fragment);
+    els.suggestionBox.style.display = "block";
 }
 
-// Hide dropdown when clicking outside
-document.addEventListener("click", function (e) {
-
-    if (
-        !referenceInvoice.contains(e.target) &&
-        !suggestionBox.contains(e.target)
-    ) {
-        suggestionBox.style.display = "none";
+document.addEventListener("click", (e) => {
+    if (!els.referenceInvoice.contains(e.target) && !els.suggestionBox.contains(e.target)) {
+        els.suggestionBox.style.display = "none";
     }
-
 });
 
-document.getElementById("addCreditDebitRow").addEventListener("click", async function () {
-    addCreditDebitRow.disabled = false;
-    const referenceInvoice = document.getElementById("referenceInvoice").value.trim();
-    const item = document.getElementById("item").value.trim();
-    const description = document.getElementById("description").value.trim();
-    const hsnCode = document.getElementById("hsnCode").value.trim();
-
-    const quantity = parseFloat(document.getElementById("quantity").value) || 0;
-    const taxableAmount = parseFloat(document.getElementById("fullAmount").value) || 0;
-
-    const taxId = partyDefaultTax.value;
-
-    // ===========================
-    // Validation
-    // ===========================
-    if (!referenceInvoice) {
-        alert("Please select Reference Invoice.");
-        referenceInvoice.focus();
-        return;
-    }
-
-    if (!item) {
-        alert("Please select Item.");
-        document.getElementById("item").focus();
-        return;
-    }
-
-    if (!description) {
-        alert("Please enter Description.");
-        document.getElementById("description").focus();
-        return;
-    }
-
-    if (!hsnCode) {
-        alert("Please enter HSN Code.");
-        document.getElementById("hsnCode").focus();
-        return;
-    }
-
-    if (quantity <= 0) {
-        alert("Please enter Quantity.");
-        document.getElementById("quantity").focus();
-        return;
-    }
-
-    if (taxableAmount <= 0) {
-        alert("Please enter Amount.");
-        document.getElementById("fullAmount").focus();
-        return;
-    }
-
-    if (!taxId) {
-        alert("Please select Tax.");
-        partyDefaultTax.focus();
-        return;
-    }
-
-    // ===========================
-    // Get Tax Details
-    // ===========================
-    const taxRates = await getTaxRatesById(taxId);
-
-    const cgstPercent = parseFloat(taxRates.cgst || 0);
-    const sgstPercent = parseFloat(taxRates.sgst || 0);
-    const igstPercent = parseFloat(taxRates.igst || 0);
-    const cessPercent = parseFloat(taxRates.cess || 0);
-    const gstPercent = parseFloat(taxRates.tax_rate || 0);
-
-    // ===========================
-    // Calculate Tax
-    // ===========================
-    const cgstAmount = taxableAmount * cgstPercent / 100;
-    const sgstAmount = taxableAmount * sgstPercent / 100;
-    const igstAmount = taxableAmount * igstPercent / 100;
-    const cessAmount = taxableAmount * cessPercent / 100;
-
-    const totalGST = cgstAmount + sgstAmount + igstAmount + cessAmount;
-
-    const grandTotal = taxableAmount + totalGST;
-    let nonTaxableAmount = 0;
-    if (totalGST <= 0) {
-        nonTaxableAmount = taxableAmount;
-    }
-
-    // ===========================
-    // Add Row
-    // ===========================
-    const tbody = document.querySelector("#creditDebitTable tbody");
-
-    const srNo = tbody.rows.length + 1;
-
-    const row = tbody.insertRow();
-
-    row.innerHTML = `
-        <td>${srNo}</td>
-        <td>${referenceInvoice}</td>
-        <td>${item}</td>
-        <td>${description}</td>
-        <td>${hsnCode}</td>
-        <td class="text-end">${gstPercent.toFixed(2)}%</td>
-        <td class="text-end">${cessPercent.toFixed(2)}%</td>
-        <td class="text-end">${quantity.toFixed(2)}</td>
-        <td class="text-end">${nonTaxableAmount.toFixed(2)}</td>
-        <td class="text-end">${taxableAmount.toFixed(2)}</td>
-        <td class="text-end">${sgstAmount.toFixed(2)}</td>
-        <td class="text-end">${cgstAmount.toFixed(2)}</td>
-        <td class="text-end">${igstAmount.toFixed(2)}</td>
-        <td class="text-end">${cessAmount.toFixed(2)}</td>
-        <td class="text-end">${totalGST.toFixed(2)}</td>
-        <td class="text-end">${grandTotal.toFixed(2)}</td>
-
-        <td class="text-center">
-            <button type="button" class="btn btn-danger btn-sm removeRow">
-                <i class="bi bi-trash"></i>
-            </button>
-        </td>
-
-        <td class="d-none">${cgstPercent}</td>
-        <td class="d-none">${sgstPercent}</td>
-        <td class="d-none">${igstPercent}</td>
-        <td class="d-none">${taxId}</td>
-    `;
-
-    // ===========================
-    // Update Totals
-    // ===========================
-    updateCreditDebitTotals();
-
-    // ===========================
-    // Clear Controls
-    // ===========================
-    document.getElementById("referenceInvoice").value = "";
-    document.getElementById("item").value = "";
-    document.getElementById("description").value = "";
-    document.getElementById("hsnCode").value = "";
-    document.getElementById("quantity").value = "";
-    document.getElementById("fullAmount").value = "";
-    document.getElementById("totalAmount").value = "";
-    partyDefaultTax.selectedIndex = 0;
-
-    addCreditDebitRow.disabled = false;
+els.partyCode.addEventListener("change", () => {
+    els.referenceInvoice.value = "";
+    els.suggestionBox.innerHTML = "";
+    els.suggestionBox.style.display = "none";
 });
 
-document.querySelector("#creditDebitTable tbody").addEventListener("click", function (e) {
+els.fullAmount.addEventListener("input", calculateTotalAmount);
+els.partyDefaultTax.addEventListener("change", calculateTotalAmount);
 
+async function calculateTotalAmount() {
+    const amount = parseFloat(els.fullAmount.value) || 0;
+    const taxId = els.partyDefaultTax.value;
+
+    if (!taxId || amount === 0) {
+        els.totalAmount.value = amount ? amount.toFixed(2) : "";
+        return;
+    }
+
+    try {
+        const taxRates = await getTaxRatesById(taxId);
+        const taxPercent = (parseFloat(taxRates.cgst) || 0) +
+            (parseFloat(taxRates.sgst) || 0) +
+            (parseFloat(taxRates.igst) || 0) +
+            (parseFloat(taxRates.cess) || 0);
+
+        els.totalAmount.value = (amount + (amount * taxPercent / 100)).toFixed(2);
+    } catch (error) {
+        console.error("Error calculating tax:", error);
+    }
+}
+
+els.noteType.addEventListener("change", function () {
+    const amountLabel = document.querySelector('label[for="fullAmount"]');
+    if (this.value === "Credit Note") amountLabel.innerHTML = 'Credit Amount <span class="text-danger">*</span>';
+    else if (this.value === "Debit Note") amountLabel.innerHTML = 'Debit Amount <span class="text-danger">*</span>';
+    else amountLabel.innerHTML = 'Amount <span class="text-danger">*</span>';
+});
+
+// ==========================================
+// Item Row Management
+// ==========================================
+
+els.addCreditDebitRow.addEventListener("click", async function () {
+    els.addCreditDebitRow.disabled = true;
+
+    const refInvoiceVal = els.referenceInvoice.value.trim();
+    const itemVal = els.item.value.trim();
+    const descVal = els.description.value.trim();
+    const hsnVal = els.hsnCode.value.trim();
+    const quantityVal = parseFloat(els.quantity.value) || 0;
+    const taxableAmount = parseFloat(els.fullAmount.value) || 0;
+    const taxId = els.partyDefaultTax.value;
+
+    if (!refInvoiceVal) return alertFocus("Please select Reference Invoice.", els.referenceInvoice);
+    if (!itemVal) return alertFocus("Please select Item.", els.item);
+    if (!descVal) return alertFocus("Please enter Description.", els.description);
+    if (!hsnVal) return alertFocus("Please enter HSN Code.", els.hsnCode);
+    if (quantityVal <= 0) return alertFocus("Please enter a valid Quantity.", els.quantity);
+    if (taxableAmount <= 0) return alertFocus("Please enter a valid Amount.", els.fullAmount);
+    if (!taxId) return alertFocus("Please select Tax Rate.", els.partyDefaultTax);
+
+    try {
+        const taxRates = await getTaxRatesById(taxId);
+
+        const cgstPercent = parseFloat(taxRates.cgst) || 0;
+        const sgstPercent = parseFloat(taxRates.sgst) || 0;
+        const igstPercent = parseFloat(taxRates.igst) || 0;
+        const cessPercent = parseFloat(taxRates.cess) || 0;
+        const gstPercent = parseFloat(taxRates.tax_rate) || 0;
+
+        const cgstAmount = (taxableAmount * cgstPercent) / 100;
+        const sgstAmount = (taxableAmount * sgstPercent) / 100;
+        const igstAmount = (taxableAmount * igstPercent) / 100;
+        const cessAmount = (taxableAmount * cessPercent) / 100;
+
+        const totalGST = cgstAmount + sgstAmount + igstAmount + cessAmount;
+        const grandTotal = taxableAmount + totalGST;
+        const nonTaxableAmount = totalGST <= 0 ? taxableAmount : 0;
+
+        const row = els.tbody.insertRow();
+        row.innerHTML = `
+            <td>${els.tbody.rows.length}</td>
+            <td>${itemVal}</td>
+            <td>${refInvoiceVal}</td>
+            <td>${descVal}</td>
+            <td>${hsnVal}</td>
+            <td class="text-end">${gstPercent.toFixed(2)}%</td>
+            <td class="text-end">${cessPercent.toFixed(2)}%</td>
+            <td class="text-end">${quantityVal.toFixed(2)}</td>
+            <td class="text-end">${nonTaxableAmount.toFixed(2)}</td>
+            <td class="text-end">${taxableAmount.toFixed(2)}</td>
+            <td class="text-end">${sgstAmount.toFixed(2)}</td>
+            <td class="text-end">${cgstAmount.toFixed(2)}</td>
+            <td class="text-end">${igstAmount.toFixed(2)}</td>
+            <td class="text-end">${cessAmount.toFixed(2)}</td>
+            <td class="text-end">${totalGST.toFixed(2)}</td>
+            <td class="text-end">${grandTotal.toFixed(2)}</td>
+            <td class="text-center">
+                <button type="button" class="btn btn-danger btn-sm removeRow"><i class="bi bi-trash"></i></button>
+            </td>
+            <td class="d-none">${cgstPercent}</td>
+            <td class="d-none">${sgstPercent}</td>
+            <td class="d-none">${igstPercent}</td>
+            <td class="d-none">${taxId}</td>
+        `;
+
+        updateCreditDebitTotals();
+        clearItemDetails();
+    } catch (error) {
+        console.error("Error adding row:", error);
+    } finally {
+        els.addCreditDebitRow.disabled = false;
+    }
+});
+
+els.tbody.addEventListener("click", (e) => {
     const btn = e.target.closest(".removeRow");
-
     if (!btn) return;
 
     btn.closest("tr").remove();
 
-    // Re-number Sr No
-    [...document.querySelectorAll("#creditDebitTable tbody tr")].forEach((row, index) => {
-        row.cells[0].textContent = index + 1;
-    });
-
+    const rows = els.tbody.rows;
+    for (let i = 0; i < rows.length; i++) {
+        rows[i].cells[0].textContent = i + 1;
+    }
     updateCreditDebitTotals();
 });
 
 function updateCreditDebitTotals() {
+    let nonTax = 0, tax = 0, sgst = 0, cgst = 0, igst = 0, cess = 0, gst = 0, grand = 0;
 
-    let nonTax = 0;
-    let tax = 0;
-    let sgst = 0;
-    let cgst = 0;
-    let igst = 0;
-    let cess = 0;
-    let gst = 0;
-    let grand = 0;
-
-    document.querySelectorAll("#creditDebitTable tbody tr").forEach(row => {
-
-        nonTax += parseFloat(row.cells[8].textContent) || 0;
-        tax += parseFloat(row.cells[9].textContent) || 0;
-        sgst += parseFloat(row.cells[10].textContent) || 0;
-        cgst += parseFloat(row.cells[11].textContent) || 0;
-        igst += parseFloat(row.cells[12].textContent) || 0;
-        cess += parseFloat(row.cells[13].textContent) || 0;
-        gst += parseFloat(row.cells[14].textContent) || 0;
-        grand += parseFloat(row.cells[15].textContent) || 0;
-    });
+    for (const row of els.tbody.rows) {
+        const c = row.cells;
+        nonTax += parseFloat(c[8].textContent) || 0;
+        tax += parseFloat(c[9].textContent) || 0;
+        sgst += parseFloat(c[10].textContent) || 0;
+        cgst += parseFloat(c[11].textContent) || 0;
+        igst += parseFloat(c[12].textContent) || 0;
+        cess += parseFloat(c[13].textContent) || 0;
+        gst += parseFloat(c[14].textContent) || 0;
+        grand += parseFloat(c[15].textContent) || 0;
+    }
 
     document.getElementById("totalNonTaxAmt").textContent = nonTax.toFixed(2);
     document.getElementById("totalTaxAmt").textContent = tax.toFixed(2);
@@ -314,396 +314,611 @@ function updateCreditDebitTotals() {
     document.getElementById("totalGrand").textContent = grand.toFixed(2);
 }
 
-async function calculateTotalAmount() {
+// ==========================================
+// Helper Functions (Disable / Enable Form)
+// ==========================================
 
-    const amount = parseFloat(fullAmount.value) || 0;
-    if (!partyDefaultTax.value) {
-        totalAmount.value = fullAmount.value || "";
-        return;
-    }
-    const taxRates = await getTaxRatesById(partyDefaultTax.value); // This should contain a string like "CGST 9%, SGST 9%"
-
-    // Read tax percentages from option data attributes
-    const cgst = parseFloat(taxRates.cgst || 0);
-    const sgst = parseFloat(taxRates.sgst || 0);
-    const igst = parseFloat(taxRates.igst || 0);
-    const cess = parseFloat(taxRates.cess || 0);
-
-    const taxPercent = cgst + sgst + igst + cess;
-
-    const taxAmount = amount * taxPercent / 100;
-    const grandTotal = amount + taxAmount;
-
-    totalAmount.value = grandTotal.toFixed(2);
+function alertFocus(msg, element) {
+    alert(msg);
+    if (element && typeof element.focus === 'function') element.focus();
+    els.addCreditDebitRow.disabled = false;
 }
 
-// Recalculate whenever amount or tax changes
-fullAmount.addEventListener("input", calculateTotalAmount);
-partyDefaultTax.addEventListener("change", calculateTotalAmount);
+function clearItemDetails() {
+    els.referenceInvoice.value = "";
+    els.item.value = "";
+    els.description.value = "";
+    els.hsnCode.value = "";
+    els.quantity.value = "";
+    els.fullAmount.value = "";
+    els.totalAmount.value = "";
+    els.partyDefaultTax.selectedIndex = 0;
+}
 
-document.getElementById("partyCode").addEventListener("change", () => {
+function disableForm() {
+    // Disable Header Inputs
+    els.noteDate.disabled = true;
+    els.noteType.disabled = true;
+    els.partyName.disabled = true;
+    els.referenceType.disabled = true;
+    els.reason.disabled = true;
+    els.remarks.disabled = true;
 
-    referenceInvoice.value = "";
-    suggestionBox.innerHTML = "";
-    suggestionBox.style.display = "none";
+    // Disable Line Item Inputs
+    els.referenceInvoice.disabled = true;
+    els.item.disabled = true;
+    els.description.disabled = true;
+    els.hsnCode.disabled = true;
+    els.quantity.disabled = true;
+    els.fullAmount.disabled = true;
+    els.partyDefaultTax.disabled = true;
+    els.addCreditDebitRow.disabled = true;
 
+    // Disable all remove buttons in the table
+    document.querySelectorAll(".removeRow").forEach(btn => btn.disabled = true);
+
+    // Disable Save, Enable Action Buttons
+    els.saveButton.disabled = true;
+    els.modifyButton.disabled = false;
+    els.deleteButton.disabled = true;
+    els.reportButton.disabled = false;
+}
+
+function enableForm() {
+    // Enable Header Inputs
+    els.noteDate.disabled = false;
+    els.noteType.disabled = false;
+    els.partyName.disabled = false;
+    els.referenceType.disabled = false;
+    els.reason.disabled = false;
+    els.remarks.disabled = false;
+
+    // Enable Line Item Inputs
+    els.referenceInvoice.disabled = false;
+    els.item.disabled = false;
+    els.description.disabled = false;
+    els.hsnCode.disabled = false;
+    els.quantity.disabled = false;
+    els.fullAmount.disabled = false;
+    els.partyDefaultTax.disabled = false;
+    els.addCreditDebitRow.disabled = false;
+
+    // Enable remove buttons in the table
+    document.querySelectorAll(".removeRow").forEach(btn => btn.disabled = false);
+
+    // Enable Save, Disable Modify Button
+    els.saveButton.disabled = false;
+    els.modifyButton.disabled = true;
+    els.deleteButton.disabled = true;
+    els.reportButton.disabled = true;
+}
+
+
+// ==========================================
+// Loading Existing Note Logic
+// ==========================================
+
+els.noteNo.addEventListener("change", async function () {
+    const noteNoStr = this.value.trim();
+    if (!noteNoStr) return;
+
+    try {
+        const { data, error } = await supabaseClient
+            .from("credit_debit_notes")
+            .select("*")
+            .eq("company_id", CompanyID)
+            .eq("note_no", noteNoStr)
+            .maybeSingle();
+
+        if (error) throw error;
+
+        if (!data) {
+            els.tempFormID.value = ""; // Clear ID so it saves as new
+            return;
+        }
+
+        els.tempFormID.value = data.id;
+        els.noteDate.value = data.note_date;
+        els.noteType.value = data.note_type;
+        els.partyCode.value = data.party_id;
+        els.partyName.value = data.party_name;
+        els.referenceType.value = data.reference_type;
+        els.reason.value = data.reason || "";
+        els.remarks.value = data.remarks || "";
+        els.noteNo.disabled = true;
+
+        // Trigger Note Type label change automatically
+        els.noteType.dispatchEvent(new Event("change"));
+
+        await loadCreditDebitNoteItems(data.id);
+
+        // Disables the form inputs & save button, enables modify button
+        disableForm();
+
+    } catch (error) {
+        console.error("Error loading note:", error);
+    }
 });
 
-document.getElementById("saveButton").addEventListener("click", async () => {
-    await saveUpdateCreditDebitNote();
-});
+async function loadCreditDebitNoteItems(noteId) {
+    els.tbody.innerHTML = "";
+
+    try {
+        const { data, error } = await supabaseClient
+            .from("credit_debit_note_items")
+            .select("*")
+            .eq("note_id", noteId)
+            .order("line_no");
+
+        if (error) throw error;
+
+        data.forEach((item, index) => {
+            const totalGST =
+                (parseFloat(item.cgst_amount) || 0) +
+                (parseFloat(item.sgst_amount) || 0) +
+                (parseFloat(item.igst_amount) || 0) +
+                (parseFloat(item.cess_amount) || 0);
+
+            const row = els.tbody.insertRow();
+            row.innerHTML = `
+                <td>${index + 1}</td>
+                <td>${item.item_id || "-"}</td>
+                <td>${item.reference_invoice || ""}</td>
+                <td>${item.description || ""}</td>
+                <td>${item.hsn_sac || ""}</td>
+                <td class="text-end">${parseFloat(item.gst_percent || 0).toFixed(2)}%</td>
+                <td class="text-end">${parseFloat(item.cess_percent || 0).toFixed(2)}%</td>
+                <td class="text-end">${parseFloat(item.qty || 0).toFixed(2)}</td>
+                <td class="text-end">${parseFloat(item.non_taxable_amount || 0).toFixed(2)}</td>
+                <td class="text-end">${parseFloat(item.taxable_amount || 0).toFixed(2)}</td>
+                <td class="text-end">${parseFloat(item.sgst_amount || 0).toFixed(2)}</td>
+                <td class="text-end">${parseFloat(item.cgst_amount || 0).toFixed(2)}</td>
+                <td class="text-end">${parseFloat(item.igst_amount || 0).toFixed(2)}</td>
+                <td class="text-end">${parseFloat(item.cess_amount || 0).toFixed(2)}</td>
+                <td class="text-end">${totalGST.toFixed(2)}</td>
+                <td class="text-end">${parseFloat(item.line_total || 0).toFixed(2)}</td>
+                <td class="text-center">
+                    <button type="button" class="btn btn-danger btn-sm removeRow"><i class="bi bi-trash"></i></button>
+                </td>
+                <td class="d-none">${parseFloat(item.cgst_percent || 0).toFixed(2)}</td>
+                <td class="d-none">${parseFloat(item.sgst_percent || 0).toFixed(2)}</td>
+                <td class="d-none">${parseFloat(item.igst_percent || 0).toFixed(2)}</td>
+                <td class="d-none"></td>
+            `;
+        });
+
+        updateCreditDebitTotals();
+    } catch (error) {
+        console.error("Error loading items:", error);
+    }
+}
+
+
+// ==========================================
+// Saving / Updating Operations
+// ==========================================
+
+els.saveButton.addEventListener("click", saveUpdateCreditDebitNote);
 
 async function generateNewCreditDebitNoteNo() {
-    const { data, error } = await supabaseClient.rpc(
-        "generate_document_no",
-        {
+    try {
+        const { data, error } = await supabaseClient.rpc("generate_document_no", {
             p_company_id: CompanyID,
             p_document_type: "credit_debit_notes"
-        }
-    );
-
-    if (error) {
-        console.error(error);
-    } else {
-        document.getElementById("noteNo").value = data;
+        });
+        if (error) throw error;
+        els.noteNo.value = data;
+    } catch (error) {
+        console.error("Error generating Note No:", error);
     }
 }
 
 async function saveUpdateCreditDebitNote() {
-
-    const btnSave = document.getElementById("saveButton");
-    btnSave.disabled = true;
+    els.saveButton.disabled = true;
 
     try {
+        const rawNoteDbId = els.tempFormID.value.trim();
 
-        const noteId = document.getElementById("noteNo").value.trim();
-        const now = localtimeStamp;
+        // Ensure the ID only contains numbers. If it's something like "TEMP-1234", treat it as a new record.
+        const isExistingRecord = /^\d+$/.test(rawNoteDbId);
+        const noteDbId = isExistingRecord ? parseInt(rawNoteDbId, 10) : null;
 
-        if (!document.getElementById("noteType").value) {
-            alert("Please select Note Type.");
-            btnSave.disabled = false;
-            document.getElementById("noteType").focus();
-            return;
-        }
+        const noteNoStr = els.noteNo.value.trim();
 
-        if (!document.getElementById("noteDate").value) {
-            alert("Please select note date.");
-            btnSave.disabled = false;
-            document.getElementById("noteDate").focus();
-            return;
-        }
+        if (!els.noteType.value) return alertFocus("Please select Note Type.", els.noteType);
+        if (!els.noteDate.value) return alertFocus("Please select Note Date.", els.noteDate);
+        if (!els.partyCode.value) return alertFocus("Please select a valid Party Name.", els.partyName);
+        if (!els.referenceType.value) return alertFocus("Please select Reference Type.", els.referenceType);
+        if (els.tbody.rows.length === 0) return alert("Please add at least one item.");
 
-        if (!document.getElementById("partyName").value) {
-            alert("Please select Party Name.");
-            btnSave.disabled = false;
-            document.getElementById("partyName").focus();
-            return;
-        }
+        // If it's not an existing record and we don't have a note number, generate one
+        if (!isExistingRecord && !noteNoStr) await generateNewCreditDebitNoteNo();
 
-        if (!document.getElementById("referenceType").value) {
-            alert("Please select Reference Type.");
-            btnSave.disabled = false;
-            document.getElementById("referenceType").focus();
-            return;
-        }
-        if (!document.querySelector("#creditDebitTable tbody tr")) {
-            alert("Please add at least one item.");
-            return;
-        }
-        // Generate Note No only for new record
-        if (!noteId) {
-            await generateNewCreditDebitNoteNo();
-        }
-
-        const record = {
+        const headerRecord = {
             company_id: CompanyID,
-            note_no: document.getElementById("noteNo").value.trim(),
-            note_date: document.getElementById("noteDate").value,
-            note_type: document.getElementById("noteType").value,
-            party_id: document.getElementById("partyCode").value.trim(),
-            party_name: document.getElementById("partyName").value.trim(),
-            reference_type: document.getElementById("referenceType").value.trim(),
-            reason: document.getElementById("reason").value.trim(),
-            remarks: document.getElementById("remarks").value.trim(),
-
-            taxable_amount: Number(document.getElementById("totalTaxAmt").value) || 0,
-            non_taxable_amount: Number(document.getElementById("totalNonTaxAmt").textContent) || 0,
-            sgst_amount: Number(document.getElementById("totalSGST").textContent) || 0,
-            cgst_amount: Number(document.getElementById("totalCGST").textContent) || 0,
-            igst_amount: Number(document.getElementById("totalIGST").textContent) || 0,
-            cess_amount: Number(document.getElementById("totalCESSAmt").textContent) || 0,
-            total_gst: Number(document.getElementById("totalGST").textContent) || 0,
-            total_amount: Number(document.getElementById("totalGrand").textContent) || 0,
-
-            updated_by: UserLoginID,
-            updated_at: now
+            note_no: els.noteNo.value.trim(),
+            note_type: els.noteType.value,
+            note_date: els.noteDate.value,
+            party_id: els.partyCode.value.trim(),
+            party_name: els.partyName.value.trim(),
+            reference_type: els.referenceType.value.trim(),
+            reference_id: null,
+            reason: els.reason.value.trim() || null,
+            remarks: els.remarks.value.trim() || null,
+            taxable_amount: parseFloat(document.getElementById("totalTaxAmt").textContent) || 0,
+            non_taxable_amount: parseFloat(document.getElementById("totalNonTaxAmt").textContent) || 0,
+            sgst_amount: parseFloat(document.getElementById("totalSGST").textContent) || 0,
+            cgst_amount: parseFloat(document.getElementById("totalCGST").textContent) || 0,
+            igst_amount: parseFloat(document.getElementById("totalIGST").textContent) || 0,
+            cess_amount: parseFloat(document.getElementById("totalCESSAmt").textContent) || 0,
+            total_gst: parseFloat(document.getElementById("totalGST").textContent) || 0,
+            total_amount: parseFloat(document.getElementById("totalGrand").textContent) || 0,
+            round_off: 0,
+            status: 'draft'
         };
-        console.log(record);
-        let header;
 
-        if (noteId) {
+        let headerID = noteDbId;
 
-            record.updated_by = UserLoginID;
-            record.updated_at = now;
+        if (isExistingRecord) {
+            headerRecord.updated_by = UserLoginID;
+            headerRecord.updated_at = new Date().toISOString();
 
-            const { data, error } = await supabaseClient
+            const { error: updError } = await supabaseClient
                 .from("credit_debit_notes")
-                .update(record)
-                .eq("note_no", noteId)
-                .eq("company_id", CompanyID)
-                .select()
-                .single();
+                .update(headerRecord)
+                .eq("id", noteDbId);
+            if (updError) throw updError;
 
-            if (error) throw error;
-
-            header = data;
-
-            // Delete old items
-            const { error: deleteError } = await supabaseClient
+            const { error: delError } = await supabaseClient
                 .from("credit_debit_note_items")
                 .delete()
-                .eq("note_id", noteId)
-                .eq("company_id", CompanyID);
-
-            if (deleteError) throw deleteError;
-
-            alert("Credit Debit Note updated successfully.");
+                .eq("note_id", noteDbId);
+            if (delError) throw delError;
 
         } else {
+            headerRecord.created_by = UserLoginID;
+            headerRecord.updated_by = UserLoginID;
 
-            record.created_by = UserLoginID;
-            record.created_at = now;
-
-            const { data, error } = await supabaseClient
+            const { data, error: insError } = await supabaseClient
                 .from("credit_debit_notes")
-                .insert(record)
-                .select()
+                .insert(headerRecord)
+                .select("id")
                 .single();
+            if (insError) throw insError;
 
-            if (error) throw error;
-
-            header = data;
-
-            document.getElementById("tempFormID").value = header.id;
-
-            alert("Credit Debit Note saved successfully.");
+            headerID = data.id;
+            els.tempFormID.value = headerID;
         }
 
-        // Save Detail Rows
-        await saveCreditDebitNoteItems(header.id);
+        await saveCreditDebitNoteItems(headerID);
 
-        console.log("Saved Successfully", header);
-        btnSave.disabled = true;
-        btnSave.innerHTML = '<i class="bi bi-save"></i> Update';
-        modifyButton.disabled = false;
-        disableForm();
-    }
-    catch (error) {
-        console.error(error);
-        alert(error.message);
-    }
-    finally {
-        btnSave.disabled = false;
+        alert("Credit Debit Note saved successfully.");
+        disableForm(); // Lock form automatically after saving
+
+    } catch (error) {
+        console.error("Save Error:", error);
+        alert(error.message || "An error occurred while saving.");
+        els.saveButton.disabled = false;
     }
 }
 
-async function saveCreditDebitNoteItems(noteId) {
-
-    const rows = document.querySelectorAll("#creditDebitTable tbody tr");
-
+async function saveCreditDebitNoteItems(noteDbId) {
+    const rows = els.tbody.rows;
     if (!rows.length) return;
 
     const items = [];
-
-    rows.forEach((row, index) => {
+    for (let i = 0; i < rows.length; i++) {
+        const c = rows[i].cells;
+        const qty = parseFloat(c[7].textContent) || 0;
+        const taxableAmt = parseFloat(c[9].textContent) || 0;
+        const rawItemId = c[1].textContent.trim();
 
         items.push({
-            note_id: noteId,
-            line_no: index + 1,
-
-            item_id: row.cells[1].textContent.trim(),
-            item_name: row.cells[2].textContent.trim(),
-            description: row.cells[3].textContent.trim(),
-            hsn_sac: row.cells[4].textContent.trim(),
-
+            note_id: noteDbId,
+            company_id: CompanyID,
+            line_no: i + 1,
+            item_id: /^\d+$/.test(rawItemId) ? parseInt(rawItemId, 10) : null,
+            item_name: c[2].textContent.trim(),
+            reference_invoice: c[2].textContent.trim(),
+            description: c[3].textContent.trim() || null,
+            hsn_sac: c[4].textContent.trim() || null,
             unit_id: null,
-
-            qty: Number(row.cells[7].textContent) || 0,
-            rate: 0,
-
-            non_taxable_amount: Number(row.cells[8].textContent) || 0,
-            taxable_amount: Number(row.cells[9].textContent) || 0,
-
-            gst_percent: Number(row.cells[5].textContent.replace("%", "")) || 0,
-            cess_percent: Number(row.cells[6].textContent.replace("%", "")) || 0,
-
-            cgst_percent: Number(row.cells[17].textContent) || 0,
-            sgst_percent: Number(row.cells[18].textContent) || 0,
-            igst_percent: Number(row.cells[19].textContent) || 0,
-
-            cgst_amount: Number(row.cells[11].textContent) || 0,
-            sgst_amount: Number(row.cells[10].textContent) || 0,
-            igst_amount: Number(row.cells[12].textContent) || 0,
-            cess_amount: Number(row.cells[13].textContent) || 0,
-
-            line_total: Number(row.cells[15].textContent) || 0
+            qty: qty,
+            rate: qty > 0 ? (taxableAmt / qty) : 0,
+            non_taxable_amount: parseFloat(c[8].textContent) || 0,
+            taxable_amount: taxableAmt,
+            gst_percent: parseFloat(c[5].textContent) || 0,
+            cess_percent: parseFloat(c[6].textContent) || 0,
+            cgst_percent: parseFloat(c[17].textContent) || 0,
+            sgst_percent: parseFloat(c[18].textContent) || 0,
+            igst_percent: parseFloat(c[19].textContent) || 0,
+            sgst_amount: parseFloat(c[10].textContent) || 0,
+            cgst_amount: parseFloat(c[11].textContent) || 0,
+            igst_amount: parseFloat(c[12].textContent) || 0,
+            cess_amount: parseFloat(c[13].textContent) || 0,
+            line_total: parseFloat(c[15].textContent) || 0
         });
+    }
 
-    });
-
-    const { error } = await supabaseClient
-        .from("credit_debit_note_items")
-        .insert(items);
-
+    const { error } = await supabaseClient.from("credit_debit_note_items").insert(items);
     if (error) throw error;
 }
 
-const noteNoInput = document.getElementById("noteNo");
-const noteNoSuggestions = document.getElementById("noteNoSuggestions");
+// ==========================================
+// Saved Notes Search Modal Logic
+// ==========================================
 
-let noteDebounce;
-
-noteNoInput.addEventListener("input", function () {
-
-    clearTimeout(noteDebounce);
-
-    const search = this.value.trim();
-
-    if (search.length < 2) {
-        noteNoSuggestions.innerHTML = "";
-        return;
-    }
-
-    noteDebounce = setTimeout(() => {
-        loadNoteNoSuggestions(search);
-    }, 300);
-
+els.btnTriggerSearch.addEventListener("click", () => {
+    searchSavedNotes(els.searchPaymentInput.value.trim());
 });
 
-async function loadNoteNoSuggestions(searchText) {
+els.searchPaymentInput.addEventListener("keypress", (e) => {
+    if (e.key === "Enter") {
+        e.preventDefault();
+        searchSavedNotes(els.searchPaymentInput.value.trim());
+    }
+});
 
-    const { data, error } = await supabaseClient
-        .from("credit_debit_notes")
-        .select("id, note_no")
-        .eq("company_id", CompanyID)
-        .ilike("note_no", `%${searchText}%`)
-        .order("note_no")
-        .limit(20);
+els.searchPaymentModal.addEventListener('shown.bs.modal', () => {
+    els.searchPaymentInput.focus();
+    if (els.searchPaymentTableBody.children.length <= 1) {
+        searchSavedNotes("");
+    }
+});
 
-    if (error) {
-        console.error(error);
+async function searchSavedNotes(searchTerm) {
+    els.searchPaymentTableBody.innerHTML = `
+        <tr>
+            <td colspan="5" class="text-center py-4">
+                <div class="spinner-border spinner-border-sm text-primary me-2"></div> Loading...
+            </td>
+        </tr>`;
+
+    try {
+        let query = supabaseClient
+            .from("credit_debit_notes")
+            .select("id, note_no, note_date, party_name, total_amount")
+            .eq("company_id", CompanyID)
+            .order("note_date", { ascending: false })
+            .limit(50);
+
+        if (searchTerm) {
+            query = query.or(`note_no.ilike.%${searchTerm}%,party_name.ilike.%${searchTerm}%`);
+        }
+
+        const { data, error } = await query;
+        if (error) throw error;
+
+        renderSearchModalTable(data);
+    } catch (error) {
+        console.error("Error searching notes:", error);
+        els.searchPaymentTableBody.innerHTML = `
+            <tr><td colspan="5" class="text-center text-danger py-3">Error loading data. Please try again.</td></tr>`;
+    }
+}
+
+function renderSearchModalTable(data) {
+    els.searchPaymentTableBody.innerHTML = "";
+
+    if (!data || data.length === 0) {
+        els.searchPaymentTableBody.innerHTML = `
+            <tr><td colspan="5" class="text-center text-muted fst-italic py-4">No records found matching your search.</td></tr>`;
         return;
     }
 
-    noteNoSuggestions.innerHTML = "";
+    const fragment = document.createDocumentFragment();
 
     data.forEach(row => {
+        const tr = document.createElement("tr");
+        const dateObj = new Date(row.note_date);
+        const formattedDate = !isNaN(dateObj) ? dateObj.toLocaleDateString('en-IN') : row.note_date;
+        const amount = parseFloat(row.total_amount || 0).toFixed(2);
 
-        const option = document.createElement("option");
-        option.value = row.note_no;
-        option.dataset.id = row.id;
-
-        noteNoSuggestions.appendChild(option);
-
-    });
-
-}
-noteNoInput.addEventListener("change", async function () {
-
-    const noteNo = this.value.trim();
-
-    if (!noteNo) return;
-
-    const { data, error } = await supabaseClient
-        .from("credit_debit_notes")
-        .select("*")
-        .eq("company_id", CompanyID)
-        .eq("note_no", noteNo)
-        .single();
-
-    if (error) {
-        console.error(error);
-        return;
-    }
-
-    // Save database ID for updates
-    document.getElementById("tempFormID").value = data.id;
-
-    // Fill form
-    document.getElementById("noteDate").value = data.note_date;
-    document.getElementById("noteType").value = data.note_type;
-    document.getElementById("partyCode").value = data.party_code;
-    document.getElementById("partyName").value = data.party_name;
-
-    document.getElementById("referenceInvoice").value = data.reference_invoice;
-    document.getElementById("noteNo").value = data.note_no;
-    document.getElementById("noteNo").disabled = true;
-
-    // Load item rows
-    await loadCreditDebitNoteItems(data.id);
-
-});
-
-async function loadCreditDebitNoteItems(noteId) {
-
-    const tbody = document.querySelector("#creditDebitTable tbody");
-    tbody.innerHTML = "";
-
-    const { data, error } = await supabaseClient
-        .from("credit_debit_note_items")
-        .select("*")
-        .eq("note_id", noteId)
-        .order("line_no");
-
-    if (error) {
-        console.error(error);
-        return;
-    }
-
-    data.forEach((item, index) => {
-
-        const totalGST =
-            Number(item.cgst_amount || 0) +
-            Number(item.sgst_amount || 0) +
-            Number(item.igst_amount || 0) +
-            Number(item.cess_amount || 0);
-
-        const row = tbody.insertRow();
-
-        row.innerHTML = `
-            <td>${index + 1}</td>
-            <td>${item.item_id ?? ""}</td>
-            <td>${item.item_name ?? ""}</td>
-            <td>${item.description ?? ""}</td>
-            <td>${item.hsn_sac ?? ""}</td>
-
-            <td class="text-end">${Number(item.gst_percent).toFixed(2)}%</td>
-            <td class="text-end">${Number(item.cess_percent).toFixed(2)}%</td>
-
-            <td class="text-end">${Number(item.qty).toFixed(3)}</td>
-            <td class="text-end">${Number(item.non_taxable_amount).toFixed(2)}</td>
-            <td class="text-end">${Number(item.taxable_amount).toFixed(2)}</td>
-
-            <td class="text-end">${Number(item.sgst_amount).toFixed(2)}</td>
-            <td class="text-end">${Number(item.cgst_amount).toFixed(2)}</td>
-            <td class="text-end">${Number(item.igst_amount).toFixed(2)}</td>
-            <td class="text-end">${Number(item.cess_amount).toFixed(2)}</td>
-
-            <td class="text-end">${totalGST.toFixed(2)}</td>
-            <td class="text-end">${Number(item.line_total).toFixed(2)}</td>
-
-            <td class="text-center">
-                <button type="button" class="btn btn-danger btn-sm removeRow">
-                    <i class="bi bi-trash"></i>
+        tr.innerHTML = `
+            <td class="fw-bold">${row.note_no}</td>
+            <td>${formattedDate}</td>
+            <td class="text-start">${row.party_name || '-'}</td>
+            <td class="text-end fw-bold text-primary">${amount}</td>
+            <td>
+                <button type="button" class="btn btn-sm btn-primary select-note-btn" data-noteno="${row.note_no}">
+                    <i class="bi bi-check2-circle"></i> Select
                 </button>
             </td>
-
-            <td class="d-none">${Number(item.cgst_percent).toFixed(2)}</td>
-            <td class="d-none">${Number(item.sgst_percent).toFixed(2)}</td>
-            <td class="d-none">${Number(item.igst_percent).toFixed(2)}</td>
-            <td class="d-none"></td>
         `;
+        fragment.appendChild(tr);
     });
 
-    updateCreditDebitTotals();
+    els.searchPaymentTableBody.appendChild(fragment);
+}
+
+els.searchPaymentTableBody.addEventListener("click", (e) => {
+    const btn = e.target.closest(".select-note-btn");
+    if (!btn) return;
+
+    const selectedNoteNo = btn.getAttribute("data-noteno");
+
+    els.noteNo.value = selectedNoteNo;
+    els.noteNo.dispatchEvent(new Event("change"));
+
+    const modalInstance = bootstrap.Modal.getInstance(els.searchPaymentModal);
+    if (modalInstance) {
+        modalInstance.hide();
+    }
+});
+
+// ==========================================
+// Generate PDF Report Logic
+// ==========================================
+
+els.reportButton.addEventListener("click", generatePDF);
+
+function generatePDF() {
+    // 1. Change button state to show loading
+    const originalText = els.reportButton.innerHTML;
+    els.reportButton.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Generating...';
+    els.reportButton.disabled = true;
+
+    // 2. Gather Header Data
+    const noteType = els.noteType.value || "CREDIT / DEBIT NOTE";
+    const noteNo = els.noteNo.value || "DRAFT";
+    const rawDate = els.noteDate.value;
+    const formattedDate = rawDate ? new Date(rawDate).toLocaleDateString('en-IN') : "";
+    const partyName = els.partyName.value || "";
+    const reason = els.reason.value || "";
+    const remarks = els.remarks.value || "";
+
+    // 3. Gather Totals Data
+    const totalTaxable = document.getElementById("totalTaxAmt").textContent;
+    const totalCGST = document.getElementById("totalCGST").textContent;
+    const totalSGST = document.getElementById("totalSGST").textContent;
+    const totalIGST = document.getElementById("totalIGST").textContent;
+    const totalCESS = document.getElementById("totalCESSAmt").textContent;
+    const grandTotal = document.getElementById("totalGrand").textContent;
+
+    // 4. Build Items Table Rows
+    let itemsHtml = "";
+    const rows = els.tbody.rows;
+
+    for (let i = 0; i < rows.length; i++) {
+        const c = rows[i].cells;
+        itemsHtml += `
+            <tr>
+                <td style="text-align: center; border: 1px solid #dee2e6; padding: 8px;">${i + 1}</td>
+                <td style="border: 1px solid #dee2e6; padding: 8px;">
+                    <strong>${c[1].textContent}</strong><br>
+                    <small style="color: #6c757d;">${c[3].textContent}</small>
+                </td>
+                <td style="border: 1px solid #dee2e6; padding: 8px;">${c[2].textContent}</td> <!-- Ref Invoice -->
+                <td style="text-align: center; border: 1px solid #dee2e6; padding: 8px;">${c[4].textContent}</td> <!-- HSN -->
+                <td style="text-align: right; border: 1px solid #dee2e6; padding: 8px;">${parseFloat(c[7].textContent).toFixed(2)}</td> <!-- Qty -->
+                <td style="text-align: center; border: 1px solid #dee2e6; padding: 8px;">${c[5].textContent}</td> <!-- GST % -->
+                <td style="text-align: right; border: 1px solid #dee2e6; padding: 8px;">${parseFloat(c[9].textContent).toFixed(2)}</td> <!-- Taxable -->
+                <td style="text-align: right; border: 1px solid #dee2e6; padding: 8px;">${parseFloat(c[10].textContent).toFixed(2)}</td> <!-- SGST -->
+                <td style="text-align: right; border: 1px solid #dee2e6; padding: 8px;">${parseFloat(c[11].textContent).toFixed(2)}</td> <!-- CGST -->
+                <td style="text-align: right; border: 1px solid #dee2e6; padding: 8px;">${parseFloat(c[14].textContent).toFixed(2)}</td> <!-- Total GST -->
+                <td style="text-align: right; font-weight: bold; border: 1px solid #dee2e6; padding: 8px;">${parseFloat(c[15].textContent).toFixed(2)}</td> <!-- Total -->
+            </tr>
+        `;
+    }
+
+    // 5. Construct the HTML String for the PDF Converter
+    const printContent = document.createElement("div");
+    printContent.innerHTML = `
+        <div style="padding: 30px; font-family: Arial, sans-serif; color: #000; width: 800px; margin: 0 auto;">
+            <!-- Header -->
+            <div style="display: flex; justify-content: space-between; border-bottom: 2px solid #000; padding-bottom: 15px; margin-bottom: 20px;">
+                <div>
+                    <h2 style="margin: 0; font-weight: bold; color: #333;">YOUR COMPANY NAME</h2>
+                    <p style="margin: 5px 0 0; color: #555; font-size: 14px;">123 Business Street, Bengaluru, Karnataka</p>
+                    <p style="margin: 5px 0 0; color: #555; font-size: 14px;">GSTIN: 29ABCDE1234F1Z5</p>
+                </div>
+                <div style="text-align: right;">
+                    <h3 style="margin: 0; font-size: 22px; color: #0d6efd; text-transform: uppercase;">${noteType}</h3>
+                    <p style="margin: 5px 0 0; font-size: 16px; font-weight: bold;"># ${noteNo}</p>
+                    <p style="margin: 5px 0 0; font-size: 14px;">Date: ${formattedDate}</p>
+                </div>
+            </div>
+
+            <!-- Party Details & Reason -->
+            <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+                <div style="width: 55%;">
+                    <h4 style="margin: 0 0 5px; border-bottom: 1px solid #333; padding-bottom: 5px; text-transform: uppercase; font-size: 14px;">Billed To</h4>
+                    <h3 style="margin: 0; font-size: 18px;">${partyName}</h3>
+                </div>
+                <div style="width: 40%; background: #f8f9fa; border: 1px solid #dee2e6; padding: 10px; border-radius: 4px;">
+                    <p style="margin: 0 0 5px; font-size: 13px;"><strong>Reason:</strong> ${reason}</p>
+                    <p style="margin: 0; font-size: 13px;"><strong>Remarks:</strong> ${remarks}</p>
+                </div>
+            </div>
+
+            <!-- Items Table -->
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 12px;">
+                <thead style="background-color: #f8f9fa; text-align: center;">
+                    <tr>
+                        <th style="border: 1px solid #dee2e6; padding: 8px;">Sr</th>
+                        <th style="border: 1px solid #dee2e6; padding: 8px;">Item / Description</th>
+                        <th style="border: 1px solid #dee2e6; padding: 8px;">Ref Inv</th>
+                        <th style="border: 1px solid #dee2e6; padding: 8px;">HSN</th>
+                        <th style="border: 1px solid #dee2e6; padding: 8px;">Qty</th>
+                        <th style="border: 1px solid #dee2e6; padding: 8px;">GST%</th>
+                        <th style="border: 1px solid #dee2e6; padding: 8px;">Taxable</th>
+                        <th style="border: 1px solid #dee2e6; padding: 8px;">SGST</th>
+                        <th style="border: 1px solid #dee2e6; padding: 8px;">CGST</th>
+                        <th style="border: 1px solid #dee2e6; padding: 8px;">Total GST</th>
+                        <th style="border: 1px solid #dee2e6; padding: 8px;">Total Amt</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${itemsHtml}
+                </tbody>
+            </table>
+
+            <!-- Totals -->
+            <div style="display: flex; justify-content: flex-end; margin-bottom: 40px;">
+                <table style="width: 40%; border-collapse: collapse; font-size: 13px; background-color: #f8f9fa; border: 1px solid #dee2e6;">
+                    <tr>
+                        <td style="padding: 6px 10px;"><strong>Taxable Amount:</strong></td>
+                        <td style="padding: 6px 10px; text-align: right;">₹ ${totalTaxable}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 6px 10px;"><strong>CGST:</strong></td>
+                        <td style="padding: 6px 10px; text-align: right;">₹ ${totalCGST}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 6px 10px;"><strong>SGST:</strong></td>
+                        <td style="padding: 6px 10px; text-align: right;">₹ ${totalSGST}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 6px 10px;"><strong>IGST:</strong></td>
+                        <td style="padding: 6px 10px; text-align: right;">₹ ${totalIGST}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 6px 10px; border-bottom: 1px solid #000;"><strong>CESS:</strong></td>
+                        <td style="padding: 6px 10px; text-align: right; border-bottom: 1px solid #000;">₹ ${totalCESS}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 10px; font-size: 16px;"><strong>Grand Total:</strong></td>
+                        <td style="padding: 10px; text-align: right; font-size: 16px; font-weight: bold;">₹ ${grandTotal}</td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- Signatures -->
+            <div style="display: flex; justify-content: space-between; margin-top: 60px;">
+                <div style="width: 200px; text-align: center; border-top: 1px solid #000; padding-top: 5px; font-size: 14px;">
+                    Customer Signature
+                </div>
+                <div style="width: 200px; text-align: center; border-top: 1px solid #000; padding-top: 5px; font-size: 14px;">
+                    Authorized Signatory
+                </div>
+            </div>
+            
+            <div style="text-align: center; margin-top: 40px; color: #6c757d; font-size: 11px;">
+                This is a computer generated document and does not require a physical signature.
+            </div>
+        </div>
+    `;
+
+    // 6. PDF Generation Settings
+    const filenameFormat = `${noteType.replace(/\s+/g, '_')}_${noteNo}.pdf`;
+
+    const opt = {
+        margin: 10,
+        filename: filenameFormat,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+
+    // 7. Generate PDF and Trigger Download
+    html2pdf().set(opt).from(printContent).save().then(() => {
+        // Restore button state
+        els.reportButton.innerHTML = originalText;
+        els.reportButton.disabled = false;
+    }).catch(err => {
+        console.error("PDF Generation Error:", err);
+        alert("Failed to generate PDF. Please try again.");
+        els.reportButton.innerHTML = originalText;
+        els.reportButton.disabled = false;
+    });
 }
