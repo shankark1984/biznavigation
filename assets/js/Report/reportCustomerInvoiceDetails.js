@@ -566,12 +566,20 @@ function renderPagination(totalCount, loadTableFn) {
 }
 
 async function exportToExcel() {
-    const filters = getFilters();
-    const allData = await fetchAllFilteredData(filters);
+    // 1. Select the actual button DOM element using querySelector
+    const buttonElement = document.querySelector('.btn');
 
-    startButtonLoading(btn);
+    // 2. Pass the element object, not the string selector
+    startButtonLoading(buttonElement);
+
     try {
-        if (allData.length === 0) return alert('No data to export.');
+        const filters = getFilters();
+        const allData = await fetchAllFilteredData(filters);
+
+        if (allData.length === 0) {
+            alert('No data to export.');
+            return; // Safe to return; the finally block will still reset the button
+        }
 
         let tableHtml = `<table><thead><tr>
         <th>Sr No</th><th>Invoice No</th><th>Invoice Date</th><th>Invoice Type</th><th>Customer Name</th>
@@ -594,12 +602,12 @@ async function exportToExcel() {
 
             tableHtml += `<tr>
             <td>${i + 1}</td>
-           <td>
-    <a href="../Accounting/CustomerInvoice.html?invoiceNo=${encodeURIComponent(row.InvoiceNo)}"
-       class="text-decoration-none fw-bold">
-        ${row.InvoiceNo}
-    </a>
-</td>
+            <td>
+                <a href="../Accounting/CustomerInvoice.html?invoiceNo=${encodeURIComponent(row.InvoiceNo)}"
+                   class="text-decoration-none fw-bold">
+                    ${row.InvoiceNo}
+                </a>
+            </td>
             <td>${row.InvoiceDate || ''}</td>
             <td>${row.InvoiceType || ''}</td>
             <td>${partyName}</td>
@@ -613,7 +621,7 @@ async function exportToExcel() {
             <td>${row.PaymentAmount || '0'}</td>
             <td>${row.OtherDeductionAmount || '0'}</td>
             <td>${row.TDSDeductionAmount || '0'}</td>
-            <th>${row.CreditDebitNoteAmount || '0'}</td>
+            <td>${row.CreditDebitNoteAmount || '0'}</td>
             <td>${row.PaymentTotalAmount || '0'}</td>
             <td>${row.BalanceAmount || '0'}</td>
             <td>${row.PaymentStatus || ''}</td>
@@ -624,15 +632,17 @@ async function exportToExcel() {
         const tempDiv = document.createElement('div');
         tempDiv.innerHTML = tableHtml;
         const wb = XLSX.utils.table_to_book(tempDiv.querySelector('table'), { sheet: "Bookings" });
-        // Get date and replace slashes with dashes
+
         const date = new Date().toLocaleDateString('en-IN').replace(/\//g, '-');
-
-        // Use backticks (`) to inject the ${date} variable into the string
         XLSX.writeFile(wb, `Customer Invoice Report_${date}.xlsx`);
-    } finally {
-        stopButtonLoading(btn);
-    }
 
+    } catch (error) {
+        console.error("Export failed:", error);
+        alert("An error occurred while exporting data.");
+    } finally {
+        // 3. Pass the element object here as well
+        stopButtonLoading(buttonElement);
+    }
 }
 
 // PDF Export Function with PartyName
