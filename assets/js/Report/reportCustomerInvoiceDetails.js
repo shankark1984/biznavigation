@@ -456,7 +456,7 @@ async function renderTable(data) {
             <td class="text-end">${formatAmount(row.PaymentAmount || '0')}</td>
             <td class="text-end">${formatAmount(row.OtherDeductionAmount || '0')}</td>
             <td class="text-end">${formatAmount(row.TDSDeductionAmount || '0')}</td>
-             <td class="text-end">${formatAmount(row.CreditDebitNoteAmount || '0')}</td>
+             <td class="text-end fw-bold  text-info">${formatAmount(row.CreditDebitNoteAmount || '0')}</td>
             <td class="text-end">${formatAmount(row.PaymentTotalAmount || '0')}</td>
             <td class="text-end fw-bold text-danger">${formatAmount(row.BalanceAmount || '0')}</td>
             <td>${row.PaymentStatus || ''}</td>
@@ -568,28 +568,31 @@ function renderPagination(totalCount, loadTableFn) {
 async function exportToExcel() {
     const filters = getFilters();
     const allData = await fetchAllFilteredData(filters);
-    if (allData.length === 0) return alert('No data to export.');
 
-    let tableHtml = `<table><thead><tr>
+    startButtonLoading(btn);
+    try {
+        if (allData.length === 0) return alert('No data to export.');
+
+        let tableHtml = `<table><thead><tr>
         <th>Sr No</th><th>Invoice No</th><th>Invoice Date</th><th>Invoice Type</th><th>Customer Name</th>
         <th>Basic Amount</th><th>Other Amount</th><th>CGST Amount</th><th>SGST Amount</th><th>IGST Amount</th>
         <th>Total GST Amount</th><th>Grand Total Amount</th><th>Collected Amount</th><th>Other Deduction Amount</th>
         <th>TDS Deduction Amount</th><th>Credit Debit Note Amount</th><th>Total Payment Amount</th><th>Balance Amount</th><th>Payment Status</th></tr></thead><tbody>`;
 
-    for (let i = 0; i < allData.length; i++) {
-        const row = allData[i];
-        let partyName = '';
-        if (row.PartyCode) {
-            if (partyNameCache[row.PartyCode]) {
-                partyName = partyNameCache[row.PartyCode];
-            } else {
-                const details = await getPartyDetailsByCode(row.PartyCode);
-                partyName = details?.PartyName || '';
-                partyNameCache[row.PartyCode] = partyName;
+        for (let i = 0; i < allData.length; i++) {
+            const row = allData[i];
+            let partyName = '';
+            if (row.PartyCode) {
+                if (partyNameCache[row.PartyCode]) {
+                    partyName = partyNameCache[row.PartyCode];
+                } else {
+                    const details = await getPartyDetailsByCode(row.PartyCode);
+                    partyName = details?.PartyName || '';
+                    partyNameCache[row.PartyCode] = partyName;
+                }
             }
-        }
 
-        tableHtml += `<tr>
+            tableHtml += `<tr>
             <td>${i + 1}</td>
            <td>
     <a href="../Accounting/CustomerInvoice.html?invoiceNo=${encodeURIComponent(row.InvoiceNo)}"
@@ -615,13 +618,21 @@ async function exportToExcel() {
             <td>${row.BalanceAmount || '0'}</td>
             <td>${row.PaymentStatus || ''}</td>
         </tr>`;
+        }
+
+        tableHtml += `</tbody></table>`;
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = tableHtml;
+        const wb = XLSX.utils.table_to_book(tempDiv.querySelector('table'), { sheet: "Bookings" });
+        // Get date and replace slashes with dashes
+        const date = new Date().toLocaleDateString('en-IN').replace(/\//g, '-');
+
+        // Use backticks (`) to inject the ${date} variable into the string
+        XLSX.writeFile(wb, `Customer Invoice Report_${date}.xlsx`);
+    } finally {
+        stopButtonLoading(btn);
     }
 
-    tableHtml += `</tbody></table>`;
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = tableHtml;
-    const wb = XLSX.utils.table_to_book(tempDiv.querySelector('table'), { sheet: "Bookings" });
-    XLSX.writeFile(wb, 'InternationalBookings.xlsx');
 }
 
 // PDF Export Function with PartyName
@@ -692,7 +703,11 @@ async function exportToPdf() {
         pageBreak: 'auto'
     });
 
-    doc.save('CustomerInvoiceReport.pdf');
+    // Get today's date in YYYY-MM-DD format
+    const date = new Date().toLocaleDateString('en-IN').replace(/\//g, '-');
+
+    // Save with the date appended
+    doc.save(`Customer Invoice Report_${date}.pdf`);
 }
 
 async function fetchAllFilteredData(filters = {}) {

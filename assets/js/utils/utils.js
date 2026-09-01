@@ -2396,3 +2396,26 @@ function showAlert(message, type = "success", duration = 3000) {
         }, duration);
     }
 }
+
+// Turn ON loading state
+function startButtonLoading(button) {
+    if (!button) return;
+
+    // Save original text only if we haven't saved it yet
+    if (!button.dataset.originalText) {
+        button.dataset.originalText = button.innerHTML;
+    }
+
+    button.disabled = true;
+    button.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processing...`;
+}
+
+// Turn OFF loading state (Revert back to normal)
+function stopButtonLoading(button) {
+    if (!button) return;
+
+    button.disabled = false;
+    if (button.dataset.originalText) {
+        button.innerHTML = button.dataset.originalText;
+    }
+}

@@ -419,13 +419,13 @@ async function renderTable(data) {
             <td class="text-end">${formatAmount(row.SGSTAmount || '0')}</td>
             <td class="text-end">${formatAmount(row.IGSTAmount || '0')}</td>
             <td class="text-end">${formatAmount(row.TotalGSTAmount || '0')}</td>
-            <td class="text-end text-success">${formatAmount(row.ChargeTotalAmount || '0')}</td>
+            <td class="text-end fw-bold  text-success">${formatAmount(row.ChargeTotalAmount || '0')}</td>
             <td class="text-end">${formatAmount(row.PaymentAmount || '0')}</td>
             <td class="text-end">${formatAmount(row.OtherDeductionAmount || '0')}</td>
             <td class="text-end">${formatAmount(row.TDSDeductionAmount || '0')}</td>
-            <td class="text-end">${formatAmount(row.CreditDebitNoteAmount || '0')}</td>
+            <td class="text-end fw-bold text-info">${formatAmount(row.CreditDebitNoteAmount || '0')}</td>
             <td class="text-end">${formatAmount(row.PaymentTotalAmount || '0')}</td>
-            <td class="text-end text-text-danger">${formatAmount(row.BalanceAmount || '0')}</td>
+            <td class="text-end fw-bold text-danger">${formatAmount(row.BalanceAmount || '0')}</td>
             <td>${row.PaymentStatus || ''}</td>
         `;
         tbody.appendChild(tr);
@@ -577,7 +577,9 @@ async function exportToExcel() {
     const tempDiv = document.createElement('div');
     tempDiv.innerHTML = tableHtml;
     const wb = XLSX.utils.table_to_book(tempDiv.querySelector('table'), { sheet: "Vendor Billing" });
-    XLSX.writeFile(wb, 'vendorBilling.xlsx');
+
+    const date = new Date().toLocaleDateString('en-IN').replace(/\//g, '-');
+    XLSX.writeFile(wb, `Vendor Billing Report_${date}.xlsx`);
 }
 
 // PDF Export Function with PartyName
@@ -647,8 +649,9 @@ async function exportToPdf() {
         },
         pageBreak: 'auto'
     });
+    const date = new Date().toLocaleDateString('en-IN').replace(/\//g, '-');
 
-    doc.save('CustomerInvoiceReport.pdf');
+    doc.save('Vendor Billing Report_${date}.pdf');
 }
 
 async function fetchAllFilteredData(filters = {}) {

@@ -293,3 +293,34 @@ function drawInvoiceBorderAllPages(doc, PAGE, movementType, footerY = 272) {
 
     doc.setPage(currentPage);
 }
+
+// ==========================================
+// DUTY TITLE
+// ==========================================
+function drawTitle_Duty_Invoice(
+    doc,
+    PAGE,
+    FONT,
+    y
+) {
+
+    doc.rect(
+        PAGE.x,
+        y,
+        PAGE.w,
+        6
+    );
+
+    PDF_FONT.bold(doc, FONT.title);
+
+    doc.text(
+        "DUTY INVOICE",
+        PAGE.x + (PAGE.w / 2),
+        y + 4,
+        {
+            align: "center"
+        }
+    );
+
+    return y + 6;
+}
