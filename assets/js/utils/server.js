@@ -258,22 +258,34 @@ async function autoUnlockMultipleTables() {
     }
 }
 
-if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/service-worker.js').then(registration => {
-        // Listen for incoming messages from the service worker
-        navigator.serviceWorker.addEventListener('message', event => {
-            if (event.data && event.data.type === 'SW_UPDATED') {
-                console.log('New app version available! Reloading...');
+// if ('serviceWorker' in navigator) {
+//     let refreshing = false;
 
-                // Option A: Automatic seamless reload
-                window.location.reload();
+//     navigator.serviceWorker.addEventListener('controllerchange', () => {
+//         // Avoid reloading if the user is actively on the login page
+//         if (window.location.pathname.includes('/login')) return;
 
-                // Option B: If you prefer showing a toast/notification instead of forcing a sudden reload:
-                // showUpdateNotificationToUser(); 
-            }
-        });
-    });
-}
+//         if (!refreshing) {
+//             refreshing = true;
+//             window.location.reload();
+//         }
+//     });
+
+//     navigator.serviceWorker.register('/service-worker.js').then((registration) => {
+//         registration.addEventListener('updatefound', () => {
+//             const newWorker = registration.installing;
+//             if (!newWorker) return;
+
+//             newWorker.addEventListener('statechange', () => {
+//                 if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+//                     // Optional: Display a UI banner/toast "New version available. [Update Now]"
+//                     // Only postMessage 'skipWaiting' when the user confirms
+//                     newWorker.postMessage({ action: 'skipWaiting' });
+//                 }
+//             });
+//         });
+//     });
+// }
 
 const now = new Date();
 const localtimeStamp = now.toLocaleString(); // Local date and time

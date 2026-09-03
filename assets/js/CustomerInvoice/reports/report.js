@@ -211,63 +211,111 @@ async function drawHeader(doc, PAGE, FONT, company, y) {
 
     return y + headerH;
 }
-
 // ==========================================
 // PARTY SECTION
 // ==========================================
 function drawPartySection(doc, PAGE, FONT, header, party, company, opNo, y) {
-    const LEFT_WIDTH = PAGE.w * 0.70, PADDING = 3, LINE_H = 3.5;
-    const safe = (v, fallback = "-") => v?.toString().trim() || fallback;
+    // 1. Safe parameter defaults to avoid NaN in jsPDF drawing methods
+    const startX = Number(PAGE?.x) || 14;
+    const startY = Number(y) || 40;
+    const pageWidth = Number(PAGE?.w) || (doc.internal.pageSize.getWidth() - startX * 2);
+    const LEFT_WIDTH = pageWidth * 0.70;
+    const PADDING = 3;
+    const LINE_H = 3.5;
 
-    const leftLines = [
-        `M/s ${safe(party?.name, "")}`,
-        safe(party?.address, ""),
-        `GST No: ${safe(party?.gst, "")}`
-    ].map(text => doc.splitTextToSize(text, LEFT_WIDTH - (PADDING * 2)));
+    const fontHeader = Number(FONT?.header) || 10;
+    const fontTitle = Number(FONT?.title) || 9;
+
+    const safe = (v, fallback = "-") => (v !== null && v !== undefined && String(v).trim() !== "") ? String(v).trim() : fallback;
+
+    // 2. Safe multi-line text splitting
+    const leftTextSources = [
+        `M/s ${safe(party?.name || party?.PartyName, "")}`.trim(),
+        safe(party?.address || party?.InvoiceAddress, ""),
+        `GST No: ${safe(party?.gst || party?.GSTNo || party?.GSTIN, "")}`.trim()
+    ];
+
+    const leftLines = leftTextSources.map(text => {
+        if (!text) return [];
+        return doc.splitTextToSize(text, Math.max(LEFT_WIDTH - (PADDING * 2), 10));
+    });
 
     const rightData = [
         ["Invoice No. :", safe(header?.InvoiceNo)],
-        ["Invoice Date :", formatDate(header?.InvoiceDate) || "-"],
+        ["Invoice Date :", (typeof formatDate === "function" ? formatDate(header?.InvoiceDate) : header?.InvoiceDate) || "-"],
         ["SAC Code :", safe(header?.SACCode)],
         ["PO No :", safe(opNo)]
     ];
 
     const boldLabels = new Set(["Invoice No. :", "Invoice Date :"]);
-    const rowHeight = (Math.max(leftLines.flat().length, rightData.length) * LINE_H) + (PADDING * 2);
 
-    doc.rect(PAGE.x, y, PAGE.w, rowHeight);
-    doc.line(PAGE.x + LEFT_WIDTH, y, PAGE.x + LEFT_WIDTH, y + rowHeight);
+    // 3. Compute row height with a guaranteed minimum
+    const totalLeftLineCount = leftLines.reduce((acc, lines) => acc + (lines.length || 1), 0);
+    const calculatedLines = Math.max(totalLeftLineCount, rightData.length);
+    const rowHeight = Math.max((calculatedLines * LINE_H) + (PADDING * 2) + 2, 22);
 
+    // 4. Draw outer box and divider line
+    doc.rect(startX, startY, pageWidth, rowHeight);
+    doc.line(startX + LEFT_WIDTH, startY, startX + LEFT_WIDTH, startY + rowHeight);
+
+    // ------------------------------------------
     // LEFT SECTION
-    let leftY = y + PADDING + 1;
-    const leftX = PAGE.x + PADDING;
+    // ------------------------------------------
+    let leftY = startY + PADDING + 2;
+    const leftX = startX + PADDING;
 
     const [partyNameLines, partyAddrLines, gstNoLines] = leftLines;
 
-    PDF_FONT.bold(doc, FONT.header - 2);
-    doc.text(partyNameLines, leftX, leftY);
-    leftY += partyNameLines.length * LINE_H;
+    // Party Name
+    if (typeof PDF_FONT !== "undefined" && PDF_FONT.bold) {
+        PDF_FONT.bold(doc, Math.max(fontHeader - 2, 8));
+    } else {
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(Math.max(fontHeader - 2, 8));
+    }
+    doc.text(partyNameLines.length ? partyNameLines : "M/s -", leftX, leftY);
+    leftY += Math.max(partyNameLines.length, 1) * LINE_H;
 
-    PDF_FONT.normal(doc, FONT.title - 1);
-    doc.text(partyAddrLines, leftX, leftY);
-    leftY += partyAddrLines.length * LINE_H + 1;
+    // Address
+    if (typeof PDF_FONT !== "undefined" && PDF_FONT.normal) {
+        PDF_FONT.normal(doc, Math.max(fontTitle - 1, 7));
+    } else {
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(Math.max(fontTitle - 1, 7));
+    }
+    doc.text(partyAddrLines.length ? partyAddrLines : "-", leftX, leftY);
+    leftY += Math.max(partyAddrLines.length, 1) * LINE_H + 1;
 
-    PDF_FONT.bold(doc, FONT.title - 1);
-    doc.text(gstNoLines, leftX, leftY);
+    // GST Number
+    if (typeof PDF_FONT !== "undefined" && PDF_FONT.bold) {
+        PDF_FONT.bold(doc, Math.max(fontTitle - 1, 7));
+    } else {
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(Math.max(fontTitle - 1, 7));
+    }
+    doc.text(gstNoLines.length ? gstNoLines : "GST No: -", leftX, leftY);
 
+    // ------------------------------------------
     // RIGHT SECTION
-    let rightY = y + PADDING + 1;
-    const rightX = PAGE.x + LEFT_WIDTH + PADDING;
+    // ------------------------------------------
+    let rightY = startY + PADDING + 2;
+    const rightX = startX + LEFT_WIDTH + PADDING;
 
     rightData.forEach(([label, value]) => {
-        // 👉 Using the Set you created properly to assign font weights
-        doc.setFont("times", boldLabels.has(label.trim()) ? "bold" : "normal");
-        doc.setFontSize(FONT.title);
+        const isBold = boldLabels.has(label.trim());
+        if (typeof PDF_FONT !== "undefined") {
+            if (isBold && PDF_FONT.bold) PDF_FONT.bold(doc, fontTitle);
+            else if (PDF_FONT.normal) PDF_FONT.normal(doc, fontTitle);
+        } else {
+            doc.setFont("helvetica", isBold ? "bold" : "normal");
+            doc.setFontSize(fontTitle);
+        }
+
         doc.text(`${label} ${value}`, rightX, rightY);
         rightY += LINE_H;
     });
 
-    return y + rowHeight;
+    return startY + rowHeight;
 }
 
 // =========================

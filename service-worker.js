@@ -11,15 +11,13 @@ const PRECACHE_URLS = [
     '/assets/img/applogo-192x192.png'
 ];
 
-/* ================= CACHE LIMIT (Optimized) ================= */
-// Uses a while loop instead of recursion to prevent stack overflow
+/* ================= CACHE LIMIT ================= */
 async function limitCacheSize(cacheName, maxItems) {
     const cache = await caches.open(cacheName);
     let keys = await cache.keys();
-
     while (keys.length > maxItems) {
         await cache.delete(keys[0]);
-        keys = await cache.keys(); // Re-evaluate keys
+        keys = await cache.keys();
     }
 }
 
@@ -38,7 +36,7 @@ self.addEventListener('install', event => {
             }
         })
     );
-    self.skipWaiting(); // Forces the waiting service worker to become active immediately
+    // REMOVED: self.skipWaiting() here causes immediate hijacking and reload loops
 });
 
 /* ================= ACTIVATE ================= */
@@ -46,24 +44,20 @@ self.addEventListener('activate', event => {
     event.waitUntil(
         (async () => {
             const keys = await caches.keys();
-            // Delete old caches
             await Promise.all(
                 keys.filter(key => key.startsWith('biznav-') && key !== STATIC_CACHE && key !== DYNAMIC_CACHE)
                     .map(key => caches.delete(key))
             );
-
-            await self.clients.claim(); // Take control of all open pages immediately
-
-            // Notify all open clients that an update is live
-            const clients = await self.clients.matchAll({ type: 'window' });
-            clients.forEach(client => client.postMessage({ type: 'SW_UPDATED' }));
+            await self.clients.claim();
+            // REMOVED: Do not blast SW_UPDATED to clients here
         })()
     );
 });
 
 /* ================= MESSAGE ================= */
 self.addEventListener('message', event => {
-    if (event.data?.action === 'skipWaiting') {
+    // Support both formats
+    if (event.data?.action === 'skipWaiting' || event.data?.type === 'SKIP_WAITING') {
         self.skipWaiting();
     }
 });
@@ -75,17 +69,16 @@ self.addEventListener('fetch', event => {
 
     const url = new URL(request.url);
 
-    // Block localhost and non-http(s) requests
+    // Bypass localhost/127.0.0.1 entirely in development
     if (url.hostname === '127.0.0.1' || url.hostname === 'localhost' || !url.protocol.startsWith('http')) {
         return;
     }
 
-    // Ignore specific external APIs completely
     if (url.hostname.includes('api.postalpincode.in')) {
         return;
     }
 
-    /* 1. SUPABASE API (Network First -> Dynamic Cache -> Offline JSON) */
+    /* 1. SUPABASE API */
     if (url.hostname.includes('supabase.co')) {
         event.respondWith(
             fetch(request)
@@ -110,23 +103,20 @@ self.addEventListener('fetch', event => {
         return;
     }
 
-    /* 2. HTML NAVIGATION (Network First -> Static Cache -> Offline HTML) */
+    /* 2. HTML NAVIGATION */
     if (request.mode === 'navigate') {
         event.respondWith(
             fetch(request)
                 .catch(async () => {
-                    // Try to get the requested page from cache first
                     const cachedPage = await caches.match(request);
                     if (cachedPage) return cachedPage;
-
-                    // Fallback to offline page
                     return caches.match('/pages/Tools/offline.html');
                 })
         );
         return;
     }
 
-    /* 3. STATIC FILES (Cache First -> Network -> Static Cache -> Image Fallback) */
+    /* 3. STATIC ASSETS */
     event.respondWith(
         caches.match(request).then(cachedResponse => {
             if (cachedResponse) return cachedResponse;
@@ -137,7 +127,6 @@ self.addEventListener('fetch', event => {
                         return networkResponse;
                     }
 
-                    // Only cache assets from our own origin
                     if (url.origin === self.location.origin) {
                         const responseClone = networkResponse.clone();
                         caches.open(STATIC_CACHE).then(cache => cache.put(request, responseClone));
@@ -145,7 +134,6 @@ self.addEventListener('fetch', event => {
                     return networkResponse;
                 })
                 .catch(async () => {
-                    // Image fallback
                     if (request.destination === 'image') {
                         return caches.match('/assets/img/applogo-192x192.png');
                     }
