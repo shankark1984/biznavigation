@@ -258,35 +258,6 @@ async function autoUnlockMultipleTables() {
     }
 }
 
-// if ('serviceWorker' in navigator) {
-//     let refreshing = false;
-
-//     navigator.serviceWorker.addEventListener('controllerchange', () => {
-//         // Avoid reloading if the user is actively on the login page
-//         if (window.location.pathname.includes('/login')) return;
-
-//         if (!refreshing) {
-//             refreshing = true;
-//             window.location.reload();
-//         }
-//     });
-
-//     navigator.serviceWorker.register('/service-worker.js').then((registration) => {
-//         registration.addEventListener('updatefound', () => {
-//             const newWorker = registration.installing;
-//             if (!newWorker) return;
-
-//             newWorker.addEventListener('statechange', () => {
-//                 if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-//                     // Optional: Display a UI banner/toast "New version available. [Update Now]"
-//                     // Only postMessage 'skipWaiting' when the user confirms
-//                     newWorker.postMessage({ action: 'skipWaiting' });
-//                 }
-//             });
-//         });
-//     });
-// }
-
 const now = new Date();
 const localtimeStamp = now.toLocaleString(); // Local date and time
 const ISODateTimeNow = new Date().toISOString();
