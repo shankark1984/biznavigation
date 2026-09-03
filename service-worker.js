@@ -1,4 +1,4 @@
-const VERSION = 'v3.04.08.04';
+const VERSION = 'v3.04.08.05';
 const STATIC_CACHE = `biznav-static-${VERSION}`;
 const DYNAMIC_CACHE = `biznav-dynamic-${VERSION}`;
 const MAX_DYNAMIC_ITEMS = 50;
@@ -38,7 +38,7 @@ self.addEventListener('install', event => {
             }
         })
     );
-    self.skipWaiting(); // Forces the waiting service worker to become the active one
+    self.skipWaiting(); // Forces the waiting service worker to become active immediately
 });
 
 /* ================= ACTIVATE ================= */
@@ -46,16 +46,17 @@ self.addEventListener('activate', event => {
     event.waitUntil(
         (async () => {
             const keys = await caches.keys();
-            // Delete old caches (both static and dynamic) that don't match current version
+            // Delete old caches
             await Promise.all(
                 keys.filter(key => key.startsWith('biznav-') && key !== STATIC_CACHE && key !== DYNAMIC_CACHE)
                     .map(key => caches.delete(key))
             );
 
+            await self.clients.claim(); // Take control of all open pages immediately
+
+            // Notify all open clients that an update is live
             const clients = await self.clients.matchAll({ type: 'window' });
             clients.forEach(client => client.postMessage({ type: 'SW_UPDATED' }));
-
-            await self.clients.claim();
         })()
     );
 });

@@ -258,6 +258,22 @@ async function autoUnlockMultipleTables() {
     }
 }
 
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/service-worker.js').then(registration => {
+        // Listen for incoming messages from the service worker
+        navigator.serviceWorker.addEventListener('message', event => {
+            if (event.data && event.data.type === 'SW_UPDATED') {
+                console.log('New app version available! Reloading...');
+
+                // Option A: Automatic seamless reload
+                window.location.reload();
+
+                // Option B: If you prefer showing a toast/notification instead of forcing a sudden reload:
+                // showUpdateNotificationToUser(); 
+            }
+        });
+    });
+}
 
 const now = new Date();
 const localtimeStamp = now.toLocaleString(); // Local date and time

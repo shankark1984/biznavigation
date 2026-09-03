@@ -768,10 +768,15 @@ document.getElementById('reportButton').addEventListener('click', async function
         }
 
     } catch (error) {
+        // Log the full stack and message explicitly:
+        console.error("Invoice PDF Generation Failed:", error?.stack || error?.message || error);
 
-        console.error('Report generation failed:', error);
-        alert('Failed to generate report.');
-
+        // Safe alert that won't crash if Swal is missing:
+        if (typeof Swal !== "undefined") {
+            Swal.fire("Error", error?.message || "PDF generation failed", "error");
+        } else {
+            alert("Report generation failed: " + (error?.message || error));
+        }
     } finally {
 
         // Restore button

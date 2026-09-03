@@ -324,3 +324,20 @@ function drawTitle_Duty_Invoice(
 
     return y + 6;
 }
+
+
+// ==========================================
+// DropdownList FUNCTIONS
+// ==========================================
+async function fetchDropdownList() {
+    const { data, error } = await supabaseClient
+        .from("dropdown_list") // Table name matches your PostgreSQL schema
+        .select("description, condition");
+
+    if (error) {
+        console.error("Error fetching dropdown list:", error);
+        return [];
+    }
+
+    return data || [];
+}

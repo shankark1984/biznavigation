@@ -32,30 +32,14 @@ async function generate_International_InvoicePDF_Annexure(header, lines = []) {
         // SECTIONS
         y = await drawHeader(doc, PAGE, FONT, company, y);
         y = drawTitle(doc, PAGE, FONT, y);
+
+        // 👉 FIXED: Passing shipmentData?.opNo to drawPartySection
         y = drawPartySection(doc, PAGE, FONT, header, party, company, shipmentData?.opNo || "", y);
 
-        // Fetch dropdown list safely
-        let dropdownList = [];
-        try {
-            dropdownList = await fetchDropdownList();
-        } catch (e) {
-            console.warn("Could not fetch dropdown list, proceeding with default sort:", e);
-        }
-
-        // FIXED: Extract shipments and charges from shipmentData, use current 'y', and capture shipmentResult
-        const shipmentRows = shipmentData?.shipments || [];
-        const allCharges = shipmentData?.charges || [];
-
         const shipmentResult = await drawShipmentTable_int_Annexure(
-            doc,
-            PAGE,
-            FONT,
-            shipmentRows,
-            y,
-            allCharges,
-            Array.isArray(dropdownList) ? dropdownList : []
+            doc, PAGE, FONT, shipmentData?.shipments || [], y, shipmentData?.charges || []
         );
-        y = shipmentResult?.y || y;
+        y = shipmentResult.y;
 
         y = await drawTermsAndTaxSection_int_Annexure(
             doc, PAGE, FONT, company, header, shipmentResult, y, bank, totalPaymentReceived, tandcData
@@ -73,18 +57,12 @@ async function generate_International_InvoicePDF_Annexure(header, lines = []) {
         doc.save(fileName);
 
     } catch (error) {
-        console.error("Invoice PDF Generation Failed:", error?.stack || error?.message || error);
-
-        // FIXED: Graceful fallback so missing Swal does not trigger a second crash
-        if (typeof Swal !== "undefined") {
-            Swal.fire({
-                icon: "error",
-                title: "PDF Generation Failed",
-                text: error?.message || "Unable to generate invoice PDF."
-            });
-        } else {
-            alert("PDF Generation Failed: " + (error?.message || "Unknown error"));
-        }
+        console.error("Invoice PDF Generation Failed:", error);
+        Swal.fire({
+            icon: "error",
+            title: "PDF Generation Failed",
+            text: error?.message || "Unable to generate invoice PDF."
+        });
     }
 }
 
@@ -295,42 +273,18 @@ async function getShipmentData_int_Annexure(invoiceNo) {
 // ==========================================
 // SHIPMENT TABLE
 // ==========================================
-async function drawShipmentTable_int_Annexure(
-    doc,
-    PAGE,
-    FONT,
-    rows = [],
-    startY,
-    allCharges = [],
-    dropdownList = [] // <-- Pass dropdown_list table records here
-) {
+async function drawShipmentTable_int_Annexure(doc, PAGE, FONT, rows = [], startY, allCharges = []) {
     let freightAmount = 0, fuelSurcharge = 0, otherAmount = 0;
     let totalCGST = 0, totalSGST = 0, totalIGST = 0, totalGST = 0;
     let taxableAmount = 0, nonTaxableAmount = 0;
 
     const safe = (val, fallback = "-") => (val != null && String(val).trim() !== "") ? val : fallback;
-
-    // 1. Build dynamic charge order map
-    const chargeOrder = {
-        "Freight Amount": 1,
-        "Fuel Surcharge": 3
-    };
-
-    // Populate order 2 for descriptions where condition contains 'fsc'
-    dropdownList.forEach(item => {
-        if (item.condition && String(item.condition).toLowerCase().includes("fsc")) {
-            if (item.description !== "Freight Amount") {
-                chargeOrder[item.description] = 2;
-            }
-        }
-    });
-
-    const getSortPriority = (chargeType) => chargeOrder[chargeType] ?? 999;
+    const chargeOrder = { "Freight Amount": 1, "Other Amount": 2 };
 
     const sharedStyle = { halign: "right", font: "times", textColor: [0, 0, 0], valign: "middle", minCellHeight: 1, cellPadding: 1 };
     const subtotalStyle = { halign: "right", fontStyle: "bold", fillColor: [128, 128, 128], textColor: [255, 255, 255], valign: "middle", minCellHeight: 2, cellPadding: { top: 1, bottom: 1, left: 2, right: 1 } };
 
-    // Group charges & tally GST simultaneously
+    // OPTIMIZED: Reduce loop for mapping charges & tallying GST simultaneously
     const chargesMap = allCharges.reduce((acc, charge) => {
         const key = charge.ID_IB;
         if (key) {
@@ -343,10 +297,8 @@ async function drawShipmentTable_int_Annexure(
         return acc;
     }, {});
 
-    // 2. Sort charges by priority (1 -> 2 -> 3 -> 999)
-    Object.values(chargesMap).forEach(group => {
-        group.sort((a, b) => getSortPriority(a.ChargesType) - getSortPriority(b.ChargesType));
-    });
+    // Sort charges by type based on the chargeOrder
+    Object.values(chargesMap).forEach(group => group.sort((a, b) => (chargeOrder[a.ChargesType] || 999) - (chargeOrder[b.ChargesType] || 999)));
 
     const body = [];
 
