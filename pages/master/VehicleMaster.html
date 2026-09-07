@@ -66,10 +66,16 @@
                                     <div class="col-xl-2 col-md-3 col-sm-6">
                                         <label for="regNumber" class="form-label small fw-semibold">Registration No.
                                             *</label>
-                                        <input list="regNumberSuggestions" id="regNumber" name="regNumber"
-                                            class="form-control form-control-sm border-primary bg-primary-subtle"
-                                            placeholder="e.g. KA-01-AB-1234" autocomplete="off" required />
-                                        <datalist id="regNumberSuggestions"></datalist>
+                                        <div class="input-group input-group-sm">
+                                            <input list="regNumberSuggestions" id="regNumber" name="regNumber"
+                                                class="form-control form-control-sm border-primary bg-primary-subtle"
+                                                placeholder="e.g. KA-01-AB-1234" autocomplete="off" required />
+                                            <datalist id="regNumberSuggestions"></datalist>
+                                            <button type="button" class="btn btn-secondary btn-sm"
+                                                data-bs-toggle="modal" data-bs-target="#searchVehicleModal">
+                                                <i class="bi bi-search"></i>
+                                            </button>
+                                        </div>
                                     </div>
 
                                     <!-- Chassis Number -->
@@ -249,7 +255,69 @@
                                     </div>
                                 </div>
                             </form>
+                            <!-- SEARCH SAVED PAYMENTS MODAL -->
+                            <div class="modal fade" id="searchVehicleModal" tabindex="-1"
+                                aria-labelledby="searchVehicleModalLabel" aria-hidden="true">
+                                <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+                                    <div class="modal-content">
 
+                                        <!-- Modal Header -->
+                                        <div class="modal-header bg-primary text-white">
+                                            <h5 class="modal-title" id="searchVehicleModalLabel">
+                                                <i class="bi bi-search"></i> Search Saved Vehicles
+                                            </h5>
+                                            <button type="button" class="btn-close btn-close-white"
+                                                data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+
+                                        <!-- Modal Body -->
+                                        <div class="modal-body">
+                                            <!-- Search Input Box -->
+                                            <div class="input-group mb-3">
+                                                <input type="text" id="searchSavedVehicleInput" class="form-control"
+                                                    placeholder="Search by Registration No, Owner Name, Make or Model..."
+                                                    autocomplete="off">
+                                                <button class="btn btn-outline-primary" type="button"
+                                                    id="btnTriggerSearch">
+                                                    <i class="bi bi-search"></i> Search
+                                                </button>
+                                            </div>
+
+                                            <!-- Search Results Table -->
+                                            <div class="table-responsive">
+                                                <table
+                                                    class="table table-sm table-hover table-bordered align-middle text-center">
+                                                    <thead class="table-light">
+                                                        <tr>
+                                                            <th>Registration No</th>
+                                                            <th>Owner Name</th>
+                                                            <th>Vehicle Type</th>
+                                                            <th>Model</th>
+                                                            <th>Make</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody id="searchVehicleTableBody">
+                                                        <!-- Example Placeholder Row (Replace with JS data) -->
+                                                        <tr>
+                                                            <td colspan="6"
+                                                                class="text-center text-muted fst-italic py-3">
+                                                                Enter search criteria to find vehicles...
+                                                            </td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+
+                                        <!-- Modal Footer -->
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary btn-sm"
+                                                data-bs-dismiss="modal">Close</button>
+                                        </div>
+
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
