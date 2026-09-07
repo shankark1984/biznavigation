@@ -1,21 +1,63 @@
-// ================================
-// HELPERS
-// ================================
-function formatAmt(v) {
-    return (parseFloat(v) || 0).toFixed(2);
+// FTL_FCL_Invoice.js
+// ============================================
+// CONSTANTS & CONFIGURATION
+// ============================================
+const TABLE_CONFIG_FTL = {
+    HEADER_COLS: [
+        "Docket<br>No", "Booked<br>Date", "Transit<br>Type", "Mode<br>Type",
+        "Route Details", "Origin", "Destination", "Vehicle Type", "Vehicle No",
+        "Container Number", "Quantity", "Chargeable<br>Weight", "Basic<br>Freight",
+        "Other<br>Amount", "SGST<br>Amount", "CGST<br>Amount", "IGST<br>Amount",
+        "Total GST<br>Amount", "Grand Total<br>Amount", "Action"
+    ],
+    TOTALS_COLUMNS: [
+        { colspan: 10, label: "Totals:", align: "text-end" },
+        { id: "totalQuantity" }, { id: "totalChargeableWeight" }, { id: "totalFreight" },
+        { id: "totalOtherAmt" }, { id: "totalSGST" }, { id: "totalCGST" },
+        { id: "totalIGST" }, { id: "totalGST" }, { id: "totalGrand" }, { empty: true }
+    ]
+};
+
+// ============================================
+// STATE MANAGEMENT
+// ============================================
+class FTLInvoiceState {
+    constructor() {
+        this.lockedBookingIds = [];
+        this.totals = this.getInitialTotals();
+        this.mergedChargesMap = {};
+        this.unlockTimer = null;
+    }
+
+    getInitialTotals() {
+        return { qty: 0, weight: 0, freight: 0, other: 0, sgst: 0, cgst: 0, igst: 0, gst: 0, grand: 0 };
+    }
+
+    reset() {
+        this.lockedBookingIds = [];
+        this.totals = this.getInitialTotals();
+        this.mergedChargesMap = {};
+        if (this.unlockTimer) {
+            clearTimeout(this.unlockTimer);
+            this.unlockTimer = null;
+        }
+    }
 }
+
+const ftlState = new FTLInvoiceState();
+
+// ============================================
+// UTILITY FUNCTIONS
+// ============================================
+const formatAmt = (v) => (parseFloat(v) || 0).toFixed(2);
+
+const getFTLTableBody = () => document.querySelector('#pendingShipmentTable tbody');
 
 function initChargesObject() {
     return {
-        BasicFrightAmt: 0,
-        FSCAmt: 0,
-        OtherAmt: 0,
-        totalSGST: 0,
-        totalCGST: 0,
-        totalIGST: 0,
-        totalGST: 0,
-        grandTotal: 0,
-        chargesMap: {}
+        BasicFrightAmt: 0, FSCAmt: 0, OtherAmt: 0,
+        totalSGST: 0, totalCGST: 0, totalIGST: 0,
+        totalGST: 0, grandTotal: 0, chargesMap: {}
     };
 }
 
@@ -24,39 +66,52 @@ function processCharge(obj, charge) {
     const typeLower = type.toLowerCase();
 
     if (!obj.chargesMap[type]) {
-        obj.chargesMap[type] = {
-            TotalAmount: 0,
-            SGSTAmt: 0,
-            CGSTAmt: 0,
-            IGSTAmt: 0,
-            TotalGSTAmt: 0,
-            GrandTotalAmt: 0
-        };
+        obj.chargesMap[type] = { TotalAmount: 0, SGSTAmt: 0, CGSTAmt: 0, IGSTAmt: 0, TotalGSTAmt: 0, GrandTotalAmt: 0 };
     }
 
     const entry = obj.chargesMap[type];
+    ['TotalAmount', 'SGSTAmt', 'CGSTAmt', 'IGSTAmt', 'TotalGSTAmt', 'GrandTotalAmt'].forEach(field => {
+        entry[field] += parseFloatSafe(charge[field]);
+    });
 
-    entry.TotalAmount += +charge.TotalAmount || 0;
-    entry.SGSTAmt += +charge.SGSTAmt || 0;
-    entry.CGSTAmt += +charge.CGSTAmt || 0;
-    entry.IGSTAmt += +charge.IGSTAmt || 0;
-    entry.TotalGSTAmt += +charge.TotalGSTAmt || 0;
-    entry.GrandTotalAmt += +charge.GrandTotalAmt || 0;
+    if (typeLower === 'freight amount') obj.BasicFrightAmt += parseFloatSafe(charge.TotalAmount);
+    else obj.OtherAmt += parseFloatSafe(charge.TotalAmount);
 
-    if (typeLower === 'freight amount') obj.BasicFrightAmt += +charge.TotalAmount || 0;
-    else obj.OtherAmt += +charge.TotalAmount || 0;
-
-    obj.totalSGST += +charge.SGSTAmt || 0;
-    obj.totalCGST += +charge.CGSTAmt || 0;
-    obj.totalIGST += +charge.IGSTAmt || 0;
-    obj.totalGST += +charge.TotalGSTAmt || 0;
-    obj.grandTotal += +charge.GrandTotalAmt || 0;
+    obj.totalSGST += parseFloatSafe(charge.SGSTAmt);
+    obj.totalCGST += parseFloatSafe(charge.CGSTAmt);
+    obj.totalIGST += parseFloatSafe(charge.IGSTAmt);
+    obj.totalGST += parseFloatSafe(charge.TotalGSTAmt);
+    obj.grandTotal += parseFloatSafe(charge.GrandTotalAmt);
 }
 
-function createRow(invoice, charges) {
+function updateFTLTotalsDisplay() {
+    const t = ftlState.totals;
+    const map = {
+        'totalQuantity': t.qty, 'totalChargeableWeight': t.weight,
+        'totalFreight': t.freight, 'totalOtherAmt': t.other,
+        'totalSGST': t.sgst, 'totalCGST': t.cgst,
+        'totalIGST': t.igst, 'totalGST': t.gst, 'totalGrand': t.grand
+    };
+
+    Object.entries(map).forEach(([id, val]) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = formatAmt(val);
+    });
+}
+
+function startFTLAutoUnlockTimer() {
+    if (ftlState.unlockTimer) clearTimeout(ftlState.unlockTimer);
+    ftlState.unlockTimer = setTimeout(() => {
+        if (ftlState.lockedBookingIds.length) ftl_unlockBooking(UserLoginID);
+    }, 30 * 60 * 1000); // 30 mins
+}
+
+// ============================================
+// DOM MANIPULATION HELPERS
+// ============================================
+function createFTLRow(invoice, charges) {
     const row = document.createElement('tr');
     row.setAttribute('data-ship-id', invoice.id);
-
     row.innerHTML = `
         <td>${invoice.LRNumber || ''}</td>
         <td>${invoice.PickupDate || ''}</td>
@@ -86,11 +141,10 @@ function createRow(invoice, charges) {
     return row;
 }
 
-// ================================
-// MAIN FUNCTION (OPTIMIZED)
-// ================================
+// ============================================
+// CORE BUSINESS LOGIC (Optimized)
+// ============================================
 async function FTL_FCL_getPendingInvoiceDetails() {
-
     const partyCode = document.getElementById('partyCode').value.trim();
     const invoiceDate = document.getElementById('invoiceDate').value;
     const movementType = document.getElementById('movementType').value;
@@ -104,11 +158,10 @@ async function FTL_FCL_getPendingInvoiceDetails() {
 
     btn.disabled = true;
     showSpinner();
+    ftlState.reset();
 
     try {
-        // ========================
         // STEP 1: FETCH BOOKINGS
-        // ========================
         const { data, error } = await supabaseClient
             .from('FullLoadMovementDetailsView')
             .select('*')
@@ -120,41 +173,29 @@ async function FTL_FCL_getPendingInvoiceDetails() {
             .order('LRNumber', { ascending: true });
 
         if (error) throw error;
-        if (!data?.length) {
-            alert('No pending invoices');
-            return;
-        }
+        if (!data?.length) return alert('No pending invoices');
 
         const bookingIds = data.map(d => d.id);
         const lrNumbers = data.map(d => d.LRNumber);
 
-        lockedBookingIds = bookingIds;
-
-        // ========================
         // STEP 2: LOCK BOOKINGS
-        // ========================
         const { data: lockedRows, error: lockError } = await supabaseClient
             .from('FullLoadBookingDetails')
-            .update({
-                IsLocked: true,
-                LockedBy: UserLoginID,
-                LockedAt: new Date().toISOString()
-            })
+            .update({ IsLocked: true, LockedBy: UserLoginID, LockedAt: new Date().toISOString() })
             .in('id', bookingIds)
             .eq('IsLocked', false)
             .select('id');
 
         if (lockError) throw lockError;
 
-        // Validate locking
-        const lockedIds = lockedRows.map(r => r.id);
-
-        if (lockedIds.length !== bookingIds.length) {
+        ftlState.lockedBookingIds = lockedRows.map(r => r.id);
+        if (ftlState.lockedBookingIds.length !== bookingIds.length) {
             console.warn("⚠ Some records already locked by another user");
         }
-        // ========================
+
+        startFTLAutoUnlockTimer();
+
         // STEP 3: BULK FETCH CHARGES
-        // ========================
         const { data: chargesData, error: chargeError } = await supabaseClient
             .from('FullLoadBookingCharges')
             .select('*')
@@ -162,99 +203,32 @@ async function FTL_FCL_getPendingInvoiceDetails() {
             .eq('AccountType', 'Sale')
             .order('id', { ascending: true });
 
-
         if (chargeError) throw chargeError;
 
         const chargesByLR = {};
-
-        for (const charge of chargesData || []) {
+        (chargesData || []).forEach(charge => {
             const lr = charge.LRNumber;
-
-            if (!chargesByLR[lr]) {
-                chargesByLR[lr] = initChargesObject();
-            }
-
+            if (!chargesByLR[lr]) chargesByLR[lr] = initChargesObject();
             processCharge(chargesByLR[lr], charge);
-        }
+        });
 
-        // ========================
-        // STEP 4: RENDER TABLE
-        // ========================
-        const tbody = document.querySelector('#pendingShipmentTable tbody');
-        tbody.innerHTML = '';
-
+        // STEP 4: RENDER & ACCUMULATE
         FTL_FCL_createPendingShipmentTableHeaderAndFooter();
-
+        const tbody = getFTLTableBody();
         const fragment = document.createDocumentFragment();
 
-        const totals = {
-            qty: 0,
-            weight: 0,
-            freight: 0,
-            other: 0,
-            sgst: 0,
-            cgst: 0,
-            igst: 0,
-            gst: 0,
-            grand: 0
-        };
-
-        let mergedChargesMap = {};
-
         data.forEach(inv => {
+            if (!ftlState.lockedBookingIds.includes(inv.id)) return; // Only process successfully locked rows
             const charges = chargesByLR[inv.LRNumber];
             if (!charges || charges.grandTotal <= 0) return;
 
-            totals.qty += +inv.Quantity || 0;
-            totals.weight += +inv.ChargeableWeight || 0;
-            totals.freight += charges.BasicFrightAmt;
-            totals.other += charges.OtherAmt;
-            totals.sgst += charges.totalSGST;
-            totals.cgst += charges.totalCGST;
-            totals.igst += charges.totalIGST;
-            totals.gst += charges.totalGST;
-            totals.grand += charges.grandTotal;
-
-            // Merge charges
-            Object.entries(charges.chargesMap).forEach(([type, amt]) => {
-                if (!mergedChargesMap[type]) {
-                    mergedChargesMap[type] = {
-                        TotalAmount: 0,
-                        SGSTAmt: 0,
-                        CGSTAmt: 0,
-                        IGSTAmt: 0,
-                        TotalGSTAmt: 0,
-                        GrandTotalAmt: 0
-                    };
-                }
-
-                mergedChargesMap[type].TotalAmount += amt.TotalAmount;
-                mergedChargesMap[type].SGSTAmt += amt.SGSTAmt;
-                mergedChargesMap[type].CGSTAmt += amt.CGSTAmt;
-                mergedChargesMap[type].IGSTAmt += amt.IGSTAmt;
-                mergedChargesMap[type].TotalGSTAmt += amt.TotalGSTAmt;
-                mergedChargesMap[type].GrandTotalAmt += amt.GrandTotalAmt;
-            });
-
-            fragment.appendChild(createRow(inv, charges));
+            accumulateFTLTotals(inv, charges);
+            fragment.appendChild(createFTLRow(inv, charges));
         });
 
         tbody.appendChild(fragment);
-
-        // ========================
-        // STEP 5: UPDATE TOTALS
-        // ========================
-        document.getElementById('totalQuantity').textContent = formatAmt(totals.qty);
-        document.getElementById('totalChargeableWeight').textContent = formatAmt(totals.weight);
-        document.getElementById('totalFreight').textContent = formatAmt(totals.freight);
-        document.getElementById('totalOtherAmt').textContent = formatAmt(totals.other);
-        document.getElementById('totalSGST').textContent = formatAmt(totals.sgst);
-        document.getElementById('totalCGST').textContent = formatAmt(totals.cgst);
-        document.getElementById('totalIGST').textContent = formatAmt(totals.igst);
-        document.getElementById('totalGST').textContent = formatAmt(totals.gst);
-        document.getElementById('totalGrand').textContent = formatAmt(totals.grand);
-
-        renderChargesTable(mergedChargesMap);
+        updateFTLTotalsDisplay();
+        renderChargesTable(ftlState.mergedChargesMap);
 
     } catch (err) {
         console.error(err);
@@ -265,115 +239,176 @@ async function FTL_FCL_getPendingInvoiceDetails() {
     }
 }
 
+function accumulateFTLTotals(inv, charges) {
+    const t = ftlState.totals;
+    t.qty += parseFloatSafe(inv.Quantity);
+    t.weight += parseFloatSafe(inv.ChargeableWeight);
+    t.freight += charges.BasicFrightAmt;
+    t.other += charges.OtherAmt;
+    t.sgst += charges.totalSGST;
+    t.cgst += charges.totalCGST;
+    t.igst += charges.totalIGST;
+    t.gst += charges.totalGST;
+    t.grand += charges.grandTotal;
+
+    Object.entries(charges.chargesMap).forEach(([type, amt]) => {
+        if (!ftlState.mergedChargesMap[type]) {
+            ftlState.mergedChargesMap[type] = { TotalAmount: 0, SGSTAmt: 0, CGSTAmt: 0, IGSTAmt: 0, TotalGSTAmt: 0, GrandTotalAmt: 0 };
+        }
+        ['TotalAmount', 'SGSTAmt', 'CGSTAmt', 'IGSTAmt', 'TotalGSTAmt', 'GrandTotalAmt'].forEach(field => {
+            ftlState.mergedChargesMap[type][field] += amt[field];
+        });
+    });
+}
+
+// ============================================
+// UI & ROW MANAGEMENT
+// ============================================
 async function FTL_FCL_createPendingShipmentTableHeaderAndFooter() {
-
     const table = document.getElementById("pendingShipmentTable");
-
-    // 🔹 Remove existing THEAD & TFOOT (safe reset)
-    table.querySelector("thead")?.remove();
-    table.querySelector("tfoot")?.remove();
-
-    // ============================
-    // 🔹 CREATE HEADER
-    // ============================
-    const headers = [
-        "Docket<br>No",
-        "Booked<br>Date",
-        "Transit<br>Type",
-        "Mode<br>Type",
-        "Route Details",
-        "Origin",
-        "Destination",
-        "Vehicle Type",
-        "Vehicle No",
-        "Container Number",
-        "Quantity",
-        "Chargeable<br>Weight",
-        "Basic<br>Freight",
-        "Other<br>Amount",
-        "SGST<br>Amount",
-        "CGST<br>Amount",
-        "IGST<br>Amount",
-        "Total GST<br>Amount",
-        "Grand Total<br>Amount",
-        "Action"
-    ];
+    table.querySelectorAll("thead, tfoot").forEach(el => el.remove());
 
     const thead = document.createElement("thead");
-    thead.classList.add("table-light");
-
+    thead.className = "table-light";
     const headRow = document.createElement("tr");
-
-    headers.forEach(text => {
+    TABLE_CONFIG_FTL.HEADER_COLS.forEach(text => {
         const th = document.createElement("th");
         th.innerHTML = text;
         headRow.appendChild(th);
     });
-
     thead.appendChild(headRow);
     table.prepend(thead);
 
-    // ============================
-    // 🔹 CREATE FOOTER (TOTALS)
-    // ============================
     const tfoot = document.createElement("tfoot");
-    tfoot.classList.add("table-light");
-
+    tfoot.className = "table-light";
     const footRow = document.createElement("tr");
     footRow.id = "totalsRow";
 
-    // Helper to create cell
-    const createCell = ({ colspan, text, id, align }) => {
+    TABLE_CONFIG_FTL.TOTALS_COLUMNS.forEach(item => {
         const th = document.createElement("th");
-
-        if (colspan) th.colSpan = colspan;
-        if (text) th.textContent = text;
-        if (id) {
-            th.id = id;
+        if (item.colspan) th.colSpan = item.colspan;
+        if (item.label) th.textContent = item.label;
+        if (item.id) {
+            th.id = item.id;
+            th.className = "text-end";
             th.textContent = "0.00";
-            th.classList.add("text-end");
         }
-        if (align) th.classList.add(align);
-
-        return th;
-    };
-
-    // Build footer structure
-    const footerConfig = [
-        { colspan: 10, text: "Totals:", align: "text-end" },
-        { id: "totalQuantity" },
-        { id: "totalChargeableWeight" },
-        { id: "totalFreight" },
-        { id: "totalOtherAmt" },
-        { id: "totalSGST" },
-        { id: "totalCGST" },
-        { id: "totalIGST" },
-        { id: "totalGST" },
-        { id: "totalGrand" },
-        { text: "" } // empty cell for Action column
-    ];
-
-    footerConfig.forEach(cfg => {
-        footRow.appendChild(createCell(cfg));
+        if (item.align) th.className = (th.className ? th.className + " " : "") + item.align;
+        if (item.empty) th.textContent = "";
+        footRow.appendChild(th);
     });
 
     tfoot.appendChild(footRow);
     table.appendChild(tfoot);
 }
 
-async function ftl_loadInvoiceBookings(invoiceNo) {
+function ftl_removeRow(button) {
+    const row = button.closest('tr');
+    if (!row) return;
 
-    if (!invoiceNo) {
-        alert('Please enter a valid invoice number.');
-        return;
+    const shipId = parseInt(row.getAttribute('data-ship-id'));
+
+    // Un-track and unlock
+    if (shipId) {
+        ftlState.lockedBookingIds = ftlState.lockedBookingIds.filter(id => id !== shipId);
+        unlockShipmentRecord_ftl(shipId); // async fire & forget
     }
 
-    showSpinner();
+    // Subtract from state
+    const t = ftlState.totals;
+    t.qty -= parseFloatSafe(row.cells[10].textContent);
+    t.weight -= parseFloatSafe(row.cells[11].textContent);
+    t.freight -= parseFloatSafe(row.cells[12].textContent);
+    t.other -= parseFloatSafe(row.cells[13].textContent);
+    t.sgst -= parseFloatSafe(row.cells[14].textContent);
+    t.cgst -= parseFloatSafe(row.cells[15].textContent);
+    t.igst -= parseFloatSafe(row.cells[16].textContent);
+    t.gst -= parseFloatSafe(row.cells[17].textContent);
+    t.grand -= parseFloatSafe(row.cells[18].textContent);
+
+    updateFTLTotalsDisplay();
+    row.remove();
+}
+
+// ============================================
+// SINGLE ACTIONS
+// ============================================
+async function ftl_addSingleShipmentToInvoice(shipmentNo, invoiceNo) {
+    if (!shipmentNo || !invoiceNo) return alert('Shipment number and invoice number required');
 
     try {
-        // ========================
-        // STEP 1: FETCH BOOKINGS
-        // ========================
+        showSpinner();
+
+        // Check UI duplicates
+        const exists = Array.from(document.querySelectorAll('#pendingShipmentTable tbody tr'))
+            .some(row => row.cells[0]?.textContent.trim() === shipmentNo);
+        if (exists) return alert('Shipment already added');
+
+        // Fetch Shipment
+        const { data: shipment, error: fetchError } = await supabaseClient
+            .from('FullLoadMovementDetailsView')
+            .select('*')
+            .eq('LRNumber', shipmentNo)
+            .eq('company_id', CompanyID)
+            .single();
+
+        if (fetchError || !shipment) return alert('Shipment not found');
+        if (shipment.InvoiceNumber && shipment.InvoiceNumber !== invoiceNo) return alert('Assigned to another invoice');
+        if (shipment.IsLocked) return alert('Locked by another user');
+
+        // Lock Record
+        const { data: updatedRows, error: lockError } = await supabaseClient
+            .from('FullLoadBookingDetails')
+            .update({
+                IsLocked: true, LockedBy: UserLoginID, LockedAt: new Date().toISOString(),
+                invoice_number: invoiceNo, InvoiceStatus: true
+            })
+            .eq('id', shipment.id)
+            .eq('IsLocked', false)
+            .select('id');
+
+        if (lockError || !updatedRows?.length) return alert('Record locked by another user');
+
+        // Fetch Charges
+        const { data: chargesData } = await supabaseClient
+            .from('FullLoadBookingCharges')
+            .select('*')
+            .eq('LRNumber', shipmentNo)
+            .eq('AccountType', 'Sale');
+
+        const chargesObj = initChargesObject();
+        (chargesData || []).forEach(c => processCharge(chargesObj, c));
+
+        if (chargesObj.grandTotal <= 0) return alert('No billable amount found');
+
+        // Append to UI & State
+        const tbody = getFTLTableBody();
+        if (!tbody) FTL_FCL_createPendingShipmentTableHeaderAndFooter();
+
+        ftlState.lockedBookingIds.push(shipment.id);
+        accumulateFTLTotals(shipment, chargesObj);
+
+        document.querySelector('#pendingShipmentTable tbody').appendChild(createFTLRow(shipment, chargesObj));
+        updateFTLTotalsDisplay();
+
+        // Re-render charge breakdown safely
+        if (typeof renderChargesTable === "function") renderChargesTable(ftlState.mergedChargesMap);
+
+    } catch (err) {
+        console.error('❌ Error:', err.message);
+        alert('Error adding shipment');
+    } finally {
+        hideSpinner();
+    }
+}
+
+async function ftl_loadInvoiceBookings(invoiceNo) {
+    if (!invoiceNo) return alert('Please enter a valid invoice number.');
+
+    showSpinner();
+    ftlState.reset();
+
+    try {
         const { data, error } = await supabaseClient
             .from('FullLoadMovementDetailsView')
             .select('*')
@@ -382,254 +417,67 @@ async function ftl_loadInvoiceBookings(invoiceNo) {
             .order('PickupDate', { ascending: true });
 
         if (error) throw error;
-
-        if (!data?.length) {
-            showToast('No shipments found for this invoice.', 'warning');
-            hideSpinner();
-            return;
-        }
+        if (!data?.length) return alert('No shipments found for this invoice.');
 
         const lrNumbers = data.map(d => d.LRNumber);
-        // console.log("LR Number " + lrNumbers);
 
-        // ========================
-        // STEP 2: BULK FETCH CHARGES
-        // ========================
-        const { data: chargesData, error: chargeError } = await supabaseClient
+        const { data: chargesData } = await supabaseClient
             .from('FullLoadBookingCharges')
             .select('*')
             .in('LRNumber', lrNumbers)
             .eq('AccountType', 'Sale');
 
-        if (chargeError) throw chargeError;
-
-        // ========================
-        // STEP 3: GROUP CHARGES
-        // ========================
         const chargesByLR = {};
-
-        for (const charge of chargesData || []) {
+        (chargesData || []).forEach(charge => {
             const lr = charge.LRNumber;
-
-            if (!chargesByLR[lr]) {
-                chargesByLR[lr] = initChargesObject();
-            }
-
+            if (!chargesByLR[lr]) chargesByLR[lr] = initChargesObject();
             processCharge(chargesByLR[lr], charge);
-        }
-
-        // ========================
-        // STEP 4: PREPARE TABLE
-        // ========================
-        const tbody = document.querySelector('#pendingShipmentTable tbody');
-        tbody.innerHTML = '';
+        });
 
         FTL_FCL_createPendingShipmentTableHeaderAndFooter();
-
+        const tbody = getFTLTableBody();
         const fragment = document.createDocumentFragment();
 
-        const totals = {
-            qty: 0,
-            weight: 0,
-            freight: 0,
-            other: 0,
-            sgst: 0,
-            cgst: 0,
-            igst: 0,
-            gst: 0,
-            grand: 0
-        };
-
-        let mergedChargesMap = {};
-
-        // ========================
-        // STEP 5: LOOP DATA
-        // ========================
         data.forEach(inv => {
-
             const charges = chargesByLR[inv.LRNumber];
             if (!charges || charges.grandTotal <= 0) return;
 
-            // Totals
-            totals.qty += +inv.Quantity || 0;
-            totals.weight += +inv.ChargeableWeight || 0;
-            totals.freight += charges.BasicFrightAmt;
-            totals.other += charges.OtherAmt;
-            totals.sgst += charges.totalSGST;
-            totals.cgst += charges.totalCGST;
-            totals.igst += charges.totalIGST;
-            totals.gst += charges.totalGST;
-            totals.grand += charges.grandTotal;
-
-            // Merge charge types
-            Object.entries(charges.chargesMap).forEach(([type, amt]) => {
-
-                if (!mergedChargesMap[type]) {
-                    mergedChargesMap[type] = {
-                        TotalAmount: 0,
-                        SGSTAmt: 0,
-                        CGSTAmt: 0,
-                        IGSTAmt: 0,
-                        TotalGSTAmt: 0,
-                        GrandTotalAmt: 0
-                    };
-                }
-
-                mergedChargesMap[type].TotalAmount += amt.TotalAmount;
-                mergedChargesMap[type].SGSTAmt += amt.SGSTAmt;
-                mergedChargesMap[type].CGSTAmt += amt.CGSTAmt;
-                mergedChargesMap[type].IGSTAmt += amt.IGSTAmt;
-                mergedChargesMap[type].TotalGSTAmt += amt.TotalGSTAmt;
-                mergedChargesMap[type].GrandTotalAmt += amt.GrandTotalAmt;
-            });
-
-            // Render row
-            fragment.appendChild(createRow(inv, charges));
+            ftlState.lockedBookingIds.push(inv.id);
+            accumulateFTLTotals(inv, charges);
+            fragment.appendChild(createFTLRow(inv, charges));
         });
 
         tbody.appendChild(fragment);
-
-        // ========================
-        // STEP 6: UPDATE TOTALS
-        // ========================
-        document.getElementById('totalQuantity').textContent = formatAmt(totals.qty);
-        document.getElementById('totalChargeableWeight').textContent = formatAmt(totals.weight);
-        document.getElementById('totalFreight').textContent = formatAmt(totals.freight);
-        document.getElementById('totalOtherAmt').textContent = formatAmt(totals.other);
-        document.getElementById('totalSGST').textContent = formatAmt(totals.sgst);
-        document.getElementById('totalCGST').textContent = formatAmt(totals.cgst);
-        document.getElementById('totalIGST').textContent = formatAmt(totals.igst);
-        document.getElementById('totalGST').textContent = formatAmt(totals.gst);
-        document.getElementById('totalGrand').textContent = formatAmt(totals.grand);
-
-        // ========================
-        // STEP 7: RENDER CHARGES TABLE
-        // ========================
-        renderChargesTable(mergedChargesMap);
+        updateFTLTotalsDisplay();
+        renderChargesTable(ftlState.mergedChargesMap);
 
     } catch (err) {
-        console.error('Error loading invoice bookings:', err.message);
-        alert('Error loading bookings. Please try again.');
+        console.error(err);
+        alert('Error loading bookings.');
     } finally {
         hideSpinner();
     }
 }
 
-function ftl_removeRow(button) {
-
-    const row = button.closest('tr');
-    if (!row) return;
-
-    const shipId = parseInt(row.getAttribute('data-ship-id'));
-
-    // ============================
-    // 🔹 REMOVE FROM LOCK ARRAY
-    // ============================
-    if (shipId && Array.isArray(lockedBookingIds)) {
-        lockedBookingIds = lockedBookingIds.filter(id => id !== shipId);
-    }
-
-    // ============================
-    // 🔹 UPDATE TOTALS (SAFE WAY)
-    // ============================
-    const getVal = (index) => parseFloat(row.cells[index]?.textContent) || 0;
-
-    const values = {
-        qty: getVal(10),
-        weight: getVal(11),
-        freight: getVal(12),
-        other: getVal(13),
-        sgst: getVal(14),
-        cgst: getVal(15),
-        igst: getVal(16),
-        gst: getVal(17),
-        grand: getVal(18)
-    };
-
-    const updateCell = (id, subtractVal) => {
-        const el = document.getElementById(id);
-        if (!el) return;
-
-        const current = parseFloat(el.textContent) || 0;
-        el.textContent = formatAmt(current - subtractVal);
-    };
-
-    updateCell('totalQuantity', values.qty);
-    updateCell('totalChargeableWeight', values.weight);
-    updateCell('totalFreight', values.freight);
-    updateCell('totalOtherAmt', values.other);
-    updateCell('totalSGST', values.sgst);
-    updateCell('totalCGST', values.cgst);
-    updateCell('totalIGST', values.igst);
-    updateCell('totalGST', values.gst);
-    updateCell('totalGrand', values.grand);
-
-    // ============================
-    // 🔹 UNLOCK RECORD (ASYNC - NON BLOCKING)
-    // ============================
-    if (shipId) {
-        unlockShipmentRecord_ftl(shipId); // fire & forget
-    }
-
-    // ============================
-    // 🔹 REMOVE ROW FROM UI
-    // ============================
-    row.remove();
-}
-
 async function ftl_updateInvoiceNumbers(invoiceNo) {
-
-    if (!invoiceNo) {
-        alert('Invalid invoice number.');
-        return;
-    }
+    if (!invoiceNo) return alert('Invalid invoice number.');
 
     const rows = document.querySelectorAll('#pendingShipmentTable tbody tr');
-
-    const shipmentIds = Array.from(rows)
-        .map(row => parseInt(row.getAttribute('data-ship-id')))
-        .filter(id => !isNaN(id));
+    const shipmentIds = Array.from(rows).map(r => parseInt(r.getAttribute('data-ship-id'))).filter(id => !isNaN(id));
 
     showSpinner();
-
     try {
-        // ============================
-        // 🔹 STEP 1: CLEAR OLD ASSIGNMENTS (ALWAYS)
-        // ============================
-        const { error: clearError } = await supabaseClient
+        await supabaseClient
             .from('FullLoadBookingDetails')
-            .update({
-                InvoiceStatus: false,
-                invoice_number: null
-            })
+            .update({ InvoiceStatus: false, invoice_number: null })
             .eq('invoice_number', invoiceNo);
 
-        if (clearError) throw clearError;
-
-        // ============================
-        // 🔹 STEP 2: RE-ASSIGN ONLY IF EXISTS
-        // ============================
         if (shipmentIds.length > 0) {
-
-            const { error: updateError } = await supabaseClient
+            await supabaseClient
                 .from('FullLoadBookingDetails')
-                .update({
-                    InvoiceStatus: true,
-                    invoice_number: invoiceNo,
-                    IsLocked: false,
-                    LockedBy: null,
-                    LockedAt: null
-                })
+                .update({ InvoiceStatus: true, invoice_number: invoiceNo, IsLocked: false, LockedBy: null, LockedAt: null })
                 .in('id', shipmentIds);
-
-            if (updateError) throw updateError;
-
-            // console.log('✅ Invoice updated:', shipmentIds);
-
-        } else {
-            console.log('⚠ All shipments removed → invoice cleared');
         }
-
     } catch (err) {
         console.error('❌ Error updating invoice:', err.message);
         alert('Error updating invoice numbers.');
@@ -639,193 +487,15 @@ async function ftl_updateInvoiceNumbers(invoiceNo) {
 }
 
 async function ftl_unlockBooking(userID) {
-
-    if (!userID) {
-        console.warn("❌ No user ID provided. Cannot unlock bookings.");
-        return;
-    }
-
+    if (!userID) return;
     try {
-        showSpinner();
-
-        // ============================
-        // 🔹 UNLOCK ALL RECORDS FOR USER
-        // ============================
-        const { data, error } = await supabaseClient
+        await supabaseClient
             .from("FullLoadBookingDetails")
-            .update({
-                IsLocked: false,
-                LockedBy: null,
-                LockedAt: null
-            })
-            .eq("LockedBy", userID)
-            .select('id'); // optional: get unlocked IDs
+            .update({ IsLocked: false, LockedBy: null, LockedAt: null })
+            .eq("LockedBy", userID);
 
-        if (error) throw error;
-
-        // ============================
-        // 🔹 CLEAN LOCAL STATE
-        // ============================
-        if (Array.isArray(lockedBookingIds)) {
-            lockedBookingIds = [];
-        }
-
-        // console.log(`✅ Unlocked ${data?.length || 0} bookings for user: ${userID}`);
-
+        ftlState.lockedBookingIds = [];
     } catch (err) {
         console.error("❌ Unlock failed:", err.message);
-        alert("Error unlocking bookings. Please try again.");
-    } finally {
-        hideSpinner();
-    }
-}
-
-async function ftl_addSingleShipmentToInvoice(shipmentNo, invoiceNo) {
-
-    if (!shipmentNo) {
-        alert('Please enter shipment number');
-        return;
-    }
-
-    if (!invoiceNo) {
-        alert('Invalid invoice number');
-        return;
-    }
-
-    try {
-        showSpinner();
-
-        // ============================
-        // 🔹 STEP 1: PREVENT UI DUPLICATE
-        // ============================
-        const exists = Array.from(document.querySelectorAll('#pendingShipmentTable tbody tr'))
-            .some(row => row.cells[0]?.textContent.trim() === shipmentNo);
-
-        if (exists) {
-            alert('Shipment already added');
-            return;
-        }
-
-        // ============================
-        // 🔹 STEP 2: FETCH SHIPMENT
-        // ============================
-        const { data: shipment, error: fetchError } = await supabaseClient
-            .from('FullLoadMovementDetailsView')
-            .select('*')
-            .eq('LRNumber', shipmentNo)
-            .eq('company_id', CompanyID)
-            .single();
-
-        if (fetchError) throw fetchError;
-
-        if (!shipment) {
-            alert('Shipment not found');
-            return;
-        }
-
-        // ============================
-        // 🔹 STEP 3: VALIDATION
-        // ============================
-        if (shipment.InvoiceNumber && shipment.InvoiceNumber !== invoiceNo) {
-            alert('Already assigned to another invoice');
-            return;
-        }
-
-        if (shipment.IsLocked) {
-            alert('Shipment is locked by another user');
-            return;
-        }
-
-        // ============================
-        // 🔹 STEP 4: LOCK + ASSIGN
-        // ============================
-        const { data: updatedRows, error: lockError } = await supabaseClient
-            .from('FullLoadBookingDetails')
-            .update({
-                IsLocked: true,
-                LockedBy: UserLoginID,
-                LockedAt: new Date().toISOString(),
-                invoice_number: invoiceNo,
-                InvoiceStatus: true
-            })
-            .eq('id', shipment.id)
-            .eq('IsLocked', false)
-            .select('id');
-
-        if (lockError) throw lockError;
-
-        if (!updatedRows || updatedRows.length === 0) {
-            alert('Shipment already locked by another user');
-            return;
-        }
-
-        // ============================
-        // 🔹 STEP 5: FETCH CHARGES
-        // ============================
-        const { data: chargesData, error: chargeError } = await supabaseClient
-            .from('FullLoadBookingCharges')
-            .select('*')
-            .eq('LRNumber', shipmentNo)
-            .eq('AccountType', 'Sale');
-
-        if (chargeError) throw chargeError;
-
-        // ============================
-        // 🔹 STEP 6: PROCESS CHARGES
-        // ============================
-        const chargesObj = initChargesObject();
-
-        for (const charge of chargesData || []) {
-            processCharge(chargesObj, charge);
-        }
-
-        if (chargesObj.grandTotal <= 0) {
-            alert('No billable amount found');
-            return;
-        }
-
-        // ============================
-        // 🔹 STEP 7: ADD ROW TO TABLE
-        // ============================
-        const tbody = document.querySelector('#pendingShipmentTable tbody');
-
-        const row = createRow(shipment, chargesObj);
-        tbody.appendChild(row);
-
-        // ============================
-        // 🔹 STEP 8: UPDATE TOTALS
-        // ============================
-        const updateCell = (id, val) => {
-            const el = document.getElementById(id);
-            const current = parseFloat(el.textContent) || 0;
-            el.textContent = formatAmt(current + val);
-        };
-
-        updateCell('totalQuantity', +shipment.Quantity || 0);
-        updateCell('totalChargeableWeight', +shipment.ChargeableWeight || 0);
-        updateCell('totalFreight', chargesObj.BasicFrightAmt);
-        updateCell('totalOtherAmt', chargesObj.OtherAmt);
-        updateCell('totalSGST', chargesObj.totalSGST);
-        updateCell('totalCGST', chargesObj.totalCGST);
-        updateCell('totalIGST', chargesObj.totalIGST);
-        updateCell('totalGST', chargesObj.totalGST);
-        updateCell('totalGrand', chargesObj.grandTotal);
-
-        // ============================
-        // 🔹 STEP 9: UPDATE CHARGES TABLE
-        // ============================
-        if (typeof renderChargesTable === "function") {
-            // Optional: rebuild full summary (safe way)
-            await ftl_loadInvoiceBookings(invoiceNo);
-        }
-
-        // console.log(`✅ Shipment ${shipmentNo} added`);
-
-    } catch (err) {
-        console.error('❌ Error:', err.message);
-        alert('Error adding shipment');
-
-    } finally {
-        hideSpinner();
     }
 }

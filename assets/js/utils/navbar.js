@@ -10,8 +10,9 @@ const Navbar = (() => {
             children: [
                 { label: "Company", icon: "bi-buildings", href: "/pages/master/companyProfile.html" },
                 { label: "Party", icon: "bi-people-fill", href: "/pages/master/PartyRegistration.html" },
-                { label: "Courier", icon: "bi-truck-flatbed", href: "/pages/master/CourierRegistration.html" },
+                { label: "Courier", icon: "bi-box-seam", href: "/pages/master/CourierRegistration.html" },
                 { label: "Employee", icon: "bi-person-badge-fill", href: "/pages/master/EmployeeMaster.html" },
+                { label: "Vehicle Master", icon: "bi-truck", href: "/pages/master/VehicleMaster.html" },
                 { label: "User Rules", icon: "bi-shield-lock", href: "/pages/master/UserAccessRules.html" }
             ]
         },
@@ -25,7 +26,8 @@ const Navbar = (() => {
                 { label: "Domestic", icon: "bi-truck", href: "/pages/Functions/DomesticBooking.html" },
                 { label: "Customs Clearance", icon: "bi-box-seam", href: "/pages/Functions/CustomsClearance.html" },
                 { label: "Full Truck Load", icon: "bi-truck-front", href: "/pages/Functions/fulltruckload.html" },
-
+                { label: "Local Transportation", icon: "bi-truck", href: "/pages/Functions/localtransportation.html" },
+                { label: "Dedicated Vehicle Trips", icon: "bi-truck-flatbed", href: "/pages/Functions/dedicatedvehicletrips.html" }
             ]
         },
         {

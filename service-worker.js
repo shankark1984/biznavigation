@@ -1,9 +1,10 @@
 const VERSION = 'v3.04.08.06';
 const STATIC_CACHE = `biznav-static-${VERSION}`;
 const DYNAMIC_CACHE = `biznav-dynamic-${VERSION}`;
+const API_CACHE = `biznav-api-${VERSION}`;
 const MAX_DYNAMIC_ITEMS = 50;
 
-const PRECACHE_URLS = [
+const PRECACHE_ASSETS = [
     '/',
     '/index.html',
     '/login.html',
@@ -11,125 +12,145 @@ const PRECACHE_URLS = [
     '/assets/img/applogo-192x192.png'
 ];
 
-/* ================= CACHE LIMIT ================= */
-async function limitCacheSize(cacheName, maxItems) {
+/* ================= UTILITIES ================= */
+async function limitCache(cacheName, maxItems) {
     const cache = await caches.open(cacheName);
-    let keys = await cache.keys();
-    while (keys.length > maxItems) {
+    const keys = await cache.keys();
+    if (keys.length > maxItems) {
         await cache.delete(keys[0]);
-        keys = await cache.keys();
+        await limitCache(cacheName, maxItems);
     }
 }
 
-/* ================= INSTALL ================= */
+/* ================= LIFECYCLE ================= */
 self.addEventListener('install', event => {
     event.waitUntil(
         caches.open(STATIC_CACHE).then(async cache => {
-            for (const url of PRECACHE_URLS) {
+            // Use cache-busting during install to avoid caching stale CDN/proxy responses
+            const fetchPromises = PRECACHE_ASSETS.map(async url => {
                 try {
-                    const response = await fetch(url);
-                    if (!response.ok) throw new Error(`Failed: ${response.status}`);
-                    await cache.put(url, response);
+                    const res = await fetch(url, { cache: 'no-cache' });
+                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                    await cache.put(url, res);
                 } catch (err) {
-                    console.warn('[SW] Failed to cache precache URL:', url, err);
+                    console.error(`[SW] Precache failed for: ${url}`, err);
                 }
-            }
+            });
+            return Promise.all(fetchPromises);
         })
     );
-    // REMOVED: self.skipWaiting() here causes immediate hijacking and reload loops
 });
 
-/* ================= ACTIVATE ================= */
 self.addEventListener('activate', event => {
     event.waitUntil(
         (async () => {
+            // Enable Navigation Preload if supported
+            if ('navigationPreload' in self.registration) {
+                await self.registration.navigationPreload.enable();
+            }
+
+            const activeCaches = [STATIC_CACHE, DYNAMIC_CACHE, API_CACHE];
             const keys = await caches.keys();
+
             await Promise.all(
-                keys.filter(key => key.startsWith('biznav-') && key !== STATIC_CACHE && key !== DYNAMIC_CACHE)
+                keys
+                    .filter(key => key.startsWith('biznav-') && !activeCaches.includes(key))
                     .map(key => caches.delete(key))
             );
+
             await self.clients.claim();
-            // REMOVED: Do not blast SW_UPDATED to clients here
         })()
     );
 });
 
-/* ================= MESSAGE ================= */
+/* ================= CLIENT COMMUNICATION ================= */
 self.addEventListener('message', event => {
-    // Support both formats
-    if (event.data?.action === 'skipWaiting' || event.data?.type === 'SKIP_WAITING') {
+    if (event.data?.type === 'SKIP_WAITING' || event.data?.action === 'skipWaiting') {
         self.skipWaiting();
     }
 });
 
-/* ================= FETCH ================= */
+/* ================= FETCH ROUTING ================= */
 self.addEventListener('fetch', event => {
-    const request = event.request;
-    if (request.method !== 'GET') return;
-
+    const { request } = event;
     const url = new URL(request.url);
 
-    // Bypass localhost/127.0.0.1 entirely in development
-    if (url.hostname === '127.0.0.1' || url.hostname === 'localhost' || !url.protocol.startsWith('http')) {
+    // 1. Non-GET or non-HTTP requests: Pass straight to network
+    if (request.method !== 'GET' || !url.protocol.startsWith('http')) {
         return;
     }
 
+    // 2. External Third-Party APIs (No cache)
     if (url.hostname.includes('api.postalpincode.in')) {
         return;
     }
 
-    /* 1. SUPABASE API */
+    // 3. Supabase REST/GraphQL: Network-First with Fallback
     if (url.hostname.includes('supabase.co')) {
+        // Only cache read queries (GET). Never cache auth tokens or mutations.
+        if (url.pathname.includes('/auth/')) return;
+
         event.respondWith(
-            fetch(request)
-                .then(response => {
-                    if (response && response.status === 200) {
-                        const clone = response.clone();
-                        caches.open(DYNAMIC_CACHE).then(cache => {
-                            cache.put(request, clone);
-                            limitCacheSize(DYNAMIC_CACHE, MAX_DYNAMIC_ITEMS);
-                        });
+            (async () => {
+                try {
+                    const response = await fetch(request);
+                    if (response.status === 200) {
+                        const copy = response.clone();
+                        const cache = await caches.open(API_CACHE);
+                        cache.put(request, copy);
+                        limitCache(API_CACHE, MAX_DYNAMIC_ITEMS);
                     }
                     return response;
-                })
-                .catch(async () => {
+                } catch {
                     const cached = await caches.match(request);
-                    return cached || new Response(
-                        JSON.stringify({ error: 'Offline', message: 'No cached data available' }),
+                    if (cached) return cached;
+
+                    return new Response(
+                        JSON.stringify({ error: 'Offline', message: 'No network connection available' }),
                         { status: 503, headers: { 'Content-Type': 'application/json' } }
                     );
-                })
+                }
+            })()
         );
         return;
     }
 
-    /* 2. HTML NAVIGATION */
+    // 4. HTML Navigations: Network-First with Preload & Offline Fallback
     if (request.mode === 'navigate') {
         event.respondWith(
-            fetch(request)
-                .catch(async () => {
+            (async () => {
+                try {
+                    const preloadResponse = await event.preloadResponse;
+                    if (preloadResponse) return preloadResponse;
+
+                    return await fetch(request);
+                } catch {
                     const cachedPage = await caches.match(request);
                     if (cachedPage) return cachedPage;
-                    return caches.match('/pages/Tools/offline.html');
-                })
+
+                    const offlineFallback = await caches.match('/pages/Tools/offline.html');
+                    return offlineFallback || new Response('Offline', { status: 503 });
+                }
+            })()
         );
         return;
     }
 
-    /* 3. STATIC ASSETS */
+    // 5. Static Assets (CSS, JS, Fonts, Images): Stale-While-Revalidate
     event.respondWith(
-        caches.match(request).then(cachedResponse => {
-            if (cachedResponse) return cachedResponse;
+        (async () => {
+            const cachedResponse = await caches.match(request);
 
-            return fetch(request)
-                .then(networkResponse => {
-                    if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
-                        return networkResponse;
-                    }
-
-                    if (url.origin === self.location.origin) {
-                        const responseClone = networkResponse.clone();
-                        caches.open(STATIC_CACHE).then(cache => cache.put(request, responseClone));
+            const networkFetch = fetch(request)
+                .then(async networkResponse => {
+                    if (
+                        networkResponse &&
+                        networkResponse.status === 200 &&
+                        (networkResponse.type === 'basic' || networkResponse.type === 'cors')
+                    ) {
+                        const cache = await caches.open(DYNAMIC_CACHE);
+                        cache.put(request, networkResponse.clone());
+                        limitCache(DYNAMIC_CACHE, MAX_DYNAMIC_ITEMS);
                     }
                     return networkResponse;
                 })
@@ -137,8 +158,10 @@ self.addEventListener('fetch', event => {
                     if (request.destination === 'image') {
                         return caches.match('/assets/img/applogo-192x192.png');
                     }
-                    return new Response('Offline', { status: 503 });
+                    return null;
                 });
-        })
+
+            return cachedResponse || (await networkFetch);
+        })()
     );
 });

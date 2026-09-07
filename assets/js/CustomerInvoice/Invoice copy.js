@@ -834,61 +834,22 @@ if (pendingTable) {
 
         if (deleteBtn && !deleteBtn.disabled) {
             const row = deleteBtn.closest('tr');
-            if (!row) return;
-
-            // 1. Identify the shipment (Assumes you have a dataset attribute or it's in the first cell)
-            const shipmentNo = deleteBtn.dataset.shipmentNo || row.cells[0]?.textContent.trim();
-
-            // 2. Remove the row from the DOM
-            row.remove();
-
-            // 3. Remove the deleted shipment from Global State to prevent ghost charges
-            if (shipmentNo) {
-                if (invoiceData && invoiceData[shipmentNo]) delete invoiceData[shipmentNo];
-                if (invoiceChargesData && invoiceChargesData[shipmentNo]) delete invoiceChargesData[shipmentNo];
-            }
+            if (row) row.remove();
 
             const tbody = document.querySelector('#pendingShipmentTable tbody');
             const remainingRows = tbody ? tbody.querySelectorAll('tr').length : 0;
 
-            // 4. Recalculate or wipe based on remaining rows
             if (remainingRows === 0) {
-                clearChargesTable();
-                clearInvoiceTotals();
-            } else {
-                // Re-build the charges map from the clean remaining state
-                const updatedChargesMap = aggregateRemainingCharges(invoiceChargesData);
-                renderChargesTable(updatedChargesMap);
-
-                // Recalculate main table DOM totals
-                recalculateShipmentTotals();
-                recalculateChargesTotals();
+                const chargesTbody = document.querySelector('#pendingShipmentCharges tbody');
+                if (chargesTbody) {
+                    chargesTbody.innerHTML = '';
+                }
             }
+
+            recalculateShipmentTotals();
+            recalculateChargesTotals();
         }
     });
-}
-
-// Helper: Dynamically aggregates remaining charges from your global state
-function aggregateRemainingCharges(chargesState) {
-    const aggregated = {};
-    if (!chargesState) return aggregated;
-
-    // Loop through remaining shipments in state
-    Object.values(chargesState).forEach(shipmentCharges => {
-        // Assuming shipmentCharges contains charge lines grouped by type
-        Object.entries(shipmentCharges).forEach(([type, amounts]) => {
-            if (!aggregated[type]) {
-                aggregated[type] = { TotalAmount: 0, SGSTAmt: 0, CGSTAmt: 0, IGSTAmt: 0, TotalGSTAmt: 0, GrandTotalAmt: 0 };
-            }
-            aggregated[type].TotalAmount += amounts.TotalAmount || 0;
-            aggregated[type].SGSTAmt += amounts.SGSTAmt || 0;
-            aggregated[type].CGSTAmt += amounts.CGSTAmt || 0;
-            aggregated[type].IGSTAmt += amounts.IGSTAmt || 0;
-            aggregated[type].TotalGSTAmt += amounts.TotalGSTAmt || 0;
-            aggregated[type].GrandTotalAmt += amounts.GrandTotalAmt || 0;
-        });
-    });
-    return aggregated;
 }
 
 const getSafeCellVal = (cell) => {

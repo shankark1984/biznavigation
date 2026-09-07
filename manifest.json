@@ -1,54 +1,79 @@
 {
-  "id": "/",
+  "id": "/?source=pwa",
   "name": "BizNavigation",
   "short_name": "BizNav",
-  "start_url": "/index.html",
+  "description": "Smart logistics software for transportation, warehousing & freight forwarding.",
+  "lang": "en-US",
+  "dir": "ltr",
+  "start_url": "/index.html?source=pwa",
   "scope": "/",
   "display": "standalone",
-  "orientation": "portrait-primary",
-  "background_color": "#0d6efd",
+  "display_override": [
+    "window-controls-overlay",
+    "standalone",
+    "minimal-ui"
+  ],
+  "background_color": "#ffffff",
   "theme_color": "#0d6efd",
-  "description": "Smart logistics software for transportation, warehousing & freight forwarding.",
-  "lang": "en",
-  "dir": "ltr",
-  "categories": ["business", "productivity", "logistics"],
+  "categories": [
+    "business",
+    "productivity",
+    "logistics"
+  ],
   "icons": [
     {
-      "src": "assets/img/applogo-72x72.png",
+      "src": "/assets/img/applogo-72x72.png",
       "sizes": "72x72",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
-      "src": "assets/img/applogo-96x96.png",
+      "src": "/assets/img/applogo-96x96.png",
       "sizes": "96x96",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
-      "src": "assets/img/applogo-128x128.png",
+      "src": "/assets/img/applogo-128x128.png",
       "sizes": "128x128",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
-      "src": "assets/img/applogo-144x144.png",
+      "src": "/assets/img/applogo-144x144.png",
       "sizes": "144x144",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
-      "src": "assets/img/applogo-152x152.png",
+      "src": "/assets/img/applogo-152x152.png",
       "sizes": "152x152",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
-      "src": "assets/img/applogo-192x192.png",
+      "src": "/assets/img/applogo-192x192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
-      "src": "assets/img/applogo-512x512.png",
+      "src": "/assets/img/applogo-512x512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/img/applogo-maskable-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/assets/img/applogo-maskable-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ],
   "shortcuts": [
@@ -56,10 +81,10 @@
       "name": "New Booking",
       "short_name": "Booking",
       "description": "Create a new logistics booking",
-      "url": "/new-booking.html",
+      "url": "/new-booking.html?utm_source=homescreen_shortcut",
       "icons": [
         {
-          "src": "assets/img/shortcut-booking.png",
+          "src": "/assets/img/shortcut-booking.png",
           "sizes": "96x96",
           "type": "image/png"
         }
@@ -68,11 +93,11 @@
     {
       "name": "Track Shipment",
       "short_name": "Track",
-      "description": "Track your shipment",
-      "url": "/track.html",
+      "description": "Track active logistics shipments",
+      "url": "/track.html?utm_source=homescreen_shortcut",
       "icons": [
         {
-          "src": "assets/img/shortcut-track.png",
+          "src": "/assets/img/shortcut-track.png",
           "sizes": "96x96",
           "type": "image/png"
         }
@@ -81,16 +106,31 @@
   ],
   "screenshots": [
     {
-      "src": "assets/screenshots/screenshot1.png",
+      "src": "/assets/screenshots/mobile-dashboard.png",
       "sizes": "1080x1920",
       "type": "image/png",
-      "form_factor": "narrow"
+      "form_factor": "narrow",
+      "label": "Shipment Overview on Mobile"
     },
     {
-      "src": "assets/screenshots/screenshot2.png",
+      "src": "/assets/screenshots/mobile-booking.png",
       "sizes": "1080x1920",
       "type": "image/png",
-      "form_factor": "narrow"
+      "form_factor": "narrow",
+      "label": "Instant Booking on Mobile"
+    },
+    {
+      "src": "/assets/screenshots/desktop-dashboard.png",
+      "sizes": "1920x1080",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Logistics Management Console"
+    }
+  ],
+  "protocol_handlers": [
+    {
+      "protocol": "web+biznav",
+      "url": "/track.html?id=%s"
     }
   ],
   "share_target": {
@@ -100,7 +140,13 @@
     "params": {
       "title": "name",
       "text": "description",
-      "url": "link"
+      "url": "link",
+      "files": [
+        {
+          "name": "documents",
+          "accept": ["application/pdf", "image/*"]
+        }
+      ]
     }
   },
   "related_applications": [
@@ -114,5 +160,5 @@
       "url": "https://apps.apple.com/app/id123456789"
     }
   ],
-  "prefer_related_applications": true
+  "prefer_related_applications": false
 }
