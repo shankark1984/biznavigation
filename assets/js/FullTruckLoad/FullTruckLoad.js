@@ -254,8 +254,6 @@ $("#lrNumber").on("change", async function () {
     document.getElementById("newButton").disabled = false;
     document.getElementById("saveButton").disabled = true;
     document.getElementById("reportButton").disabled = false;
-
-
 });
 
 document.getElementById('newButton').addEventListener('click', async function () {
@@ -986,3 +984,8 @@ async function generateLRNumber() {
 
     return data;
 }
+
+document.getElementById("reportButton").addEventListener("click", async function () {
+    const lrNumber = document.getElementById("lrNumber").value.trim();
+    await generateConsignmentNote(lrNumber);
+});

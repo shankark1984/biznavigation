@@ -5,6 +5,28 @@ const PDF_CONFIG = {
 };
 
 // ==========================================
+// TEXT BALANCING HELPER (NEW)
+// ==========================================
+// Forces long addresses to split symmetrically across two lines
+function getBalancedText(doc, text, maxWidth) {
+    if (!text) return [];
+    const fullW = doc.getTextWidth(text);
+
+    // If it already fits on one line, return it
+    if (fullW <= maxWidth) return doc.splitTextToSize(text, maxWidth);
+
+    // Target half the string's width (+ a small buffer) to force a balanced two-line wrap
+    const targetW = (fullW / 2) + 5;
+    const lines = doc.splitTextToSize(text, Math.max(targetW, maxWidth * 0.55));
+
+    // If it somehow broke into 3+ lines, fallback to natural max-width wrapping
+    if (lines.length > 2) {
+        return doc.splitTextToSize(text, maxWidth);
+    }
+    return lines;
+}
+
+// ==========================================
 // UTILITY FUNCTIONS
 // ==========================================
 async function fetchCompanyDetails(header) {
@@ -48,14 +70,19 @@ async function fetchPartyDetails(header) {
 }
 
 // ================= AMOUNT IN WORDS =================
-function drawAmountInWords(doc, PAGE, FONT, grandTotal, y) { // 👈 Added missing 'y' parameter
+function drawAmountInWords(doc, PAGE, FONT, grandTotal, y) {
     const padding = 1;
     const text = `Amount in Words: ${numberToWordsIndian(grandTotal)}`;
 
     const lines = doc.splitTextToSize(text, PAGE.w - (padding * 2));
     const boxH = (lines.length * 3) + (padding * 2);
 
-    doc.rect(PAGE.x, y, PAGE.w, boxH);
+    // Contiguous border (Left, Right, Bottom) - NO overlapping top line
+    doc.setLineWidth(0.15);
+    doc.line(PAGE.x, y, PAGE.x, y + boxH); // Left
+    doc.line(PAGE.x + PAGE.w, y, PAGE.x + PAGE.w, y + boxH); // Right
+    doc.line(PAGE.x, y + boxH, PAGE.x + PAGE.w, y + boxH); // Bottom
+
     doc.text(lines, PAGE.x + padding, y + padding + 2);
 
     return y + boxH;
@@ -69,7 +96,6 @@ function drawBankDetailsSection(doc, PAGE, FONT, company, bank, y) {
     const lineHeight = 4;
     const textWidth = PAGE.w - (padding * 2) - 2;
 
-    // Use an array to map and dynamically measure text lines
     const wrappedLines = [
         `A/c Name : ${company?.name || "-"} | A/c No : ${bank?.AccountNo || "-"}`,
         `Bank : ${bank?.BankName || "-"}`,
@@ -79,7 +105,11 @@ function drawBankDetailsSection(doc, PAGE, FONT, company, bank, y) {
     const totalLines = wrappedLines.reduce((acc, curr) => acc + curr.length, 0);
     const boxHeight = (totalLines * lineHeight) + 4;
 
-    doc.rect(PAGE.x, y, PAGE.w, boxHeight);
+    // Contiguous border (Left, Right, Bottom) - NO overlapping top line
+    doc.setLineWidth(0.15);
+    doc.line(PAGE.x, y, PAGE.x, y + boxHeight); // Left
+    doc.line(PAGE.x + PAGE.w, y, PAGE.x + PAGE.w, y + boxHeight); // Right
+    doc.line(PAGE.x, y + boxHeight, PAGE.x + PAGE.w, y + boxHeight); // Bottom
 
     let currentY = y + 3;
     PDF_FONT.bold(doc, FONT.body);
@@ -119,7 +149,6 @@ function drawaddFooterToAllPages(doc, PAGE, y) {
         doc.text(`Page ${pageNo} of ${totalPages}`, PAGE.x + PAGE.w, footerYPos, { align: "right" });
     }
 
-    // Reset defaults
     PDF_FONT.normal(doc, 8);
     doc.setTextColor(0, 0, 0);
 }
@@ -161,21 +190,17 @@ function drawCenteredText(doc, text, x, width, y, height) {
 }
 
 // ==========================================
-// TITLE (Merged both Title functions into one)
-// ==========================================
-function drawTitle(doc, PAGE, FONT, y, title = "TAX INVOICE") {
-    doc.rect(PAGE.x, y, PAGE.w, 6);
-    PDF_FONT.bold(doc, FONT.title);
-    doc.text(title, PAGE.x + (PAGE.w / 2), y + 4, { align: "center" });
-    return y + 6;
-}
-
-// ==========================================
 // HEADER
 // ==========================================
 async function drawHeader(doc, PAGE, FONT, company, y) {
-    const headerH = 24, logoW = PAGE.w * 0.20, textW = PAGE.w * 0.75;
-    doc.rect(PAGE.x, y, PAGE.w, headerH);
+    const headerH = 28, logoW = PAGE.w * 0.20, textW = PAGE.w * 0.75;
+
+    // Draw the main container for the Header (Top, Left, Right, Bottom)
+    doc.setLineWidth(0.15);
+    doc.line(PAGE.x, y, PAGE.x + PAGE.w, y); // TOP
+    doc.line(PAGE.x, y, PAGE.x, y + headerH); // LEFT
+    doc.line(PAGE.x + PAGE.w, y, PAGE.x + PAGE.w, y + headerH); // RIGHT
+    doc.line(PAGE.x, y + headerH, PAGE.x + PAGE.w, y + headerH); // BOTTOM
 
     // LOGO
     const logoImg = await loadImage(company.logo);
@@ -193,11 +218,14 @@ async function drawHeader(doc, PAGE, FONT, company, y) {
     PDF_FONT.bold(doc, FONT.header + 2);
     doc.text(company.name || "", centerX, y + 5, { align: "center" });
 
+    // USE TEXT BALANCING AND PROPER CASE FOR COMPANY ADDRESS
     PDF_FONT.normal(doc, FONT.title - 1);
-    const addressLines = doc.splitTextToSize(company.address || "", textW - 10).slice(0, 2);
-    doc.text(addressLines, centerX, y + 10, { align: "center" });
+    const rawCompanyAddr = company.address || "";
+    const properCaseCompanyAddr = toProperCase(rawCompanyAddr);
+    const addressLines = getBalancedText(doc, properCaseCompanyAddr, textW - 2);
 
-    // Contact Details Array mapping
+    doc.text(addressLines, centerX, y + 10, { align: "center", maxWidth: textW - 2 });
+
     const contactInfo = [
         `Ph: ${company.phone || "-"}`,
         company.email || "-",
@@ -206,21 +234,55 @@ async function drawHeader(doc, PAGE, FONT, company, y) {
     if (company?.panNo && company.panNo !== "-") contactInfo.push(`PAN: ${company.panNo}`);
     if (company?.uANo && company.uANo !== "-") contactInfo.push(`UA No: ${company.uANo}`);
 
-    const contactY = y + 12 + (addressLines.length * 3.8);
-    doc.text(contactInfo.join(" | "), centerX, contactY, { align: "center", maxWidth: textW - 8 });
+    const midContact = Math.ceil(contactInfo.length / 2);
+    const contactLine1 = contactInfo.slice(0, midContact).join(" | ");
+    const contactLine2 = contactInfo.slice(midContact).join(" | ");
+
+    let contactY = y + 10 + (addressLines.length * 3.8);
+
+    doc.text(contactLine1, centerX, contactY, { align: "center", maxWidth: textW - 2 });
+
+    if (contactLine2) {
+        contactY += 3.8;
+        doc.text(contactLine2, centerX, contactY, { align: "center", maxWidth: textW - 2 });
+    }
 
     return y + headerH;
 }
+
+// ==========================================
+// TITLE 
+// ==========================================
+function drawTitle(doc, PAGE, FONT, y, title = "TAX INVOICE") {
+    // Contiguous block (Left, Right, Bottom). No Top line drawn to avoid double-thickness.
+    doc.setLineWidth(0.15);
+    doc.line(PAGE.x, y, PAGE.x, y + 6); // LEFT
+    doc.line(PAGE.x + PAGE.w, y, PAGE.x + PAGE.w, y + 6); // RIGHT
+    doc.line(PAGE.x, y + 6, PAGE.x + PAGE.w, y + 6); // BOTTOM
+
+    PDF_FONT.bold(doc, FONT.title);
+    doc.text(title, PAGE.x + (PAGE.w / 2), y + 4, { align: "center" });
+
+    return y + 6;
+}
+
+// ==========================================
+// PROPER CASE HELPER
+// ==========================================
+function toProperCase(str) {
+    if (!str) return "";
+    return str.toLowerCase().replace(/\b\w/g, char => char.toUpperCase());
+}
+
 // ==========================================
 // PARTY SECTION
 // ==========================================
 function drawPartySection(doc, PAGE, FONT, header, party, company, opNo, y) {
-    // 1. Safe parameter defaults to avoid NaN in jsPDF drawing methods
-    const startX = Number(PAGE?.x) || 14;
+    const startX = Number(PAGE?.x) || 15;
     const startY = Number(y) || 40;
     const pageWidth = Number(PAGE?.w) || (doc.internal.pageSize.getWidth() - startX * 2);
     const LEFT_WIDTH = pageWidth * 0.70;
-    const PADDING = 3;
+    const PADDING = 5;
     const LINE_H = 3.5;
 
     const fontHeader = Number(FONT?.header) || 10;
@@ -228,17 +290,21 @@ function drawPartySection(doc, PAGE, FONT, header, party, company, opNo, y) {
 
     const safe = (v, fallback = "-") => (v !== null && v !== undefined && String(v).trim() !== "") ? String(v).trim() : fallback;
 
-    // 2. Safe multi-line text splitting
-    const leftTextSources = [
-        `M/s ${safe(party?.name || party?.PartyName, "")}`.trim(),
-        safe(party?.address || party?.InvoiceAddress, ""),
-        `GST No: ${safe(party?.gst || party?.GSTNo || party?.GSTIN, "")}`.trim()
-    ];
+    // 1. Fetch raw address
+    let rawPartyAddr = safe(party?.address || party?.InvoiceAddress, "");
 
-    const leftLines = leftTextSources.map(text => {
-        if (!text) return [];
-        return doc.splitTextToSize(text, Math.max(LEFT_WIDTH - (PADDING * 2), 10));
-    });
+    // 2. Remove hard line breaks and clean up extra spaces so it wraps purely by box width
+    rawPartyAddr = rawPartyAddr.replace(/[\r\n]+/g, " ").replace(/\s+/g, " ").trim();
+
+    // 3. Apply Proper Case and Balance Text
+    const properCaseAddr = toProperCase(rawPartyAddr);
+    const partyAddrLines = getBalancedText(doc, properCaseAddr, LEFT_WIDTH - (PADDING * 2));
+
+    const leftTextSources = [
+        { text: `M/s ${safe(party?.name || party?.PartyName, "")}`.trim(), isBold: true, isName: true },
+        { text: partyAddrLines, isBold: false, isName: false },
+        { text: `GST No: ${safe(party?.gst || party?.GSTNo || party?.GSTIN, "")}`.trim(), isBold: true, isName: false }
+    ];
 
     const rightData = [
         ["Invoice No. :", safe(header?.InvoiceNo)],
@@ -249,14 +315,13 @@ function drawPartySection(doc, PAGE, FONT, header, party, company, opNo, y) {
 
     const boldLabels = new Set(["Invoice No. :", "Invoice Date :"]);
 
-    // 3. Compute row height with a guaranteed minimum
-    const totalLeftLineCount = leftLines.reduce((acc, lines) => acc + (lines.length || 1), 0);
-    const calculatedLines = Math.max(totalLeftLineCount, rightData.length);
-    const rowHeight = Math.max((calculatedLines * LINE_H) + (PADDING * 2) + 2, 22);
+    // Calculate Row Height dynamically
+    let leftLinesCount = 1; // 1 for Name
+    leftLinesCount += partyAddrLines.length; // + Address Lines
+    leftLinesCount += 1; // + GST Line
 
-    // 4. Draw outer box and divider line
-    doc.rect(startX, startY, pageWidth, rowHeight);
-    doc.line(startX + LEFT_WIDTH, startY, startX + LEFT_WIDTH, startY + rowHeight);
+    const calculatedLines = Math.max(leftLinesCount, rightData.length);
+    const rowHeight = Math.max((calculatedLines * LINE_H) + (PADDING * 2) + 2, 22);
 
     // ------------------------------------------
     // LEFT SECTION
@@ -264,36 +329,21 @@ function drawPartySection(doc, PAGE, FONT, header, party, company, opNo, y) {
     let leftY = startY + PADDING + 2;
     const leftX = startX + PADDING;
 
-    const [partyNameLines, partyAddrLines, gstNoLines] = leftLines;
+    leftTextSources.forEach(item => {
+        if (!item.text || item.text.length === 0) return;
 
-    // Party Name
-    if (typeof PDF_FONT !== "undefined" && PDF_FONT.bold) {
-        PDF_FONT.bold(doc, Math.max(fontHeader - 2, 8));
-    } else {
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(Math.max(fontHeader - 2, 8));
-    }
-    doc.text(partyNameLines.length ? partyNameLines : "M/s -", leftX, leftY);
-    leftY += Math.max(partyNameLines.length, 1) * LINE_H;
+        if (typeof PDF_FONT !== "undefined" && PDF_FONT.bold) {
+            if (item.isBold) PDF_FONT.bold(doc, item.isName ? Math.max(fontHeader - 2, 8) : Math.max(fontTitle - 1, 7));
+            else PDF_FONT.normal(doc, Math.max(fontTitle - 1, 7));
+        } else {
+            doc.setFont("helvetica", item.isBold ? "bold" : "normal");
+            doc.setFontSize(item.isName ? Math.max(fontHeader - 2, 8) : Math.max(fontTitle - 1, 7));
+        }
 
-    // Address
-    if (typeof PDF_FONT !== "undefined" && PDF_FONT.normal) {
-        PDF_FONT.normal(doc, Math.max(fontTitle - 1, 7));
-    } else {
-        doc.setFont("helvetica", "normal");
-        doc.setFontSize(Math.max(fontTitle - 1, 7));
-    }
-    doc.text(partyAddrLines.length ? partyAddrLines : "-", leftX, leftY);
-    leftY += Math.max(partyAddrLines.length, 1) * LINE_H + 1;
-
-    // GST Number
-    if (typeof PDF_FONT !== "undefined" && PDF_FONT.bold) {
-        PDF_FONT.bold(doc, Math.max(fontTitle - 1, 7));
-    } else {
-        doc.setFont("helvetica", "bold");
-        doc.setFontSize(Math.max(fontTitle - 1, 7));
-    }
-    doc.text(gstNoLines.length ? gstNoLines : "GST No: -", leftX, leftY);
+        doc.text(item.text, leftX, leftY);
+        const addedLines = Array.isArray(item.text) ? item.text.length : 1;
+        leftY += addedLines * LINE_H + (item.isName ? 0 : 1);
+    });
 
     // ------------------------------------------
     // RIGHT SECTION
@@ -315,13 +365,13 @@ function drawPartySection(doc, PAGE, FONT, header, party, company, opNo, y) {
         rightY += LINE_H;
     });
 
-    return startY + rowHeight;
+    return startY + rowHeight - 6;
 }
 
 // =========================
 // INVOICE BORDER
 // =========================
-function drawInvoiceBorder(doc, PAGE, movementType, footerY = 272, { top = 9, bottom, left = 0, right = 0, lineWidth = 0.1 } = {}) {
+function drawInvoiceBorder(doc, PAGE, movementType, footerY = 272, { top = 9, bottom, left = 0, right = 0, lineWidth = 0.15 } = {}) {
     bottom ??= movementType === "Customs Clearance" ? 2 : 12;
     doc.setDrawColor(0, 0, 0);
     doc.setLineWidth(lineWidth);
@@ -345,41 +395,24 @@ function drawInvoiceBorderAllPages(doc, PAGE, movementType, footerY = 272) {
 // ==========================================
 // DUTY TITLE
 // ==========================================
-function drawTitle_Duty_Invoice(
-    doc,
-    PAGE,
-    FONT,
-    y
-) {
-
-    doc.rect(
-        PAGE.x,
-        y,
-        PAGE.w,
-        6
-    );
+function drawTitle_Duty_Invoice(doc, PAGE, FONT, y) {
+    doc.setLineWidth(0.15);
+    doc.line(PAGE.x, y, PAGE.x, y + 6); // LEFT
+    doc.line(PAGE.x + PAGE.w, y, PAGE.x + PAGE.w, y + 6); // RIGHT
+    doc.line(PAGE.x, y + 6, PAGE.x + PAGE.w, y + 6); // BOTTOM
 
     PDF_FONT.bold(doc, FONT.title);
-
-    doc.text(
-        "DUTY INVOICE",
-        PAGE.x + (PAGE.w / 2),
-        y + 4,
-        {
-            align: "center"
-        }
-    );
+    doc.text("DUTY INVOICE", PAGE.x + (PAGE.w / 2), y + 4, { align: "center" });
 
     return y + 6;
 }
-
 
 // ==========================================
 // DropdownList FUNCTIONS
 // ==========================================
 async function fetchDropdownList() {
     const { data, error } = await supabaseClient
-        .from("dropdown_list") // Table name matches your PostgreSQL schema
+        .from("dropdown_list")
         .select("description, condition");
 
     if (error) {

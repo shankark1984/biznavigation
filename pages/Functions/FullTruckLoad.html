@@ -59,7 +59,7 @@
                                         <i class="bi bi-trash"></i> Delete
                                     </button>
                                     <button type="button" class="btn btn-info btn-sm" id="reportButton" disabled>
-                                        <i class="bi bi-printer"></i> Print </button>
+                                        <i class="bi bi-printer"></i> LR Print </button>
                                     <button type="button" class="btn btn-success btn-sm" id="saveButton"
                                         data-mode="insert" title="Save booking">
                                         <i class="bi bi-save"></i> Save
@@ -453,7 +453,11 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/2.3.10/purify.min.js" defer
         crossorigin="anonymous"></script>
 
-    <script src="https://unpkg.com/@supabase/supabase-js"></script>
+    <!-- Replace the old qrcode script with this one -->
+    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode/1.5.4/qrcode.min.js" defer></script> -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
+
+    <script src="https://unpkg.com/@supabase/supabase-js" defer></script>
 
     <!-- Local Scripts -->
     <script src="../../assets/js/utils/server.js" defer></script>
@@ -465,6 +469,7 @@
     <script src="../../assets/js/utils/logout.js" defer></script>
     <script src="../../assets/js/utils/GlobalShortcut.js" defer></script>
     <script src="../../assets/js/FullTruckLoad/FullTruckLoad.js" defer></script>
+    <script src="../../assets/js/FullTruckLoad/lr_Report.js" defer></script>
 
 </body>
 

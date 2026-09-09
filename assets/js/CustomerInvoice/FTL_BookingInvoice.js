@@ -173,10 +173,22 @@ async function FTL_FCL_getPendingInvoiceDetails() {
             .order('LRNumber', { ascending: true });
 
         if (error) throw error;
-        if (!data?.length) return alert('No pending invoices');
+        if (!data || data.length === 0) {
+            alert('No pending invoices');
+            return;
+        }
 
         const bookingIds = data.map(d => d.id);
-        const lrNumbers = data.map(d => d.LRNumber);
+
+        // --- DEBUG SNIPPET START ---
+        // This will print the actual state of the base table to your console 
+        // before attempting to update, helping identify RLS or ID mismatch issues.
+        const { data: baseTableCheck } = await supabaseClient
+            .from('FullLoadBookingDetails')
+            .select('id, IsLocked')
+            .in('id', bookingIds);
+        console.log("🔍 DEBUG - Base table rows found:", baseTableCheck);
+        // --- DEBUG SNIPPET END ---
 
         // STEP 2: LOCK BOOKINGS
         const { data: lockedRows, error: lockError } = await supabaseClient
@@ -188,18 +200,33 @@ async function FTL_FCL_getPendingInvoiceDetails() {
 
         if (lockError) throw lockError;
 
-        ftlState.lockedBookingIds = lockedRows.map(r => r.id);
-        if (ftlState.lockedBookingIds.length !== bookingIds.length) {
-            console.warn("⚠ Some records already locked by another user");
+        // Use Set for fast lookup and protect against lockedRows being null
+        const lockedIdsSet = new Set((lockedRows || []).map(r => r.id));
+        ftlState.lockedBookingIds = Array.from(lockedIdsSet);
+
+        console.log(`Locked ${lockedIdsSet.size} out of ${bookingIds.length} bookings.`);
+
+        // EARLY EXIT: If nothing locked, alert and stop.
+        if (lockedIdsSet.size === 0) {
+            alert('Could not lock any bookings. Check the console for debug info.');
+            return;
         }
+
+        if (lockedIdsSet.size < bookingIds.length) {
+            console.warn("⚠ Some records already locked by another user or could not be locked");
+        }
+
+        // Filter bookings and LR numbers to ONLY include successfully locked ones
+        const lockedBookings = data.filter(d => lockedIdsSet.has(d.id));
+        const lockedLrNumbers = lockedBookings.map(d => d.LRNumber);
 
         startFTLAutoUnlockTimer();
 
-        // STEP 3: BULK FETCH CHARGES
+        // STEP 3: BULK FETCH CHARGES (Optimized to only fetch for locked records)
         const { data: chargesData, error: chargeError } = await supabaseClient
             .from('FullLoadBookingCharges')
             .select('*')
-            .in('LRNumber', lrNumbers)
+            .in('LRNumber', lockedLrNumbers)
             .eq('AccountType', 'Sale')
             .order('id', { ascending: true });
 
@@ -217,8 +244,7 @@ async function FTL_FCL_getPendingInvoiceDetails() {
         const tbody = getFTLTableBody();
         const fragment = document.createDocumentFragment();
 
-        data.forEach(inv => {
-            if (!ftlState.lockedBookingIds.includes(inv.id)) return; // Only process successfully locked rows
+        lockedBookings.forEach(inv => {
             const charges = chargesByLR[inv.LRNumber];
             if (!charges || charges.grandTotal <= 0) return;
 
@@ -231,7 +257,7 @@ async function FTL_FCL_getPendingInvoiceDetails() {
         renderChargesTable(ftlState.mergedChargesMap);
 
     } catch (err) {
-        console.error(err);
+        console.error('Error loading invoices:', err);
         alert('Error loading invoices');
     } finally {
         hideSpinner();

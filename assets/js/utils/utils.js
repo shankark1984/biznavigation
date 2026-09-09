@@ -2419,3 +2419,46 @@ function stopButtonLoading(button) {
         button.innerHTML = button.dataset.originalText;
     }
 }
+
+// ==========================================
+// QR CODE GENERATOR UTILITY (With API Fallback)
+// ==========================================
+async function generateQRCodeBase64(text) {
+    if (!text) return null;
+
+    // 1. If the library loaded successfully from HTML, use it natively (Fastest)
+    if (typeof QRCode !== 'undefined') {
+        try {
+            return await QRCode.toDataURL(String(text), {
+                errorCorrectionLevel: 'M',
+                type: 'image/png',
+                margin: 1,
+                width: 150
+            });
+        } catch (err) {
+            console.warn("Local QR generation failed, falling back to API...", err);
+        }
+    }
+
+    // 2. FALLBACK: If the script was blocked by a firewall, use an external API
+    try {
+        const apiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(text)}`;
+
+        const response = await fetch(apiUrl);
+        if (!response.ok) throw new Error("QR API request failed");
+
+        const blob = await response.blob();
+
+        // Convert the API image blob to the Base64 string jsPDF needs
+        return await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+        });
+
+    } catch (err) {
+        console.error("Fatal Error generating QR code Base64:", err);
+        return null;
+    }
+}

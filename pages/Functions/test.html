@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dedicated Vehicle Trips Management</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <!-- <script src="https://unpkg.com/lucide@latest"></script> -->
+    <title>Domestic Booking</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+
+    <!-- Sidebar CSS -->
+    <link rel="stylesheet" href="../../assets/css/navbar.css" />
+    <style>
+        /* Custom scrollbar for better UI feel */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+
+<body class="bg-slate-50 text-slate-800 font-sans antialiased min-h-screen flex flex-col">
+
+    <!-- Top Navbar -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-30">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="p-2 bg-indigo-600 text-white rounded-lg shadow-sm">
+                    <i data-lucide="truck" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg text-slate-900 leading-tight">FleetOps Core</h1>
+                    <p class="text-xs text-slate-500">Dedicated Contracts & Line-Haul Operations</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <button
+                    class="relative p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-full transition">
+                    <i data-lucide="bell" class="w-5 h-5"></i>
+                    <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full"></span>
+                </button>
+                <div class="flex items-center gap-2 pl-3 border-l border-slate-200">
+                    <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop"
+                        class="w-8 h-8 rounded-full border border-slate-200" alt="Avatar">
+                    <span class="text-sm font-medium text-slate-700 hidden sm:inline">Dispatched by Sarah K.</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full space-y-6">
+
+        <!-- Header Actions -->
+        <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+            <div>
+                <h2 class="text-2xl font-bold text-slate-900 tracking-tight">Dedicated Vehicle Trips</h2>
+                <p class="text-sm text-slate-500 mt-0.5">Manage SLA-backed vehicle trips, assigned line-hauls, and
+                    contract dispatches.</p>
+            </div>
+            <div class="flex items-center gap-3">
+                <button
+                    class="inline-flex items-center gap-2 px-4 py-2 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 shadow-sm transition">
+                    <i data-lucide="download" class="w-4 h-4"></i>
+                    Export Manifest
+                </button>
+                <button onclick="toggleModal('newTripModal')"
+                    class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 rounded-lg text-sm font-medium text-white hover:bg-indigo-700 shadow-sm shadow-indigo-200 transition">
+                    <i data-lucide="plus" class="w-4 h-4"></i>
+                    New Dedicated Trip
+                </button>
+            </div>
+        </div>
+
+        <!-- Quick Stats Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-semibold uppercase text-slate-400">Total Active Trips</p>
+                    <p class="text-2xl font-bold text-slate-900 mt-1">42</p>
+                    <span class="text-xs text-emerald-600 font-medium inline-flex items-center gap-1 mt-1">
+                        <i data-lucide="arrow-up-right" class="w-3.5 h-3.5"></i> +8% from yesterday
+                    </span>
+                </div>
+                <div class="p-3 bg-indigo-50 text-indigo-600 rounded-xl">
+                    <i data-lucide="map-pin" class="w-6 h-6"></i>
+                </div>
+            </div>
+
+            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-semibold uppercase text-slate-400">On-Time SLA</p>
+                    <p class="text-2xl font-bold text-slate-900 mt-1">96.8%</p>
+                    <span class="text-xs text-emerald-600 font-medium inline-flex items-center gap-1 mt-1">
+                        Target SLA &gt; 95%
+                    </span>
+                </div>
+                <div class="p-3 bg-emerald-50 text-emerald-600 rounded-xl">
+                    <i data-lucide="shield-check" class="w-6 h-6"></i>
+                </div>
+            </div>
+
+            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-semibold uppercase text-slate-400">Delayed / Critical</p>
+                    <p class="text-2xl font-bold text-rose-600 mt-1">3</p>
+                    <span class="text-xs text-rose-500 font-medium inline-flex items-center gap-1 mt-1">
+                        <i data-lucide="alert-triangle" class="w-3.5 h-3.5"></i> Action Required
+                    </span>
+                </div>
+                <div class="p-3 bg-rose-50 text-rose-600 rounded-xl">
+                    <i data-lucide="clock" class="w-6 h-6"></i>
+                </div>
+            </div>
+
+            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-semibold uppercase text-slate-400">Fleet Utilization</p>
+                    <p class="text-2xl font-bold text-slate-900 mt-1">88.4%</p>
+                    <span class="text-xs text-slate-500 font-medium inline-flex items-center gap-1 mt-1">
+                        58/65 Dedicated Units
+                    </span>
+                </div>
+                <div class="p-3 bg-amber-50 text-amber-600 rounded-xl">
+                    <i data-lucide="gauge" class="w-6 h-6"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filters and Search Toolbar -->
+        <div
+            class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col md:flex-row items-center justify-between gap-3">
+            <div class="flex-1 w-full md:w-auto relative">
+                <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-3"></i>
+                <input type="text" placeholder="Search by Trip ID, Vehicle No, Driver, Contract..."
+                    class="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+            </div>
+            <div class="flex items-center gap-3 w-full md:w-auto overflow-x-auto">
+                <select
+                    class="px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <option value="">All Statuses</option>
+                    <option value="in_transit">In Transit</option>
+                    <option value="scheduled">Scheduled</option>
+                    <option value="delayed">Delayed</option>
+                    <option value="completed">Completed</option>
+                </select>
+                <select
+                    class="px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <option value="">All Clients / Accounts</option>
+                    <option value="amazon">Amazon Logistics</option>
+                    <option value="walmart">Walmart Supply Chain</option>
+                    <option value="ikea">IKEA Dedicated Line</option>
+                </select>
+                <button
+                    class="px-3 py-2 border border-slate-200 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50 flex items-center gap-1.5 shrink-0">
+                    <i data-lucide="sliders-horizontal" class="w-4 h-4"></i> Filters
+                </button>
+            </div>
+        </div>
+
+        <!-- Trips Table Container -->
+        <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm text-slate-600 border-collapse">
+                    <thead
+                        class="bg-slate-50/80 text-xs uppercase text-slate-500 border-b border-slate-200 font-semibold">
+                        <tr>
+                            <th scope="col" class="px-6 py-4">Trip Details</th>
+                            <th scope="col" class="px-6 py-4">Contract / Client</th>
+                            <th scope="col" class="px-6 py-4">Vehicle & Driver</th>
+                            <th scope="col" class="px-6 py-4">Route & Milestones</th>
+                            <th scope="col" class="px-6 py-4">ETA & Status</th>
+                            <th scope="col" class="px-6 py-4 text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 font-normal">
+
+                        <!-- Row 1: Delayed Status -->
+                        <tr class="hover:bg-slate-50/60 transition">
+                            <td class="px-6 py-4">
+                                <span class="font-semibold text-slate-900 block">TRP-98421</span>
+                                <span class="text-xs text-slate-500">Scheduled: Today, 06:00 AM</span>
+                            </td>
+                            <td class="px-6 py-4">
+                                <span class="font-medium text-slate-900 block">Amazon Logistics</span>
+                                <span class="text-xs text-indigo-600 font-semibold">Line-Haul SLA: 6 hrs</span>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="flex items-center gap-2">
+                                    <div
+                                        class="w-8 h-8 rounded bg-slate-100 flex items-center justify-center font-bold text-xs text-slate-600">
+                                        32T
+                                    </div>
+                                    <div>
+                                        <p class="font-medium text-slate-900 text-xs">KA-01-MJ-9921</p>
+                                        <p class="text-xs text-slate-500">R. Vignesh (+91-987...)</p>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="flex items-center gap-1.5 text-xs text-slate-700 font-medium">
+                                    <span>BLR Hub</span>
+                                    <i data-lucide="arrow-right" class="w-3.5 h-3.5 text-slate-400"></i>
+                                    <span>HYD Fulfilment</span>
+                                </div>
+                                <div class="w-36 bg-slate-200 rounded-full h-1.5 mt-2">
+                                    <div class="bg-rose-500 h-1.5 rounded-full" style="width: 45%"></div>
+                                </div>
+                                <span class="text-[11px] text-slate-400 mt-1 block">Stop 2 of 4 (Kurnool Bypass)</span>
+                            </td>
+                            <td class="px-6 py-4">
+                                <span
+                                    class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span> Delayed (+45m)
+                                </span>
+                                <p class="text-xs text-slate-500 mt-1">ETA: 03:30 PM</p>
+                            </td>
+                            <td class="px-6 py-4 text-right">
+                                <button onclick="openDrawer('TRP-98421')"
+                                    class="p-1.5 hover:bg-slate-100 rounded-lg text-slate-500 hover:text-slate-800 transition">
+                                    <i data-lucide="external-link" class="w-4 h-4"></i>
+                                </button>
+                            </td>
+                        </tr>
+
+                        <!-- Row 2: In Transit -->
+                        <tr class="hover:bg-slate-50/60 transition">
+                            <td class="px-6 py-4">
+                                <span class="font-semibold text-slate-900 block">TRP-98420</span>
+                                <span class="text-xs text-slate-500">Scheduled: Today, 08:30 AM</span>
+                            </td>
+                            <td class="px-6 py-4">
+                                <span class="font-medium text-slate-900 block">Walmart Supply Chain</span>
+                                <span class="text-xs text-indigo-600 font-semibold">Round-Trip Dedicated</span>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="flex items-center gap-2">
+                                    <div
+                                        class="w-8 h-8 rounded bg-slate-100 flex items-center justify-center font-bold text-xs text-slate-600">
+                                        24T
+                                    </div>
+                                    <div>
+                                        <p class="font-medium text-slate-900 text-xs">MH-12-PQ-4011</p>
+                                        <p class="text-xs text-slate-500">Sunil Sharma (+91-912...)</p>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="flex items-center gap-1.5 text-xs text-slate-700 font-medium">
+                                    <span>Pune DC</span>
+                                    <i data-lucide="arrow-right" class="w-3.5 h-3.5 text-slate-400"></i>
+                                    <span>Nagpur DC</span>
+                                </div>
+                                <div class="w-36 bg-slate-200 rounded-full h-1.5 mt-2">
+                                    <div class="bg-indigo-600 h-1.5 rounded-full" style="width: 70%"></div>
+                                </div>
+                                <span class="text-[11px] text-slate-400 mt-1 block">Stop 3 of 3 (Final Leg)</span>
+                            </td>
+                            <td class="px-6 py-4">
+                                <span
+                                    class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> On-Time
+                                </span>
+                                <p class="text-xs text-slate-500 mt-1">ETA: 06:15 PM</p>
+                            </td>
+                            <td class="px-6 py-4 text-right">
+                                <button onclick="openDrawer('TRP-98420')"
+                                    class="p-1.5 hover:bg-slate-100 rounded-lg text-slate-500 hover:text-slate-800 transition">
+                                    <i data-lucide="external-link" class="w-4 h-4"></i>
+                                </button>
+                            </td>
+                        </tr>
+
+                        <!-- Row 3: Scheduled / Loading -->
+                        <tr class="hover:bg-slate-50/60 transition">
+                            <td class="px-6 py-4">
+                                <span class="font-semibold text-slate-900 block">TRP-98419</span>
+                                <span class="text-xs text-slate-500">Scheduled: Today, 11:00 AM</span>
+                            </td>
+                            <td class="px-6 py-4">
+                                <span class="font-medium text-slate-900 block">IKEA Dedicated Line</span>
+                                <span class="text-xs text-indigo-600 font-semibold">Priority Freight</span>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="flex items-center gap-2">
+                                    <div
+                                        class="w-8 h-8 rounded bg-slate-100 flex items-center justify-center font-bold text-xs text-slate-600">
+                                        40T
+                                    </div>
+                                    <div>
+                                        <p class="font-medium text-slate-900 text-xs">DL-01-AB-1200</p>
+                                        <p class="text-xs text-slate-500">Harpreet Singh (+91-998...)</p>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="flex items-center gap-1.5 text-xs text-slate-700 font-medium">
+                                    <span>Gurugram Yard</span>
+                                    <i data-lucide="arrow-right" class="w-3.5 h-3.5 text-slate-400"></i>
+                                    <span>Jaipur Outlet</span>
+                                </div>
+                                <div class="w-36 bg-slate-200 rounded-full h-1.5 mt-2">
+                                    <div class="bg-amber-400 h-1.5 rounded-full" style="width: 10%"></div>
+                                </div>
+                                <span class="text-[11px] text-slate-400 mt-1 block">Dock 4 (At Loading Gate)</span>
+                            </td>
+                            <td class="px-6 py-4">
+                                <span
+                                    class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> Loading Gate
+                                </span>
+                                <p class="text-xs text-slate-500 mt-1">ETD: 11:30 AM</p>
+                            </td>
+                            <td class="px-6 py-4 text-right">
+                                <button onclick="openDrawer('TRP-98419')"
+                                    class="p-1.5 hover:bg-slate-100 rounded-lg text-slate-500 hover:text-slate-800 transition">
+                                    <i data-lucide="external-link" class="w-4 h-4"></i>
+                                </button>
+                            </td>
+                        </tr>
+
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            <div
+                class="px-6 py-3 border-t border-slate-200 bg-slate-50 flex items-center justify-between text-xs text-slate-500">
+                <p>Showing <span class="font-semibold text-slate-700">1</span> to <span
+                        class="font-semibold text-slate-700">3</span> of <span
+                        class="font-semibold text-slate-700">42</span> dedicated trips</p>
+                <div class="inline-flex gap-1">
+                    <button
+                        class="px-3 py-1 bg-white border border-slate-200 rounded hover:bg-slate-100">Previous</button>
+                    <button class="px-3 py-1 bg-indigo-600 text-white font-semibold rounded">1</button>
+                    <button class="px-3 py-1 bg-white border border-slate-200 rounded hover:bg-slate-100">2</button>
+                    <button class="px-3 py-1 bg-white border border-slate-200 rounded hover:bg-slate-100">Next</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal: Create New Dedicated Trip -->
+    <div id="newTripModal"
+        class="fixed inset-0 z-50 hidden bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl max-w-xl w-full p-6 space-y-4">
+            <div class="flex items-center justify-between border-b pb-3 border-slate-100">
+                <h3 class="text-lg font-bold text-slate-900">Dispatch New Dedicated Trip</h3>
+                <button onclick="toggleModal('newTripModal')" class="text-slate-400 hover:text-slate-600">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <form class="space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Contract / Dedicated
+                            Client</label>
+                        <select
+                            class="w-full text-sm border border-slate-200 rounded-lg p-2.5 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                            <option>Amazon Logistics India</option>
+                            <option>Flipkart Dedicated Line</option>
+                            <option>Tata Croma Line-Haul</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Dedicated Vehicle
+                            Assigned</label>
+                        <select
+                            class="w-full text-sm border border-slate-200 rounded-lg p-2.5 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                            <option>KA-01-MJ-9921 (32ft Multi-Axle)</option>
+                            <option>MH-12-PQ-4011 (24ft Container)</option>
+                            <option>DL-01-AB-1200 (40ft Trailer)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Origin Node / Hub</label>
+                        <input type="text" placeholder="e.g. Bangalore FC-01"
+                            class="w-full text-sm border border-slate-200 rounded-lg p-2.5 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Destination Node</label>
+                        <input type="text" placeholder="e.g. Hyderabad DC-03"
+                            class="w-full text-sm border border-slate-200 rounded-lg p-2.5 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-3 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Scheduled Departure</label>
+                        <input type="datetime-local"
+                            class="w-full text-xs border border-slate-200 rounded-lg p-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Max Target Transit (Hrs)</label>
+                        <input type="number" placeholder="12"
+                            class="w-full text-xs border border-slate-200 rounded-lg p-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Load Weight (Tons)</label>
+                        <input type="number" placeholder="18.5"
+                            class="w-full text-xs border border-slate-200 rounded-lg p-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Special Instructions / Seal
+                        Numbers</label>
+                    <textarea rows="2" placeholder="e.g. Tamper-evident seal #SEAL-9092. Cold storage check required."
+                        class="w-full text-sm border border-slate-200 rounded-lg p-2 focus:ring-2 focus:ring-indigo-500 focus:outline-none"></textarea>
+                </div>
+
+                <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
+                    <button type="button" onclick="toggleModal('newTripModal')"
+                        class="px-4 py-2 border rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-50">Cancel</button>
+                    <button type="submit"
+                        class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700">Dispatch
+                        Trip</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Side Drawer: Trip Live Insights -->
+    <div id="tripDrawer"
+        class="fixed inset-y-0 right-0 max-w-md w-full bg-white shadow-2xl z-50 transform translate-x-full transition-transform duration-300 ease-in-out flex flex-col">
+        <div class="p-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
+            <div>
+                <h3 id="drawerTripId" class="text-base font-bold text-slate-900">TRP-98421</h3>
+                <p class="text-xs text-slate-500">Dedicated Fleet Live Telemetry</p>
+            </div>
+            <button onclick="closeDrawer()"
+                class="p-1 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-200/60">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+
+        <div class="p-6 overflow-y-auto flex-1 space-y-6">
+            <!-- Live Status Banner -->
+            <div class="bg-rose-50 border border-rose-200 rounded-lg p-3 text-rose-800 text-xs flex items-center gap-3">
+                <i data-lucide="alert-circle" class="w-5 h-5 text-rose-600 shrink-0"></i>
+                <span>Vehicle halted at Toll Plaza 4 for &gt;45 min. Driver contacted. Traffic clearance
+                    reported.</span>
+            </div>
+
+            <!-- Route Milestones -->
+            <div>
+                <h4 class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-3">Live Route Progress</h4>
+                <div
+                    class="relative pl-6 space-y-6 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-200">
+                    <div class="relative">
+                        <span
+                            class="absolute -left-6 top-1 w-3.5 h-3.5 rounded-full bg-emerald-500 ring-4 ring-white"></span>
+                        <p class="text-xs font-semibold text-slate-800">BLR Hub (Origin)</p>
+                        <p class="text-[11px] text-slate-400">Departed: 06:12 AM (On-Time)</p>
+                    </div>
+                    <div class="relative">
+                        <span
+                            class="absolute -left-6 top-1 w-3.5 h-3.5 rounded-full bg-indigo-600 ring-4 ring-white"></span>
+                        <p class="text-xs font-semibold text-slate-800">Kurnool Bypass Checkpoint</p>
+                        <p class="text-[11px] text-indigo-600 font-medium">Passed: 10:45 AM (Delay +45m)</p>
+                    </div>
+                    <div class="relative">
+                        <span
+                            class="absolute -left-6 top-1 w-3.5 h-3.5 rounded-full bg-slate-300 ring-4 ring-white"></span>
+                        <p class="text-xs font-semibold text-slate-400">HYD Fulfilment Center (Destination)</p>
+                        <p class="text-[11px] text-slate-400">Expected: 03:30 PM</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sensor & Telemetry Data -->
+            <div>
+                <h4 class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-3">Sensors & Vehicle Vitals
+                </h4>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="p-3 bg-slate-50 border border-slate-100 rounded-lg">
+                        <p class="text-[11px] text-slate-500">Current Speed</p>
+                        <p class="text-base font-bold text-slate-800 mt-0.5">64 km/h</p>
+                    </div>
+                    <div class="p-3 bg-slate-50 border border-slate-100 rounded-lg">
+                        <p class="text-[11px] text-slate-500">Cargo Temp (Reefer)</p>
+                        <p class="text-base font-bold text-slate-800 mt-0.5">4.2 °C</p>
+                    </div>
+                    <div class="p-3 bg-slate-50 border border-slate-100 rounded-lg">
+                        <p class="text-[11px] text-slate-500">Fuel Level</p>
+                        <p class="text-base font-bold text-slate-800 mt-0.5">72%</p>
+                    </div>
+                    <div class="p-3 bg-slate-50 border border-slate-100 rounded-lg">
+                        <p class="text-[11px] text-slate-500">E-Lock Seal</p>
+                        <p class="text-base font-bold text-emerald-600 mt-0.5">SECURE</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="p-4 border-t border-slate-200 bg-slate-50 flex gap-2">
+            <button
+                class="flex-1 py-2 px-3 bg-slate-800 text-white rounded-lg text-xs font-medium hover:bg-slate-900 transition flex items-center justify-center gap-1.5">
+                <i data-lucide="phone" class="w-3.5 h-3.5"></i> Call Driver
+            </button>
+            <button
+                class="flex-1 py-2 px-3 border border-slate-300 bg-white text-slate-700 rounded-lg text-xs font-medium hover:bg-slate-50 transition">
+                Re-route Trip
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Lucide Icons
+        lucide.createIcons();
+
+        // Modal toggler
+        function toggleModal(id) {
+            const modal = document.getElementById(id);
+            modal.classList.toggle('hidden');
+        }
+
+        // Drawer opener
+        function openDrawer(tripId) {
+            document.getElementById('drawerTripId').innerText = tripId;
+            document.getElementById('tripDrawer').classList.remove('translate-x-full');
+        }
+
+        function closeDrawer() {
+            document.getElementById('tripDrawer').classList.add('translate-x-full');
+        }
+    </script>
+</body>
+
+</html>
