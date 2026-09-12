@@ -500,14 +500,23 @@ async function loadCreditDebitNoteItems(noteId) {
 
 els.saveButton.addEventListener("click", saveUpdateCreditDebitNote);
 
-async function generateNewCreditDebitNoteNo() {
+async function generateNewCreditDebitNoteNo(documentType = 'CreditNote') {
     try {
-        const { data, error } = await supabaseClient.rpc("generate_document_no", {
+        const companyShortCode = CompanyShortCode;
+        const selectedDate = els.noteDate.value || new Date().toISOString().split('T')[0];
+
+        const { data, error } = await supabaseClient.rpc("generate_document_number", {
             p_company_id: CompanyID,
-            p_document_type: "credit_debit_notes"
+            p_company_short_code: companyShortCode,
+            p_document_type: documentType,
+            p_note_date: selectedDate // Passes the input date to determine FY
         });
+
         if (error) throw error;
-        els.noteNo.value = data;
+
+        if (els && els.noteNo) {
+            els.noteNo.value = data;
+        }
     } catch (error) {
         console.error("Error generating Note No:", error);
     }

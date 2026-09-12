@@ -63,7 +63,7 @@ function resetAndApplyFilter(tbodyId, selectedParty = '') {
     tbody.querySelectorAll('[class*="group-child-"]').forEach(row => row.style.display = 'none');
 
     // Track filtered grand totals
-    const filteredGrandTotals = Object.fromEntries([...BUCKET_KEYS, 'overall'].map(k => [k, 0]));
+    const filteredGrandTotals = Object.fromEntries([...BUCKET_KEYS, 'overall', 'totalAmount'].map(k => [k, 0]));
 
     allSummaryRows.forEach(row => {
         const partyName = row.getAttribute('data-party');
@@ -104,28 +104,32 @@ function resetAndApplyFilter(tbodyId, selectedParty = '') {
 // Helper to extract totals from a collapsed summary row
 function addSummaryRowTotalsToGrandTotal(row, totalsObj) {
     const cells = row.querySelectorAll('td');
-    // Bucket columns start from index 3 up to 11 (9 buckets), and index 12 is overall total
+    // For summary rows:
+    // Customer: Amt at index 3, Buckets 4-12, Overall 13
+    // Vendor: Amt at index 3, Buckets 4-12, Overall 13 (Symmetrical layout now)
+    totalsObj['totalAmount'] += parseCurrencyValue(cells[3].textContent);
     BUCKET_KEYS.forEach((key, index) => {
-        const cellValue = parseCurrencyValue(cells[3 + index].textContent);
+        const cellValue = parseCurrencyValue(cells[4 + index].textContent);
         totalsObj[key] += cellValue;
     });
-    totalsObj['overall'] += parseCurrencyValue(cells[12].textContent);
+    totalsObj['overall'] += parseCurrencyValue(cells[13].textContent);
 }
 
 // Helper to extract totals from an expanded subtotal row
 function addSubtotalRowTotalsToGrandTotal(row, totalsObj) {
     const cells = row.querySelectorAll('td');
-    // In subtotal rows, because colspan="3" shifts cells: buckets start at index 1 to 9, overall at index 10
+    // In subtotal rows with colspan="3":
+    // Amount is at index 1, Buckets start at index 2 to 10, overall at index 11
+    totalsObj['totalAmount'] += parseCurrencyValue(cells[1].textContent);
     BUCKET_KEYS.forEach((key, index) => {
-        const cellValue = parseCurrencyValue(cells[1 + index].textContent);
+        const cellValue = parseCurrencyValue(cells[2 + index].textContent);
         totalsObj[key] += cellValue;
     });
-    totalsObj['overall'] += parseCurrencyValue(cells[10].textContent);
+    totalsObj['overall'] += parseCurrencyValue(cells[11].textContent);
 }
 
 function parseCurrencyValue(text) {
     if (!text || text === '-') return 0;
-    // Remove commas and convert to float
     return parseFloat(text.replace(/,/g, '')) || 0;
 }
 
@@ -154,7 +158,7 @@ async function loadCustomerOutstanding() {
     } catch (err) {
         console.error('Error loading customer outstanding:', err);
         document.getElementById('customerTableBody').innerHTML =
-            `<tr><td colspan="14" class="text-center text-danger">Failed to load customer data.</td></tr>`;
+            `<tr><td colspan="15" class="text-center text-danger">Failed to load customer data.</td></tr>`;
     }
 }
 
@@ -165,7 +169,7 @@ async function loadVendorOutstanding() {
     } catch (err) {
         console.error('Error loading vendor outstanding:', err);
         document.getElementById('vendorTableBody').innerHTML =
-            `<tr><td colspan="14" class="text-center text-danger">Failed to load vendor data.</td></tr>`;
+            `<tr><td colspan="15" class="text-center text-danger">Failed to load vendor data.</td></tr>`;
     }
 }
 
@@ -178,7 +182,7 @@ function renderTableData(data, tbodyId, type) {
     tbody.innerHTML = '';
 
     if (!data || data.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="14" class="text-center text-muted py-4">No outstanding records found.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="15" class="text-center text-muted py-4">No outstanding records found.</td></tr>`;
         return;
     }
 
@@ -197,7 +201,7 @@ function renderTableData(data, tbodyId, type) {
         populatePartyFilter(type);
     }
 
-    const grandTotals = Object.fromEntries([...BUCKET_KEYS, 'overall'].map(k => [k, 0]));
+    const grandTotals = Object.fromEntries([...BUCKET_KEYS, 'overall', 'totalAmount'].map(k => [k, 0]));
     const currentDate = new Date();
     currentDate.setHours(0, 0, 0, 0);
 
@@ -205,27 +209,37 @@ function renderTableData(data, tbodyId, type) {
     const dateField = isCustomer ? 'InvoiceDate' : 'BillDate';
     const noField = isCustomer ? 'InvoiceNo' : 'BillNo';
 
+    // Select the correct Amount Field based on the view type
+    const amountField = isCustomer ? 'GrandTotalAmount' : 'ChargeTotalAmount';
+
     const fragment = document.createDocumentFragment();
     let groupIndex = 0;
 
     for (const [partyName, rows] of Object.entries(groupedData)) {
         groupIndex++;
         const safePartyName = partyName.replace(/"/g, '&quot;');
-        const partyTotals = Object.fromEntries([...BUCKET_KEYS, 'overall'].map(k => [k, 0]));
+        const partyTotals = Object.fromEntries([...BUCKET_KEYS, 'overall', 'totalAmount'].map(k => [k, 0]));
 
         let childRowsHTML = '';
         const invoiceRowsCount = rows.length;
 
         rows.forEach((row, index) => {
             const balanceAmount = parseFloat(row.BalanceAmount) || 0;
+
+            // Map the total document amount using the specific field for Customer or Vendor
+            const docAmount = parseFloat(row[amountField]) || 0;
+
             const billDate = new Date(row[dateField]);
             billDate.setHours(0, 0, 0, 0);
 
             const pendingDays = Math.ceil(Math.abs(currentDate - billDate) / (1000 * 60 * 60 * 24));
             const bucketKey = getBucketKey(pendingDays);
 
+            partyTotals['totalAmount'] += docAmount;
             partyTotals[bucketKey] += balanceAmount;
             partyTotals['overall'] += balanceAmount;
+
+            grandTotals['totalAmount'] += docAmount;
             grandTotals[bucketKey] += balanceAmount;
             grandTotals['overall'] += balanceAmount;
 
@@ -244,6 +258,7 @@ function renderTableData(data, tbodyId, type) {
                     ${rowspanCell}
                     <td>${row[noField] || '(blank)'}</td>
                     <td>${formatDate(billDate)}</td>
+                    <td class="text-end">${formatCurrency(docAmount)}</td>
                     ${generateBucketsHTML(bucketKey, balanceAmount)}
                     <td class="text-end">${formatCurrency(balanceAmount)}</td>
                     <td class="text-center fw-medium">${pendingDays}</td>
@@ -255,6 +270,7 @@ function renderTableData(data, tbodyId, type) {
         childRowsHTML += `
             <tr class="group-child-${groupIndex} fw-bold table-info" data-party="${safePartyName}" style="display: none;">
                 <td colspan="3" class="text-center border-end text-dark">${partyName} Total</td>
+                <td class="text-end text-dark">${formatCurrency(partyTotals['totalAmount'])}</td>
                 ${generateSummaryBucketsHTML(partyTotals)}
                 <td class="text-end text-primary">${formatCurrency(partyTotals['overall'])}</td>
                 <td></td>
@@ -276,6 +292,7 @@ function renderTableData(data, tbodyId, type) {
             </td>
             <td></td>
             <td></td>
+            <td class="text-end">${formatCurrency(partyTotals['totalAmount'])}</td>
             ${generateSummaryBucketsHTML(partyTotals)}
             <td class="text-end text-primary">${formatCurrency(partyTotals['overall'])}</td>
             <td></td>
@@ -294,7 +311,6 @@ function renderTableData(data, tbodyId, type) {
     setupEventDelegation(tbody);
     updateFooterTotals(tbodyId, grandTotals);
 }
-
 // ==========================================
 // Toggle Click Handler
 // ==========================================
@@ -376,11 +392,16 @@ function updateFooterTotals(tbodyId, totals) {
     if (!tfoot) return;
 
     const footerCells = tfoot.querySelectorAll('td');
-    if (footerCells.length >= 10) {
+    // Footer indices mapping with Document Amount + 9 Buckets + Overall Total:
+    // Index 0: Total Document Amount
+    // Indices 1-9: Bucket Totals
+    // Index 10: Overall Grand Total
+    if (footerCells.length >= 11) {
+        footerCells[0].textContent = formatCurrency(totals['totalAmount']);
         BUCKET_KEYS.forEach((key, index) => {
-            footerCells[index].textContent = formatCurrency(totals[key]);
+            footerCells[1 + index].textContent = formatCurrency(totals[key]);
         });
-        footerCells[9].textContent = formatCurrency(totals['overall']);
+        footerCells[10].textContent = formatCurrency(totals['overall']);
     }
 }
 
@@ -425,7 +446,6 @@ function getFilteredExportTable() {
 
     const tableClone = table.cloneNode(true);
 
-    // Remove top summary rows and filter out unselected parties simultaneously
     tableClone.querySelectorAll('tr').forEach(row => {
         if (row.classList.value.includes('summary-row-')) {
             row.remove();
@@ -437,7 +457,6 @@ function getFilteredExportTable() {
         }
     });
 
-    // Force expand all remaining rows
     tableClone.querySelectorAll('tr[style*="display: none"]').forEach(row => row.style.display = '');
 
     return { table: tableClone, type };
