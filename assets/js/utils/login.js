@@ -121,6 +121,9 @@ async function login() {
         /* ---------- STORE USER ---------- */
         storeUserDetails(data);
 
+        // 🔥 CHECK FOR APP UPDATES ON SUCCESSFUL LOGIN
+        await checkUpdateOnLogin();
+
         if (password === reSetPass) {
             localStorage.setItem('ForcePasswordReset', 'true');
             window.location.href = '/pages/auth/new-password.html';
