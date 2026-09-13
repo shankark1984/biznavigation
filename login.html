@@ -4,16 +4,17 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>BizNavigation - Login</title>
+    <title>BizNavigation | Enterprise Portal Login</title>
 
-    <!-- Bootstrap 5.3.2 CSS (Standard high-priority load, eliminates SW mismatch warning) -->
+    <!-- Bootstrap 5.3.2 CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
         crossorigin="anonymous">
 
-    <!-- Google Font -->
+    <!-- Google Font: Plus Jakarta Sans -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
 
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
@@ -22,12 +23,12 @@
     <link rel="manifest" href="/manifest.json">
 
     <!-- Meta Theme Color -->
-    <meta name="theme-color" content="#0d6efd" media="(prefers-color-scheme: light)">
-    <meta name="theme-color" content="#0a58ca" media="(prefers-color-scheme: dark)">
+    <meta name="theme-color" content="#000428" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#000428" media="(prefers-color-scheme: dark)">
 
     <!-- iOS Safari Support -->
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="BizNav">
     <link rel="apple-touch-icon" href="/assets/img/applogo-192x192.png">
 
@@ -39,22 +40,16 @@
 
     <style>
         :root {
-            /* Ocean Color Palette */
             --primary-color: #0284c7;
             --primary-hover: #0369a1;
-            --primary-light: rgba(2, 132, 199, 0.1);
-
+            --primary-glow: rgba(2, 132, 199, 0.25);
             --bg-ocean-1: #000428;
             --bg-ocean-2: #004e92;
             --bg-ocean-3: #0077b6;
-
-            --card-bg: rgba(255, 255, 255, 0.85);
             --text-main: #0f172a;
-            --text-muted: #475569;
-
+            --text-muted: #64748b;
             --input-bg: #f8fafc;
-            --input-border: #cbd5e1;
-            --icon-color: #64748b;
+            --input-border: #e2e8f0;
         }
 
         * {
@@ -63,18 +58,17 @@
 
         body {
             margin: 0;
-            padding: 0.5rem;
-            font-family: 'Poppins', sans-serif;
+            padding: 1.5rem;
+            font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
             min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-
-            /* Deep Ocean Animated Background */
-            background: linear-gradient(-45deg, var(--bg-ocean-1), var(--bg-ocean-2), var(--bg-ocean-3), #00b4d8);
+            background: linear-gradient(-45deg, var(--bg-ocean-1), var(--bg-ocean-2), var(--bg-ocean-3), #012a4a);
             background-size: 400% 400%;
-            animation: gradientBG 15s ease infinite;
-            overflow: hidden;
+            animation: gradientBG 16s ease infinite;
+            position: relative;
+            overflow-x: hidden;
         }
 
         @keyframes gradientBG {
@@ -91,18 +85,16 @@
             }
         }
 
-        /* =========================================
-           OCEAN WAVES ANIMATION
-           ========================================= */
+        /* SVG Waves at base */
         .ocean-waves {
             position: fixed;
             width: 100%;
-            height: 20vh;
+            height: 16vh;
             bottom: 0;
             left: 0;
-            min-height: 120px;
-            max-height: 200px;
-            z-index: 0;
+            min-height: 90px;
+            max-height: 160px;
+            z-index: 1;
             pointer-events: none;
         }
 
@@ -140,98 +132,149 @@
             }
         }
 
-        /* =========================================
-           WATER RIPPLE CLICK EFFECT
-           ========================================= */
-        .water-ripple {
-            position: fixed;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.4);
-            transform: scale(0);
-            animation: ripple-anim 0.6s ease-out forwards;
-            pointer-events: none;
-            z-index: 9999;
-            box-shadow: 0 0 10px rgba(255, 255, 255, 0.5), inset 0 0 15px rgba(255, 255, 255, 0.8);
-        }
-
-        @keyframes ripple-anim {
-            to {
-                transform: scale(3);
-                opacity: 0;
-            }
-        }
-
-        /* =========================================
-           LOGIN CARD STYLING
-           ========================================= */
+        /* Portal Card Frame */
         .login-container {
-            background: var(--card-bg);
-            backdrop-filter: blur(25px);
-            -webkit-backdrop-filter: blur(25px);
-            padding: 1.5rem 2rem;
-            border-radius: 1.25rem;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2), 0 1px 3px rgba(0, 0, 0, 0.1);
             width: 100%;
-            max-width: 400px;
-            animation: slideUpFade 0.8s cubic-bezier(0.16, 1, 0.3, 1);
-            border: 1px solid rgba(255, 255, 255, 0.4);
-            z-index: 10;
+            max-width: 960px;
+            min-height: 600px;
+            background: #ffffff;
+            border-radius: 24px;
+            box-shadow: 0 25px 60px rgba(0, 4, 40, 0.45);
+            display: flex;
+            overflow: hidden;
             position: relative;
-            max-height: 95vh;
-            overflow-y: auto;
-            -ms-overflow-style: none;
-            scrollbar-width: none;
+            z-index: 10;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            animation: entranceAnim 0.7s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
-        .login-container::-webkit-scrollbar {
-            display: none;
-        }
-
-        @keyframes slideUpFade {
+        @keyframes entranceAnim {
             from {
                 opacity: 0;
-                transform: translateY(30px);
+                transform: translateY(20px) scale(0.98);
             }
 
             to {
                 opacity: 1;
-                transform: translateY(0);
+                transform: translateY(0) scale(1);
             }
+        }
+
+        /* Left Side: Enterprise Banner */
+        .portal-brand-side {
+            flex: 1;
+            background: linear-gradient(145deg, #001233, #003566);
+            padding: 3.5rem 3rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            color: #ffffff;
+            position: relative;
+        }
+
+        .portal-brand-side::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+            background-size: 32px 32px;
+            pointer-events: none;
+        }
+
+        .brand-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            padding: 0.35rem 0.85rem;
+            border-radius: 50px;
+            font-size: 0.75rem;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            font-weight: 600;
+            color: #38bdf8;
+            width: fit-content;
+        }
+
+        .status-badge-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 1.25rem;
+            margin-top: 2rem;
+        }
+
+        /* Right Side: Form View */
+        .portal-form-side {
+            flex: 1.15;
+            padding: 3.5rem 3rem;
+            background: #ffffff;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
         }
 
         .login-header {
             text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        /* Logo + App Name inline styling */
+        .app-brand-lockup {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.75rem;
+            width: 100%;
             margin-bottom: 1.25rem;
         }
 
-        .login-header img {
-            max-width: 60px;
-            margin-bottom: 0.5rem;
-            filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
-            transition: transform 0.3s ease;
+        .app-brand-lockup img {
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+            object-fit: contain;
+            box-shadow: 0 4px 10px rgba(2, 132, 199, 0.2);
         }
 
-        .login-header img:hover {
-            transform: scale(1.05);
-        }
-
-        .login-header h1 {
-            font-weight: 700;
-            font-size: 1.35rem;
+        .app-brand-title {
+            font-size: 1.45rem;
+            font-weight: 800;
             color: var(--text-main);
+            letter-spacing: -0.03em;
             margin: 0;
-            letter-spacing: -0.5px;
+            line-height: 1.1;
+        }
+
+        .login-header h2 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-main);
+            letter-spacing: -0.02em;
+            margin-bottom: 0.25rem;
         }
 
         .login-header p {
             color: var(--text-muted);
-            font-size: 0.85rem;
-            margin-top: 0.15rem;
+            font-size: 0.88rem;
+            margin: 0;
+        }
+
+        .field-label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #334155;
+            margin-bottom: 0.4rem;
+            display: block;
         }
 
         .input-group-custom {
             position: relative;
-            margin-bottom: 1rem;
+            margin-bottom: 1.25rem;
         }
 
         .input-group-custom .input-icon {
@@ -239,58 +282,76 @@
             left: 1rem;
             top: 50%;
             transform: translateY(-50%);
-            color: var(--icon-color);
-            transition: color 0.3s ease;
-            pointer-events: none;
+            color: #94a3b8;
             font-size: 1.1rem;
+            transition: color 0.2s ease;
+            pointer-events: none;
         }
 
         .form-control {
-            border-radius: 0.75rem;
-            padding: 0.75rem 1rem 0.75rem 2.5rem;
+            border-radius: 12px;
+            padding: 0.75rem 1rem 0.75rem 2.75rem;
             border: 1.5px solid var(--input-border);
             background-color: var(--input-bg);
             color: var(--text-main);
-            font-size: 0.9rem;
-            transition: all 0.3s ease;
+            font-size: 0.92rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .form-control:focus {
+            box-shadow: 0 0 0 4px var(--primary-glow);
+            border-color: var(--primary-color);
+            background-color: #ffffff;
         }
 
         .input-group-custom:focus-within .input-icon {
             color: var(--primary-color);
         }
 
-        .form-control:focus {
-            box-shadow: 0 0 0 4px var(--primary-light);
-            border-color: var(--primary-color);
-            background-color: #fff;
+        .password-toggle-btn {
+            position: absolute;
+            right: 0.85rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background: transparent;
+            border: none;
+            color: #94a3b8;
+            cursor: pointer;
+            padding: 0.25rem;
+            display: flex;
+            align-items: center;
+        }
+
+        .password-toggle-btn:hover {
+            color: #334155;
         }
 
         .btn-primary {
-            background-color: var(--primary-color);
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
             border: none;
-            border-radius: 0.75rem;
-            padding: 0.75rem;
+            border-radius: 12px;
+            padding: 0.85rem;
             font-weight: 600;
             width: 100%;
             font-size: 0.95rem;
-            letter-spacing: 0.5px;
-            box-shadow: 0 4px 6px rgba(2, 132, 199, 0.2);
-            transition: all 0.3s ease;
+            box-shadow: 0 8px 16px -4px rgba(2, 132, 199, 0.4);
+            transition: all 0.25s ease;
+            margin-top: 0.5rem;
         }
 
         .btn-primary:hover {
-            background-color: var(--primary-hover);
-            box-shadow: 0 6px 12px rgba(2, 132, 199, 0.3);
+            background: linear-gradient(135deg, #0369a1, #075985);
             transform: translateY(-1px);
+            box-shadow: 0 12px 20px -4px rgba(2, 132, 199, 0.5);
         }
 
         .form-links {
-            margin-top: 1rem;
+            margin-top: 1.25rem;
             display: flex;
-            justify-content: center;
-            flex-wrap: wrap;
-            gap: 0.5rem 1rem;
-            font-size: 0.8rem;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.82rem;
         }
 
         .form-links a {
@@ -305,22 +366,57 @@
         }
 
         .error-message {
-            background: #fef2f2;
-            color: #ef4444;
+            background: #fff1f2;
+            color: #e11d48;
             text-align: center;
             margin-top: 1rem;
-            padding: 0.6rem;
-            border-radius: 0.5rem;
+            padding: 0.75rem;
+            border-radius: 10px;
             font-weight: 500;
             font-size: 0.85rem;
-            border: 1px solid rgba(239, 68, 68, 0.2);
+            border: 1px solid #ffe4e6;
         }
 
         .footer-text {
             text-align: center;
-            margin-top: 1.25rem;
-            font-size: 0.7rem;
+            margin-top: 1.75rem;
+            font-size: 0.72rem;
             color: #94a3b8;
+        }
+
+        /* Water Ripple Click Effect */
+        .water-ripple {
+            position: fixed;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.35);
+            transform: scale(0);
+            animation: ripple-anim 0.6s ease-out forwards;
+            pointer-events: none;
+            z-index: 9999;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.5), inset 0 0 15px rgba(255, 255, 255, 0.8);
+        }
+
+        @keyframes ripple-anim {
+            to {
+                transform: scale(3);
+                opacity: 0;
+            }
+        }
+
+        /* Mobile Adaptability */
+        @media (max-width: 900px) {
+            .login-container {
+                flex-direction: column;
+                max-width: 440px;
+            }
+
+            .portal-brand-side {
+                display: none;
+            }
+
+            .portal-form-side {
+                padding: 2.25rem 1.75rem;
+            }
         }
     </style>
 </head>
@@ -334,7 +430,7 @@
             <path id="gentle-wave" d="M-160 44c30 0 58-18 88-18s 58 18 88 18 58-18 88-18 58 18 88 18 v44h-352z" />
         </defs>
         <g class="parallax">
-            <use xlink:href="#gentle-wave" x="48" y="0" fill="rgba(255,255,255,0.07)" />
+            <use xlink:href="#gentle-wave" x="48" y="0" fill="rgba(255,255,255,0.06)" />
             <use xlink:href="#gentle-wave" x="48" y="3" fill="rgba(255,255,255,0.1)" />
             <use xlink:href="#gentle-wave" x="48" y="5" fill="rgba(255,255,255,0.15)" />
             <use xlink:href="#gentle-wave" x="48" y="7" fill="rgba(255,255,255,0.25)" />
@@ -342,75 +438,143 @@
     </svg>
 
     <main class="login-container" role="main">
-        <div class="login-header">
-            <img src="assets/img/applogo.png" alt="BizNavigation Logo" />
-            <h1>BizNavigation</h1>
-            <p>Take your business to the next level</p>
-        </div>
-
-        <form id="loginForm">
-            <div class="input-group-custom">
-                <i class="bi bi-person input-icon"></i>
-                <input type="text" class="form-control" id="userName" placeholder="Username" autocomplete="username"
-                    required autofocus />
+        <!-- Brand Visual Side -->
+        <section class="portal-brand-side position-relative z-1">
+            <div>
+                <span class="brand-pill">
+                    <i class="bi bi-shield-lock-fill"></i> Enterprise Portal
+                </span>
+                <h2 class="display-6 fw-bold mt-4 mb-2">Smart Logistics Control</h2>
+                <p class="text-white-50 small">
+                    End-to-end dispatch orchestration, real-time cargo visibility, and cloud accounting in a single
+                    command interface.
+                </p>
             </div>
 
-            <div class="input-group-custom">
-                <i class="bi bi-lock input-icon"></i>
-                <input type="password" class="form-control" id="password" placeholder="Password"
-                    autocomplete="current-password" required />
-            </div>
-
-            <button id="loginButton" type="submit"
-                class="btn btn-primary d-flex justify-content-center align-items-center">
-                <span id="loginButtonText">Sign In</span>
-                <div id="loginSpinner" class="spinner-border spinner-border-sm ms-2 d-none" role="status">
-                    <span class="visually-hidden">Loading...</span>
+            <div class="status-badge-card">
+                <div class="d-flex align-items-center mb-2">
+                    <span class="spinner-grow spinner-grow-sm text-info me-2" role="status"></span>
+                    <span class="small fw-semibold text-light">AllEdge Gateway Online</span>
                 </div>
-            </button>
-
-            <div class="form-links">
-                <a href="/pages/Tools/ResetPassword.html" id="forgotPasswordLink">Forgot Password?</a>
-                <a href="/pages/Tools/UserActivation.html" id="userActivationLink1">User Activation</a>
-                <a href="registration.html" id="registrationLink">Create Account</a>
+                <div class="text-white-50" style="font-size: 0.75rem;">
+                    TLS 1.3 Active • Supabase Cluster Connected
+                </div>
             </div>
 
-            <div class="footer-text">
-                <span id="versionInfo">&copy; AllEdge @ 2018 | v3.04.08.05 | Build: 04-02-2026</span>
+            <div class="text-white-50 small" style="font-size: 0.72rem;">
+                Authorized personnel access only. Actions are logged and monitored.
             </div>
-        </form>
+        </section>
 
-        <div id="errorMessage" class="error-message d-none" aria-live="assertive">
-            Invalid username or password. Please try again.
-        </div>
+        <!-- Form Interactive Side -->
+        <section class="portal-form-side">
+            <div class="login-header">
+                <!-- App Name Next to Logo -->
+                <div class="app-brand-lockup d-flex justify-content-center align-items-center">
+                    <img src="assets/img/applogo.png" alt="BizNavigation Logo"
+                        onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0NCIgaGVpZ2h0PSI0NCI+PHJlY3Qgd2lkdGg9IjQ0IiBoZWlnaHQ9IjQ0IiByeD0iMTAiIGZpbGw9IiMwMjg0YzciLz48L3N2Zz4='" />
+                    <h1 class="app-brand-title m-0">BizNavigation</h1>
+                </div>
 
-        <button id="logoutOtherSessionsBtn" class="btn btn-warning mt-2 w-100 d-none">
-            Logout Other Sessions
-        </button>
+                <h2>Sign In</h2>
+                <p>Enter your system operator credentials to continue</p>
+            </div>
+
+            <form id="loginForm">
+                <div>
+                    <label class="field-label" for="userName">Operator Identity</label>
+                    <div class="input-group-custom">
+                        <i class="bi bi-person input-icon"></i>
+                        <input type="text" class="form-control" id="userName" placeholder="Enter username or email"
+                            autocomplete="username" required autofocus />
+                    </div>
+                </div>
+
+                <div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <label class="field-label" for="password">Security Key</label>
+                        <a href="/pages/Tools/ResetPassword.html" id="forgotPasswordLink"
+                            class="text-decoration-none small text-muted" style="font-size: 0.76rem;">Forgot?</a>
+                    </div>
+                    <div class="input-group-custom">
+                        <i class="bi bi-lock input-icon"></i>
+                        <input type="password" class="form-control pe-5" id="password" placeholder="••••••••••••"
+                            autocomplete="current-password" required />
+                        <button type="button" class="password-toggle-btn" id="togglePasswordBtn"
+                            aria-label="Toggle password visibility">
+                            <i class="bi bi-eye" id="togglePasswordIcon"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <button id="loginButton" type="submit"
+                    class="btn btn-primary d-flex justify-content-center align-items-center">
+                    <span id="loginButtonText">Authenticate Session</span>
+                    <div id="loginSpinner" class="spinner-border spinner-border-sm ms-2 d-none" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </button>
+
+                <div class="form-links">
+                    <a href="/pages/Tools/UserActivation.html" id="userActivationLink1">
+                        <i class="bi bi-patch-check me-1"></i>User Activation
+                    </a>
+                    <a href="registration.html" id="registrationLink">
+                        <i class="bi bi-person-plus me-1"></i>Create Account
+                    </a>
+                </div>
+
+                <div id="errorMessage" class="error-message d-none" aria-live="assertive">
+                    Invalid username or password. Please try again.
+                </div>
+
+                <button id="logoutOtherSessionsBtn" class="btn btn-outline-danger mt-3 w-100 py-2 d-none fw-semibold">
+                    <i class="bi bi-box-arrow-right me-1"></i> Logout Other Sessions
+                </button>
+
+                <div class="footer-text">
+                    <span id="versionInfo">&copy; AllEdge @ 2018 | v3.04.08.05 | Build: 04-02-2026</span>
+                </div>
+            </form>
+        </section>
     </main>
 
-    <!-- External scripts (deferred/loaded after UI) -->
+    <!-- External Business Logic Scripts -->
     <script src="assets/js/utils/server.js" defer></script>
     <script src="assets/js/utils/login.js" defer></script>
 
-    <!-- Optimized Water Ripple Script -->
+    <!-- UI Interaction Scripts -->
     <script>
-        document.addEventListener('click', function (e) {
-            // Prevent adding ripples when interacting with form inputs or buttons
-            if (['INPUT', 'BUTTON', 'A'].includes(e.target.tagName)) return;
+        document.addEventListener('DOMContentLoaded', () => {
+            // Password toggle
+            const toggleBtn = document.getElementById('togglePasswordBtn');
+            const pwd = document.getElementById('password');
+            const icon = document.getElementById('togglePasswordIcon');
 
-            const size = 100;
-            const ripple = document.createElement('div');
-            ripple.className = 'water-ripple';
-            ripple.style.width = `${size}px`;
-            ripple.style.height = `${size}px`;
-            ripple.style.left = `${e.clientX - (size / 2)}px`;
-            ripple.style.top = `${e.clientY - (size / 2)}px`;
+            if (toggleBtn && pwd) {
+                toggleBtn.addEventListener('click', () => {
+                    const isPwd = pwd.type === 'password';
+                    pwd.type = isPwd ? 'text' : 'password';
+                    icon.classList.toggle('bi-eye', !isPwd);
+                    icon.classList.toggle('bi-eye-slash', isPwd);
+                });
+            }
 
-            document.body.appendChild(ripple);
+            // Ripple click effect
+            document.addEventListener('click', (e) => {
+                if (['INPUT', 'BUTTON', 'A', 'I'].includes(e.target.tagName)) return;
 
-            // Cleans up automatically after CSS animation finishes
-            ripple.addEventListener('animationend', () => ripple.remove(), { once: true });
+                const size = 100;
+                const ripple = document.createElement('div');
+                ripple.className = 'water-ripple';
+                ripple.style.width = `${size}px`;
+                ripple.style.height = `${size}px`;
+                ripple.style.left = `${e.clientX - (size / 2)}px`;
+                ripple.style.top = `${e.clientY - (size / 2)}px`;
+
+                document.body.appendChild(ripple);
+                ripple.addEventListener('animationend', () => ripple.remove(), { once: true });
+            });
         });
     </script>
 </body>

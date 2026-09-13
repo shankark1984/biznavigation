@@ -2465,16 +2465,16 @@ async function generateQRCodeBase64(text) {
 
 
 // Run this when user successfully logs in
-async function checkUpdateOnLogin() {
-    if ('serviceWorker' in navigator) {
-        try {
-            const registration = await navigator.serviceWorker.getRegistration();
-            if (registration) {
-                // Force check server for a new sw.js version
-                await registration.update();
-            }
-        } catch (err) {
-            console.error('Update check failed on login:', err);
-        }
-    }
-}
+// async function checkUpdateOnLogin() {
+//     if ('serviceWorker' in navigator) {
+//         try {
+//             const registration = await navigator.serviceWorker.getRegistration();
+//             if (registration) {
+//                 // Force check server for a new sw.js version
+//                 await registration.update();
+//             }
+//         } catch (err) {
+//             console.error('Update check failed on login:', err);
+//         }
+//     }
+// }
