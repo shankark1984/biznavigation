@@ -1,11 +1,12 @@
 async function generatePDF() {
-    if (!els.tempFormID.value || !/^\d+$/.test(els.tempFormID.value.trim())) {
+    const rawFormID = els.tempFormID?.value?.trim() || "";
+    if (!rawFormID || !/^\d+$/.test(rawFormID)) {
         alert("Please save or load a valid note before generating the report.");
         return;
     }
 
-    const noteDbId = parseInt(els.tempFormID.value.trim(), 10);
-    const partyCode = els.partyCode.value.trim();
+    const noteDbId = parseInt(rawFormID, 10);
+    const partyCode = els.partyCode?.value?.trim() || "";
 
     // 1. Change button state to show loading
     const originalText = els.reportButton.innerHTML;
@@ -13,7 +14,7 @@ async function generatePDF() {
     els.reportButton.disabled = true;
 
     try {
-        // 2. Fetch Header, Line Items, Company Profile, and Party Details in parallel for performance
+        // 2. Fetch all required datasets in parallel
         const [
             { data: headerData, error: headerError },
             { data: itemData, error: itemError },
@@ -38,8 +39,30 @@ async function generatePDF() {
         // 3. Format Header & Document Variables
         const noteType = header.note_type || "CREDIT / DEBIT NOTE";
         const noteNo = header.note_no || "DRAFT";
-        const rawDate = header.note_date;
-        const formattedDate = rawDate ? new Date(rawDate).toLocaleDateString('en-IN') : "";
+
+        const formattedDate = header.note_date ? (() => {
+            const d = new Date(header.note_date);
+            return `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`;
+        })() : "";
+
+        // Format Audit Timestamps
+        const formatDateTime = (raw) => {
+            if (!raw) return "";
+            const d = new Date(raw);
+            if (isNaN(d)) return raw;
+            const day = String(d.getDate()).padStart(2, '0');
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const year = d.getFullYear();
+            const hours = String(d.getHours()).padStart(2, '0');
+            const mins = String(d.getMinutes()).padStart(2, '0');
+            return `${day}-${month}-${year} ${hours}:${mins}`;
+        };
+
+        const createdBy = header.created_by || "-";
+        const createdAt = formatDateTime(header.created_at) || "-";
+        const approvedBy = header.approved_by || "Pending";
+        const approvedAt = formatDateTime(header.approved_at) || "";
+
         const reason = header.reason || "-";
         const remarks = header.remarks || "-";
 
@@ -87,8 +110,7 @@ async function generatePDF() {
         const grandTotal = fmt(header.total_amount);
 
         // 7. Build Items Table Rows Dynamically
-        let itemsHtml = "";
-        (itemData || []).forEach((item, index) => {
+        const itemsHtml = (itemData || []).map((item, index) => {
             const totalGST = (parseFloat(item.cgst_amount) || 0) +
                 (parseFloat(item.sgst_amount) || 0) +
                 (parseFloat(item.igst_amount) || 0) +
@@ -96,14 +118,12 @@ async function generatePDF() {
 
             const rowBg = index % 2 === 0 ? "#ffffff" : "#f8fafc";
 
-            itemsHtml += `
+            return `
                 <tr style="background-color: ${rowBg};">
                     <td style="text-align: center; border: 1px solid #cbd5e1; padding: 6px 8px; font-size: 10.5px; color: #334155;">${index + 1}</td>
-                    <td style="border: 1px solid #cbd5e1; padding: 6px 8px; font-size: 10.5px;">
-                        <strong style="color: #0f172a;">${item.item_name || '-'}</strong><br>
-                        <span style="color: #64748b; font-size: 9.5px;">${item.description || ''}</span>
-                    </td>
+                    <td style="border: 1px solid #cbd5e1; padding: 6px 8px; font-size: 10.5px; color: #334155;">${item.item_id || '-'}</td>
                     <td style="border: 1px solid #cbd5e1; padding: 6px 8px; font-size: 10.5px; color: #334155;">${item.reference_invoice || '-'}</td>
+                    <td style="border: 1px solid #cbd5e1; padding: 6px 8px; font-size: 10.5px; color: #334155;">${item.description || ''}</td>
                     <td style="text-align: center; border: 1px solid #cbd5e1; padding: 6px 8px; font-size: 10.5px; color: #334155;">${item.hsn_sac || '-'}</td>
                     <td style="text-align: right; border: 1px solid #cbd5e1; padding: 6px 8px; font-size: 10.5px; color: #334155;">${fmt(item.qty)}</td>
                     <td style="text-align: center; border: 1px solid #cbd5e1; padding: 6px 8px; font-size: 10.5px; color: #334155;">${fmt(item.gst_percent)}%</td>
@@ -114,7 +134,7 @@ async function generatePDF() {
                     <td style="text-align: right; font-weight: bold; border: 1px solid #cbd5e1; padding: 6px 8px; font-size: 10.5px; color: #0f172a;">${fmt(item.line_total)}</td>
                 </tr>
             `;
-        });
+        }).join('');
 
         // 8. Construct A4 HTML Container Template
         const printContent = document.createElement("div");
@@ -158,8 +178,9 @@ async function generatePDF() {
                     <thead>
                         <tr style="background-color: #0f172a; color: #ffffff; text-align: center;">
                             <th style="border: 1px solid #0f172a; padding: 6px 8px; font-size: 10px; font-weight: 600;">Sr</th>
-                            <th style="border: 1px solid #0f172a; padding: 6px 8px; font-size: 10px; font-weight: 600; text-align: left;">Item / Description</th>
+                            <th style="border: 1px solid #0f172a; padding: 6px 8px; font-size: 10px; font-weight: 600; text-align: left;">Item ID</th>
                             <th style="border: 1px solid #0f172a; padding: 6px 8px; font-size: 10px; font-weight: 600;">Ref Inv</th>
+                            <th style="border: 1px solid #0f172a; padding: 6px 8px; font-size: 10px; font-weight: 600; text-align: left;">Description</th>
                             <th style="border: 1px solid #0f172a; padding: 6px 8px; font-size: 10px; font-weight: 600;">HSN</th>
                             <th style="border: 1px solid #0f172a; padding: 6px 8px; font-size: 10px; font-weight: 600;">Qty</th>
                             <th style="border: 1px solid #0f172a; padding: 6px 8px; font-size: 10px; font-weight: 600;">GST%</th>
@@ -206,12 +227,22 @@ async function generatePDF() {
                 </div>
 
                 <!-- Signatures & Footer Note -->
-                <div style="display: flex; justify-content: space-between; margin-top: 40px;">
+                <div style="display: flex; justify-content: space-between; margin-top: 40px; align-items: flex-end;">
                     <div style="width: 170px; text-align: center; border-top: 1px solid #94a3b8; padding-top: 5px; font-size: 10.5px; color: #475569;">
                         Customer Signature
                     </div>
-                    <div style="width: 170px; text-align: center; border-top: 1px solid #94a3b8; padding-top: 5px; font-size: 10.5px; color: #475569;">
-                        Authorized Signatory
+                    
+                    <!-- Authorized Signatory with Audit Trail Info Above It -->
+                    <div style="width: 220px; text-align: center; font-size: 9.5px; color: #475569;">
+                        <div style="margin-bottom: 20px; text-align: left; background: #f8fafc; padding: 6px 8px; border: 1px solid #cbd5e1; border-radius: 4px; line-height: 1.4;">
+                            <div><strong>Created:</strong> ${createdBy}</div>
+                            <div style="color: #64748b; font-size: 9px;">${createdAt}</div>
+                            <div style="margin-top: 4px;"><strong>Approved:</strong> ${approvedBy}</div>
+                            ${approvedAt ? `<div style="color: #64748b; font-size: 9px;">${approvedAt}</div>` : ''}
+                        </div>
+                        <div style="border-top: 1px solid #94a3b8; padding-top: 1px; font-size: 10.5px;">
+                            Authorized Signatory
+                        </div>
                     </div>
                 </div>
                 
@@ -238,8 +269,10 @@ async function generatePDF() {
         console.error("PDF Database Fetch or Generation Error:", err);
         alert("Failed to generate PDF report. Please check your data connection and try again.");
     } finally {
-        // Restore Report Button State
-        els.reportButton.innerHTML = originalText;
-        els.reportButton.disabled = false;
+        // Restore Report Button State Safely
+        if (els.reportButton) {
+            els.reportButton.innerHTML = originalText;
+            els.reportButton.disabled = false;
+        }
     }
 }

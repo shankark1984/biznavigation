@@ -18,7 +18,7 @@
 
     <!-- Sidebar CSS -->
     <link rel="stylesheet" href="../../assets/css/navbar.css" />
-    <!-- Add this above your custom scripts -->
+    <!-- html2pdf library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
     <style>
@@ -30,6 +30,7 @@
 
         #referenceSuggestions .list-group-item {
             cursor: pointer;
+            padding: 0.35rem 0.75rem;
         }
 
         #referenceSuggestions .list-group-item:hover {
@@ -49,45 +50,55 @@
         <!-- Main Content -->
         <div class="main-content">
             <div class="page-content">
-                <div class="container-fluid mt-2">
-                    <div class="card shadow-lg rounded">
-                        <div class="card-body">
+                <div class="container-fluid mt-2 px-3">
+                    <div class="card shadow-sm rounded border-0">
+                        <div class="card-body p-3">
                             <form class="invoiceForm" id="creditDebitForm">
 
                                 <!-- Action Buttons -->
-                                <div class="d-flex flex-wrap gap-2 mb-4">
-                                    <button type="button" class="btn btn-primary btn-sm" id="newButton"
+                                <div class="d-flex flex-wrap gap-2 mb-3 align-items-center">
+                                    <button type="button" class="btn btn-primary btn-sm px-3" id="newButton"
                                         title="Create new note">
                                         <i class="bi bi-file-earmark-plus" aria-hidden="true"></i> New
                                     </button>
 
-                                    <button type="button" class="btn btn-warning btn-sm" id="modifyButton" disabled
+                                    <button type="button" class="btn btn-warning btn-sm px-3" id="modifyButton" disabled
                                         title="Modify note">
                                         <i class="bi bi-pencil" aria-hidden="true"></i> Modify
                                     </button>
 
-                                    <button type="button" class="btn btn-danger btn-sm" id="deleteButton" disabled
+                                    <button type="button" class="btn btn-danger btn-sm px-3" id="deleteButton" disabled
                                         title="Delete note">
                                         <i class="bi bi-trash" aria-hidden="true"></i> Delete
                                     </button>
 
-                                    <button type="button" class="btn btn-info btn-sm text-white" id="reportButton"
+                                    <button type="button" class="btn btn-info btn-sm text-white px-3" id="reportButton"
                                         disabled title="Print report">
                                         <i class="bi bi-printer" aria-hidden="true"></i> Print
                                     </button>
 
-                                    <button type="button" class="btn btn-success btn-sm" id="saveButton"
+                                    <!-- Added Approve Button -->
+                                    <button type="button" class="btn btn-success btn-sm px-3" id="approveButton"
+                                        disabled title="Approve note">
+                                        <i class="bi bi-check-circle" aria-hidden="true"></i> Approve
+                                    </button>
+
+                                    <button type="button" class="btn btn-success btn-sm px-3" id="saveButton"
                                         data-mode="insert" title="Save record">
                                         <span id="saveSpinnerBtn" class="spinner-border spinner-border-sm me-2 d-none"
                                             role="status" aria-hidden="true"></span>
                                         <i class="bi bi-save" aria-hidden="true"></i> Save
                                     </button>
 
-                                    <!-- Status Indicator -->
-                                    <div class="ms-auto d-flex align-items-center">
-                                        <span class="badge bg-secondary px-3 py-2 fs-6 d-none"
+                                    <!-- Status Indicator & Approval Badge -->
+                                    <div class="ms-auto d-flex align-items-center gap-2">
+                                        <span class="badge bg-secondary px-2 py-1 fs-6 d-none"
                                             id="statusBadge">New</span>
                                         <input type="hidden" id="status" value="New">
+
+                                        <span class="badge bg-warning text-dark px-2 py-1 fs-6 d-none"
+                                            id="approvalBadge">Pending Approval</span>
+                                        <input type="hidden" id="approvalStatus" value="Pending">
                                     </div>
 
                                     <!-- Hidden Fields -->
@@ -97,16 +108,16 @@
                                 </div>
 
                                 <!-- ===================== CREDIT / DEBIT NOTE DETAILS ===================== -->
-                                <div class="border rounded p-3 bg-white mb-4 shadow-sm">
-                                    <h5 class="fw-bold text-primary border-bottom pb-2 mb-3">Credit or Debit Note
-                                        Details</h5>
+                                <div class="border rounded p-2 bg-white mb-3 shadow-none">
+                                    <h6 class="fw-bold text-primary border-bottom pb-1 mb-2">Credit or Debit Note
+                                        Details</h6>
 
-                                    <div class="row g-3">
+                                    <div class="row g-2">
                                         <!-- Note Type -->
                                         <div class="col-md-2">
-                                            <label for="noteType" class="form-label">Note Type <span
+                                            <label for="noteType" class="form-label small mb-1">Note Type <span
                                                     class="text-danger">*</span></label>
-                                            <select class="form-select" id="noteType" required>
+                                            <select class="form-select form-select-sm" id="noteType" required>
                                                 <option value="" selected disabled>Choose...</option>
                                                 <option value="Credit Note">Credit Note</option>
                                                 <option value="Debit Note">Debit Note</option>
@@ -115,13 +126,14 @@
 
                                         <!-- Note Number -->
                                         <div class="col-md-2">
-                                            <label for="noteNo" class="form-label">Note No</label>
+                                            <label for="noteNo" class="form-label small mb-1">Note No</label>
                                             <div class="input-group input-group-sm">
-                                                <input list="noteNoSuggestions" class="form-control" id="noteNo"
-                                                    disabled autocomplete="off">
+                                                <input list="noteNoSuggestions" class="form-control form-control-sm"
+                                                    id="noteNo" disabled autocomplete="off">
                                                 <datalist id="noteNoSuggestions"></datalist>
-                                                <button type="button" class="btn btn-secondary " data-bs-toggle="modal"
-                                                    data-bs-target="#searchPaymentModal" aria-label="Search Notes">
+                                                <button type="button" class="btn btn-secondary btn-sm px-2"
+                                                    data-bs-toggle="modal" data-bs-target="#searchPaymentModal"
+                                                    aria-label="Search Notes">
                                                     <i class="bi bi-search" aria-hidden="true"></i>
                                                 </button>
                                             </div>
@@ -129,25 +141,26 @@
 
                                         <!-- Note Date -->
                                         <div class="col-md-2">
-                                            <label for="noteDate" class="form-label">Note Date <span
+                                            <label for="noteDate" class="form-label small mb-1">Note Date <span
                                                     class="text-danger">*</span></label>
-                                            <input type="date" class="form-control" id="noteDate" required>
+                                            <input type="date" class="form-control form-control-sm" id="noteDate"
+                                                required>
                                         </div>
 
                                         <!-- Party Name -->
                                         <div class="col-lg-4">
-                                            <label for="partyName" class="form-label">Party Name <span
+                                            <label for="partyName" class="form-label small mb-1">Party Name <span
                                                     class="text-danger">*</span></label>
-                                            <input list="partySuggestions" class="form-control" id="partyName" required
-                                                placeholder="Choose..." autocomplete="off">
+                                            <input list="partySuggestions" class="form-control form-control-sm"
+                                                id="partyName" required placeholder="Choose..." autocomplete="off">
                                             <datalist id="partySuggestions"></datalist>
                                         </div>
 
                                         <!-- Reference Type -->
                                         <div class="col-md-2">
-                                            <label for="referenceType" class="form-label">Reference Type <span
-                                                    class="text-danger">*</span></label>
-                                            <select class="form-select" id="referenceType" required>
+                                            <label for="referenceType" class="form-label small mb-1">Reference Type
+                                                <span class="text-danger">*</span></label>
+                                            <select class="form-select form-select-sm" id="referenceType" required>
                                                 <option value="" selected disabled>Choose...</option>
                                                 <option value="Customer Invoice">Customer Invoice</option>
                                                 <option value="Vendor Bill">Vendor Bill</option>
@@ -157,96 +170,101 @@
 
                                         <!-- Reason -->
                                         <div class="col-md-6">
-                                            <label for="reason" class="form-label">Reason <span
+                                            <label for="reason" class="form-label small mb-1">Reason <span
                                                     class="text-danger">*</span></label>
-                                            <input type="text" class="form-control" id="reason" required
+                                            <input type="text" class="form-control form-control-sm" id="reason" required
                                                 autocomplete="off">
                                         </div>
 
                                         <!-- Remarks -->
                                         <div class="col-md-6">
-                                            <label for="remarks" class="form-label">Remarks</label>
-                                            <input type="text" class="form-control" id="remarks" autocomplete="off">
+                                            <label for="remarks" class="form-label small mb-1">Remarks</label>
+                                            <input type="text" class="form-control form-control-sm" id="remarks"
+                                                autocomplete="off">
                                         </div>
                                     </div>
                                 </div>
 
                                 <!-- ===================== ITEM DETAILS ===================== -->
-                                <div class="border rounded p-3 bg-white mb-4 shadow-sm">
-                                    <h5 class="fw-bold text-primary border-bottom pb-2 mb-3">Item Details</h5>
+                                <div class="border rounded p-2 bg-white mb-3 shadow-none">
+                                    <h6 class="fw-bold text-primary border-bottom pb-1 mb-2">Item Details</h6>
 
-                                    <div class="row g-3">
+                                    <div class="row g-2 align-items-end">
                                         <!-- Reference Invoice / Bill -->
                                         <div class="col-md-2 position-relative">
-                                            <label for="referenceInvoice" class="form-label">Ref. Invoice/Bill <span
-                                                    class="text-danger">*</span></label>
-                                            <input type="text" class="form-control" id="referenceInvoice"
-                                                autocomplete="off" required placeholder="Type Invoice No...">
+                                            <label for="referenceInvoice" class="form-label small mb-1">Ref.
+                                                Invoice/Bill <span class="text-danger">*</span></label>
+                                            <input type="text" class="form-control form-control-sm"
+                                                id="referenceInvoice" autocomplete="off" required
+                                                placeholder="Type Invoice No...">
                                             <div id="referenceSuggestions"
                                                 class="list-group position-absolute w-100 shadow"
-                                                style="z-index: 1055; max-height: 250px; overflow-y: auto; display: none;">
+                                                style="z-index: 1055; max-height: 200px; overflow-y: auto; display: none;">
                                             </div>
                                         </div>
 
                                         <!-- Item -->
                                         <div class="col-md-2">
-                                            <label for="item" class="form-label">Item <span
+                                            <label for="item" class="form-label small mb-1">Item <span
                                                     class="text-danger">*</span></label>
-                                            <input list="itemSuggestions" class="form-control" id="item" required
-                                                autocomplete="off">
+                                            <input list="itemSuggestions" class="form-control form-control-sm" id="item"
+                                                required autocomplete="off">
                                             <datalist id="itemSuggestions"></datalist>
                                         </div>
 
                                         <!-- Description -->
                                         <div class="col-md-4">
-                                            <label for="description" class="form-label">Description <span
+                                            <label for="description" class="form-label small mb-1">Description <span
                                                     class="text-danger">*</span></label>
-                                            <input type="text" class="form-control" id="description" required
-                                                autocomplete="off">
+                                            <input type="text" class="form-control form-control-sm" id="description"
+                                                required autocomplete="off">
                                         </div>
 
                                         <!-- HSN Code -->
                                         <div class="col-md-2">
-                                            <label for="hsnCode" class="form-label">HSN Code <span
+                                            <label for="hsnCode" class="form-label small mb-1">HSN Code <span
                                                     class="text-danger">*</span></label>
-                                            <input type="text" class="form-control" id="hsnCode" required
-                                                autocomplete="off">
+                                            <input type="text" class="form-control form-control-sm" id="hsnCode"
+                                                required autocomplete="off">
                                         </div>
 
                                         <!-- Quantity -->
                                         <div class="col-md-2">
-                                            <label for="quantity" class="form-label">Quantity <span
+                                            <label for="quantity" class="form-label small mb-1">Quantity <span
                                                     class="text-danger">*</span></label>
-                                            <input type="number" class="form-control text-end" id="quantity" required
-                                                min="0.01" step="any" placeholder="0.00">
+                                            <input type="number" class="form-control form-control-sm text-end"
+                                                id="quantity" required min="0.01" step="any" placeholder="0.00">
                                         </div>
 
                                         <!-- Full Amount -->
                                         <div class="col-md-3">
-                                            <label for="fullAmount" id="fullAmountLabel" class="form-label">
-                                                Amount <span class="text-danger">*</span> </label>
-                                            <input type="number" class="form-control text-end" id="fullAmount" required
-                                                min="0" step="0.01" placeholder="0.00">
+                                            <label for="fullAmount" id="fullAmountLabel"
+                                                class="form-label small mb-1">Amount <span
+                                                    class="text-danger">*</span></label>
+                                            <input type="number" class="form-control form-control-sm text-end"
+                                                id="fullAmount" required min="0" step="0.01" placeholder="0.00">
                                         </div>
 
                                         <!-- Tax Rate -->
-                                        <div class="col-md-3 text-start">
-                                            <label for="partyDefaultTax" class="form-label">Tax Rate</label>
-                                            <select id="partyDefaultTax" class="form-select">
+                                        <div class="col-md-3">
+                                            <label for="partyDefaultTax" class="form-label small mb-1">Tax Rate</label>
+                                            <select id="partyDefaultTax" class="form-select form-select-sm">
                                                 <option value="" disabled selected>Select Tax</option>
                                             </select>
                                         </div>
 
                                         <!-- Total Amount -->
-                                        <div class="col-md-3 text-start">
-                                            <label for="totalAmount" class="form-label">Total Amount</label>
-                                            <input type="number" id="totalAmount" class="form-control bg-light text-end"
-                                                readonly placeholder="0.00">
+                                        <div class="col-md-3">
+                                            <label for="totalAmount" class="form-label small mb-1">Total Amount</label>
+                                            <input type="number" id="totalAmount"
+                                                class="form-control form-control-sm bg-light text-end" readonly
+                                                placeholder="0.00">
                                         </div>
 
                                         <!-- Add Row Button -->
-                                        <div class="col-md-3 d-flex align-items-end">
-                                            <button type="button" id="addCreditDebitRow" class="btn btn-primary w-100">
+                                        <div class="col-md-3">
+                                            <button type="button" id="addCreditDebitRow"
+                                                class="btn btn-primary btn-sm w-100">
                                                 <i class="bi bi-plus-lg" aria-hidden="true"></i> Add Item
                                             </button>
                                         </div>
@@ -254,14 +272,14 @@
                                 </div>
 
                                 <!-- ===================== CREDIT / DEBIT DETAILS TABLE ===================== -->
-                                <div class="border rounded p-3 bg-white mt-4 shadow-sm">
-                                    <h5 class="fw-bold text-primary border-bottom pb-2 mb-3">Credit / Debit Summary</h5>
+                                <div class="border rounded p-2 bg-white shadow-none">
+                                    <h6 class="fw-bold text-primary border-bottom pb-1 mb-2">Credit / Debit Summary</h6>
 
-                                    <div class="table-responsive">
+                                    <div class="table-responsive" style="max-height: 280px; overflow-y: auto;">
                                         <table
-                                            class="table table-sm table-bordered table-hover text-center align-middle small sticky-header text-nowrap"
+                                            class="table table-sm table-bordered table-hover text-center align-middle small text-nowrap mb-0"
                                             id="creditDebitTable">
-                                            <thead class="table-light align-middle">
+                                            <thead class="table-light align-middle sticky-top">
                                                 <tr>
                                                     <th>Sr No</th>
                                                     <th>Item ID</th>
@@ -287,7 +305,7 @@
                                                 </tr>
                                             </thead>
                                             <tbody></tbody>
-                                            <tfoot class="table-light fw-bold">
+                                            <tfoot class="table-light fw-bold sticky-bottom">
                                                 <tr id="totalsRow">
                                                     <td colspan="8" class="text-end">Totals:</td>
                                                     <td class="text-end" id="totalNonTaxAmt">0.00</td>
@@ -321,12 +339,12 @@
                                 aria-labelledby="addressModalLabel" aria-hidden="true">
                                 <div class="modal-dialog modal-dialog-centered">
                                     <div class="modal-content">
-                                        <div class="modal-header bg-light">
-                                            <h5 class="modal-title" id="addressModalLabel">Select Invoice Address</h5>
+                                        <div class="modal-header bg-light py-2">
+                                            <h6 class="modal-title" id="addressModalLabel">Select Invoice Address</h6>
                                             <button type="button" class="btn-close" data-bs-dismiss="modal"
                                                 aria-label="Close"></button>
                                         </div>
-                                        <div class="modal-body" id="addressListContainer"></div>
+                                        <div class="modal-body p-3" id="addressListContainer"></div>
                                     </div>
                                 </div>
                             </div>
@@ -343,29 +361,24 @@
         aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
             <div class="modal-content">
-                <!-- Modal Header -->
-                <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title" id="searchPaymentModalLabel">
+                <div class="modal-header bg-primary text-white py-2">
+                    <h6 class="modal-title" id="searchPaymentModalLabel">
                         <i class="bi bi-search" aria-hidden="true"></i> Search Saved Payments
-                    </h5>
+                    </h6>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
                         aria-label="Close"></button>
                 </div>
-
-                <!-- Modal Body -->
-                <div class="modal-body">
-                    <!-- Search Input Box -->
-                    <div class="input-group mb-3">
+                <div class="modal-body p-3">
+                    <div class="input-group input-group-sm mb-3">
                         <input type="text" id="searchSavedPaymentInput" class="form-control"
                             placeholder="Search by Note No, Party Name, or Reference No..." autocomplete="off">
                         <button class="btn btn-outline-primary" type="button" id="btnTriggerSearch">
                             <i class="bi bi-search" aria-hidden="true"></i> Search
                         </button>
                     </div>
-
-                    <!-- Search Results Table -->
                     <div class="table-responsive">
-                        <table class="table table-sm table-hover table-bordered align-middle text-center text-nowrap">
+                        <table
+                            class="table table-sm table-hover table-bordered align-middle text-center text-nowrap mb-0">
                             <thead class="table-light">
                                 <tr>
                                     <th>Note No</th>
@@ -376,7 +389,6 @@
                                 </tr>
                             </thead>
                             <tbody id="searchPaymentTableBody">
-                                <!-- Example Placeholder Row -->
                                 <tr>
                                     <td colspan="5" class="text-center text-muted fst-italic py-3">
                                         Enter search criteria to find payments...
@@ -386,9 +398,7 @@
                         </table>
                     </div>
                 </div>
-
-                <!-- Modal Footer -->
-                <div class="modal-footer">
+                <div class="modal-footer py-2">
                     <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
                 </div>
             </div>
@@ -400,9 +410,7 @@
         <div id="errorToast" class="toast align-items-center text-white bg-danger border-0" role="alert"
             aria-live="assertive" aria-atomic="true">
             <div class="d-flex">
-                <div class="toast-body" id="errorToastMessage">
-                    Error message here...
-                </div>
+                <div class="toast-body" id="errorToastMessage">Error message here...</div>
                 <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"
                     aria-label="Close"></button>
             </div>

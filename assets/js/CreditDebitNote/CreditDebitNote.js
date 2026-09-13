@@ -30,6 +30,11 @@ const els = {
     modifyButton: document.getElementById("modifyButton"),
     deleteButton: document.getElementById("deleteButton"),
     reportButton: document.getElementById("reportButton"),
+    approveButton: document.getElementById("approveButton"),
+
+    // Approval & Status Elements
+    approvalBadge: document.getElementById("approvalBadge"),
+    approvalStatus: document.getElementById("approvalStatus"),
 
     // Modal Elements
     searchPaymentInput: document.getElementById("searchSavedPaymentInput"),
@@ -43,6 +48,7 @@ let referenceDebounceTimer, noteDebounceTimer;
 
 document.addEventListener("DOMContentLoaded", async () => {
     try {
+        deleteButton.disabled = true;
         if (typeof loadSuggestions === "function") await loadSuggestions("partySuggestions", "PartyDetails", CompanyID);
         if (typeof loadTaxData === "function") loadTaxData();
     } catch (error) {
@@ -62,6 +68,13 @@ els.newButton.addEventListener("click", () => {
     updateCreditDebitTotals();
     enableForm();
     els.saveButton.innerHTML = '<i class="bi bi-save" aria-hidden="true"></i> Save';
+
+    // Reset Approval Badge to default
+    if (els.approvalBadge) {
+        els.approvalBadge.className = "badge bg-warning text-dark px-2 py-1 fs-6 d-none";
+        els.approvalBadge.textContent = "Pending Approval";
+    }
+    if (els.approvalStatus) els.approvalStatus.value = "Draft";
 
     // Reset Full Amount Label
     document.querySelector('label[for="fullAmount"]').innerHTML = 'Amount <span class="text-danger">*</span>';
@@ -336,7 +349,6 @@ function clearItemDetails() {
 }
 
 function disableForm() {
-    // Disable Header Inputs
     els.noteDate.disabled = true;
     els.noteType.disabled = true;
     els.partyName.disabled = true;
@@ -344,7 +356,6 @@ function disableForm() {
     els.reason.disabled = true;
     els.remarks.disabled = true;
 
-    // Disable Line Item Inputs
     els.referenceInvoice.disabled = true;
     els.item.disabled = true;
     els.description.disabled = true;
@@ -354,18 +365,16 @@ function disableForm() {
     els.partyDefaultTax.disabled = true;
     els.addCreditDebitRow.disabled = true;
 
-    // Disable all remove buttons in the table
     document.querySelectorAll(".removeRow").forEach(btn => btn.disabled = true);
 
-    // Disable Save, Enable Action Buttons
     els.saveButton.disabled = true;
     els.modifyButton.disabled = false;
     els.deleteButton.disabled = true;
+    els.approveButton.disabled = false;
     els.reportButton.disabled = false;
 }
 
 function enableForm() {
-    // Enable Header Inputs
     els.noteDate.disabled = false;
     els.noteType.disabled = false;
     els.partyName.disabled = false;
@@ -373,7 +382,6 @@ function enableForm() {
     els.reason.disabled = false;
     els.remarks.disabled = false;
 
-    // Enable Line Item Inputs
     els.referenceInvoice.disabled = false;
     els.item.disabled = false;
     els.description.disabled = false;
@@ -383,13 +391,12 @@ function enableForm() {
     els.partyDefaultTax.disabled = false;
     els.addCreditDebitRow.disabled = false;
 
-    // Enable remove buttons in the table
     document.querySelectorAll(".removeRow").forEach(btn => btn.disabled = false);
 
-    // Enable Save, Disable Modify Button
     els.saveButton.disabled = false;
     els.modifyButton.disabled = true;
     els.deleteButton.disabled = true;
+    els.approveButton.disabled = true;
     els.reportButton.disabled = true;
 }
 
@@ -413,7 +420,7 @@ els.noteNo.addEventListener("change", async function () {
         if (error) throw error;
 
         if (!data) {
-            els.tempFormID.value = ""; // Clear ID so it saves as new
+            els.tempFormID.value = "";
             return;
         }
 
@@ -427,13 +434,33 @@ els.noteNo.addEventListener("change", async function () {
         els.remarks.value = data.remarks || "";
         els.noteNo.disabled = true;
 
-        // Trigger Note Type label change automatically
-        els.noteType.dispatchEvent(new Event("change"));
+        // Handle Approval Status UI state based on database value
+        const isApproved = data.status === "Approved";
+        if (els.approvalStatus) els.approvalStatus.value = isApproved ? "Approved" : "Draft";
+        if (els.approvalBadge) {
+            els.approvalBadge.className = isApproved ? "badge bg-success px-2 py-1 fs-6" : "badge bg-secondary px-2 py-1 fs-6";
+            els.approvalBadge.textContent = isApproved ? "Approved" : "Draft";
+        }
 
+        els.noteType.dispatchEvent(new Event("change"));
         await loadCreditDebitNoteItems(data.id);
 
-        // Disables the form inputs & save button, enables modify button
         disableForm();
+
+        // Prevent self-approval (Creator cannot approve their own draft note)
+        if (!isApproved && data.created_by === UserLoginID) {
+            els.approveButton.disabled = true;
+            console.warn("Self-approval restricted: You cannot approve a note created by yourself.");
+        }
+
+        // If already approved, lock down modify, delete, approve, and save buttons completely
+        if (isApproved) {
+            els.modifyButton.disabled = true;
+            els.deleteButton.disabled = true;
+            els.approveButton.disabled = true;
+            els.saveButton.disabled = true;
+            els.reportButton.disabled = false; // Only Report & New remain active
+        }
 
     } catch (error) {
         console.error("Error loading note:", error);
@@ -498,50 +525,108 @@ async function loadCreditDebitNoteItems(noteId) {
 // Saving / Updating Operations
 // ==========================================
 
-els.saveButton.addEventListener("click", saveUpdateCreditDebitNote);
+els.saveButton?.addEventListener("click", saveUpdateCreditDebitNote);
 
-async function generateNewCreditDebitNoteNo(documentType = 'CreditNote') {
+async function generateNewCreditDebitNoteNo() {
     try {
-        const companyShortCode = CompanyShortCode;
+        const companyData = await getCompanyProfile(CompanyID);
+        const documentType = els.noteType.value;
+        const shortCode = companyData ? companyData.short_code : '';
         const selectedDate = els.noteDate.value || new Date().toISOString().split('T')[0];
 
         const { data, error } = await supabaseClient.rpc("generate_document_number", {
             p_company_id: CompanyID,
-            p_company_short_code: companyShortCode,
+            p_company_short_code: shortCode || '',
             p_document_type: documentType,
-            p_note_date: selectedDate // Passes the input date to determine FY
+            p_note_date: selectedDate
         });
 
         if (error) throw error;
-
-        if (els && els.noteNo) {
-            els.noteNo.value = data;
-        }
+        if (els?.noteNo) els.noteNo.value = data;
     } catch (error) {
         console.error("Error generating Note No:", error);
     }
 }
 
+async function saveCreditDebitNoteItems(noteDbId) {
+    const rows = els.tbody.rows;
+    if (!rows.length) return;
+
+    const items = [];
+    for (let i = 0; i < rows.length; i++) {
+        const c = rows[i].cells;
+        const qty = parseFloat(c[7]?.textContent) || 0;
+        const taxableAmt = parseFloat(c[9]?.textContent) || 0;
+        const rawItemId = c[1]?.textContent.trim();
+
+        items.push({
+            note_id: noteDbId,
+            company_id: CompanyID,
+            line_no: i + 1,
+            item_id: /^\d+$/.test(rawItemId) ? parseInt(rawItemId, 10) : null,
+            item_name: c[2]?.textContent.trim(),
+            reference_invoice: c[2]?.textContent.trim(),
+            description: c[3]?.textContent.trim() || null,
+            hsn_sac: c[4]?.textContent.trim() || null,
+            unit_id: null,
+            qty: qty,
+            rate: qty > 0 ? (taxableAmt / qty) : 0,
+            non_taxable_amount: parseFloat(c[8]?.textContent) || 0,
+            taxable_amount: taxableAmt,
+            gst_percent: parseFloat(c[5]?.textContent) || 0,
+            cess_percent: parseFloat(c[6]?.textContent) || 0,
+            cgst_percent: parseFloat(c[17]?.textContent) || 0,
+            sgst_percent: parseFloat(c[18]?.textContent) || 0,
+            igst_percent: parseFloat(c[19]?.textContent) || 0,
+            sgst_amount: parseFloat(c[10]?.textContent) || 0,
+            cgst_amount: parseFloat(c[11]?.textContent) || 0,
+            igst_amount: parseFloat(c[12]?.textContent) || 0,
+            cess_amount: parseFloat(c[13]?.textContent) || 0,
+            line_total: parseFloat(c[15]?.textContent) || 0
+        });
+    }
+
+    const { error } = await supabaseClient.from("credit_debit_note_items").insert(items);
+    if (error) throw error;
+}
+
 async function saveUpdateCreditDebitNote() {
+    if (!els.saveButton) return;
     els.saveButton.disabled = true;
 
     try {
         const rawNoteDbId = els.tempFormID.value.trim();
-
-        // Ensure the ID only contains numbers. If it's something like "TEMP-1234", treat it as a new record.
         const isExistingRecord = /^\d+$/.test(rawNoteDbId);
         const noteDbId = isExistingRecord ? parseInt(rawNoteDbId, 10) : null;
-
         const noteNoStr = els.noteNo.value.trim();
 
-        if (!els.noteType.value) return alertFocus("Please select Note Type.", els.noteType);
-        if (!els.noteDate.value) return alertFocus("Please select Note Date.", els.noteDate);
-        if (!els.partyCode.value) return alertFocus("Please select a valid Party Name.", els.partyName);
-        if (!els.referenceType.value) return alertFocus("Please select Reference Type.", els.referenceType);
-        if (els.tbody.rows.length === 0) return alert("Please add at least one item.");
+        if (!els.noteType.value) {
+            els.saveButton.disabled = false;
+            return alertFocus("Please select Note Type.", els.noteType);
+        }
+        if (!els.noteDate.value) {
+            els.saveButton.disabled = false;
+            return alertFocus("Please select Note Date.", els.noteDate);
+        }
+        if (!els.partyCode.value) {
+            els.saveButton.disabled = false;
+            return alertFocus("Please select a valid Party Name.", els.partyName);
+        }
+        if (!els.referenceType.value) {
+            els.saveButton.disabled = false;
+            return alertFocus("Please select Reference Type.", els.referenceType);
+        }
+        if (els.tbody.rows.length === 0) {
+            els.saveButton.disabled = false;
+            return alert("Please add at least one item.");
+        }
 
-        // If it's not an existing record and we don't have a note number, generate one
         if (!isExistingRecord && !noteNoStr) await generateNewCreditDebitNoteNo();
+        if (!els.noteNo.value) {
+            alert("Note No is required.");
+            els.saveButton.disabled = false;
+            return;
+        }
 
         const headerRecord = {
             company_id: CompanyID,
@@ -554,16 +639,16 @@ async function saveUpdateCreditDebitNote() {
             reference_id: null,
             reason: els.reason.value.trim() || null,
             remarks: els.remarks.value.trim() || null,
-            taxable_amount: parseFloat(document.getElementById("totalTaxAmt").textContent) || 0,
-            non_taxable_amount: parseFloat(document.getElementById("totalNonTaxAmt").textContent) || 0,
-            sgst_amount: parseFloat(document.getElementById("totalSGST").textContent) || 0,
-            cgst_amount: parseFloat(document.getElementById("totalCGST").textContent) || 0,
-            igst_amount: parseFloat(document.getElementById("totalIGST").textContent) || 0,
-            cess_amount: parseFloat(document.getElementById("totalCESSAmt").textContent) || 0,
-            total_gst: parseFloat(document.getElementById("totalGST").textContent) || 0,
-            total_amount: parseFloat(document.getElementById("totalGrand").textContent) || 0,
+            taxable_amount: parseFloat(document.getElementById("totalTaxAmt")?.textContent) || 0,
+            non_taxable_amount: parseFloat(document.getElementById("totalNonTaxAmt")?.textContent) || 0,
+            sgst_amount: parseFloat(document.getElementById("totalSGST")?.textContent) || 0,
+            cgst_amount: parseFloat(document.getElementById("totalCGST")?.textContent) || 0,
+            igst_amount: parseFloat(document.getElementById("totalIGST")?.textContent) || 0,
+            cess_amount: parseFloat(document.getElementById("totalCESSAmt")?.textContent) || 0,
+            total_gst: parseFloat(document.getElementById("totalGST")?.textContent) || 0,
+            total_amount: parseFloat(document.getElementById("totalGrand")?.textContent) || 0,
             round_off: 0,
-            status: 'draft'
+            status: 'Draft'
         };
 
         let headerID = noteDbId;
@@ -601,56 +686,24 @@ async function saveUpdateCreditDebitNote() {
 
         await saveCreditDebitNoteItems(headerID);
 
+        // Update status badge to Draft upon save
+        if (els.approvalStatus) els.approvalStatus.value = "Draft";
+        if (els.approvalBadge) {
+            els.approvalBadge.className = "badge bg-secondary px-2 py-1 fs-6";
+            els.approvalBadge.textContent = "Draft";
+        }
+
         alert("Credit Debit Note saved successfully.");
-        disableForm(); // Lock form automatically after saving
+        disableForm();
+
+        // If the current user saved it, keep the approve button disabled (self-approval prevention)
+        els.approveButton.disabled = true;
 
     } catch (error) {
         console.error("Save Error:", error);
         alert(error.message || "An error occurred while saving.");
         els.saveButton.disabled = false;
     }
-}
-
-async function saveCreditDebitNoteItems(noteDbId) {
-    const rows = els.tbody.rows;
-    if (!rows.length) return;
-
-    const items = [];
-    for (let i = 0; i < rows.length; i++) {
-        const c = rows[i].cells;
-        const qty = parseFloat(c[7].textContent) || 0;
-        const taxableAmt = parseFloat(c[9].textContent) || 0;
-        const rawItemId = c[1].textContent.trim();
-
-        items.push({
-            note_id: noteDbId,
-            company_id: CompanyID,
-            line_no: i + 1,
-            item_id: /^\d+$/.test(rawItemId) ? parseInt(rawItemId, 10) : null,
-            item_name: c[2].textContent.trim(),
-            reference_invoice: c[2].textContent.trim(),
-            description: c[3].textContent.trim() || null,
-            hsn_sac: c[4].textContent.trim() || null,
-            unit_id: null,
-            qty: qty,
-            rate: qty > 0 ? (taxableAmt / qty) : 0,
-            non_taxable_amount: parseFloat(c[8].textContent) || 0,
-            taxable_amount: taxableAmt,
-            gst_percent: parseFloat(c[5].textContent) || 0,
-            cess_percent: parseFloat(c[6].textContent) || 0,
-            cgst_percent: parseFloat(c[17].textContent) || 0,
-            sgst_percent: parseFloat(c[18].textContent) || 0,
-            igst_percent: parseFloat(c[19].textContent) || 0,
-            sgst_amount: parseFloat(c[10].textContent) || 0,
-            cgst_amount: parseFloat(c[11].textContent) || 0,
-            igst_amount: parseFloat(c[12].textContent) || 0,
-            cess_amount: parseFloat(c[13].textContent) || 0,
-            line_total: parseFloat(c[15].textContent) || 0
-        });
-    }
-
-    const { error } = await supabaseClient.from("credit_debit_note_items").insert(items);
-    if (error) throw error;
 }
 
 // ==========================================
@@ -760,3 +813,51 @@ els.searchPaymentTableBody.addEventListener("click", (e) => {
 // ==========================================
 
 els.reportButton.addEventListener("click", generatePDF);
+
+
+// ==========================================
+// Approval Event Listener
+// ==========================================
+
+els.approveButton?.addEventListener("click", async () => {
+    const noteDbId = parseInt(els.tempFormID?.value, 10);
+
+    if (!noteDbId || isNaN(noteDbId)) {
+        alert("Please load a saved note before approving.");
+        return;
+    }
+
+    if (!confirm("Are you sure you want to approve this Credit/Debit Note?")) return;
+
+    try {
+        const { error } = await supabaseClient
+            .from("credit_debit_notes")
+            .update({
+                status: "Approved",
+                approved_by: UserLoginID,
+                approved_at: new Date().toISOString()
+            })
+            .eq("id", noteDbId);
+
+        if (error) throw error;
+
+        // Update UI State to Approved
+        if (els.approvalStatus) els.approvalStatus.value = "Approved";
+        if (els.approvalBadge) {
+            els.approvalBadge.className = "badge bg-success px-2 py-1 fs-6";
+            els.approvalBadge.textContent = "Approved";
+        }
+
+        // Lock form inputs and disable modification controls completely
+        els.modifyButton.disabled = true;
+        els.deleteButton.disabled = true;
+        els.approveButton.disabled = true;
+        els.saveButton.disabled = true;
+        els.reportButton.disabled = false; // Keep Report enabled
+
+        alert("Note approved successfully!");
+    } catch (err) {
+        console.error("Approval error:", err);
+        alert("Failed to approve the note. Please try again.");
+    }
+});
