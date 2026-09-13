@@ -259,15 +259,15 @@ async function autoUnlockMultipleTables() {
 }
 
 // Listen for a new service worker taking control and auto-reload the page
-let refreshing = false;
-if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.addEventListener('controllerchange', () => {
-        if (!refreshing) {
-            refreshing = true;
-            window.location.reload();
-        }
-    });
-}
+// let refreshing = false;
+// if ('serviceWorker' in navigator) {
+//     navigator.serviceWorker.addEventListener('controllerchange', () => {
+//         if (!refreshing) {
+//             refreshing = true;
+//             window.location.reload();
+//         }
+//     });
+// }
 
 const now = new Date();
 const localtimeStamp = now.toLocaleString(); // Local date and time

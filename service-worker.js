@@ -1,4 +1,4 @@
-const VERSION = 'v3.04.08.09'; // Increment this when you deploy changes
+const VERSION = 'v3.04.09.01';
 const STATIC_CACHE = `biznav-static-${VERSION}`;
 const DYNAMIC_CACHE = `biznav-dynamic-${VERSION}`;
 const API_CACHE = `biznav-api-${VERSION}`;
@@ -24,11 +24,9 @@ async function limitCache(cacheName, maxItems) {
 
 /* ================= LIFECYCLE ================= */
 self.addEventListener('install', event => {
-    // Force the waiting service worker to become the active service worker immediately
-    self.skipWaiting();
-
     event.waitUntil(
         caches.open(STATIC_CACHE).then(async cache => {
+            // Use cache-busting during install to avoid caching stale CDN/proxy responses
             const fetchPromises = PRECACHE_ASSETS.map(async url => {
                 try {
                     const res = await fetch(url, { cache: 'no-cache' });
@@ -60,7 +58,6 @@ self.addEventListener('activate', event => {
                     .map(key => caches.delete(key))
             );
 
-            // Take control of all pages immediately without waiting for reload
             await self.clients.claim();
         })()
     );
@@ -90,6 +87,7 @@ self.addEventListener('fetch', event => {
 
     // 3. Supabase REST/GraphQL: Network-First with Fallback
     if (url.hostname.includes('supabase.co')) {
+        // Only cache read queries (GET). Never cache auth tokens or mutations.
         if (url.pathname.includes('/auth/')) return;
 
         event.respondWith(

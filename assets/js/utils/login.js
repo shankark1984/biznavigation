@@ -24,9 +24,37 @@ const hideError = () => {
     el.errorMsg.classList.add('d-none');
 };
 
+// Auto-reload if a new Service Worker takes over
+let isRefreshing = false;
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (!isRefreshing) {
+            isRefreshing = true;
+            window.location.reload();
+        }
+    });
+}
+
+// Check for updates with a timeout safeguard so login isn't delayed
+async function checkUpdateOnLogin() {
+    if (!('serviceWorker' in navigator)) return;
+
+    try {
+        const registration = await navigator.serviceWorker.getRegistration();
+        if (!registration) return;
+
+        // Race registration.update against a 2-second timeout
+        const updateCheck = registration.update();
+        const timeout = new Promise(resolve => setTimeout(resolve, 2000));
+        await Promise.race([updateCheck, timeout]);
+    } catch (err) {
+        console.warn('Update check failed on login:', err);
+    }
+}
+
 // Store user details locally
 const storeUserDetails = ({ emp_code, user_name, user_login_id, user_type, company_id, working_branch }) => {
-    // 🔥 CLEAR OLD PERMISSIONS (very important)
+    // Clear old permissions
     Object.keys(localStorage)
         .filter(key => key.startsWith("permissions_"))
         .forEach(key => localStorage.removeItem(key));
@@ -46,14 +74,26 @@ const setLoading = (isLoading) => {
     el.loginSpinner.classList.toggle('d-none', !isLoading);
 };
 
-// Main login handler
+// Helper: Safely fetch public IP with fallback
+async function getPublicIP() {
+    try {
+        const res = await fetch('https://api.ipify.org?format=json', { cache: 'no-store' });
+        const data = await res.json();
+        return data.ip || 'Unknown';
+    } catch {
+        return 'Unknown';
+    }
+}
 
+// Main login handler
 async function login() {
     const username = el.username.value.trim();
     const password = el.password.value.trim();
     const deviceId = getDeviceId();
-    // store locally
-    localStorage.setItem('session_token', sessionToken);
+
+    if (typeof sessionToken !== 'undefined') {
+        localStorage.setItem('session_token', sessionToken);
+    }
 
     if (!username || !password) {
         showError('Please enter both username and password.');
@@ -91,40 +131,40 @@ async function login() {
             return;
         }
 
-        // If logged in from another device
-        if (activeSessions.length > 0 &&
-            !activeSessions.some(s => s.device_id === deviceId)) {
-
+        // Check if logged in from another device
+        if (activeSessions?.length > 0 && !activeSessions.some(s => s.device_id === deviceId)) {
             showError('You are already logged in from another device.');
-            // Optionally, you could add a "Logout Other Sessions" button here to allow the user to terminate other sessions.
-            document.getElementById('logoutOtherSessionsBtn').classList.remove('d-none');
+            const logoutBtn = document.getElementById('logoutOtherSessionsBtn');
+            if (logoutBtn) logoutBtn.classList.remove('d-none');
             return;
         }
 
         /* ---------- CREATE / UPDATE SESSION ---------- */
-        // sessionToken = crypto.randomUUID();
+        const clientIP = await getPublicIP();
+        const currentTime = typeof localtimeStamp !== 'undefined' ? localtimeStamp : new Date().toISOString();
+        const currentToken = typeof sessionToken !== 'undefined' ? sessionToken : crypto.randomUUID();
 
         await supabaseClient
             .from('user_sessions')
             .upsert({
                 user_id: username,
-                session_token: sessionToken,
+                session_token: currentToken,
                 device_id: deviceId,
                 device_name: navigator.userAgent,
-                ip_address: '' + (await fetch('https://api.ipify.org?format=json').then(res => res.json()).then(data => data.ip)) + '',
+                ip_address: clientIP,
                 user_agent: navigator.userAgent,
-                last_active: localtimeStamp,
+                last_active: currentTime,
                 is_active: true,
-                created_at: localtimeStamp
+                created_at: currentTime
             });
 
-        /* ---------- STORE USER ---------- */
+        /* ---------- STORE USER & CHECK UPDATES ---------- */
         storeUserDetails(data);
 
-        // 🔥 CHECK FOR APP UPDATES ON SUCCESSFUL LOGIN
+        // Check for new service worker code
         await checkUpdateOnLogin();
 
-        if (password === reSetPass) {
+        if (typeof reSetPass !== 'undefined' && password === reSetPass) {
             localStorage.setItem('ForcePasswordReset', 'true');
             window.location.href = '/pages/auth/new-password.html';
             return;
@@ -140,16 +180,14 @@ async function login() {
     }
 }
 
-
-document.getElementById('logoutOtherSessionsBtn')
-    .addEventListener('click', async () => {
-
+const logoutOtherSessionsBtn = document.getElementById('logoutOtherSessionsBtn');
+if (logoutOtherSessionsBtn) {
+    logoutOtherSessionsBtn.addEventListener('click', async () => {
         const username = el.username.value.trim();
-
 
         const result = await logoutOtherSessions(username);
 
-        if (!result.success) {
+        if (!result?.success) {
             alert('Failed to terminate sessions');
             return;
         }
@@ -157,4 +195,4 @@ document.getElementById('logoutOtherSessionsBtn')
         alert('Other sessions logged out. Please login again.');
         location.reload();
     });
-
+}
