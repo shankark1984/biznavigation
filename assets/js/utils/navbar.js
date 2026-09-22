@@ -414,12 +414,17 @@ const Navbar = (() => {
         const pageTitle = document.title || "Dashboard";
 
         const navbar = document.createElement("header");
-        navbar.className = "top-navbar d-flex align-items-center justify-content-between shadow-sm";
+        navbar.className = "top-navbar d-flex align-items-center justify-content-between shadow-sm p-3";
         navbar.innerHTML = `
             <div class="navbar-left d-flex align-items-center">
-                <h5 class="mb-0 fw-semibold text-truncate" style="max-width: 300px;">Intelligent Logistics Solutions</h5>
+                <!-- Added responsive font sizing and truncation so it doesn't break on mobile -->
+                <h5 class="mb-0 fw-semibold text-truncate d-none d-md-block" style="max-width: 300px;">Intelligent Logistics Solutions</h5>
+                <h6 class="mb-0 fw-semibold text-truncate d-block d-md-none ms-2" style="max-width: 200px;">Intelligent Logistics</h6>
             </div>
-            <div class="navbar-right d-flex align-items-center gap-3">
+            
+            <!-- Changed 'd-flex' to 'd-none d-md-flex' to hide this entire section on mobile -->
+            <!-- Mobile users will use the theme/logout buttons already built into your sidebar -->
+            <div class="navbar-right d-none d-md-flex align-items-center gap-3">
                 <button id="themeToggle" class="theme-btn btn btn-light rounded-circle shadow-sm" aria-label="Toggle Dark Mode">
                     <i class="bi bi-moon-fill"></i>
                 </button>
@@ -428,7 +433,7 @@ const Navbar = (() => {
                     <div class="avatar bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px; font-weight: 600;">
                         ${userName.charAt(0).toUpperCase()}
                     </div>
-                    <span class="username fw-medium text-dark me-3 d-none d-sm-block">${userName}</span>
+                    <span class="username fw-medium text-dark me-3">${userName}</span>
                     <button id="logoutBtn" class="logout-btn btn btn-sm btn-outline-danger rounded-pill" aria-label="Logout" title="Logout">
                         <i class="bi bi-power"></i>
                     </button>
@@ -439,7 +444,7 @@ const Navbar = (() => {
         container.prepend(navbar);
         setupThemeToggle();
 
-        navbar.querySelector("#logoutBtn").addEventListener("click", async () => {
+        navbar.querySelector("#logoutBtn")?.addEventListener("click", async () => {
             try {
                 const userRaw = localStorage.getItem("user");
                 if (userRaw) {
