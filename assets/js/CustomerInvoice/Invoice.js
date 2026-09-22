@@ -224,7 +224,6 @@ if (fetchPendingBtn) {
 /* =========================================================
    SAVE INVOICE
 ========================================================= */
-// const saveButton = document.getElementById('saveButton');
 if (saveButton) {
     saveButton.addEventListener('click', async () => {
         const saveBtn = document.getElementById('saveButton');
@@ -286,7 +285,6 @@ if (saveButton) {
                 otherCents = fscCents + otherChargesCents;
             }
 
-            // Added fallbacks for GST in case HTML IDs are different
             const cgstCents = toCents(getSafeAmount(`totalCGST${strategy.taxSuffix}`, 'cgstAmount'));
             const sgstCents = toCents(getSafeAmount(`totalSGST${strategy.taxSuffix}`, 'sgstAmount'));
             const igstCents = toCents(getSafeAmount(`totalIGST${strategy.taxSuffix}`, 'igstAmount'));
@@ -295,13 +293,11 @@ if (saveButton) {
             const exactGrandTotalCents = basicCents + otherCents + totalGstCents;
             const calculatedGrandTotalCents = Math.round(exactGrandTotalCents / 100) * 100;
 
-            // Checked all possible IDs for the Grand Total
             let scrapedGrandTotalCents = toCents(getSafeAmount('totalGrand', 'totalAmount'));
             if (scrapedGrandTotalCents === 0) {
                 scrapedGrandTotalCents = toCents(getSafeAmount('totalGrandAmt'));
             }
 
-            // FAILSAFE: If the DOM element is entirely missing or completely blank but math calculates > 0, trust the math!
             if (scrapedGrandTotalCents === 0 && calculatedGrandTotalCents > 0) {
                 console.warn("UI Grand Total element not found or is 0. Trusting internal calculation.");
                 scrapedGrandTotalCents = calculatedGrandTotalCents;
@@ -465,7 +461,7 @@ function clearInvoiceTotals() {
     if (table?.tBodies?.[0]) table.tBodies[0].innerHTML = '';
 
     const totalIds = [
-        'totalFreight', 'totalFSCAmt', 'totalOtherAmt', 'totalSGST',
+        'totalFreight', 'totalFSCAmt', 'totalOtherAmt', 'totalSGST', 'totalChargeableWeight', 'totalQuantity',
         'totalCGST', 'totalIGST', 'totalGST', 'totalGrand',
         'cgstAmount', 'sgstAmount', 'igstAmount', 'gstAmount', 'totalAmount'
     ];
@@ -730,13 +726,6 @@ document.getElementById('reportButton').addEventListener('click', async function
 
         reportType = document.getElementById('reportType').value;
 
-        // console.log(
-        //     'Generating report for Invoice No:',
-        //     invoiceNo,
-        //     'with Report Type:',
-        //     reportType
-        // );
-
         const invoiceDetails = await getInvoiceDetails(invoiceNo);
 
         if (!invoiceDetails) return;
@@ -768,21 +757,16 @@ document.getElementById('reportButton').addEventListener('click', async function
         }
 
     } catch (error) {
-        // Log the full stack and message explicitly:
         console.error("Invoice PDF Generation Failed:", error?.stack || error?.message || error);
 
-        // Safe alert that won't crash if Swal is missing:
         if (typeof Swal !== "undefined") {
             Swal.fire("Error", error?.message || "PDF generation failed", "error");
         } else {
             alert("Report generation failed: " + (error?.message || error));
         }
     } finally {
-
-        // Restore button
         btn.disabled = false;
         btn.innerHTML = originalText;
-
     }
 });
 
@@ -836,13 +820,10 @@ if (pendingTable) {
             const row = deleteBtn.closest('tr');
             if (!row) return;
 
-            // 1. Identify the shipment (Assumes you have a dataset attribute or it's in the first cell)
             const shipmentNo = deleteBtn.dataset.shipmentNo || row.cells[0]?.textContent.trim();
 
-            // 2. Remove the row from the DOM
             row.remove();
 
-            // 3. Remove the deleted shipment from Global State to prevent ghost charges
             if (shipmentNo) {
                 if (invoiceData && invoiceData[shipmentNo]) delete invoiceData[shipmentNo];
                 if (invoiceChargesData && invoiceChargesData[shipmentNo]) delete invoiceChargesData[shipmentNo];
@@ -851,16 +832,13 @@ if (pendingTable) {
             const tbody = document.querySelector('#pendingShipmentTable tbody');
             const remainingRows = tbody ? tbody.querySelectorAll('tr').length : 0;
 
-            // 4. Recalculate or wipe based on remaining rows
             if (remainingRows === 0) {
                 clearChargesTable();
                 clearInvoiceTotals();
             } else {
-                // Re-build the charges map from the clean remaining state
                 const updatedChargesMap = aggregateRemainingCharges(invoiceChargesData);
                 renderChargesTable(updatedChargesMap);
 
-                // Recalculate main table DOM totals
                 recalculateShipmentTotals();
                 recalculateChargesTotals();
             }
@@ -868,14 +846,11 @@ if (pendingTable) {
     });
 }
 
-// Helper: Dynamically aggregates remaining charges from your global state
 function aggregateRemainingCharges(chargesState) {
     const aggregated = {};
     if (!chargesState) return aggregated;
 
-    // Loop through remaining shipments in state
     Object.values(chargesState).forEach(shipmentCharges => {
-        // Assuming shipmentCharges contains charge lines grouped by type
         Object.entries(shipmentCharges).forEach(([type, amounts]) => {
             if (!aggregated[type]) {
                 aggregated[type] = { TotalAmount: 0, SGSTAmt: 0, CGSTAmt: 0, IGSTAmt: 0, TotalGSTAmt: 0, GrandTotalAmt: 0 };
@@ -897,7 +872,6 @@ const getSafeCellVal = (cell) => {
     return parseFloat(text.replace(/,/g, '').trim()) || 0;
 };
 
-// 2. Recalculate MAIN Shipment Details Table
 function recalculateShipmentTotals() {
     const tbody = document.querySelector('#pendingShipmentTable tbody');
     if (!tbody) return;
@@ -938,7 +912,6 @@ function recalculateShipmentTotals() {
     setSafeText('totalIGST', format(totals.igst / 100));
     setSafeText('totalGST', format(totals.gst / 100));
 
-    // Check multiple IDs for Grand Total
     setSafeText('totalGrand', Math.round(totals.grand / 100).toFixed(2));
     setSafeText('totalAmount', Math.round(totals.grand / 100).toFixed(2));
 
@@ -949,7 +922,6 @@ function recalculateShipmentTotals() {
     setSafeText('totalIGST_sc', format(totals.igst / 100));
 }
 
-// 3. Recalculate SHIPMENT CHARGES Table
 function recalculateChargesTotals() {
     const tbody = document.querySelector('#pendingShipmentCharges tbody');
     if (!tbody) return;
@@ -977,4 +949,204 @@ function recalculateChargesTotals() {
     setSafeText('totalIGSTAmt', format(totals.igst));
     setSafeText('totalGSTAmt', format(totals.gst));
     setSafeText('totalGrandAmt', Math.round(totals.grand / 100).toFixed(2));
+}
+
+/* =========================================================
+   SEARCH SAVED INVOICES — MODAL WIRING + DATA FETCH
+========================================================= */
+
+/**
+ * Opens the invoice search modal, auto-loads recent invoices,
+ * wires Enter key + search button, and handles row selection.
+ */
+(function wireInvoiceSearchModal() {
+    function init() {
+        const openBtn = document.getElementById('invoiceNoSearch');
+        const modalEl = document.getElementById('searchInvoiceModal');
+        const inputEl = document.getElementById('searchSavedInvoiceInput');
+        const tbodyEl = document.getElementById('searchInvoiceTableBody');
+        const btnSearch = document.getElementById('btnTriggerSearch');
+
+        if (!modalEl || !inputEl || !tbodyEl) return;
+
+        const modalInstance = bootstrap.Modal.getOrCreateInstance(modalEl);
+
+        /* ---- Open modal (🔍 button next to Invoice No) ---- */
+        if (openBtn) {
+            openBtn.addEventListener('click', function () {
+                inputEl.value = '';
+                modalInstance.show();
+                searchSavedInvoice();
+                setTimeout(() => inputEl.focus(), 250);
+            });
+        }
+
+        /* ---- Auto-load when modal opens via any trigger ---- */
+        modalEl.addEventListener('shown.bs.modal', function () {
+            if (!inputEl.value.trim()) searchSavedInvoice();
+        });
+
+        /* ---- Search button inside modal ---- */
+        if (btnSearch) {
+            btnSearch.addEventListener('click', searchSavedInvoice);
+        }
+
+        /* ---- Enter key inside search input ---- */
+        inputEl.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                searchSavedInvoice();
+            }
+        });
+
+        /* ---- Row selection ---- */
+        tbodyEl.addEventListener('click', async function (e) {
+            const btn = e.target.closest('.select-invoice-btn');
+            if (!btn) return;
+
+            const invoiceNoVal = btn.dataset.id;
+            modalInstance.hide();
+
+            if (invoiceNoVal) {
+                await loadInvoice(invoiceNoVal);
+            }
+        });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+})();
+
+/* =========================================================
+   FETCH SAVED INVOICES FOR THE MODAL
+========================================================= */
+async function searchSavedInvoice() {
+    const inputEl = document.getElementById("searchSavedInvoiceInput");
+    const tbodyEl = document.getElementById("searchInvoiceTableBody");
+    if (!inputEl || !tbodyEl) return;
+
+    const query = inputEl.value.trim();
+
+    // Loading state (7 columns)
+    tbodyEl.innerHTML = `
+        <tr>
+            <td colspan="7" class="text-center text-muted py-3">
+                <span class="spinner-border spinner-border-sm me-2"></span>
+                Searching...
+            </td>
+        </tr>`;
+
+    /* ---- Build query ---- */
+    let q = supabaseClient
+        .from("InvoicePaymentView")
+        .select("InvoiceNo, InvoiceDate, InvoiceType, PartyCode, PartyName, GrandTotalAmount, BalanceAmount")
+        .eq("company_id", CompanyID)
+
+    if (query) {
+        q = q.or(
+            `InvoiceNo.ilike.%${query}%,` +
+            `PartyCode.ilike.%${query}%,` +
+            `PartyName.ilike.%${query}%,` +
+            `InvoiceType.ilike.%${query}%`
+        );
+    }
+
+    const { data: payData, error } = await q
+        .order("InvoiceDate", { ascending: false })
+        .limit(50);
+
+    if (error) {
+        console.error("searchSavedInvoice error:", error);
+        tbodyEl.innerHTML = `
+            <tr>
+                <td colspan="7" class="text-center text-danger fw-bold py-3">
+                    <i class="bi bi-exclamation-triangle me-1"></i> Error fetching data.
+                </td>
+            </tr>`;
+        return;
+    }
+
+    if (!payData || !payData.length) {
+        tbodyEl.innerHTML = `
+            <tr>
+                <td colspan="7" class="text-center text-muted fst-italic py-3">
+                    <i class="bi bi-inbox fs-4 d-block mb-2 opacity-50"></i>
+                    No invoices found.
+                </td>
+            </tr>`;
+        return;
+    }
+
+    /* ---- Fetch party names for rows missing PartyName ---- */
+    const missingCodes = [...new Set(
+        payData.filter(i => !i.PartyName && i.PartyCode).map(i => i.PartyCode)
+    )];
+    const pMap = {};
+    if (missingCodes.length) {
+        const { data: pData } = await supabaseClient
+            .from("PartyDetails")
+            .select("PartyCode, PartyName")
+            .eq("company_id", CompanyID)
+            .in("PartyCode", missingCodes);
+        pData?.forEach(p => (pMap[p.PartyCode] = p.PartyName));
+    }
+
+    /* ---- Render rows using DOM APIs (XSS-safe) ---- */
+    const frag = document.createDocumentFragment();
+
+    payData.forEach((p, idx) => {
+        const displayDate = typeof formatDate === 'function'
+            ? formatDate(p.InvoiceDate)
+            : (p.InvoiceDate || "-");
+        const customerName = p.PartyName || pMap[p.PartyCode] || p.PartyCode || "-";
+        const movementType = p.InvoiceType || "-";
+        const total = typeof safeNumber === 'function'
+            ? safeNumber(p.GrandTotalAmount).toFixed(2)
+            : Number(p.GrandTotalAmount || 0).toFixed(2);
+
+        const tr = document.createElement("tr");
+
+        const tdIdx = document.createElement("td");
+        tdIdx.className = "text-center";
+        tdIdx.textContent = idx + 1;
+
+        const tdInv = document.createElement("td");
+        const badge = document.createElement("span");
+        badge.className = "badge bg-secondary";
+        badge.textContent = p.InvoiceNo || "";
+        tdInv.appendChild(badge);
+
+        const tdDate = document.createElement("td");
+        tdDate.textContent = displayDate;
+
+        const tdCust = document.createElement("td");
+        tdCust.className = "text-start fw-bold";
+        tdCust.textContent = customerName;
+
+        const tdMove = document.createElement("td");
+        tdMove.textContent = movementType;
+
+        const tdAmt = document.createElement("td");
+        tdAmt.className = "text-end fw-bold text-success";
+        tdAmt.textContent = total;
+
+        const tdAct = document.createElement("td");
+        tdAct.className = "text-center";
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "btn btn-sm btn-success select-invoice-btn";
+        btn.dataset.id = p.InvoiceNo || "";
+        btn.title = "Select this invoice";
+        btn.innerHTML = '<i class="bi bi-check2-circle"></i> Select';
+        tdAct.appendChild(btn);
+
+        tr.append(tdIdx, tdInv, tdDate, tdCust, tdMove, tdAmt, tdAct);
+        frag.appendChild(tr);
+    });
+
+    tbodyEl.innerHTML = "";
+    tbodyEl.appendChild(frag);
 }

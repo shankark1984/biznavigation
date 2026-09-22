@@ -697,7 +697,7 @@ tfoot td {
     }
 
     .card-header {
-        padding: 8px 12px;
+        padding: 5px 10px;
     }
 
     .card-body {
@@ -705,13 +705,13 @@ tfoot td {
     }
 
     .form-label {
-        font-size: 12px;
+        font-size: 10px;
     }
 
     .form-control,
     .form-select {
-        font-size: 12px;
-        height: 32px;
+        font-size: 10px;
+        height: 30px;
     }
 
     .modal-dialog {

@@ -15,7 +15,12 @@ const TABLE_CONFIG_FTL = {
         { id: "totalQuantity" }, { id: "totalChargeableWeight" }, { id: "totalFreight" },
         { id: "totalOtherAmt" }, { id: "totalSGST" }, { id: "totalCGST" },
         { id: "totalIGST" }, { id: "totalGST" }, { id: "totalGrand" }, { empty: true }
-    ]
+    ],
+    // Named cell indices — survives reordering better than magic numbers
+    CELL_INDEX: {
+        QTY: 10, WEIGHT: 11, FREIGHT: 12, OTHER: 13,
+        SGST: 14, CGST: 15, IGST: 16, GST: 17, GRAND: 18
+    }
 };
 
 // ============================================
@@ -26,6 +31,7 @@ class FTLInvoiceState {
         this.lockedBookingIds = [];
         this.totals = this.getInitialTotals();
         this.mergedChargesMap = {};
+        this.rowCharges = {};    // NEW: shipId → per-row charges (for precise removal)
         this.unlockTimer = null;
     }
 
@@ -37,6 +43,7 @@ class FTLInvoiceState {
         this.lockedBookingIds = [];
         this.totals = this.getInitialTotals();
         this.mergedChargesMap = {};
+        this.rowCharges = {};
         if (this.unlockTimer) {
             clearTimeout(this.unlockTimer);
             this.unlockTimer = null;
@@ -46,10 +53,19 @@ class FTLInvoiceState {
 
 const ftlState = new FTLInvoiceState();
 
+// Public API — call this from newInvoice() in Invoice.js
+function ftl_resetState() {
+    ftlState.reset();
+}
+
 // ============================================
 // UTILITY FUNCTIONS
 // ============================================
 const formatAmt = (v) => (parseFloat(v) || 0).toFixed(2);
+
+// Reusable toCents / toCurrency (local to FTL — avoids load-order dependency)
+const ftlToCents = (amount) => Math.round((parseFloat(amount) || 0) * 100);
+const ftlFromCents = (cents) => cents / 100;
 
 const getFTLTableBody = () => document.querySelector('#pendingShipmentTable tbody');
 
@@ -141,88 +157,81 @@ function createFTLRow(invoice, charges) {
     return row;
 }
 
-// ============================================
-// CORE BUSINESS LOGIC (Optimized)
-// ============================================
 async function FTL_FCL_getPendingInvoiceDetails() {
     const partyCode = document.getElementById('partyCode').value.trim();
     const invoiceDate = document.getElementById('invoiceDate').value;
     const movementType = document.getElementById('movementType').value;
 
-    if (!partyCode) return alert('Select customer');
+    if (!partyCode) return alert('Select customer. (Hidden partyCode is missing)');
     if (!invoiceDate) return alert('Select invoice date');
     if (!movementType) return alert('Select movement type');
+    if (!UserLoginID) return alert('User session missing — please log in again.');
 
     const btn = document.getElementById('fetchPendingInvoices');
     if (btn.disabled) return;
-
     btn.disabled = true;
     showSpinner();
+
+    // Reset local state + clear any leftover rows from a previous fetch
     ftlState.reset();
+    const tbody = getFTLTableBody();
+    if (tbody) tbody.innerHTML = '';
 
     try {
-        // STEP 1: FETCH BOOKINGS
+        // ─────────────────────────────────────────────
+        // STEP 1: Fetch unlocked, pending bookings with sale > 0
+        // ─────────────────────────────────────────────
         const { data, error } = await supabaseClient
             .from('FullLoadMovementDetailsView')
-            .select('*')
+            .select('id, LRNumber, PickupDate, TransitType, ModeType, RouteDetails, OriginCity, DestinationCity, VehicleType, VehicleNumber, ContainerNumber, Quantity, ChargeableWeight, GrandTotalSale')
             .eq('company_id', CompanyID)
             .eq('CustomerCode', partyCode)
-            .eq('InvoiceStatus', "Pending")
-            .eq('IsLocked', false)
+            .eq('InvoiceStatus', 'Pending')
+            .gt('GrandTotalSale', 0)
+            .or('IsLocked.eq.false,IsLocked.is.null')
             .order('PickupDate', { ascending: true })
             .order('LRNumber', { ascending: true });
 
         if (error) throw error;
-        if (!data || data.length === 0) {
-            alert('No pending invoices');
+
+        if (!data?.length) {
+            alert('No pending invoices found for this Customer & Company.');
             return;
         }
 
+        // ─────────────────────────────────────────────
+        // STEP 2: Atomically lock the fetched rows
+        // ─────────────────────────────────────────────
         const bookingIds = data.map(d => d.id);
 
-        // --- DEBUG SNIPPET START ---
-        // This will print the actual state of the base table to your console 
-        // before attempting to update, helping identify RLS or ID mismatch issues.
-        const { data: baseTableCheck } = await supabaseClient
-            .from('FullLoadBookingDetails')
-            .select('id, IsLocked')
-            .in('id', bookingIds);
-        console.log("🔍 DEBUG - Base table rows found:", baseTableCheck);
-        // --- DEBUG SNIPPET END ---
-
-        // STEP 2: LOCK BOOKINGS
         const { data: lockedRows, error: lockError } = await supabaseClient
             .from('FullLoadBookingDetails')
-            .update({ IsLocked: true, LockedBy: UserLoginID, LockedAt: new Date().toISOString() })
+            .update({
+                IsLocked: true,
+                LockedBy: UserLoginID,
+                LockedAt: new Date().toISOString()
+            })
             .in('id', bookingIds)
-            .eq('IsLocked', false)
+            .or('IsLocked.eq.false,IsLocked.is.null')
             .select('id');
 
         if (lockError) throw lockError;
 
-        // Use Set for fast lookup and protect against lockedRows being null
         const lockedIdsSet = new Set((lockedRows || []).map(r => r.id));
-        ftlState.lockedBookingIds = Array.from(lockedIdsSet);
-
-        console.log(`Locked ${lockedIdsSet.size} out of ${bookingIds.length} bookings.`);
-
-        // EARLY EXIT: If nothing locked, alert and stop.
         if (lockedIdsSet.size === 0) {
-            alert('Could not lock any bookings. Check the console for debug info.');
+            alert('All matching invoices are currently locked by another user. Please try again shortly.');
             return;
         }
 
-        if (lockedIdsSet.size < bookingIds.length) {
-            console.warn("⚠ Some records already locked by another user or could not be locked");
-        }
+        ftlState.lockedBookingIds = Array.from(lockedIdsSet);
+        startFTLAutoUnlockTimer();
 
-        // Filter bookings and LR numbers to ONLY include successfully locked ones
         const lockedBookings = data.filter(d => lockedIdsSet.has(d.id));
         const lockedLrNumbers = lockedBookings.map(d => d.LRNumber);
 
-        startFTLAutoUnlockTimer();
-
-        // STEP 3: BULK FETCH CHARGES (Optimized to only fetch for locked records)
+        // ─────────────────────────────────────────────
+        // STEP 3: Bulk-fetch sale charges for locked LRs
+        // ─────────────────────────────────────────────
         const { data: chargesData, error: chargeError } = await supabaseClient
             .from('FullLoadBookingCharges')
             .select('*')
@@ -239,26 +248,33 @@ async function FTL_FCL_getPendingInvoiceDetails() {
             processCharge(chargesByLR[lr], charge);
         });
 
-        // STEP 4: RENDER & ACCUMULATE
+        // ─────────────────────────────────────────────
+        // STEP 4: Build table headers + render rows
+        // ─────────────────────────────────────────────
         FTL_FCL_createPendingShipmentTableHeaderAndFooter();
-        const tbody = getFTLTableBody();
+        const tbodyEl = getFTLTableBody();     // re-query — createTable may have rebuilt DOM
         const fragment = document.createDocumentFragment();
 
         lockedBookings.forEach(inv => {
             const charges = chargesByLR[inv.LRNumber];
             if (!charges || charges.grandTotal <= 0) return;
 
+            ftlState.rowCharges[inv.id] = charges;
             accumulateFTLTotals(inv, charges);
             fragment.appendChild(createFTLRow(inv, charges));
         });
 
-        tbody.appendChild(fragment);
+        tbodyEl.appendChild(fragment);
         updateFTLTotalsDisplay();
-        renderChargesTable(ftlState.mergedChargesMap);
 
+        if (typeof renderChargesTable === 'function') {
+            renderChargesTable(ftlState.mergedChargesMap);
+        }
     } catch (err) {
-        console.error('Error loading invoices:', err);
-        alert('Error loading invoices');
+        console.error('❌ Error loading invoices:', err);
+        alert('Error loading invoices. Check console for details.');
+        // Rollback local lock state — leave server as-is
+        ftlState.reset();
     } finally {
         hideSpinner();
         btn.disabled = false;
@@ -290,10 +306,13 @@ function accumulateFTLTotals(inv, charges) {
 // ============================================
 // UI & ROW MANAGEMENT
 // ============================================
-async function FTL_FCL_createPendingShipmentTableHeaderAndFooter() {
+function FTL_FCL_createPendingShipmentTableHeaderAndFooter() {
     const table = document.getElementById("pendingShipmentTable");
+    if (!table) return;
+
     table.querySelectorAll("thead, tfoot").forEach(el => el.remove());
 
+    // THEAD
     const thead = document.createElement("thead");
     thead.className = "table-light";
     const headRow = document.createElement("tr");
@@ -305,6 +324,7 @@ async function FTL_FCL_createPendingShipmentTableHeaderAndFooter() {
     thead.appendChild(headRow);
     table.prepend(thead);
 
+    // TFOOT
     const tfoot = document.createElement("tfoot");
     tfoot.className = "table-light";
     const footRow = document.createElement("tr");
@@ -334,26 +354,61 @@ function ftl_removeRow(button) {
 
     const shipId = parseInt(row.getAttribute('data-ship-id'));
 
-    // Un-track and unlock
+    // 1. Untrack + unlock
     if (shipId) {
         ftlState.lockedBookingIds = ftlState.lockedBookingIds.filter(id => id !== shipId);
-        unlockShipmentRecord_ftl(shipId); // async fire & forget
+        if (typeof unlockShipmentRecord_ftl === 'function') {
+            unlockShipmentRecord_ftl(shipId);   // fire & forget
+        }
     }
 
-    // Subtract from state
-    const t = ftlState.totals;
-    t.qty -= parseFloatSafe(row.cells[10].textContent);
-    t.weight -= parseFloatSafe(row.cells[11].textContent);
-    t.freight -= parseFloatSafe(row.cells[12].textContent);
-    t.other -= parseFloatSafe(row.cells[13].textContent);
-    t.sgst -= parseFloatSafe(row.cells[14].textContent);
-    t.cgst -= parseFloatSafe(row.cells[15].textContent);
-    t.igst -= parseFloatSafe(row.cells[16].textContent);
-    t.gst -= parseFloatSafe(row.cells[17].textContent);
-    t.grand -= parseFloatSafe(row.cells[18].textContent);
+    // 2. Subtract from state using cached per-row charges (precise)
+    const cachedCharges = ftlState.rowCharges[shipId];
 
-    updateFTLTotalsDisplay();
+    if (cachedCharges) {
+        const t = ftlState.totals;
+        t.qty -= parseFloatSafe(row.cells[TABLE_CONFIG_FTL.CELL_INDEX.QTY].textContent);
+        t.weight -= parseFloatSafe(row.cells[TABLE_CONFIG_FTL.CELL_INDEX.WEIGHT].textContent);
+        t.freight -= cachedCharges.BasicFrightAmt;
+        t.other -= cachedCharges.OtherAmt;
+        t.sgst -= cachedCharges.totalSGST;
+        t.cgst -= cachedCharges.totalCGST;
+        t.igst -= cachedCharges.totalIGST;
+        t.gst -= cachedCharges.totalGST;
+        t.grand -= cachedCharges.grandTotal;
+
+        // Subtract this row's charge breakdown from mergedChargesMap
+        Object.entries(cachedCharges.chargesMap).forEach(([type, amt]) => {
+            const merged = ftlState.mergedChargesMap[type];
+            if (!merged) return;
+            ['TotalAmount', 'SGSTAmt', 'CGSTAmt', 'IGSTAmt', 'TotalGSTAmt', 'GrandTotalAmt'].forEach(field => {
+                merged[field] -= amt[field];
+            });
+            // Clean up zero entries
+            const isEmpty = ['TotalAmount', 'SGSTAmt', 'CGSTAmt', 'IGSTAmt', 'TotalGSTAmt', 'GrandTotalAmt']
+                .every(f => Math.abs(merged[f]) < 0.005);
+            if (isEmpty) delete ftlState.mergedChargesMap[type];
+        });
+
+        delete ftlState.rowCharges[shipId];
+    }
+
+    // 3. Remove from DOM
     row.remove();
+
+    // 4. Refresh displays
+    updateFTLTotalsDisplay();
+    if (typeof renderChargesTable === 'function') {
+        renderChargesTable(ftlState.mergedChargesMap);
+    }
+
+    // 5. If no rows left, clear everything
+    const remaining = getFTLTableBody()?.querySelectorAll('tr').length || 0;
+    if (remaining === 0) {
+        ftlState.reset();
+        updateFTLTotalsDisplay();
+        if (typeof clearChargesTable === 'function') clearChargesTable();
+    }
 }
 
 // ============================================
@@ -365,12 +420,12 @@ async function ftl_addSingleShipmentToInvoice(shipmentNo, invoiceNo) {
     try {
         showSpinner();
 
-        // Check UI duplicates
+        // 1. UI duplicate check
         const exists = Array.from(document.querySelectorAll('#pendingShipmentTable tbody tr'))
             .some(row => row.cells[0]?.textContent.trim() === shipmentNo);
         if (exists) return alert('Shipment already added');
 
-        // Fetch Shipment
+        // 2. Fetch shipment
         const { data: shipment, error: fetchError } = await supabaseClient
             .from('FullLoadMovementDetailsView')
             .select('*')
@@ -380,9 +435,11 @@ async function ftl_addSingleShipmentToInvoice(shipmentNo, invoiceNo) {
 
         if (fetchError || !shipment) return alert('Shipment not found');
         if (shipment.InvoiceNumber && shipment.InvoiceNumber !== invoiceNo) return alert('Assigned to another invoice');
-        if (shipment.IsLocked) return alert('Locked by another user');
 
-        // Lock Record
+        // FIX: Treat NULL as unlocked too
+        if (shipment.IsLocked === true) return alert('Locked by another user');
+
+        // 3. Lock record — FIX: handle NULL IsLocked
         const { data: updatedRows, error: lockError } = await supabaseClient
             .from('FullLoadBookingDetails')
             .update({
@@ -390,12 +447,12 @@ async function ftl_addSingleShipmentToInvoice(shipmentNo, invoiceNo) {
                 invoice_number: invoiceNo, InvoiceStatus: true
             })
             .eq('id', shipment.id)
-            .eq('IsLocked', false)
+            .or('IsLocked.eq.false,IsLocked.is.null')
             .select('id');
 
         if (lockError || !updatedRows?.length) return alert('Record locked by another user');
 
-        // Fetch Charges
+        // 4. Fetch charges
         const { data: chargesData } = await supabaseClient
             .from('FullLoadBookingCharges')
             .select('*')
@@ -407,18 +464,26 @@ async function ftl_addSingleShipmentToInvoice(shipmentNo, invoiceNo) {
 
         if (chargesObj.grandTotal <= 0) return alert('No billable amount found');
 
-        // Append to UI & State
+        // 5. Ensure thead/tfoot exist, then re-query tbody
+        if (!getFTLTableBody()) {
+            FTL_FCL_createPendingShipmentTableHeaderAndFooter();
+        }
         const tbody = getFTLTableBody();
-        if (!tbody) FTL_FCL_createPendingShipmentTableHeaderAndFooter();
+        if (!tbody) return alert('Table not ready');
 
-        ftlState.lockedBookingIds.push(shipment.id);
+        // 6. Update state (with dedupe)
+        if (!ftlState.lockedBookingIds.includes(shipment.id)) {
+            ftlState.lockedBookingIds.push(shipment.id);
+        }
+        ftlState.rowCharges[shipment.id] = chargesObj;
         accumulateFTLTotals(shipment, chargesObj);
 
-        document.querySelector('#pendingShipmentTable tbody').appendChild(createFTLRow(shipment, chargesObj));
+        // 7. Append row + refresh
+        tbody.appendChild(createFTLRow(shipment, chargesObj));
         updateFTLTotalsDisplay();
-
-        // Re-render charge breakdown safely
-        if (typeof renderChargesTable === "function") renderChargesTable(ftlState.mergedChargesMap);
+        if (typeof renderChargesTable === 'function') {
+            renderChargesTable(ftlState.mergedChargesMap);
+        }
 
     } catch (err) {
         console.error('❌ Error:', err.message);
@@ -468,7 +533,10 @@ async function ftl_loadInvoiceBookings(invoiceNo) {
             const charges = chargesByLR[inv.LRNumber];
             if (!charges || charges.grandTotal <= 0) return;
 
-            ftlState.lockedBookingIds.push(inv.id);
+            if (!ftlState.lockedBookingIds.includes(inv.id)) {
+                ftlState.lockedBookingIds.push(inv.id);
+            }
+            ftlState.rowCharges[inv.id] = charges;
             accumulateFTLTotals(inv, charges);
             fragment.appendChild(createFTLRow(inv, charges));
         });
@@ -489,10 +557,13 @@ async function ftl_updateInvoiceNumbers(invoiceNo) {
     if (!invoiceNo) return alert('Invalid invoice number.');
 
     const rows = document.querySelectorAll('#pendingShipmentTable tbody tr');
-    const shipmentIds = Array.from(rows).map(r => parseInt(r.getAttribute('data-ship-id'))).filter(id => !isNaN(id));
+    const shipmentIds = Array.from(rows)
+        .map(r => parseInt(r.getAttribute('data-ship-id')))
+        .filter(id => !isNaN(id));
 
     showSpinner();
     try {
+        // Unlink previous invoice assignments
         await supabaseClient
             .from('FullLoadBookingDetails')
             .update({ InvoiceStatus: false, invoice_number: null })
@@ -501,9 +572,21 @@ async function ftl_updateInvoiceNumbers(invoiceNo) {
         if (shipmentIds.length > 0) {
             await supabaseClient
                 .from('FullLoadBookingDetails')
-                .update({ InvoiceStatus: true, invoice_number: invoiceNo, IsLocked: false, LockedBy: null, LockedAt: null })
+                .update({
+                    InvoiceStatus: true,
+                    invoice_number: invoiceNo,
+                    IsLocked: false,
+                    LockedBy: null,
+                    LockedAt: null
+                })
                 .in('id', shipmentIds);
         }
+
+        // FIX: clear local lock state after successful save
+        ftlState.lockedBookingIds = [];
+        ftlState.rowCharges = {};
+        ftlState.mergedChargesMap = {};
+
     } catch (err) {
         console.error('❌ Error updating invoice:', err.message);
         alert('Error updating invoice numbers.');
@@ -520,7 +603,7 @@ async function ftl_unlockBooking(userID) {
             .update({ IsLocked: false, LockedBy: null, LockedAt: null })
             .eq("LockedBy", userID);
 
-        ftlState.lockedBookingIds = [];
+        ftlState.reset();
     } catch (err) {
         console.error("❌ Unlock failed:", err.message);
     }

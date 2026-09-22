@@ -73,6 +73,7 @@ async function loadReportSuggestions() {
         .from('FullLoadMovementDetailsView')
         .select('LRNumber, CustomerName, MovementType, OriginCity, DestinationCity, ModeType, InvoiceStatus, PickupDate,VendorName')
         .eq('company_id', CompanyID)
+        .order('LRNumber', { ascending: false })
         .order('PickupDate', { ascending: false })
         .limit(1000);
 
@@ -274,6 +275,166 @@ function renderPagination(totalCount, loadTableFn) {
     }
 }
 
+function applyFilters(query, filters) {
+    if (filters.docketNo) query = query.ilike('LRNumber', `%${filters.docketNo}%`);
+    if (filters.customerName) query = query.ilike('CustomerName', `%${filters.customerName}%`);
+    if (filters.movementType) query = query.ilike('MovementType', `%${filters.movementType}%`);
+    if (filters.modeType) query = query.ilike('ModeType', `%${filters.modeType}%`);
+    if (filters.vendorName) query = query.ilike('VendorName', `%${filters.vendorName}%`);
+    if (filters.routeDetails) query = query.ilike('RouteDetails', `%${filters.routeDetails}%`);
+    if (filters.originCity) query = query.ilike('OriginCity', `%${filters.originCity}%`);
+    if (filters.destinationCity) query = query.ilike('DestinationCity', `%${filters.destinationCity}%`);
+    if (filters.invoiceStatus) query = query.ilike('InvoiceStatus', `%${filters.invoiceStatus}%`);
+    if (filters.startDate) query = query.gte('PickupDate', filters.startDate);
+    if (filters.endDate) query = query.lte('PickupDate', filters.endDate);
+
+    // Month filter
+    if (filters.bookedMonth) {
+        let [monthStr, yearStr] = filters.bookedMonth.split('-');
+        if (parseInt(monthStr) > 12) [yearStr, monthStr] = [monthStr, yearStr];
+
+        const month = parseInt(monthStr);
+        const year = parseInt(yearStr);
+
+        if (!isNaN(year) && !isNaN(month)) {
+            const start = new Date(year, month - 1, 1).toISOString().split('T')[0];
+            const end = new Date(year, month, 0).toISOString().split('T')[0];
+            query = query.gte('PickupDate', start).lte('PickupDate', end);
+        }
+    }
+
+    // Year filter
+    if (!filters.bookedMonth && filters.bookedYear) {
+        const year = parseInt(filters.bookedYear);
+        if (!isNaN(year)) {
+            query = query
+                .gte('PickupDate', `${year}-01-01`)
+                .lte('PickupDate', `${year}-12-31`);
+        }
+    }
+
+    // Financial year
+    if (filters.financialYear) {
+        const [startYear, endYear] = filters.financialYear.split('-').map(Number);
+        query = query
+            .gte('PickupDate', `${startYear}-04-01`)
+            .lte('PickupDate', `${endYear}-03-31`);
+    }
+
+    return query;
+}
+
+async function loadTable(filters = {}) {
+    const spinner = document.getElementById('loadingSpinner');
+    spinner.classList.remove('d-none');
+
+    let query = supabaseClient
+        .from('FullLoadMovementDetailsView')
+        .select('*', { count: 'exact' })
+        .eq('company_id', CompanyID)
+        .order('LRNumber', { ascending: false }); // Or false if you want newest first
+
+    // ✅ Apply common filters
+    query = applyFilters(query, filters);
+
+    // ✅ Sorting
+    if (sortColumn) {
+        query = query.order(sortColumn, { ascending: sortOrder === 'asc' });
+    }
+
+    const { data, error, count } = await query.range(
+        (currentPage - 1) * pageSize,
+        currentPage * pageSize - 1
+    );
+
+    spinner.classList.add('d-none');
+
+    if (error) {
+        console.error('Error loading table:', error);
+        return;
+    }
+
+    renderTable(data);
+    renderPagination(count, loadTable);
+    updateHeaderSortIndicators();
+}
+
+async function fetchAllFilteredData(filters = {}) {
+    let allData = [];
+    let batchSize = 1000;
+    let from = 0;
+    let to = batchSize - 1;
+    let hasMore = true;
+
+    while (hasMore) {
+        let query = supabaseClient
+            .from('FullLoadMovementDetailsView')
+            .select('*')
+            .eq('company_id', CompanyID);
+
+        // ✅ Apply same filters
+        query = applyFilters(query, filters);
+
+        // ✅ Apply the same sorting as the UI table
+        if (sortColumn) {
+            query = query.order(sortColumn, { ascending: sortOrder === 'asc' });
+        } else {
+            query = query.order('LRNumber', { ascending: true }); // Default to LRNumber
+        }
+
+        const { data, error } = await query.range(from, to);
+
+        if (error) {
+            console.error('Error fetching data for export:', error);
+            break;
+        }
+
+        if (data.length > 0) {
+            allData = allData.concat(data);
+            from += batchSize;
+            to += batchSize;
+        } else {
+            hasMore = false;
+        }
+    }
+
+    return allData;
+}
+
+function setSearchButtonLoading(isLoading) {
+    const btn = document.getElementById("searchBtn");
+
+    if (isLoading) {
+        btn.disabled = true;
+        btn.innerHTML = `
+            <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+            Processing...
+        `;
+    } else {
+        btn.disabled = false;
+        btn.innerHTML = `
+            <i class="bi bi-search"></i> Search
+        `;
+    }
+}
+
+document.getElementById("searchBtn").addEventListener("click", async () => {
+    currentPage = 1;
+
+    // Collapse filter section
+    const filterSection = document.getElementById("filterSection");
+    const collapse = bootstrap.Collapse.getOrCreateInstance(filterSection);
+    collapse.hide();
+
+    setSearchButtonLoading(true);
+
+    try {
+        await loadTable(getFilters());
+    } finally {
+        setSearchButtonLoading(false);
+    }
+});
+
 async function exportToExcel() {
 
     const filters = getFilters();
@@ -408,157 +569,3 @@ async function exportToPdf() {
 
     doc.save('ReportFullTruckDetails.pdf');
 }
-
-function applyFilters(query, filters) {
-    if (filters.docketNo) query = query.ilike('LRNumber', `%${filters.docketNo}%`);
-    if (filters.customerName) query = query.ilike('CustomerName', `%${filters.customerName}%`);
-    if (filters.movementType) query = query.ilike('MovementType', `%${filters.movementType}%`);
-    if (filters.modeType) query = query.ilike('ModeType', `%${filters.modeType}%`);
-    if (filters.vendorName) query = query.ilike('VendorName', `%${filters.vendorName}%`);
-    if (filters.routeDetails) query = query.ilike('RouteDetails', `%${filters.routeDetails}%`);
-    if (filters.originCity) query = query.ilike('OriginCity', `%${filters.originCity}%`);
-    if (filters.destinationCity) query = query.ilike('DestinationCity', `%${filters.destinationCity}%`);
-    if (filters.invoiceStatus) query = query.ilike('InvoiceStatus', `%${filters.invoiceStatus}%`);
-    if (filters.startDate) query = query.gte('PickupDate', filters.startDate);
-    if (filters.endDate) query = query.lte('PickupDate', filters.endDate);
-
-    // Month filter
-    if (filters.bookedMonth) {
-        let [monthStr, yearStr] = filters.bookedMonth.split('-');
-        if (parseInt(monthStr) > 12) [yearStr, monthStr] = [monthStr, yearStr];
-
-        const month = parseInt(monthStr);
-        const year = parseInt(yearStr);
-
-        if (!isNaN(year) && !isNaN(month)) {
-            const start = new Date(year, month - 1, 1).toISOString().split('T')[0];
-            const end = new Date(year, month, 0).toISOString().split('T')[0];
-            query = query.gte('PickupDate', start).lte('PickupDate', end);
-        }
-    }
-
-    // Year filter
-    if (!filters.bookedMonth && filters.bookedYear) {
-        const year = parseInt(filters.bookedYear);
-        if (!isNaN(year)) {
-            query = query
-                .gte('PickupDate', `${year}-01-01`)
-                .lte('PickupDate', `${year}-12-31`);
-        }
-    }
-
-    // Financial year
-    if (filters.financialYear) {
-        const [startYear, endYear] = filters.financialYear.split('-').map(Number);
-        query = query
-            .gte('PickupDate', `${startYear}-04-01`)
-            .lte('PickupDate', `${endYear}-03-31`);
-    }
-
-    return query;
-}
-
-async function loadTable(filters = {}) {
-    const spinner = document.getElementById('loadingSpinner');
-    spinner.classList.remove('d-none');
-
-    let query = supabaseClient
-        .from('FullLoadMovementDetailsView')
-        .select('*', { count: 'exact' })
-        .eq('company_id', CompanyID)
-        .order('PickupDate', { ascending: false });
-
-    // ✅ Apply common filters
-    query = applyFilters(query, filters);
-
-    // ✅ Sorting
-    if (sortColumn) {
-        query = query.order(sortColumn, { ascending: sortOrder === 'asc' });
-    }
-
-    const { data, error, count } = await query.range(
-        (currentPage - 1) * pageSize,
-        currentPage * pageSize - 1
-    );
-
-    spinner.classList.add('d-none');
-
-    if (error) {
-        console.error('Error loading table:', error);
-        return;
-    }
-
-    renderTable(data);
-    renderPagination(count, loadTable);
-    updateHeaderSortIndicators();
-}
-
-async function fetchAllFilteredData(filters = {}) {
-    let allData = [];
-    let batchSize = 1000;
-    let from = 0;
-    let to = batchSize - 1;
-    let hasMore = true;
-
-    while (hasMore) {
-        let query = supabaseClient
-            .from('FullLoadMovementDetailsView')
-            .select('*')
-            .eq('company_id', CompanyID)
-            .order('PickupDate', { ascending: false });
-
-        // ✅ Apply same filters
-        query = applyFilters(query, filters);
-
-        const { data, error } = await query.range(from, to);
-
-        if (error) {
-            console.error('Error fetching data for export:', error);
-            break;
-        }
-
-        if (data.length > 0) {
-            allData = allData.concat(data);
-            from += batchSize;
-            to += batchSize;
-        } else {
-            hasMore = false;
-        }
-    }
-
-    return allData;
-}
-
-function setSearchButtonLoading(isLoading) {
-    const btn = document.getElementById("searchBtn");
-
-    if (isLoading) {
-        btn.disabled = true;
-        btn.innerHTML = `
-            <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-            Processing...
-        `;
-    } else {
-        btn.disabled = false;
-        btn.innerHTML = `
-            <i class="bi bi-search"></i> Search
-        `;
-    }
-}
-
-document.getElementById("searchBtn").addEventListener("click", async () => {
-    currentPage = 1;
-
-    // Collapse filter section
-    const filterSection = document.getElementById("filterSection");
-    const collapse = bootstrap.Collapse.getOrCreateInstance(filterSection);
-    collapse.hide();
-
-    setSearchButtonLoading(true);
-
-    try {
-        await loadTable(getFilters());
-    } finally {
-        setSearchButtonLoading(false);
-    }
-});

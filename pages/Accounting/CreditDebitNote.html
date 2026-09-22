@@ -6,8 +6,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Credit or Debit Note</title>
 
-    <!-- Preconnect to CDN for faster asset loading -->
+    <!-- Resource Hints -->
     <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <!-- Modern Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <!-- Bootstrap CSS & Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -18,87 +24,492 @@
 
     <!-- Sidebar CSS -->
     <link rel="stylesheet" href="../../assets/css/navbar.css" />
+
     <!-- html2pdf library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
+    <!-- Upgraded Modern Form Styles (Unified) -->
     <style>
+        :root {
+            --primary-color: #2563eb;
+            --primary-hover: #1d4ed8;
+            --success-color: #059669;
+            --warning-color: #d97706;
+            --danger-color: #dc2626;
+            --info-color: #0284c7;
+            --bg-color: #f8fafc;
+            --surface-color: #ffffff;
+            --border-color: #e2e8f0;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --radius-md: 8px;
+            --radius-lg: 12px;
+            --transition: all 0.2s ease-in-out;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            font-family: 'Inter', sans-serif;
+            color: var(--text-main);
+        }
+
+        /* Card Styling */
+        .card {
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            border-radius: var(--radius-lg);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -2px rgba(0, 0, 0, 0.02) !important;
+            background-color: var(--surface-color);
+        }
+
+        .card-body {
+            padding: 1.5rem 2rem !important;
+        }
+
+        /* Action Bar */
+        .action-bar {
+            padding-bottom: 1.25rem;
+            margin-bottom: 1.25rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .btn {
+            font-weight: 500;
+            border-radius: 6px;
+            padding: 0.4rem 0.875rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            transition: var(--transition);
+        }
+
+        .btn-sm {
+            font-size: 0.85rem;
+        }
+
+        /* Form Controls */
+        .form-label {
+            margin-bottom: 0.3rem !important;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-label.small {
+            font-size: 0.72rem !important;
+        }
+
+        .form-control,
+        .form-select {
+            padding: 0.45rem 0.75rem !important;
+            font-size: 0.875rem !important;
+            background-color: #f8fafc;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            color: var(--text-main);
+            transition: var(--transition);
+        }
+
+        .form-control-sm,
+        .form-select-sm {
+            padding: 0.4rem 0.7rem !important;
+            font-size: 0.85rem !important;
+            border-radius: var(--radius-md);
+        }
+
+        .form-control:hover,
+        .form-select:hover {
+            border-color: #cbd5e1;
+        }
+
+        .form-control:focus,
+        .form-select:focus {
+            background-color: #ffffff;
+            border-color: #93c5fd;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+        }
+
+        .form-control::placeholder {
+            color: #94a3b8;
+        }
+
+        .form-control[readonly],
+        .form-control.bg-light {
+            background-color: #f1f5f9 !important;
+            color: #475569;
+            cursor: default;
+        }
+
+        textarea.form-control {
+            min-height: 38px !important;
+            resize: none;
+        }
+
+        /* Section Headers */
+        .section-header {
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--text-main);
+            padding: 0.75rem 0 0.65rem 0;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .section-header::before {
+            content: "";
+            display: inline-block;
+            width: 4px;
+            height: 14px;
+            border-radius: 2px;
+            background-color: var(--primary-color);
+        }
+
+        /* Section Wrapper (replaces .border.rounded.p-2) */
+        .form-section {
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 1.25rem 1.5rem;
+            background-color: var(--surface-color);
+            margin-bottom: 1.25rem;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.02);
+        }
+
+        /* Input group */
+        .input-group-sm>.form-control,
+        .input-group-sm>.form-select {
+            padding: 0.4rem 0.7rem !important;
+            font-size: 0.85rem !important;
+        }
+
+        .input-group .btn-secondary {
+            background-color: #f8fafc;
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+        }
+
+        .input-group .btn-secondary:hover {
+            background-color: #eff6ff;
+            color: var(--primary-color);
+            border-color: #bfdbfe;
+        }
+
+        /* Modern Tables */
+        .table-responsive {
+            max-height: 320px;
+            overflow: auto;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            background: var(--surface-color);
+        }
+
+        .table {
+            margin-bottom: 0;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+
+        .table thead th {
+            position: sticky;
+            top: 0;
+            background-color: #f1f5f9 !important;
+            color: var(--text-muted);
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+            z-index: 10;
+            padding: 0.6rem 0.75rem !important;
+            border-bottom: 1px solid var(--border-color);
+            border-top: none;
+            white-space: nowrap;
+            text-align: center;
+        }
+
+        .table tbody td {
+            padding: 0.6rem 0.75rem !important;
+            font-size: 0.82rem;
+            vertical-align: middle;
+            color: var(--text-main);
+            border-bottom: 1px solid var(--border-color);
+            border-color: var(--border-color);
+        }
+
+        .table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .table tbody tr:hover {
+            background-color: #f8fafc;
+        }
+
+        .table tfoot td {
+            background-color: #f1f5f9;
+            font-weight: 700;
+            font-size: 0.82rem;
+            padding: 0.7rem 0.75rem !important;
+            border-top: 1px solid var(--border-color);
+            color: var(--text-main);
+        }
+
+        .table tfoot td#totalGrand {
+            color: var(--primary-color) !important;
+        }
+
+        /* Reference suggestions dropdown */
         #referenceSuggestions {
-            border: 1px solid #dee2e6;
+            border: 1px solid var(--border-color);
             border-top: none;
             background: #fff;
+            border-radius: 0 0 var(--radius-md) var(--radius-md);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
         }
 
         #referenceSuggestions .list-group-item {
             cursor: pointer;
-            padding: 0.35rem 0.75rem;
+            padding: 0.45rem 0.85rem;
+            font-size: 0.85rem;
+            border: none;
+            border-bottom: 1px solid var(--border-color);
+            transition: var(--transition);
+        }
+
+        #referenceSuggestions .list-group-item:last-child {
+            border-bottom: none;
         }
 
         #referenceSuggestions .list-group-item:hover {
-            background: #f8f9fa;
+            background: #f8fafc;
+            color: var(--primary-color);
+        }
+
+        /* Modals */
+        .modal-content {
+            border: none;
+            border-radius: var(--radius-lg);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+        }
+
+        .modal-header {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .modal-header.bg-light {
+            background-color: #f1f5f9 !important;
+            color: var(--text-main);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .modal-header.bg-primary {
+            background-color: var(--primary-color) !important;
+        }
+
+        .modal-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+        }
+
+        .modal-footer {
+            border-top: 1px solid var(--border-color);
+            padding: 0.85rem 1.5rem;
+            background-color: #f8fafc;
+        }
+
+        .modal .table {
+            font-size: 0.85rem;
+        }
+
+        .modal .table thead th {
+            background-color: #f1f5f9 !important;
+            color: var(--text-muted);
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+            padding: 0.6rem 0.75rem !important;
+            border-bottom: 1px solid var(--border-color);
+            border-top: none;
+        }
+
+        .modal .table tbody td {
+            padding: 0.6rem 0.75rem !important;
+            font-size: 0.85rem;
+            vertical-align: middle;
+            border-color: var(--border-color);
+            color: var(--text-main);
+        }
+
+        .modal .table tbody tr:hover {
+            background-color: #f8fafc;
+        }
+
+        /* Address selection list */
+        #addressListContainer .address-item {
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 0.85rem;
+        }
+
+        #addressListContainer .address-item:hover {
+            background-color: #eff6ff;
+            border-color: #bfdbfe;
+        }
+
+        /* Status Badges */
+        .badge.bg-secondary {
+            background-color: #e2e8f0 !important;
+            color: #475569 !important;
+            font-weight: 600;
+            padding: 0.4rem 0.75rem;
+            font-size: 0.75rem;
+            border-radius: 20px;
+        }
+
+        .badge.bg-warning {
+            background-color: #fef3c7 !important;
+            color: #92400e !important;
+            font-weight: 600;
+            padding: 0.4rem 0.75rem;
+            font-size: 0.75rem;
+            border-radius: 20px;
+        }
+
+        /* Select2 unified look */
+        .select2-container--default .select2-selection--single,
+        .select2-container--default .select2-selection--multiple {
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            background-color: #f8fafc;
+            min-height: 38px;
+            padding: 0.15rem 0.5rem;
+        }
+
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            line-height: 30px;
+            font-size: 0.875rem;
+            color: var(--text-main);
+        }
+
+        .select2-container--default.select2-container--focus .select2-selection--single,
+        .select2-container--default.select2-container--focus .select2-selection--multiple {
+            border-color: #93c5fd;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+            background-color: #ffffff;
+        }
+
+        .select2-dropdown {
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+
+        .select2-results__option--highlighted {
+            background-color: var(--primary-color) !important;
+        }
+
+        /* Toast */
+        .toast {
+            border: none;
+            border-radius: var(--radius-md);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.05);
+        }
+
+        /* Mobile tweaks */
+        @media (max-width: 768px) {
+            .card-body {
+                padding: 1rem 1.25rem !important;
+            }
+
+            .form-section {
+                padding: 1rem 1.25rem;
+            }
         }
     </style>
 </head>
 
-<body class="bg-light">
+<body>
     <div class="app-wrapper">
 
         <!-- Sidebar -->
         <div id="sidebar">
-            <div class="text-center text-white p-3">Loading...</div>
+            <div class="text-center text-muted p-3">Loading Sidebar...</div>
         </div>
 
         <!-- Main Content -->
         <div class="main-content">
             <div class="page-content">
-                <div class="container-fluid mt-2 px-3">
-                    <div class="card shadow-sm rounded border-0">
-                        <div class="card-body p-3">
-                            <form class="invoiceForm" id="creditDebitForm">
+                <div class="container-fluid mt-3 mb-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <form class="invoiceForm" id="creditDebitForm" autocomplete="off">
 
-                                <!-- Action Buttons -->
-                                <div class="d-flex flex-wrap gap-2 mb-3 align-items-center">
-                                    <button type="button" class="btn btn-primary btn-sm px-3" id="newButton"
-                                        title="Create new note">
-                                        <i class="bi bi-file-earmark-plus" aria-hidden="true"></i> New
-                                    </button>
+                                <!-- Action Bar -->
+                                <div
+                                    class="action-bar d-flex flex-wrap gap-2 align-items-center justify-content-between">
+                                    <h5 class="m-0 fw-bold text-dark d-none d-md-block">Credit / Debit Note</h5>
 
-                                    <button type="button" class="btn btn-warning btn-sm px-3" id="modifyButton" disabled
-                                        title="Modify note">
-                                        <i class="bi bi-pencil" aria-hidden="true"></i> Modify
-                                    </button>
+                                    <div class="d-flex flex-wrap gap-2 align-items-center">
+                                        <button type="button" class="btn btn-outline-primary btn-sm bg-white"
+                                            id="newButton" title="Create new note">
+                                            <i class="bi bi-file-earmark-plus" aria-hidden="true"></i> New
+                                        </button>
 
-                                    <button type="button" class="btn btn-danger btn-sm px-3" id="deleteButton" disabled
-                                        title="Delete note">
-                                        <i class="bi bi-trash" aria-hidden="true"></i> Delete
-                                    </button>
+                                        <button type="button" class="btn btn-outline-warning btn-sm bg-white"
+                                            id="modifyButton" disabled title="Modify note">
+                                            <i class="bi bi-pencil" aria-hidden="true"></i> Modify
+                                        </button>
 
-                                    <button type="button" class="btn btn-info btn-sm text-white px-3" id="reportButton"
-                                        disabled title="Print report">
-                                        <i class="bi bi-printer" aria-hidden="true"></i> Print
-                                    </button>
+                                        <button type="button" class="btn btn-outline-danger btn-sm bg-white"
+                                            id="deleteButton" disabled title="Delete note">
+                                            <i class="bi bi-trash" aria-hidden="true"></i> Delete
+                                        </button>
 
-                                    <!-- Added Approve Button -->
-                                    <button type="button" class="btn btn-success btn-sm px-3" id="approveButton"
-                                        disabled title="Approve note">
-                                        <i class="bi bi-check-circle" aria-hidden="true"></i> Approve
-                                    </button>
+                                        <button type="button" class="btn btn-outline-info btn-sm bg-white"
+                                            id="reportButton" disabled title="Print report">
+                                            <i class="bi bi-printer" aria-hidden="true"></i> Print
+                                        </button>
 
-                                    <button type="button" class="btn btn-success btn-sm px-3" id="saveButton"
-                                        data-mode="insert" title="Save record">
-                                        <span id="saveSpinnerBtn" class="spinner-border spinner-border-sm me-2 d-none"
-                                            role="status" aria-hidden="true"></span>
-                                        <i class="bi bi-save" aria-hidden="true"></i> Save
-                                    </button>
+                                        <!-- Approve Button -->
+                                        <button type="button" class="btn btn-outline-success btn-sm bg-white"
+                                            id="approveButton" disabled title="Approve note">
+                                            <i class="bi bi-check-circle" aria-hidden="true"></i> Approve
+                                        </button>
 
-                                    <!-- Status Indicator & Approval Badge -->
-                                    <div class="ms-auto d-flex align-items-center gap-2">
-                                        <span class="badge bg-secondary px-2 py-1 fs-6 d-none"
-                                            id="statusBadge">New</span>
-                                        <input type="hidden" id="status" value="New">
+                                        <button type="button" class="btn btn-primary btn-sm px-4 shadow-sm"
+                                            id="saveButton" data-mode="insert" title="Save record">
+                                            <span id="saveSpinnerBtn"
+                                                class="spinner-border spinner-border-sm me-2 d-none" role="status"
+                                                aria-hidden="true"></span>
+                                            <i class="bi bi-check2-circle" aria-hidden="true"></i> Save
+                                        </button>
 
-                                        <span class="badge bg-warning text-dark px-2 py-1 fs-6 d-none"
-                                            id="approvalBadge">Pending Approval</span>
-                                        <input type="hidden" id="approvalStatus" value="Pending">
+                                        <!-- Status Indicator & Approval Badge -->
+                                        <div class="d-flex align-items-center gap-2 ms-2">
+                                            <span class="badge bg-secondary d-none" id="statusBadge">New</span>
+                                            <input type="hidden" id="status" value="New">
+
+                                            <span class="badge bg-warning d-none" id="approvalBadge">Pending
+                                                Approval</span>
+                                            <input type="hidden" id="approvalStatus" value="Pending">
+                                        </div>
                                     </div>
 
                                     <!-- Hidden Fields -->
@@ -108,14 +519,15 @@
                                 </div>
 
                                 <!-- ===================== CREDIT / DEBIT NOTE DETAILS ===================== -->
-                                <div class="border rounded p-2 bg-white mb-3 shadow-none">
-                                    <h6 class="fw-bold text-primary border-bottom pb-1 mb-2">Credit or Debit Note
-                                        Details</h6>
+                                <div class="form-section">
+                                    <h6 class="section-header">
+                                        <i class="bi bi-file-earmark-text"></i> Credit or Debit Note Details
+                                    </h6>
 
-                                    <div class="row g-2">
+                                    <div class="row g-3">
                                         <!-- Note Type -->
                                         <div class="col-md-2">
-                                            <label for="noteType" class="form-label small mb-1">Note Type <span
+                                            <label for="noteType" class="form-label">Note Type <span
                                                     class="text-danger">*</span></label>
                                             <select class="form-select form-select-sm" id="noteType" required>
                                                 <option value="" selected disabled>Choose...</option>
@@ -126,14 +538,14 @@
 
                                         <!-- Note Number -->
                                         <div class="col-md-2">
-                                            <label for="noteNo" class="form-label small mb-1">Note No</label>
+                                            <label for="noteNo" class="form-label">Note No</label>
                                             <div class="input-group input-group-sm">
                                                 <input list="noteNoSuggestions" class="form-control form-control-sm"
                                                     id="noteNo" disabled autocomplete="off">
                                                 <datalist id="noteNoSuggestions"></datalist>
                                                 <button type="button" class="btn btn-secondary btn-sm px-2"
                                                     data-bs-toggle="modal" data-bs-target="#searchPaymentModal"
-                                                    aria-label="Search Notes">
+                                                    aria-label="Search Notes" title="Search Notes">
                                                     <i class="bi bi-search" aria-hidden="true"></i>
                                                 </button>
                                             </div>
@@ -141,7 +553,7 @@
 
                                         <!-- Note Date -->
                                         <div class="col-md-2">
-                                            <label for="noteDate" class="form-label small mb-1">Note Date <span
+                                            <label for="noteDate" class="form-label">Note Date <span
                                                     class="text-danger">*</span></label>
                                             <input type="date" class="form-control form-control-sm" id="noteDate"
                                                 required>
@@ -149,7 +561,7 @@
 
                                         <!-- Party Name -->
                                         <div class="col-lg-4">
-                                            <label for="partyName" class="form-label small mb-1">Party Name <span
+                                            <label for="partyName" class="form-label">Party Name <span
                                                     class="text-danger">*</span></label>
                                             <input list="partySuggestions" class="form-control form-control-sm"
                                                 id="partyName" required placeholder="Choose..." autocomplete="off">
@@ -158,8 +570,8 @@
 
                                         <!-- Reference Type -->
                                         <div class="col-md-2">
-                                            <label for="referenceType" class="form-label small mb-1">Reference Type
-                                                <span class="text-danger">*</span></label>
+                                            <label for="referenceType" class="form-label">Reference Type <span
+                                                    class="text-danger">*</span></label>
                                             <select class="form-select form-select-sm" id="referenceType" required>
                                                 <option value="" selected disabled>Choose...</option>
                                                 <option value="Customer Invoice">Customer Invoice</option>
@@ -170,30 +582,32 @@
 
                                         <!-- Reason -->
                                         <div class="col-md-6">
-                                            <label for="reason" class="form-label small mb-1">Reason <span
+                                            <label for="reason" class="form-label">Reason <span
                                                     class="text-danger">*</span></label>
                                             <input type="text" class="form-control form-control-sm" id="reason" required
-                                                autocomplete="off">
+                                                autocomplete="off" placeholder="Enter reason">
                                         </div>
 
                                         <!-- Remarks -->
                                         <div class="col-md-6">
-                                            <label for="remarks" class="form-label small mb-1">Remarks</label>
+                                            <label for="remarks" class="form-label">Remarks</label>
                                             <input type="text" class="form-control form-control-sm" id="remarks"
-                                                autocomplete="off">
+                                                autocomplete="off" placeholder="Optional">
                                         </div>
                                     </div>
                                 </div>
 
                                 <!-- ===================== ITEM DETAILS ===================== -->
-                                <div class="border rounded p-2 bg-white mb-3 shadow-none">
-                                    <h6 class="fw-bold text-primary border-bottom pb-1 mb-2">Item Details</h6>
+                                <div class="form-section">
+                                    <h6 class="section-header">
+                                        <i class="bi bi-box-seam"></i> Item Details
+                                    </h6>
 
-                                    <div class="row g-2 align-items-end">
+                                    <div class="row g-3 align-items-end">
                                         <!-- Reference Invoice / Bill -->
                                         <div class="col-md-2 position-relative">
-                                            <label for="referenceInvoice" class="form-label small mb-1">Ref.
-                                                Invoice/Bill <span class="text-danger">*</span></label>
+                                            <label for="referenceInvoice" class="form-label">Ref. Invoice/Bill <span
+                                                    class="text-danger">*</span></label>
                                             <input type="text" class="form-control form-control-sm"
                                                 id="referenceInvoice" autocomplete="off" required
                                                 placeholder="Type Invoice No...">
@@ -205,32 +619,32 @@
 
                                         <!-- Item -->
                                         <div class="col-md-2">
-                                            <label for="item" class="form-label small mb-1">Item <span
+                                            <label for="item" class="form-label">Item <span
                                                     class="text-danger">*</span></label>
                                             <input list="itemSuggestions" class="form-control form-control-sm" id="item"
-                                                required autocomplete="off">
+                                                required autocomplete="off" placeholder="Select item">
                                             <datalist id="itemSuggestions"></datalist>
                                         </div>
 
                                         <!-- Description -->
                                         <div class="col-md-4">
-                                            <label for="description" class="form-label small mb-1">Description <span
+                                            <label for="description" class="form-label">Description <span
                                                     class="text-danger">*</span></label>
                                             <input type="text" class="form-control form-control-sm" id="description"
-                                                required autocomplete="off">
+                                                required autocomplete="off" placeholder="Description">
                                         </div>
 
                                         <!-- HSN Code -->
                                         <div class="col-md-2">
-                                            <label for="hsnCode" class="form-label small mb-1">HSN Code <span
+                                            <label for="hsnCode" class="form-label">HSN Code <span
                                                     class="text-danger">*</span></label>
                                             <input type="text" class="form-control form-control-sm" id="hsnCode"
-                                                required autocomplete="off">
+                                                required autocomplete="off" placeholder="HSN">
                                         </div>
 
                                         <!-- Quantity -->
                                         <div class="col-md-2">
-                                            <label for="quantity" class="form-label small mb-1">Quantity <span
+                                            <label for="quantity" class="form-label">Quantity <span
                                                     class="text-danger">*</span></label>
                                             <input type="number" class="form-control form-control-sm text-end"
                                                 id="quantity" required min="0.01" step="any" placeholder="0.00">
@@ -238,8 +652,7 @@
 
                                         <!-- Full Amount -->
                                         <div class="col-md-3">
-                                            <label for="fullAmount" id="fullAmountLabel"
-                                                class="form-label small mb-1">Amount <span
+                                            <label for="fullAmount" id="fullAmountLabel" class="form-label">Amount <span
                                                     class="text-danger">*</span></label>
                                             <input type="number" class="form-control form-control-sm text-end"
                                                 id="fullAmount" required min="0" step="0.01" placeholder="0.00">
@@ -247,7 +660,7 @@
 
                                         <!-- Tax Rate -->
                                         <div class="col-md-3">
-                                            <label for="partyDefaultTax" class="form-label small mb-1">Tax Rate</label>
+                                            <label for="partyDefaultTax" class="form-label">Tax Rate</label>
                                             <select id="partyDefaultTax" class="form-select form-select-sm">
                                                 <option value="" disabled selected>Select Tax</option>
                                             </select>
@@ -255,7 +668,7 @@
 
                                         <!-- Total Amount -->
                                         <div class="col-md-3">
-                                            <label for="totalAmount" class="form-label small mb-1">Total Amount</label>
+                                            <label for="totalAmount" class="form-label">Total Amount</label>
                                             <input type="number" id="totalAmount"
                                                 class="form-control form-control-sm bg-light text-end" readonly
                                                 placeholder="0.00">
@@ -264,22 +677,22 @@
                                         <!-- Add Row Button -->
                                         <div class="col-md-3">
                                             <button type="button" id="addCreditDebitRow"
-                                                class="btn btn-primary btn-sm w-100">
-                                                <i class="bi bi-plus-lg" aria-hidden="true"></i> Add Item
+                                                class="btn btn-outline-primary btn-sm w-100">
+                                                <i class="bi bi-plus-circle" aria-hidden="true"></i> Add Item
                                             </button>
                                         </div>
                                     </div>
                                 </div>
 
                                 <!-- ===================== CREDIT / DEBIT DETAILS TABLE ===================== -->
-                                <div class="border rounded p-2 bg-white shadow-none">
-                                    <h6 class="fw-bold text-primary border-bottom pb-1 mb-2">Credit / Debit Summary</h6>
+                                <div class="form-section mb-0">
+                                    <h6 class="section-header">
+                                        <i class="bi bi-list-check"></i> Credit / Debit Summary
+                                    </h6>
 
-                                    <div class="table-responsive" style="max-height: 280px; overflow-y: auto;">
-                                        <table
-                                            class="table table-sm table-bordered table-hover text-center align-middle small text-nowrap mb-0"
-                                            id="creditDebitTable">
-                                            <thead class="table-light align-middle sticky-top">
+                                    <div class="table-responsive">
+                                        <table class="table table-hover text-center align-middle" id="creditDebitTable">
+                                            <thead>
                                                 <tr>
                                                     <th>Sr No</th>
                                                     <th>Item ID</th>
@@ -297,7 +710,7 @@
                                                     <th>CESS Amt</th>
                                                     <th>Total GST</th>
                                                     <th>Total Amt</th>
-                                                    <th>Action</th>
+                                                    <th class="text-center">Action</th>
                                                     <th class="d-none">cgst_percent</th>
                                                     <th class="d-none">sgst_percent</th>
                                                     <th class="d-none">igst_percent</th>
@@ -305,7 +718,7 @@
                                                 </tr>
                                             </thead>
                                             <tbody></tbody>
-                                            <tfoot class="table-light fw-bold sticky-bottom">
+                                            <tfoot>
                                                 <tr id="totalsRow">
                                                     <td colspan="8" class="text-end">Totals:</td>
                                                     <td class="text-end" id="totalNonTaxAmt">0.00</td>
@@ -315,7 +728,7 @@
                                                     <td class="text-end" id="totalIGST">0.00</td>
                                                     <td class="text-end" id="totalCESSAmt">0.00</td>
                                                     <td class="text-end" id="totalGST">0.00</td>
-                                                    <td class="text-end text-primary" id="totalGrand">0.00</td>
+                                                    <td class="text-end" id="totalGrand">0.00</td>
                                                     <td></td>
                                                 </tr>
                                             </tfoot>
@@ -339,12 +752,14 @@
                                 aria-labelledby="addressModalLabel" aria-hidden="true">
                                 <div class="modal-dialog modal-dialog-centered">
                                     <div class="modal-content">
-                                        <div class="modal-header bg-light py-2">
-                                            <h6 class="modal-title" id="addressModalLabel">Select Invoice Address</h6>
+                                        <div class="modal-header bg-light">
+                                            <h6 class="modal-title" id="addressModalLabel">
+                                                <i class="bi bi-geo-alt"></i> Select Invoice Address
+                                            </h6>
                                             <button type="button" class="btn-close" data-bs-dismiss="modal"
                                                 aria-label="Close"></button>
                                         </div>
-                                        <div class="modal-body p-3" id="addressListContainer"></div>
+                                        <div class="modal-body" id="addressListContainer"></div>
                                     </div>
                                 </div>
                             </div>
@@ -361,14 +776,14 @@
         aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
             <div class="modal-content">
-                <div class="modal-header bg-primary text-white py-2">
+                <div class="modal-header bg-primary text-white">
                     <h6 class="modal-title" id="searchPaymentModalLabel">
                         <i class="bi bi-search" aria-hidden="true"></i> Search Saved Payments
                     </h6>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
                         aria-label="Close"></button>
                 </div>
-                <div class="modal-body p-3">
+                <div class="modal-body">
                     <div class="input-group input-group-sm mb-3">
                         <input type="text" id="searchSavedPaymentInput" class="form-control"
                             placeholder="Search by Note No, Party Name, or Reference No..." autocomplete="off">
@@ -376,10 +791,10 @@
                             <i class="bi bi-search" aria-hidden="true"></i> Search
                         </button>
                     </div>
-                    <div class="table-responsive">
-                        <table
-                            class="table table-sm table-hover table-bordered align-middle text-center text-nowrap mb-0">
-                            <thead class="table-light">
+                    <div class="table-responsive"
+                        style="border: 1px solid var(--border-color); border-radius: var(--radius-md);">
+                        <table class="table table-hover align-middle text-center text-nowrap mb-0">
+                            <thead>
                                 <tr>
                                     <th>Note No</th>
                                     <th>Note Date</th>
@@ -390,7 +805,8 @@
                             </thead>
                             <tbody id="searchPaymentTableBody">
                                 <tr>
-                                    <td colspan="5" class="text-center text-muted fst-italic py-3">
+                                    <td colspan="5" class="text-center text-muted fst-italic py-4">
+                                        <i class="bi bi-search fs-3 d-block mb-2 opacity-50"></i>
                                         Enter search criteria to find payments...
                                     </td>
                                 </tr>
@@ -398,8 +814,9 @@
                         </table>
                     </div>
                 </div>
-                <div class="modal-footer py-2">
-                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary btn-sm"
+                        data-bs-dismiss="modal">Close</button>
                 </div>
             </div>
         </div>
@@ -407,7 +824,7 @@
 
     <!-- Toast Container -->
     <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1070;">
-        <div id="errorToast" class="toast align-items-center text-white bg-danger border-0" role="alert"
+        <div id="errorToast" class="toast align-items-center text-white bg-danger border-0 shadow" role="alert"
             aria-live="assertive" aria-atomic="true">
             <div class="d-flex">
                 <div class="toast-body" id="errorToastMessage">Error message here...</div>

@@ -17,6 +17,7 @@ document.addEventListener('DOMContentLoaded', function () {
     setupPincodeListener('pinCode', 'city');
     setupPincodeListener('billingPinCode', 'billingCity', 'billingState', 'billingCountry');
     setupPincodeListener('branchPinCode', 'branchCity', 'branchState', 'branchCountry');
+    setupPincodeListener('shipmentPinCode', 'shipmentCity');
     // setupBankListener('branchIFSCCode', 'branchBankName', 'branchAcBankName', 'branchMICRCode', 'branchBankAddress');
 });
 

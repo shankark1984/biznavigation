@@ -4,33 +4,878 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Customer Invoice Management System">
     <title>Customer Invoice</title>
 
-    <!-- Resource Hints for faster loading -->
-    <link rel="preconnect" href="https://cdn.jsdelivr.net">
-    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <!-- Resource Hints -->
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin="anonymous">
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin="anonymous">
+    <link rel="preconnect" href="https://unpkg.com" crossorigin="anonymous">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <!-- Modern Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Preload Critical CSS -->
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" as="style">
 
     <!-- CSS Libraries -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"
+        crossorigin="anonymous">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet"
+        crossorigin="anonymous">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet"
+        crossorigin="anonymous">
     <link href="../../assets/css/navbar.css" rel="stylesheet" />
 
+    <!-- Upgraded Modern Form Styles (Unified) -->
     <style>
+        :root {
+            --primary-color: #2563eb;
+            --primary-hover: #1d4ed8;
+            --success-color: #059669;
+            --warning-color: #d97706;
+            --danger-color: #dc2626;
+            --info-color: #0284c7;
+            --bg-color: #f8fafc;
+            --surface-color: #ffffff;
+            --border-color: #e2e8f0;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --radius-md: 8px;
+            --radius-lg: 12px;
+            --transition: all 0.2s ease-in-out;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            font-family: 'Inter', sans-serif;
+            color: var(--text-main);
+        }
+
+        /* Card Styling */
+        .card {
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            border-radius: var(--radius-lg);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -2px rgba(0, 0, 0, 0.02) !important;
+            background-color: var(--surface-color);
+        }
+
+        .card-body {
+            padding: 1.5rem 1.75rem !important;
+        }
+
+        /* Action Bar */
+        .action-bar {
+            padding-bottom: 1.25rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .btn {
+            font-weight: 500;
+            border-radius: 6px;
+            padding: 0.4rem 0.875rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            transition: var(--transition);
+        }
+
+        .btn-sm {
+            font-size: 0.85rem;
+        }
+
+        /* Form Controls */
+        .form-label {
+            margin-bottom: 0.35rem !important;
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-control,
+        .form-select {
+            padding: 0.45rem 0.75rem !important;
+            font-size: 0.85rem !important;
+            background-color: #f8fafc;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            color: var(--text-main);
+            transition: var(--transition);
+        }
+
+        .form-control:hover,
+        .form-select:hover {
+            border-color: #cbd5e1;
+        }
+
+        .form-control:focus,
+        .form-select:focus {
+            background-color: #ffffff;
+            border-color: #93c5fd;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+        }
+
+        .form-control::placeholder {
+            color: #94a3b8;
+        }
+
+        textarea.form-control {
+            min-height: 96px;
+            resize: none;
+        }
+
+        .form-control[readonly],
+        .form-control:disabled {
+            background-color: #f1f5f9 !important;
+            color: #475569;
+            cursor: default;
+        }
+
+        /* Auto-populated highlight (modernized) */
         .invoice-bg {
-            background-color: #d8e26b !important;
+            background-color: #eff6ff !important;
+            border-color: #bfdbfe !important;
+            color: #1e3a8a;
+            font-weight: 500;
+        }
+
+        .invoice-bg:focus {
+            background-color: #ffffff !important;
+            border-color: #93c5fd !important;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+        }
+
+        .bg-light-input {
+            background-color: #eff6ff !important;
+            border-color: #bfdbfe !important;
+            color: #1e3a8a;
+        }
+
+        .bg-light-input:focus {
+            background-color: #ffffff !important;
+        }
+
+        /* Form grid spacing — comfortable breathing room */
+        .form-grid {
+            --bs-gutter-x: 1rem;
+            --bs-gutter-y: 1rem;
+        }
+
+        /* Single-line address field with horizontal scroll */
+        .single-line-address {
+            min-height: 38px !important;
+            height: 38px;
+            overflow-x: auto;
+            overflow-y: hidden;
+            white-space: nowrap;
+            resize: none;
+            padding-top: 0.45rem !important;
+            padding-bottom: 0.45rem !important;
+            scrollbar-width: thin;
+            scrollbar-color: #cbd5e1 #f1f5f9;
+        }
+
+        /* Slim scrollbar for the address field */
+        .single-line-address::-webkit-scrollbar {
+            height: 4px;
+        }
+
+        .single-line-address::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 2px;
+        }
+
+        .single-line-address::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 2px;
+        }
+
+        .single-line-address::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* Input group with search button */
+        .input-group .form-control {
+            border-top-right-radius: 0;
+            border-bottom-right-radius: 0;
+        }
+
+        .input-group .btn-search {
+            border: 1px solid var(--border-color);
+            border-left: none;
+            background-color: #f8fafc;
+            color: var(--text-muted);
+            border-top-right-radius: var(--radius-md);
+            border-bottom-right-radius: var(--radius-md);
+            padding: 0 0.65rem;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .input-group .btn-search:hover {
+            background-color: #eff6ff;
+            color: var(--primary-color);
+            border-color: #bfdbfe;
+        }
+
+        .input-group .btn-search:focus {
+            outline: none;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+        }
+
+        /* Modern Tabs */
+        .nav-tabs {
+            border-bottom: 1px solid var(--border-color);
+            gap: 1.5rem;
+            padding-bottom: 0px;
+            margin-bottom: 0;
+        }
+
+        .nav-tabs .nav-link {
+            border: none;
+            color: var(--text-muted);
+            background-color: transparent;
+            font-weight: 600;
+            padding: 0.65rem 0.25rem !important;
+            font-size: 0.85rem;
+            border-bottom: 2px solid transparent;
+            border-radius: 0;
+            transition: var(--transition);
+        }
+
+        .nav-tabs .nav-link:hover {
+            color: var(--text-main);
+            border-bottom-color: #cbd5e1;
+        }
+
+        .nav-tabs .nav-link.active {
+            color: var(--primary-color) !important;
+            background-color: transparent !important;
+            border-bottom: 2px solid var(--primary-color);
+        }
+
+        .tab-content {
+            padding-top: 1.25rem;
+            background: transparent;
+            border: none !important;
+        }
+
+        /* Modern Tables */
+        .table-responsive {
+            max-height: 400px;
+            min-height: 150px;
+            overflow: auto;
+            overflow-x: auto;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            background: var(--surface-color);
+            scroll-behavior: smooth;
+        }
+
+        /* Custom scrollbar */
+        .table-responsive::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        .table-responsive::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 4px;
+        }
+
+        .table-responsive::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+
+        .table-responsive::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        .table {
+            margin-bottom: 0;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+
+        .table thead th {
+            position: sticky;
+            top: 0;
+            background-color: #f1f5f9 !important;
+            color: var(--text-muted);
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+            z-index: 10;
+            padding: 0.6rem 0.75rem !important;
+            border-bottom: 1px solid var(--border-color);
+            border-top: none;
+            white-space: nowrap;
+            text-align: center;
+        }
+
+        .table tbody td {
+            padding: 0.6rem 0.75rem !important;
+            font-size: 0.82rem;
+            vertical-align: middle;
+            color: var(--text-main);
+            border-color: var(--border-color);
+            text-align: center;
+        }
+
+        .table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .table tbody tr:hover {
+            background-color: #f8fafc;
+        }
+
+        .table tfoot th,
+        .table tfoot td {
+            background-color: #f1f5f9;
+            font-weight: 700;
+            font-size: 0.82rem;
+            padding: 0.7rem 0.75rem !important;
+            border-top: 1px solid var(--border-color);
+            color: var(--text-main);
+            text-align: center;
+            position: sticky;
+            bottom: 0;
+        }
+
+        .table tfoot #totalGrand,
+        .table tfoot #totalGrandAmt {
+            color: var(--primary-color) !important;
+        }
+
+        /* Modals */
+        .modal-content {
+            border: none;
+            border-radius: var(--radius-lg);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+        }
+
+        .modal-header {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            background-color: #f1f5f9;
+        }
+
+        .modal-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+        }
+
+        .modal-footer {
+            border-top: 1px solid var(--border-color);
+            padding: 0.85rem 1.5rem;
+            background-color: #f8fafc;
+        }
+
+        /* Address selection list */
+        #addressListContainer .address-item {
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 0.85rem;
+        }
+
+        #addressListContainer .address-item:hover {
+            background-color: #eff6ff;
+            border-color: #bfdbfe;
+        }
+
+        /* Select2 unified look */
+        .select2-container--default .select2-selection--single,
+        .select2-container--default .select2-selection--multiple {
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            background-color: #f8fafc;
+            min-height: 38px;
+            padding: 0.15rem 0.5rem;
+        }
+
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            line-height: 30px;
+            font-size: 0.85rem;
+            color: var(--text-main);
+        }
+
+        .select2-container--default.select2-container--focus .select2-selection--single,
+        .select2-container--default.select2-container--focus .select2-selection--multiple {
+            border-color: #93c5fd;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+            background-color: #ffffff;
+        }
+
+        .select2-dropdown {
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+
+        .select2-results__option--highlighted {
+            background-color: var(--primary-color) !important;
+        }
+
+        /* Toast */
+        .toast {
+            border: none;
+            border-radius: var(--radius-md);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.05);
+        }
+
+        /* Mobile tweaks */
+        @media (max-width: 768px) {
+            .card-body {
+                padding: 1rem 1.25rem !important;
+            }
+
+            .nav-tabs {
+                gap: 1rem;
+            }
+
+            .form-grid {
+                --bs-gutter-x: 0.75rem;
+                --bs-gutter-y: 0.75rem;
+            }
         }
     </style>
+</head>
 
-    <!-- Deferred JS Libraries (Downloads in parallel, executes in order) -->
-    <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js" defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js" defer></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/2.3.10/purify.min.js" defer></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"
-        defer></script>
-    <script src="https://unpkg.com/@supabase/supabase-js" defer></script>
+<body>
+    <div class="app-wrapper">
+
+        <!-- Sidebar -->
+        <aside id="sidebar" aria-label="Sidebar Navigation">
+            <div class="text-center text-muted p-3">Loading Sidebar...</div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+
+            <!-- PAGE CONTENT -->
+            <section class="page-content">
+                <div class="container-fluid mt-3 mb-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <form class="invoiceForm" id="mainInvoiceForm" autocomplete="off">
+
+                                <!-- Action Bar -->
+                                <div
+                                    class="action-bar d-flex flex-wrap gap-2 align-items-center justify-content-between">
+                                    <h5 class="m-0 fw-bold text-dark d-none d-md-block">Customer Invoice</h5>
+
+                                    <div class="d-flex flex-wrap gap-2" role="group" aria-label="Form Actions">
+                                        <button type="button" class="btn btn-outline-primary btn-sm bg-white"
+                                            id="newButton" title="Create new booking">
+                                            <i class="bi bi-file-earmark-plus" aria-hidden="true"></i> New
+                                        </button>
+                                        <button type="button" class="btn btn-outline-warning btn-sm bg-white"
+                                            id="modifyButton" disabled title="Modify booking">
+                                            <i class="bi bi-pencil" aria-hidden="true"></i> Modify
+                                        </button>
+                                        <button type="button" class="btn btn-outline-danger btn-sm bg-white"
+                                            id="deleteButton" disabled title="Delete booking">
+                                            <i class="bi bi-trash" aria-hidden="true"></i> Delete
+                                        </button>
+                                        <button type="button" class="btn btn-outline-info btn-sm bg-white"
+                                            id="reportButton" disabled aria-label="Print Report">
+                                            <i class="bi bi-printer" aria-hidden="true"></i> Print
+                                        </button>
+                                        <button id="saveButton" class="btn btn-primary btn-sm px-4 shadow-sm"
+                                            type="button" data-mode="insert" title="Save invoice">
+                                            <span id="saveSpinnerBtn"
+                                                class="spinner-border spinner-border-sm me-2 d-none"
+                                                aria-hidden="true"></span>
+                                            <i class="bi bi-check2-circle" aria-hidden="true"></i> Save
+                                        </button>
+                                        <div id="saveSpinnerOverlay" class="spinner-border text-primary d-none"
+                                            aria-hidden="true"></div>
+                                        <input type="text" class="form-control bg-light d-none" id="status" value="New"
+                                            aria-hidden="true" readonly>
+                                    </div>
+
+                                    <!-- Hidden Fields -->
+                                    <input type="hidden" id="tempFormID">
+                                    <input type="hidden" id="partyCode">
+                                    <input type="hidden" id="bankIDs">
+                                </div>
+
+                                <!-- Form Inputs -->
+                                <div class="row g-3 form-grid">
+                                    <!-- Row 1: Customer & Invoice basics -->
+                                    <div class="col-lg-4 col-md-6 col-sm-12">
+                                        <label for="partyName" class="form-label">Customer Name</label>
+                                        <input list="partySuggestions" class="form-control" id="partyName" required
+                                            placeholder="Choose Customer..." autocomplete="off">
+                                        <datalist id="partySuggestions"></datalist>
+                                    </div>
+                                    <div class="col-lg-4 col-md-6 col-sm-12">
+                                        <label for="invoiceAddress" class="form-label">Invoice Address</label>
+                                        <textarea class="form-control single-line-address" id="invoiceAddress" rows="1"
+                                            readonly aria-readonly="true"
+                                            placeholder="Invoice address will auto-fill based on customer"></textarea>
+                                    </div>
+                                    <div class="col-lg-2 col-md-6 col-sm-6">
+                                        <label for="invoiceNo" class="form-label">Invoice No</label>
+                                        <div class="input-group">
+                                            <input list="invoiceNoSuggestions" class="form-control invoice-bg"
+                                                id="invoiceNo" required autocomplete="off" placeholder="Invoice No">
+                                            <datalist id="invoiceNoSuggestions"></datalist>
+                                            <button type="button" class="btn btn-secondary btn-sm"
+                                                data-bs-toggle="modal" data-bs-target="#searchInvoiceModal"
+                                                title="Search Invoice">
+                                                <i class="bi bi-search"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-2 col-md-6 col-sm-6">
+                                        <label for="invoiceDate" class="form-label">Booked Date</label>
+                                        <input type="date" class="form-control" id="invoiceDate" required>
+                                    </div>
+
+                                    <!-- Row 2: Movement & Transit -->
+                                    <div class="col-lg-2 col-md-4 col-sm-6">
+                                        <label for="movementType" class="form-label">Movement Type</label>
+                                        <select class="form-select" id="movementType" required>
+                                            <option value="" disabled selected>Choose...</option>
+                                            <option value="Customs Clearance">Customs Clearance</option>
+                                            <option value="Domestic">Domestic</option>
+                                            <option value="Export">Export</option>
+                                            <option value="Forwarding">Forwarding</option>
+                                            <option value="Full Truck Load">Full Truck Load</option>
+                                            <option value="Import">Import</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-lg-2 col-md-4 col-sm-6">
+                                        <label for="transitType" class="form-label">Transit Type</label>
+                                        <select class="form-select" id="transitType">
+                                            <option value="" disabled selected>Choose...</option>
+                                            <option value="By Air Freight">By Air Freight</option>
+                                            <option value="By Courier">By Courier</option>
+                                            <option value="By Sea Freight">By Sea Freight</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-lg-2 col-md-4 col-sm-6">
+                                        <label for="modeType" class="form-label">Mode Type</label>
+                                        <select class="form-select" id="modeType">
+                                            <option value="" disabled selected>Choose...</option>
+                                            <option value="Dox">Dox</option>
+                                            <option value="Non-Dox">Non-Dox</option>
+                                            <option value="FCL">FCL</option>
+                                            <option value="LCL">LCL</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-lg-2 col-md-4 col-sm-6">
+                                        <label for="startDate" class="form-label">Start Date</label>
+                                        <input type="date" class="form-control" id="startDate">
+                                    </div>
+                                    <div class="col-lg-2 col-md-4 col-sm-6">
+                                        <label for="endDate" class="form-label">End Date</label>
+                                        <input type="date" class="form-control" id="endDate">
+                                    </div>
+                                    <div class="col-lg-2 col-md-4 col-sm-6">
+                                        <label for="department" class="form-label">Department</label>
+                                        <input list="departmentList" class="form-control bg-light-input" id="department"
+                                            autocomplete="off" placeholder="Select Department">
+                                        <datalist id="departmentList"></datalist>
+                                    </div>
+
+                                    <!-- Row 3: Information & Get Data -->
+                                    <div class="col-lg-10 col-md-8 col-sm-12">
+                                        <label for="invoiceInformation" class="form-label">Information</label>
+                                        <input type="text" class="form-control" id="invoiceInformation"
+                                            placeholder="Enter additional information">
+                                    </div>
+                                    <div class="col-lg-2 col-md-4 col-sm-12 d-grid align-items-end">
+                                        <button type="button" class="btn btn-outline-primary btn-sm"
+                                            id="fetchPendingInvoices">
+                                            <i class="bi bi-plus-circle" aria-hidden="true"></i> Get Data
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Divider + Tabs -->
+                                <div class="mt-4 pt-3 border-top">
+                                    <ul class="nav nav-tabs" id="partyTabs" role="tablist">
+                                        <li class="nav-item" role="presentation">
+                                            <button class="nav-link active" id="shipmentDetails-tab"
+                                                data-bs-toggle="tab" data-bs-target="#shipmentDetails" type="button"
+                                                role="tab" aria-controls="shipmentDetails" aria-selected="true">
+                                                Shipment Details
+                                            </button>
+                                        </li>
+                                        <li class="nav-item" role="presentation">
+                                            <button class="nav-link" id="shipmentCharges-tab" data-bs-toggle="tab"
+                                                data-bs-target="#shipmentCharges" type="button" role="tab"
+                                                aria-controls="shipmentCharges" aria-selected="false">
+                                                Shipment Charges
+                                            </button>
+                                        </li>
+                                    </ul>
+                                </div>
+
+                                <!-- Tab Content -->
+                                <div class="tab-content">
+                                    <!-- Shipment Details Table -->
+                                    <div class="tab-pane fade show active" id="shipmentDetails" role="tabpanel"
+                                        aria-labelledby="shipmentDetails-tab" tabindex="0">
+                                        <div class="table-responsive">
+                                            <table class="table table-hover" id="pendingShipmentTable">
+                                                <thead>
+                                                    <tr>
+                                                        <th scope="col">Docket<br>No</th>
+                                                        <th scope="col">Booked<br>Date</th>
+                                                        <th scope="col">Movement<br>Type</th>
+                                                        <th scope="col">Transit<br>Type</th>
+                                                        <th scope="col">Mode<br>Type</th>
+                                                        <th scope="col">Origin</th>
+                                                        <th scope="col">Destination</th>
+                                                        <th scope="col">No.<br>of Units</th>
+                                                        <th scope="col">Actual<br>Weight</th>
+                                                        <th scope="col">Chargeable<br>Weight</th>
+                                                        <th scope="col">Basic<br>Freight</th>
+                                                        <th scope="col">FSC<br>Amount</th>
+                                                        <th scope="col">Other<br>Amount</th>
+                                                        <th scope="col">SGST<br>Amount</th>
+                                                        <th scope="col">CGST<br>Amount</th>
+                                                        <th scope="col">IGST<br>Amount</th>
+                                                        <th scope="col">Total GST<br>Amount</th>
+                                                        <th scope="col">Total<br>Amount</th>
+                                                        <th scope="col" class="text-center">Action</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody></tbody>
+                                                <tfoot>
+                                                    <tr id="totalsRow">
+                                                        <th colspan="10" class="text-end" scope="row">Totals:</th>
+                                                        <th class="text-end" id="totalQuantity">0.00</th>
+                                                        <th class="text-end" id="totalChargeableWeight">0.00</th>
+                                                        <th class="text-end" id="totalFreight">0.00</th>
+                                                        <th class="text-end" id="totalFSCAmt">0.00</th>
+                                                        <th class="text-end" id="totalOtherAmt">0.00</th>
+                                                        <th class="text-end" id="totalSGST">0.00</th>
+                                                        <th class="text-end" id="totalCGST">0.00</th>
+                                                        <th class="text-end" id="totalIGST">0.00</th>
+                                                        <th class="text-end" id="totalGST">0.00</th>
+                                                        <th class="text-end" id="totalGrand">0.00</th>
+                                                    </tr>
+                                                </tfoot>
+                                            </table>
+                                        </div>
+                                    </div>
+
+                                    <!-- Shipment Charges Table -->
+                                    <div class="tab-pane fade" id="shipmentCharges" role="tabpanel"
+                                        aria-labelledby="shipmentCharges-tab" tabindex="0">
+                                        <div class="table-responsive">
+                                            <table class="table table-hover" id="pendingShipmentCharges">
+                                                <thead>
+                                                    <tr>
+                                                        <th scope="col">Charges Type</th>
+                                                        <th scope="col">Total Amount</th>
+                                                        <th scope="col">SGST Amt</th>
+                                                        <th scope="col">CGST Amt</th>
+                                                        <th scope="col">IGST Amt</th>
+                                                        <th scope="col">Total GST Amt</th>
+                                                        <th scope="col">Grand Total Amt</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody></tbody>
+                                                <tfoot>
+                                                    <tr id="ChargestotalsRow">
+                                                        <th class="text-end" scope="row">Totals:</th>
+                                                        <th class="text-end" id="totalFreightAmt">0.00</th>
+                                                        <th class="text-end" id="totalSGSTAmt">0.00</th>
+                                                        <th class="text-end" id="totalCGSTAmt">0.00</th>
+                                                        <th class="text-end" id="totalIGSTAmt">0.00</th>
+                                                        <th class="text-end" id="totalGSTAmt">0.00</th>
+                                                        <th class="text-end" id="totalGrandAmt">0.00</th>
+                                                    </tr>
+                                                </tfoot>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Bottom Actions -->
+                                <div class="row g-3 mt-4 pt-3 border-top">
+                                    <div class="col-md-4">
+                                        <label for="inputBankName" class="form-label">Bank Name</label>
+                                        <input list="bankNameSuggestions" class="form-control bg-light-input"
+                                            id="inputBankName" required autocomplete="off" placeholder="Select Bank">
+                                        <datalist id="bankNameSuggestions"></datalist>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label for="shipmentNo" class="form-label">Shipment Number</label>
+                                        <input list="shipmentNoSuggestions" class="form-control bg-light-input"
+                                            id="shipmentNo" required autocomplete="off" placeholder="Select Shipment">
+                                        <datalist id="shipmentNoSuggestions"></datalist>
+                                    </div>
+                                    <div class="col-md-1 d-grid align-items-end">
+                                        <button type="button" class="btn btn-outline-primary btn-sm" id="addShipmentNo"
+                                            aria-label="Add Shipment Number" title="Add Shipment Number">
+                                            <i class="bi bi-plus-circle" aria-hidden="true"></i>Add
+                                        </button>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label for="reportType" class="form-label">Report Type</label>
+                                        <select class="form-select" id="reportType">
+                                            <option value="Main" selected>Choose...</option>
+                                            <option value="Letter Head">Letter Head</option>
+                                            <option value="Print Annexure">Print Annexure</option>
+                                            <option value="Duty Invoice">Duty Invoice</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </form>
+
+                            <!-- Loading Spinner -->
+                            <div id="loadingSpinner"
+                                class="d-none position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center bg-dark bg-opacity-50"
+                                aria-live="polite" style="z-index: 1060;">
+                                <div class="spinner-border text-light" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                            </div>
+
+                            <!-- Address Selection Modal -->
+                            <div class="modal fade" id="addressSelectionModal" tabindex="-1"
+                                aria-labelledby="addressModalLabel" aria-hidden="true">
+                                <div class="modal-dialog modal-dialog-centered">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="addressModalLabel">
+                                                <i class="bi bi-geo-alt"></i> Select Invoice Address
+                                            </h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                                aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body" id="addressListContainer"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- SEARCH SAVED INVOICE MODAL -->
+    <div class="modal fade" id="searchInvoiceModal" tabindex="-1" aria-labelledby="searchInvoiceModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+
+                <!-- Modal Header -->
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="searchInvoiceModalLabel">
+                        <i class="bi bi-search"></i> Search Saved Invoice
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
+
+                <!-- Modal Body -->
+                <div class="modal-body">
+                    <!-- Search Input Box -->
+                    <div class="input-group mb-3">
+                        <input type="text" id="searchSavedInvoiceInput" class="form-control"
+                            placeholder="Search by Invoice No, Customer Name, or Movement Type..." autocomplete="off"
+                            aria-label="Search Invoice">
+                        <button class="btn btn-outline-primary" type="button" id="btnTriggerSearch">
+                            <i class="bi bi-search"></i> Search
+                        </button>
+                    </div>
+
+                    <!-- Search Results Table -->
+                    <div class="table-responsive"
+                        style="border: 1px solid var(--border-color); border-radius: var(--radius-md);">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th style="width: 60px;">Sl No</th>
+                                    <th>Invoice No</th>
+                                    <th style="width: 120px;">Invoice Date</th>
+                                    <th class="text-start">Customer Name</th>
+                                    <th style="width: 160px;">Movement Type</th>
+                                    <th class="text-end" style="width: 130px;">Invoice Amount</th>
+                                    <th style="width: 110px;" class="text-center">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="searchInvoiceTableBody">
+                                <tr>
+                                    <td colspan="7" class="text-center text-muted fst-italic py-4">
+                                        <i class="bi bi-receipt fs-3 d-block mb-2 opacity-50"></i>
+                                        Loading invoices...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Modal Footer -->
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary btn-sm"
+                        data-bs-dismiss="modal">Close</button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="position-fixed top-0 end-0 p-3" style="z-index: 9999" aria-live="assertive" aria-atomic="true">
+        <div id="errorToast" class="toast align-items-center text-white bg-danger border-0 shadow" role="alert">
+            <div class="d-flex">
+                <div class="toast-body" id="errorToastMessage">
+                    Error message here...
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"
+                    aria-label="Close"></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Core Dependencies -->
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js" defer crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" defer
+        crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js" defer
+        crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js" defer crossorigin="anonymous"></script>
+
+    <!-- Deferred Utility & PDF Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/2.3.10/purify.min.js" defer
+        crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer
+        crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js" defer
+        crossorigin="anonymous"></script>
 
     <!-- App Scripts -->
     <script src="../../assets/js/utils/server.js" defer></script>
@@ -52,333 +897,6 @@
     <script src="../../assets/js/CustomerInvoice/reports/Clear_Main_Reports.js" defer></script>
     <script src="../../assets/js/CustomerInvoice/reports/DomesticReports.js" defer></script>
     <script src="../../assets/js/CustomerInvoice/reports/FTL_FCL_Reports.js" defer></script>
-</head>
-
-<body class="bg-light">
-    <!-- APP LAYOUT -->
-    <div class="app-wrapper">
-
-        <!-- Sidebar -->
-        <div id="sidebar">
-            <div class="text-center text-white p-3">Loading...</div>
-        </div>
-
-        <!-- Main Content -->
-        <div class="main-content">
-
-            <!-- PAGE CONTENT -->
-            <div class="page-content">
-                <div class="container-fluid mt-2">
-                    <div class="card shadow-lg rounded">
-                        <div class="card-body">
-                            <form class="invoiceForm">
-                                <!-- Action Buttons -->
-                                <div class="d-flex flex-wrap gap-1 mb-3">
-                                    <button type="button" class="btn btn-primary btn-sm" id="newButton"
-                                        title="Create new booking">
-                                        <i class="bi bi-file-earmark-plus"></i> New
-                                    </button>
-                                    <button type="button" class="btn btn-warning btn-sm" id="modifyButton" disabled
-                                        title="Modify booking">
-                                        <i class="bi bi-pencil"></i> Modify
-                                    </button>
-                                    <button type="button" class="btn btn-danger btn-sm" id="deleteButton" disabled
-                                        title="Delete booking">
-                                        <i class="bi bi-trash"></i> Delete
-                                    </button>
-                                    <button type="button" class="btn btn-info btn-sm" id="reportButton" disabled>
-                                        <i class="bi bi-printer"></i> Print
-                                    </button>
-                                    <button id="saveButton" class="btn btn-primary btn-sm" type="button"
-                                        data-mode="insert">
-                                        <span id="saveSpinnerBtn"
-                                            class="spinner-border spinner-border-sm me-2 d-none"></span>
-                                        <i class="bi bi-save"></i> Save
-                                    </button>
-                                    <div id="saveSpinnerOverlay" class="spinner-border text-primary d-none"></div>
-                                    <input type="text" class="form-control bg-light d-none" id="status" value="New"
-                                        readonly>
-
-                                    <!-- Hidden Fields -->
-                                    <input type="hidden" id="tempFormID">
-                                    <input type="hidden" id="partyCode">
-                                    <input type="hidden" id="bankIDs">
-                                </div>
-
-                                <!-- Form Inputs -->
-                                <div class="row g-2">
-                                    <!-- Customer Details -->
-                                    <div class="col-lg-5">
-                                        <label for="partyName" class="form-label">Customer Name</label>
-                                        <input list="partySuggestions" class="form-control mb-2" id="partyName" required
-                                            placeholder="Choose..." autocomplete="off">
-                                        <datalist id="partySuggestions"></datalist>
-
-                                        <label for="invoiceAddress" class="form-label">Invoice Address</label>
-                                        <textarea class="form-control" id="invoiceAddress" rows="4" readonly></textarea>
-                                    </div>
-
-                                    <!-- Invoice Details -->
-                                    <div class="col-lg-7">
-                                        <div class="row g-2">
-                                            <div class="col-md-4">
-                                                <label for="invoiceNo" class="form-label">Invoice No</label>
-                                                <input list="invoiceNoSuggestions" class="form-control invoice-bg"
-                                                    id="invoiceNo" required autocomplete="off">
-                                                <datalist id="invoiceNoSuggestions"></datalist>
-                                            </div>
-
-                                            <div class="col-md-4">
-                                                <label for="invoiceDate" class="form-label">Booked Date</label>
-                                                <input type="date" class="form-control" id="invoiceDate" required>
-                                            </div>
-
-                                            <div class="col-md-4">
-                                                <label for="movementType" class="form-label">Movement Type</label>
-                                                <select class="form-control" id="movementType" required>
-                                                    <option value="">Choose...</option>
-                                                    <option value="Customs Clearance">Customs Clearance</option>
-                                                    <option value="Domestic">Domestic</option>
-                                                    <option value="Export">Export</option>
-                                                    <option value="Forwarding">Forwarding</option>
-                                                    <option value="Full Truck Load">Full Truck Load</option>
-                                                    <option value="Import">Import</option>
-                                                </select>
-                                            </div>
-
-                                            <div class="col-md-3">
-                                                <label for="transitType" class="form-label">Transit Type</label>
-                                                <select class="form-control" id="transitType">
-                                                    <option value="">Choose...</option>
-                                                    <option value="By Air Freight">By Air Freight</option>
-                                                    <option value="By Courier">By Courier</option>
-                                                    <option value="By Sea Freight">By Sea Freight</option>
-                                                </select>
-                                            </div>
-
-                                            <div class="col-md-3">
-                                                <label for="modeType" class="form-label">Mode Type</label>
-                                                <select class="form-control" id="modeType">
-                                                    <option value="">Choose...</option>
-                                                    <option value="Dox">Dox</option>
-                                                    <option value="Non-Dox">Non-Dox</option>
-                                                    <option value="FCL">FCL</option>
-                                                    <option value="LCL">LCL</option>
-                                                </select>
-                                            </div>
-
-                                            <div class="col-md-3">
-                                                <label for="startDate" class="form-label">Start Date</label>
-                                                <input type="date" class="form-control" id="startDate">
-                                            </div>
-
-                                            <div class="col-md-3">
-                                                <label for="endDate" class="form-label">End Date</label>
-                                                <input type="date" class="form-control" id="endDate">
-                                            </div>
-
-                                            <div class="col-md-3">
-                                                <label for="department" class="form-label">Department</label>
-                                                <input list="departmentList" class="form-control bg-light-input"
-                                                    id="department" autocomplete="off">
-                                                <datalist id="departmentList"></datalist>
-                                            </div>
-
-                                            <div class="col-md-6">
-                                                <label for="invoiceInformation" class="form-label">Information</label>
-                                                <input type="text" class="form-control" id="invoiceInformation">
-                                            </div>
-
-                                            <div class="col-md-3 d-grid align-items-end">
-                                                <button type="button" class="btn btn-primary mt-4"
-                                                    id="fetchPendingInvoices">
-                                                    <i class="bi bi-plus-circle"></i> Get Data
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Tabs -->
-                                <ul class="nav nav-tabs mt-4" id="partyTabs" role="tablist">
-                                    <li class="nav-item" role="presentation">
-                                        <button class="nav-link active" id="shipmentDetails-tab" data-bs-toggle="tab"
-                                            data-bs-target="#shipmentDetails" type="button" role="tab"
-                                            aria-controls="shipmentDetails" aria-selected="true">
-                                            Shipment Details
-                                        </button>
-                                    </li>
-                                    <li class="nav-item" role="presentation">
-                                        <button class="nav-link" id="shipmentCharges-tab" data-bs-toggle="tab"
-                                            data-bs-target="#shipmentCharges" type="button" role="tab"
-                                            aria-controls="shipmentCharges" aria-selected="false">
-                                            Shipment Charges
-                                        </button>
-                                    </li>
-                                </ul>
-
-                                <!-- Tab Content -->
-                                <div class="tab-content p-3 border border-top-0 bg-white">
-                                    <!-- Shipment Details Table -->
-                                    <div class="tab-pane fade show active" id="shipmentDetails" role="tabpanel"
-                                        aria-labelledby="shipmentDetails-tab">
-                                        <div class="table-responsive mt-4">
-                                            <table
-                                                class="table table-sm table-bordered text-center align-middle small sticky-header"
-                                                id="pendingShipmentTable">
-                                                <thead class="table-light">
-                                                    <tr>
-                                                        <th>Docket<br>No</th>
-                                                        <th>Booked<br>Date</th>
-                                                        <th>Movement<br>Type</th>
-                                                        <th>Transit<br>Type</th>
-                                                        <th>Mode<br>Type</th>
-                                                        <th>Origin</th>
-                                                        <th>Destination</th>
-                                                        <th>No.<br>of Units</th>
-                                                        <th>Actual<br>Weight</th>
-                                                        <th>Chargeable<br>Weight</th>
-                                                        <th>Basic<br>Freight</th>
-                                                        <th>FSC<br>Amount</th>
-                                                        <th>Other<br>Amount</th>
-                                                        <th>SGST<br>Amount</th>
-                                                        <th>CGST<br>Amount</th>
-                                                        <th>IGST<br>Amount</th>
-                                                        <th>Total GST<br>Amount</th>
-                                                        <th>Total<br>Amount</th>
-                                                        <th>Action</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody></tbody>
-                                                <tfoot class="table-light">
-                                                    <tr id="totalsRow">
-                                                        <th colspan="10" class="text-end">Totals:</th>
-                                                        <th class="text-end" id="totalQuantity">0.00</th>
-                                                        <th class="text-end" id="totalChargeableWeight">0.00</th>
-                                                        <th class="text-end" id="totalFreight">0.00</th>
-                                                        <th class="text-end" id="totalFSCAmt">0.00</th>
-                                                        <th class="text-end" id="totalOtherAmt">0.00</th>
-                                                        <th class="text-end" id="totalSGST">0.00</th>
-                                                        <th class="text-end" id="totalCGST">0.00</th>
-                                                        <th class="text-end" id="totalIGST">0.00</th>
-                                                        <th class="text-end" id="totalGST">0.00</th>
-                                                        <th class="text-end" id="totalGrand">0.00</th>
-                                                    </tr>
-                                                </tfoot>
-                                            </table>
-                                        </div>
-                                    </div>
-
-                                    <!-- Shipment Charges Table -->
-                                    <div class="tab-pane fade" id="shipmentCharges" role="tabpanel"
-                                        aria-labelledby="shipmentCharges-tab">
-                                        <div class="table-responsive mt-4">
-                                            <table
-                                                class="table table-sm table-bordered text-center align-middle small sticky-header"
-                                                id="pendingShipmentCharges">
-                                                <thead class="table-light">
-                                                    <tr>
-                                                        <th>Charges Type</th>
-                                                        <th>Total Amount</th>
-                                                        <th>SGST Amt</th>
-                                                        <th>CGST Amt</th>
-                                                        <th>IGST Amt</th>
-                                                        <th>Total GST Amt</th>
-                                                        <th>Grand Total Amt</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody></tbody>
-                                                <tfoot class="table-light">
-                                                    <tr id="ChargestotalsRow">
-                                                        <th class="text-end">Totals:</th>
-                                                        <th class="text-end" id="totalFreightAmt">0.00</th>
-                                                        <th class="text-end" id="totalSGSTAmt">0.00</th>
-                                                        <th class="text-end" id="totalCGSTAmt">0.00</th>
-                                                        <th class="text-end" id="totalIGSTAmt">0.00</th>
-                                                        <th class="text-end" id="totalGSTAmt">0.00</th>
-                                                        <th class="text-end" id="totalGrandAmt">0.00</th>
-                                                    </tr>
-                                                </tfoot>
-                                            </table>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Bottom Actions -->
-                                <div class="row g-2 mt-2">
-                                    <div class="col-md-4">
-                                        <label for="inputBankName" class="form-label">Bank Name</label>
-                                        <input list="bankNameSuggestions" class="form-control bg-light-input"
-                                            id="inputBankName" required autocomplete="off">
-                                        <datalist id="bankNameSuggestions"></datalist>
-                                    </div>
-
-                                    <div class="col-md-4">
-                                        <label for="shipmentNo" class="form-label">Shipment Number</label>
-                                        <input list="shipmentNoSuggestions" class="form-control bg-light-input"
-                                            id="shipmentNo" required autocomplete="off">
-                                        <datalist id="shipmentNoSuggestions"></datalist>
-                                    </div>
-
-                                    <div class="col-md-1 d-grid align-items-end">
-                                        <button type="button" class="btn btn-primary mt-4" id="addShipmentNo">
-                                            <i class="bi bi-plus-circle"></i>
-                                        </button>
-                                    </div>
-
-                                    <div class="col-md-3">
-                                        <label for="reportType" class="form-label">Report Type</label>
-                                        <select class="form-select" id="reportType">
-                                            <option value="Main">Choose...</option>
-                                            <option value="Letter Head">Letter Head</option>
-                                            <option value="Print Annexure">Print Annexure</option>
-                                            <option value="Duty Invoice">Duty Invoice</option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </form>
-
-                            <!-- Loading Spinner -->
-                            <div id="loadingSpinner"
-                                class="d-none position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center bg-dark bg-opacity-50">
-                                <div class="spinner-border text-light" role="status">
-                                    <span class="visually-hidden">Loading...</span>
-                                </div>
-                            </div>
-
-                            <!-- Address Selection Modal -->
-                            <div class="modal fade" id="addressSelectionModal" tabindex="-1"
-                                aria-labelledby="addressModalLabel" aria-hidden="true">
-                                <div class="modal-dialog modal-dialog-centered">
-                                    <div class="modal-content">
-                                        <div class="modal-header">
-                                            <h5 class="modal-title" id="addressModalLabel">Select Invoice Address</h5>
-                                            <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                                aria-label="Close"></button>
-                                        </div>
-                                        <div class="modal-body" id="addressListContainer"></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Toast Container -->
-    <div class="position-fixed top-0 end-0 p-3" style="z-index: 9999">
-        <div id="errorToast" class="toast align-items-center text-white bg-danger border-0" role="alert">
-            <div class="d-flex">
-                <div class="toast-body" id="errorToastMessage">
-                    Error message here...
-                </div>
-                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-            </div>
-        </div>
-    </div>
-
 </body>
 
 </html>

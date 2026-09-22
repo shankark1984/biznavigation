@@ -5,273 +5,621 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vendor Billing</title>
+
+    <!-- Resource Hints -->
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <!-- Modern Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
     <!-- Bootstrap CSS & Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
 
+    <!-- Select2 -->
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
     <!-- Sidebar CSS -->
     <link rel="stylesheet" href="../../assets/css/navbar.css" />
+
+    <!-- Upgraded Modern Form Styles (Unified) -->
     <style>
+        :root {
+            --primary-color: #2563eb;
+            --primary-hover: #1d4ed8;
+            --success-color: #059669;
+            --warning-color: #d97706;
+            --danger-color: #dc2626;
+            --info-color: #0284c7;
+            --bg-color: #f8fafc;
+            --surface-color: #ffffff;
+            --border-color: #e2e8f0;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --radius-md: 8px;
+            --radius-lg: 12px;
+            --transition: all 0.2s ease-in-out;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            font-family: 'Inter', sans-serif;
+            color: var(--text-main);
+        }
+
+        /* Card Styling */
+        .card {
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            border-radius: var(--radius-lg);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -2px rgba(0, 0, 0, 0.02) !important;
+            background-color: var(--surface-color);
+        }
+
+        .card-body {
+            padding: 1.5rem 2rem !important;
+        }
+
+        /* Action Bar */
+        .action-bar {
+            padding-bottom: 1.25rem;
+            margin-bottom: 1.25rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .btn {
+            font-weight: 500;
+            border-radius: 6px;
+            padding: 0.4rem 0.875rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            transition: var(--transition);
+        }
+
+        .btn-sm {
+            font-size: 0.85rem;
+        }
+
+        /* Form Controls */
+        .form-label {
+            margin-bottom: 0.3rem !important;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-control,
+        .form-select {
+            padding: 0.45rem 0.75rem !important;
+            font-size: 0.875rem !important;
+            background-color: #f8fafc;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            color: var(--text-main);
+            transition: var(--transition);
+        }
+
+        .form-control-sm,
+        .form-select-sm {
+            padding: 0.4rem 0.7rem !important;
+            font-size: 0.85rem !important;
+            border-radius: var(--radius-md);
+        }
+
+        .form-control:hover,
+        .form-select:hover {
+            border-color: #cbd5e1;
+        }
+
+        .form-control:focus,
+        .form-select:focus {
+            background-color: #ffffff;
+            border-color: #93c5fd;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+        }
+
+        .form-control::placeholder {
+            color: #94a3b8;
+        }
+
+        .form-control[readonly],
+        .form-control:disabled,
+        .form-control.bg-light {
+            background-color: #f1f5f9 !important;
+            color: #475569;
+            cursor: default;
+        }
+
+        /* Preserved highlight for auto-populated fields */
         .invoice-bg {
-            background-color: #d8e26b !important;
+            background-color: #eff6ff !important;
+            border-color: #bfdbfe !important;
+            color: #1e3a8a;
+            font-weight: 500;
+        }
+
+        .invoice-bg:focus {
+            background-color: #ffffff !important;
+            border-color: #93c5fd !important;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
         }
 
         #vendorBillNo {
             text-transform: uppercase;
         }
+
+        /* Modern Tabs — tighter to content above */
+        .nav-tabs {
+            border-bottom: 1px solid var(--border-color);
+            gap: 1.5rem;
+            padding-bottom: 0px;
+            margin-bottom: 0;
+        }
+
+        .nav-tabs .nav-link {
+            border: none;
+            color: var(--text-muted);
+            background-color: transparent;
+            font-weight: 600;
+            padding: 0.75rem 0.25rem !important;
+            font-size: 0.875rem;
+            border-bottom: 2px solid transparent;
+            border-radius: 0;
+            transition: var(--transition);
+        }
+
+        .nav-tabs .nav-link:hover {
+            color: var(--text-main);
+            border-bottom-color: #cbd5e1;
+        }
+
+        .nav-tabs .nav-link.active {
+            color: var(--primary-color) !important;
+            background-color: transparent !important;
+            border-bottom: 2px solid var(--primary-color);
+        }
+
+        .tab-content {
+            padding-top: 1.25rem;
+            background: transparent;
+            border: none !important;
+        }
+
+        /* Modern Tables */
+        .table-responsive {
+            max-height: 500px;
+            overflow: auto;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            background: var(--surface-color);
+        }
+
+        .table {
+            margin-bottom: 0;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+
+        .table thead th {
+            position: sticky;
+            top: 0;
+            background-color: #f1f5f9 !important;
+            color: var(--text-muted);
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+            z-index: 10;
+            padding: 0.6rem 0.75rem !important;
+            border-bottom: 1px solid var(--border-color);
+            border-top: none;
+            white-space: nowrap;
+            text-align: center;
+        }
+
+        .table tbody td {
+            padding: 0.6rem 0.75rem !important;
+            font-size: 0.82rem;
+            vertical-align: middle;
+            color: var(--text-main);
+            border-color: var(--border-color);
+            text-align: center;
+        }
+
+        .table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .table tbody tr:hover {
+            background-color: #f8fafc;
+        }
+
+        .table tfoot th,
+        .table tfoot td {
+            background-color: #f1f5f9;
+            font-weight: 700;
+            font-size: 0.82rem;
+            padding: 0.7rem 0.75rem !important;
+            border-top: 1px solid var(--border-color);
+            color: var(--text-main);
+            text-align: center;
+        }
+
+        .table tfoot #grandTotalAmount {
+            color: var(--primary-color) !important;
+        }
+
+        /* Modals */
+        .modal-content {
+            border: none;
+            border-radius: var(--radius-lg);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+        }
+
+        .modal-header {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            background-color: #f1f5f9;
+        }
+
+        .modal-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+        }
+
+        .modal-footer {
+            border-top: 1px solid var(--border-color);
+            padding: 0.85rem 1.5rem;
+            background-color: #f8fafc;
+        }
+
+        /* Address selection list */
+        #addressListContainer .address-item {
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 0.85rem;
+        }
+
+        #addressListContainer .address-item:hover {
+            background-color: #eff6ff;
+            border-color: #bfdbfe;
+        }
+
+        /* Select2 unified look */
+        .select2-container--default .select2-selection--single,
+        .select2-container--default .select2-selection--multiple {
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            background-color: #f8fafc;
+            min-height: 38px;
+            padding: 0.15rem 0.5rem;
+        }
+
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            line-height: 30px;
+            font-size: 0.875rem;
+            color: var(--text-main);
+        }
+
+        .select2-container--default.select2-container--focus .select2-selection--single,
+        .select2-container--default.select2-container--focus .select2-selection--multiple {
+            border-color: #93c5fd;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+            background-color: #ffffff;
+        }
+
+        .select2-dropdown {
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+
+        .select2-results__option--highlighted {
+            background-color: var(--primary-color) !important;
+        }
+
+        /* Toast */
+        .toast {
+            border: none;
+            border-radius: var(--radius-md);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.05);
+        }
+
+        /* Mobile tweaks */
+        @media (max-width: 768px) {
+            .card-body {
+                padding: 1rem 1.25rem !important;
+            }
+        }
     </style>
 </head>
 
-<body class="bg-light">
-    <!-- 🔥 APP LAYOUT -->
+<body>
     <div class="app-wrapper">
 
         <!-- Sidebar -->
         <div id="sidebar">
-            <!-- fallback -->
-            <div class="text-center text-white p-3">Loading...</div>
+            <div class="text-center text-muted p-3">Loading Sidebar...</div>
         </div>
 
         <!-- Main Content -->
         <div class="main-content">
+            <div class="page-content">
 
-            <!-- YOUR EXISTING UI (UNCHANGED) -->
-            <div class="container-fluid mt-2">
-                <div class="card shadow-lg rounded">
+                <div class="container-fluid mt-3 mb-4">
+                    <div class="card">
+                        <div class="card-body">
 
-                    <div class="card-body">
-                        <form class="invoiceForm" autocomplete="off">
-                            <!-- Action Buttons -->
-                            <div class="d-flex flex-wrap gap-1 mb-3">
-                                <button type="button" class="btn btn-primary btn-sm" id="newButton"
-                                    title="Create new booking">
-                                    <i class="bi bi-file-earmark-plus"></i> New
-                                </button>
-                                <button type="button" class="btn btn-warning btn-sm" id="modifyButton" disabled
-                                    title="Modify booking">
-                                    <i class="bi bi-pencil"></i> Modify
-                                </button>
-                                <button type="button" class="btn btn-danger btn-sm" id="deleteButton" disabled
-                                    title="Delete booking">
-                                    <i class="bi bi-trash"></i> Delete
-                                </button>
-                                <button type="button" class="btn btn-info btn-sm" id="reportButton" disabled>
-                                    <i class="bi bi-printer"></i> Print </button>
-                                <button id="saveButton" class="btn btn-primary btn-sm" type="button" data-mode="insert">
-                                    <span id="saveSpinnerBtn"
-                                        class="spinner-border spinner-border-sm me-2 d-none"></span>
-                                    <i class="bi bi-save"></i> Save
-                                </button>
-                                <div id="saveSpinnerOverlay" class="spinner-border text-primary d-none"></div>
-                                <input type="text" class="form-control bg-light d-none" id="status" value="New"
-                                    readonly>
+                            <form class="invoiceForm" autocomplete="off">
+
+                                <!-- Action Bar -->
+                                <div
+                                    class="action-bar d-flex flex-wrap gap-2 align-items-center justify-content-between">
+                                    <h5 class="m-0 fw-bold text-dark d-none d-md-block">Vendor Billing</h5>
+
+                                    <div class="d-flex flex-wrap gap-2">
+                                        <button type="button" class="btn btn-outline-primary btn-sm bg-white"
+                                            id="newButton" title="Create new booking">
+                                            <i class="bi bi-file-earmark-plus"></i> New
+                                        </button>
+                                        <button type="button" class="btn btn-outline-warning btn-sm bg-white"
+                                            id="modifyButton" disabled title="Modify booking">
+                                            <i class="bi bi-pencil"></i> Modify
+                                        </button>
+                                        <button type="button" class="btn btn-outline-danger btn-sm bg-white"
+                                            id="deleteButton" disabled title="Delete booking">
+                                            <i class="bi bi-trash"></i> Delete
+                                        </button>
+                                        <button type="button" class="btn btn-outline-info btn-sm bg-white"
+                                            id="reportButton" disabled title="Print">
+                                            <i class="bi bi-printer"></i> Print
+                                        </button>
+                                        <button id="saveButton" class="btn btn-primary btn-sm px-4 shadow-sm"
+                                            type="button" data-mode="insert" title="Save billing">
+                                            <span id="saveSpinnerBtn"
+                                                class="spinner-border spinner-border-sm me-2 d-none"></span>
+                                            <i class="bi bi-check2-circle"></i> Save
+                                        </button>
+                                        <div id="saveSpinnerOverlay" class="spinner-border text-primary d-none"></div>
+                                    </div>
+
+                                    <input type="text" class="form-control bg-light d-none" id="status" value="New"
+                                        readonly>
+                                </div>
+
+                                <!-- Hidden Fields -->
+                                <input type="hidden" id="tempFormID">
+                                <input type="hidden" id="partyCode">
+                                <input type="hidden" id="bankIDs">
+                                <input type="hidden" id="vendorBillingID">
+                                <input type="hidden" id="mode" value="insert">
+
+                                <!-- Form Inputs -->
+                                <div class="row g-3">
+                                    <!-- Expense Type -->
+                                    <div class="col-lg-4 col-md-6 col-sm-12">
+                                        <label for="expenseType" class="form-label">Expense Type</label>
+                                        <input type="text" class="form-control" id="expenseType" list="expenseTypeList"
+                                            autocomplete="off" placeholder="Select Expense Type" autofocus>
+                                        <datalist id="expenseTypeList"></datalist>
+                                    </div>
+
+                                    <div class="col-lg-4 col-md-6 col-sm-12">
+                                        <label for="expenseFor" class="form-label">Expense For</label>
+                                        <input type="text" class="form-control" id="expenseFor" list="expenseForList"
+                                            autocomplete="off" placeholder="Select Expense For">
+                                        <datalist id="expenseForList"></datalist>
+                                    </div>
+
+                                    <div class="col-lg-2 col-md-3 col-sm-6">
+                                        <label for="billReferenceNo" class="form-label">Reference No</label>
+                                        <input list="billReferenceNoSuggestions" class="form-control invoice-bg"
+                                            id="billReferenceNo" required autocomplete="off" tabindex="-1"
+                                            placeholder="Auto">
+                                        <datalist id="billReferenceNoSuggestions"></datalist>
+                                    </div>
+
+                                    <div class="col-lg-2 col-md-3 col-sm-6">
+                                        <label for="accountedDate" class="form-label">Accounted Date</label>
+                                        <input type="date" class="form-control" id="accountedDate" required>
+                                    </div>
+
+                                    <div class="col-lg-4 col-md-6 col-sm-12">
+                                        <label for="partyName" class="form-label">Vendor Name</label>
+                                        <input list="partySuggestions" class="form-control" id="partyName" required
+                                            placeholder="Choose Vendor..." autocomplete="off">
+                                        <datalist id="partySuggestions"></datalist>
+                                    </div>
+
+                                    <div class="col-lg-2 col-md-3 col-sm-6">
+                                        <label for="vendorBillNo" class="form-label">Bill No</label>
+                                        <input list="vendorBillNoSuggestions" class="form-control invoice-bg"
+                                            id="vendorBillNo" required autocomplete="off" placeholder="Bill No">
+                                        <datalist id="vendorBillNoSuggestions"></datalist>
+                                    </div>
+
+                                    <div class="col-lg-2 col-md-3 col-sm-6">
+                                        <label for="vendorBillDate" class="form-label">Bill Date</label>
+                                        <input type="date" class="form-control" id="vendorBillDate" required>
+                                    </div>
+
+                                    <div class="col-lg-2 col-md-3 col-sm-6">
+                                        <label for="vendorBilledAmount" class="form-label">Billed Amount</label>
+                                        <input type="number" class="form-control text-end" id="vendorBilledAmount"
+                                            required min="0" placeholder="0.00" step="0.01">
+                                    </div>
+
+                                    <div class="col-lg-2 col-md-3 col-sm-6">
+                                        <label for="vendorDueDate" class="form-label">Due Date</label>
+                                        <input type="date" class="form-control" id="vendorDueDate" required>
+                                    </div>
+
+                                    <div class="col-lg-8 col-md-6 col-sm-12">
+                                        <label for="vendorBillInformation" class="form-label">Information</label>
+                                        <input type="text" class="form-control" id="vendorBillInformation"
+                                            placeholder="Enter additional information">
+                                    </div>
+                                </div>
+
+                            </form>
+
+                            <!-- Tabs — directly under form, no gap -->
+                            <ul class="nav nav-tabs mt-4" id="partyTabs" role="tablist">
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link active" id="shipmentDetails-tab" data-bs-toggle="tab"
+                                        data-bs-target="#shipmentDetails" type="button" role="tab"
+                                        aria-controls="shipmentDetails" aria-selected="true">
+                                        Billing Details
+                                    </button>
+                                </li>
+                            </ul>
+
+                            <!-- Tab Content -->
+                            <div class="tab-content">
+                                <div class="tab-pane fade show active" id="shipmentDetails" role="tabpanel"
+                                    aria-labelledby="shipmentDetails-tab">
+
+                                    <!-- Charge Input Row -->
+                                    <div class="row g-3 align-items-end mb-4">
+                                        <div class="col-lg-2 col-md-4 col-sm-6">
+                                            <label for="chargesType" class="form-label">Charges Type</label>
+                                            <input type="text" class="form-control" id="chargesType"
+                                                list="chargesTypeList" autocomplete="off"
+                                                placeholder="Select Charges Type">
+                                            <datalist id="chargesTypeList"></datalist>
+                                        </div>
+
+                                        <div class="col-lg-2 col-md-4 col-sm-6">
+                                            <label for="shipmentNo" class="form-label">Shipment No</label>
+                                            <input type="text" class="form-control" id="shipmentNo"
+                                                list="shipmentNoList" autocomplete="off"
+                                                placeholder="Select Shipment No">
+                                            <datalist id="shipmentNoList"></datalist>
+                                        </div>
+
+                                        <div class="col-lg-2 col-md-4 col-sm-6">
+                                            <label for="nonTaxableAmount" class="form-label">Non-Taxable Amount</label>
+                                            <input type="number" class="form-control text-end" id="nonTaxableAmount"
+                                                autocomplete="off" placeholder="0.00" min="0" step="0.01">
+                                        </div>
+
+                                        <div class="col-lg-2 col-md-4 col-sm-6">
+                                            <label for="taxableAmount" class="form-label">Taxable Amount</label>
+                                            <input type="number" class="form-control text-end" id="taxableAmount"
+                                                autocomplete="off" placeholder="0.00" min="0" step="0.01">
+                                        </div>
+
+                                        <div class="col-lg-2 col-md-4 col-sm-6">
+                                            <label for="partyDefaultTax" class="form-label">Tax Rate</label>
+                                            <select id="partyDefaultTax" class="form-select">
+                                                <option value="" disabled selected>Select Tax</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="col-lg-2 col-md-4 col-sm-6">
+                                            <button type="button" class="btn btn-outline-primary btn-sm w-100"
+                                                id="addChargesDetails">
+                                                <i class="bi bi-plus-circle"></i> Add
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Shipment Details Table -->
+                                    <div class="table-responsive">
+                                        <table class="table table-hover" id="pendingShipmentTable">
+                                            <thead>
+                                                <tr>
+                                                    <th>Sl.No</th>
+                                                    <th>Charges Type</th>
+                                                    <th>Shipment No</th>
+                                                    <th>GST %</th>
+                                                    <th>Non-Taxable Amt</th>
+                                                    <th>Taxable Amt</th>
+                                                    <th>SGST<br>Amount</th>
+                                                    <th>CGST<br>Amount</th>
+                                                    <th>IGST<br>Amount</th>
+                                                    <th>Total GST<br>Amount</th>
+                                                    <th>Total<br>Amount</th>
+                                                    <th class="text-center">Action</th>
+                                                    <th class="d-none">Tax ID</th>
+                                                    <th class="d-none">Status</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody></tbody>
+                                            <tfoot>
+                                                <tr id="totalsRow">
+                                                    <th colspan="4" class="text-end">Totals:</th>
+                                                    <th class="text-end" id="totalNonTaxableAmount">0.00</th>
+                                                    <th class="text-end" id="totalTaxableAmount">0.00</th>
+                                                    <th class="text-end" id="totalSGSTAmount">0.00</th>
+                                                    <th class="text-end" id="totalCGSTAmount">0.00</th>
+                                                    <th class="text-end" id="totalIGSTAmount">0.00</th>
+                                                    <th class="text-end" id="totalGSTAmount">0.00</th>
+                                                    <th class="text-end" id="grandTotalAmount">0.00</th>
+                                                </tr>
+                                            </tfoot>
+                                        </table>
+                                    </div>
+
+                                </div>
                             </div>
-                            <!-- Hidden Fields -->
-                            <input type="hidden" id="tempFormID">
-                            <input type="hidden" id="partyCode">
-                            <input type="hidden" id="bankIDs">
-                            <input type="hidden" id="vendorBillingID">
-                            <input type="hidden" id="mode" value="insert">
 
-                            <!-- Form Inputs -->
-                            <div class="row g-2">
-                                <!-- Expense Type-->
-                                <div class="col-lg-4">
-                                    <label for="expenseType" class="form-label">Expense Type</label>
-                                    <input type="text" class="form-control" id="expenseType" list="expenseTypeList"
-                                        autocomplete="off" placeholder="Select Expense Type" autofocus>
-                                    <datalist id="expenseTypeList"></datalist>
-                                </div>
-
-                                <div class="col-lg-4">
-                                    <label for="expenseFor" class="form-label">Expense For</label>
-                                    <input type="text" class="form-control" id="expenseFor" list="expenseForList"
-                                        autocomplete="off" placeholder="Select Expense For">
-                                    <datalist id="expenseForList"></datalist>
-                                </div>
-
-                                <div class="col-md-2">
-                                    <label for="billReferenceNo" class="form-label">Reference No</label>
-                                    <input list="billReferenceNoSuggestions" class="form-control invoice-bg"
-                                        id="billReferenceNo" required autocomplete="off" tabindex="-1">
-                                    <datalist id="billReferenceNoSuggestions"></datalist>
-                                </div>
-
-                                <div class="col-md-2">
-                                    <label for="accountedDate" class="form-label">Accounted Date</label>
-                                    <input type="date" class="form-control" id="accountedDate" required>
-                                </div>
-                                <div class="col-lg-4">
-                                    <label for="partyName" class="form-label">Vendor Name</label>
-                                    <input list="partySuggestions" class="form-control mb-2" id="partyName" required
-                                        placeholder="Choose..." autocomplete="off">
-                                    <datalist id="partySuggestions"></datalist>
-                                </div>
-                                <div class="col-md-2">
-                                    <label for="vendorBillNo" class="form-label">Bill No</label>
-                                    <input list="vendorBillNoSuggestions" class="form-control invoice-bg"
-                                        id="vendorBillNo" required autocomplete="off">
-                                    <datalist id="vendorBillNoSuggestions"></datalist>
-                                </div>
-
-                                <div class="col-md-2">
-                                    <label for="vendorBillDate" class="form-label">Bill Date</label>
-                                    <input type="date" class="form-control" id="vendorBillDate" required>
-                                </div>
-
-                                <div class="col-md-2">
-                                    <label for="vendorBilledAmount" class="form-label">Billed Amount</label>
-                                    <input type="number" class="form-control text-end" id="vendorBilledAmount" required
-                                        min="0" placeholder="0.00" step="0.01">
-                                </div>
-
-                                <div class="col-md-2">
-                                    <label for="vendorDueDate" class="form-label">Due Date</label>
-                                    <input type="date" class="form-control" id="vendorDueDate" required>
-                                </div>
-
-                                <div class="col-md-12">
-                                    <label for="vendorBillInformation" class="form-label">Information</label>
-                                    <input type="text" class="form-control" id="vendorBillInformation">
-                                </div>
-
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Tabs -->
-            <ul class="nav nav-tabs mt-4" id="partyTabs" role="tablist">
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link active" id="shipmentDetails-tab" data-bs-toggle="tab"
-                        data-bs-target="#shipmentDetails" type="button" role="tab" aria-controls="shipmentDetails"
-                        aria-selected="true">
-                        Billing Details
-                    </button>
-                </li>
-            </ul>
-
-            <!-- Tab Content -->
-            <div class="tab-content p-3 border border-top-0 bg-white">
-
-                <div class="row g-2 align-items-end">
-
-                    <div class="col-lg-2 col-md-4 col-sm-6">
-                        <label for="chargesType" class="form-label">Charges Type</label>
-                        <input type="text" class="form-control" id="chargesType" list="chargesTypeList"
-                            autocomplete="off" placeholder="Select Charges Type">
-                        <datalist id="chargesTypeList"></datalist>
-                    </div>
-
-                    <div class="col-lg-2 col-md-4 col-sm-6">
-                        <label for="shipmentNo" class="form-label">Shipment No</label>
-                        <input type="text" class="form-control" id="shipmentNo" list="shipmentNoList" autocomplete="off"
-                            placeholder="Select Shipment No">
-                        <datalist id="shipmentNoList"></datalist>
-                    </div>
-
-                    <div class="col-lg-2 col-md-4 col-sm-6">
-                        <label for="nonTaxableAmount" class="form-label">Non-Taxable Amount</label>
-                        <input type="number" class="form-control  text-end" id="nonTaxableAmount" autocomplete="off"
-                            placeholder="0.00" min="0" step="0.01">
-                    </div>
-
-                    <div class="col-lg-2 col-md-4 col-sm-6">
-                        <label for="taxableAmount" class="form-label">Taxable Amount</label>
-                        <input type="number" class="form-control  text-end" id="taxableAmount" autocomplete="off"
-                            placeholder="0.00" min="0" step="0.01">
-                    </div>
-
-                    <div class="col-lg-2 col-md-4 col-sm-6">
-                        <label for="partyDefaultTax" class="form-label small">Tax
-                            Rate</label>
-                        <select id="partyDefaultTax" class="form-control form-control-sm">
-                            <option value="" disabled selected>Select Tax</option>
-                        </select>
-                    </div>
-
-                    <div class="col-lg-2 col-md-4 col-sm-6">
-                        <button type="button" class="btn btn-success btn-sm w-100" id="addChargesDetails">
-                            <i class="bi bi-plus-circle"></i> Add
-                        </button>
-                    </div>
-
-                </div>
-                <!-- Shipment Details Table -->
-                <div class=" tab-pane fade show active" id="shipmentDetails" role="tabpanel"
-                    aria-labelledby="shipmentDetails-tab">
-                    <div class="table-responsive mt-4" style="max-height:500px;">
-                        <table class="table table-sm table-bordered text-center align-middle small sticky-header"
-                            id="pendingShipmentTable">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>Sl.No</th>
-                                    <th>Charges Type</th>
-                                    <th>Shipment No</th>
-                                    <th>GST %</th>
-                                    <th>Non-Taxable Amt</th>
-                                    <th>Taxable Amt</th>
-                                    <th>SGST<br>Amount</th>
-                                    <th>CGST<br>Amount</th>
-                                    <th>IGST<br>Amount</th>
-                                    <th>Total GST<br>Amount</th>
-                                    <th>Total<br>Amount</th>
-                                    <th>Action</th>
-                                    <th class="d-none">Tax ID</th>
-                                    <th class="d-none">Status</th>
-                                </tr>
-                            </thead>
-                            <tbody></tbody>
-                            <tfoot class="table-light">
-                                <tr id="totalsRow">
-                                    <th colspan="4" class="text-end">Totals:</th>
-                                    <th class="text-end" id="totalNonTaxableAmount">0.00</th>
-                                    <th class="text-end" id="totalTaxableAmount">0.00</th>
-                                    <th class="text-end" id="totalSGSTAmount">0.00</th>
-                                    <th class="text-end" id="totalCGSTAmount">0.00</th>
-                                    <th class="text-end" id="totalIGSTAmount">0.00</th>
-                                    <th class="text-end" id="totalGSTAmount">0.00</th>
-                                    <th class="text-end" id="grandTotalAmount">0.00</th>
-                                </tr>
-                            </tfoot>
-                        </table>
-                    </div>
-                </div>
-
-            </div>
-
-            <!-- Loading Spinner -->
-            <div id="loadingSpinner"
-                class="d-none position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center bg-dark bg-opacity-50">
-                <div class="spinner-border text-light" role="status">
-                    <span class="visually-hidden">Loading...</span>
-                </div>
-            </div>
-
-            <!-- Address Selection Modal -->
-            <div class="modal fade" id="addressSelectionModal" tabindex="-1" aria-labelledby="addressModalLabel"
-                aria-hidden="true">
-                <div class="modal-dialog modal-dialog-centered">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title" id="addressModalLabel">Select Invoice Address</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
-                        <div class="modal-body" id="addressListContainer"></div>
                     </div>
                 </div>
+
+                <!-- Loading Spinner -->
+                <div id="loadingSpinner"
+                    class="d-none position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center bg-dark bg-opacity-50"
+                    style="z-index: 1060;">
+                    <div class="spinner-border text-light" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+
+                <!-- Address Selection Modal -->
+                <div class="modal fade" id="addressSelectionModal" tabindex="-1" aria-labelledby="addressModalLabel"
+                    aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="addressModalLabel">
+                                    <i class="bi bi-geo-alt"></i> Select Invoice Address
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                    aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body" id="addressListContainer"></div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>
 
     <!-- Toast Container -->
     <div class="position-fixed top-0 end-0 p-3" style="z-index: 9999">
-        <div id="errorToast" class="toast align-items-center text-white bg-danger border-0" role="alert">
+        <div id="errorToast" class="toast align-items-center text-white bg-danger border-0 shadow" role="alert">
             <div class="d-flex">
                 <div class="toast-body" id="errorToastMessage">
                     Error message here...
@@ -298,7 +646,6 @@
     <script src="../../assets/js/utils/taxDescription.js" defer></script>
 
     <script src="../../assets/js/VendorBilling/VendorBilling.js" defer></script>
-
 
 </body>
 

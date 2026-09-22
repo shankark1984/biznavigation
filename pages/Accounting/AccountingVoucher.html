@@ -7,7 +7,16 @@
     <meta name="description" content="Accounting Voucher Entry System">
     <title>Accounting Voucher</title>
 
-    <!-- Bootstrap -->
+    <!-- Resource Hints -->
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <!-- Modern Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap & Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
 
@@ -17,100 +26,412 @@
     <!-- Sidebar -->
     <link rel="stylesheet" href="../../assets/css/navbar.css">
 
+    <!-- Upgraded Modern Voucher Styles (Unified) -->
     <style>
+        :root {
+            --primary-color: #2563eb;
+            --primary-hover: #1d4ed8;
+            --success-color: #059669;
+            --warning-color: #d97706;
+            --danger-color: #dc2626;
+            --info-color: #0284c7;
+            --bg-color: #f8fafc;
+            --surface-color: #ffffff;
+            --border-color: #e2e8f0;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --radius-md: 8px;
+            --radius-lg: 12px;
+            --transition: all 0.2s ease-in-out;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            font-family: 'Inter', sans-serif;
+            color: var(--text-main);
+        }
+
+        /* Card Styling */
         .card {
-            border: none;
-            border-radius: .5rem;
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            border-radius: var(--radius-lg);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -2px rgba(0, 0, 0, 0.02) !important;
+            background-color: var(--surface-color);
         }
 
-        .card-header {
+        .card-body {
+            padding: 1.5rem 2rem !important;
+        }
+
+        /* Section Headers inside the single card */
+        .section-header {
+            font-size: 0.8rem;
             font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--text-main);
+            padding: 0 0 0.65rem 0;
+            margin: 0 0 1.25rem 0;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
 
-        .required::after {
-            content: " *";
-            color: red;
+        .section-header::before {
+            content: "";
+            display: inline-block;
+            width: 4px;
+            height: 16px;
+            border-radius: 2px;
+            background-color: var(--primary-color);
         }
 
-        .readonly {
-            background: #fff3cd !important;
+        .section-header.success::before {
+            background-color: var(--success-color);
         }
 
-        .form-label {
-            font-weight: 600;
-            margin-bottom: .25rem;
+        /* Action Bar */
+        .action-bar {
+            padding-bottom: 1.25rem;
+            margin-bottom: 1.25rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .btn {
+            font-weight: 500;
+            border-radius: 6px;
+            padding: 0.4rem 0.875rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            transition: var(--transition);
+        }
+
+        .btn-sm {
+            font-size: 0.85rem;
         }
 
         .btn-toolbar .btn {
             min-width: 90px;
         }
+
+        /* Form Controls */
+        .form-label {
+            margin-bottom: 0.3rem !important;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-control,
+        .form-select {
+            padding: 0.45rem 0.75rem !important;
+            font-size: 0.875rem !important;
+            background-color: #f8fafc;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            color: var(--text-main);
+            transition: var(--transition);
+        }
+
+        .form-control-sm,
+        .form-select-sm {
+            padding: 0.4rem 0.7rem !important;
+            font-size: 0.85rem !important;
+            border-radius: var(--radius-md);
+        }
+
+        .form-control:hover,
+        .form-select:hover {
+            border-color: #cbd5e1;
+        }
+
+        .form-control:focus,
+        .form-select:focus {
+            background-color: #ffffff;
+            border-color: #93c5fd;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+        }
+
+        .form-control::placeholder {
+            color: #94a3b8;
+        }
+
+        textarea.form-control {
+            min-height: 38px !important;
+            resize: none;
+        }
+
+        /* Required asterisk */
+        .required::after {
+            content: " *";
+            color: var(--danger-color);
+            font-weight: 700;
+        }
+
+        /* Readonly / calculated fields */
+        .readonly,
+        .form-control[readonly] {
+            background-color: #f1f5f9 !important;
+            color: #475569;
+            cursor: default;
+        }
+
+        /* Input group consistency */
+        .input-group-sm>.form-control,
+        .input-group-sm>.form-select {
+            padding: 0.4rem 0.7rem !important;
+            font-size: 0.85rem !important;
+        }
+
+        .input-group-text {
+            background-color: #f8fafc;
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        .input-group .btn-outline-secondary {
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            background-color: #ffffff;
+        }
+
+        .input-group .btn-outline-secondary:hover {
+            background-color: #eff6ff;
+            color: var(--primary-color);
+            border-color: #bfdbfe;
+        }
+
+        /* Divider */
+        hr {
+            border-top: 1px solid var(--border-color);
+            opacity: 1;
+            margin: 1.5rem 0;
+        }
+
+        /* Modals */
+        .modal-content {
+            border: none;
+            border-radius: var(--radius-lg);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+        }
+
+        .modal-header {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .modal-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+        }
+
+        .modal-footer {
+            border-top: 1px solid var(--border-color);
+            padding: 0.85rem 1.5rem;
+            background-color: #f8fafc;
+        }
+
+        /* Soften modal header backgrounds */
+        .modal-header.bg-primary {
+            background-color: var(--primary-color) !important;
+            color: #ffffff;
+        }
+
+        .modal-header.bg-success {
+            background-color: var(--success-color) !important;
+            color: #ffffff;
+        }
+
+        /* Modal Tables */
+        .modal .table {
+            margin-bottom: 0;
+            font-size: 0.85rem;
+        }
+
+        .modal .table thead th {
+            position: sticky;
+            top: 0;
+            background-color: #f1f5f9 !important;
+            color: var(--text-muted);
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+            padding: 0.6rem 0.75rem !important;
+            border-bottom: 1px solid var(--border-color);
+            border-top: none;
+            z-index: 2;
+            white-space: nowrap;
+        }
+
+        .modal .table tbody td {
+            padding: 0.6rem 0.75rem !important;
+            font-size: 0.85rem;
+            vertical-align: middle;
+            border-color: var(--border-color);
+            color: var(--text-main);
+        }
+
+        .modal .table tbody tr {
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .modal .table tbody tr:hover {
+            background-color: #f8fafc;
+        }
+
+        /* Badges */
+        .badge.bg-secondary {
+            background-color: #e2e8f0 !important;
+            color: #475569 !important;
+            font-weight: 600;
+            padding: 0.4rem 0.75rem;
+            font-size: 0.75rem;
+        }
+
+        /* Search input inside modal */
+        .modal input[type="search"],
+        .modal input[type="text"] {
+            padding: 0.5rem 0.85rem !important;
+            font-size: 0.875rem !important;
+        }
+
+        /* Select2 unified look */
+        .select2-container--default .select2-selection--single,
+        .select2-container--default .select2-selection--multiple {
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            background-color: #f8fafc;
+            min-height: 38px;
+            padding: 0.15rem 0.5rem;
+        }
+
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            line-height: 30px;
+            font-size: 0.875rem;
+            color: var(--text-main);
+        }
+
+        .select2-container--default.select2-container--focus .select2-selection--single,
+        .select2-container--default.select2-container--focus .select2-selection--multiple {
+            border-color: #93c5fd;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+            background-color: #ffffff;
+        }
+
+        .select2-dropdown {
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+
+        .select2-results__option--highlighted {
+            background-color: var(--primary-color) !important;
+        }
+
+        /* Alert / Toast */
+        #alertContainer .alert {
+            border: none;
+            border-radius: var(--radius-md);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+            font-size: 0.875rem;
+        }
+
+        /* Mobile tweaks */
+        @media (max-width: 768px) {
+            .card-body {
+                padding: 1rem 1.25rem !important;
+            }
+
+            .btn-toolbar .btn {
+                min-width: auto;
+            }
+        }
     </style>
 </head>
 
-<body class="bg-light">
-
+<body>
     <div class="app-wrapper">
 
         <!-- Sidebar -->
         <aside id="sidebar">
-            <div class="text-center text-white p-3">
-                Loading...
-            </div>
+            <div class="text-center text-muted p-3">Loading Sidebar...</div>
         </aside>
 
         <!-- Main Content -->
         <main class="main-content">
             <form id="voucherForm" autocomplete="off">
-                <div class="container-fluid mt-3">
+                <div class="container-fluid mt-3 mb-4">
 
-                    <!-- ===================================================== -->
-                    <!-- TOOLBAR -->
-                    <!-- ===================================================== -->
-                    <div class="card shadow-sm mb-3">
+                    <!-- Single Unified Card -->
+                    <div class="card">
                         <div class="card-body">
-                            <div class="d-flex flex-wrap justify-content-between align-items-center">
-                                <div class="btn-toolbar gap-2">
-                                    <button type="button" class="btn btn-primary btn-sm" id="newButton">
+
+                            <!-- ===================================================== -->
+                            <!-- TOOLBAR / ACTION BAR -->
+                            <!-- ===================================================== -->
+                            <div class="action-bar d-flex flex-wrap gap-2 align-items-center justify-content-between">
+                                <h5 class="m-0 fw-bold text-dark d-none d-md-block">Accounting Voucher</h5>
+
+                                <div class="btn-toolbar gap-2" role="group" aria-label="Voucher actions">
+                                    <button type="button" class="btn btn-outline-primary btn-sm bg-white" id="newButton"
+                                        title="Create new voucher">
                                         <i class="bi bi-file-earmark-plus"></i> New
                                     </button>
-                                    <button type="button" class="btn btn-warning btn-sm" id="modifyButton" disabled>
+                                    <button type="button" class="btn btn-outline-warning btn-sm bg-white"
+                                        id="modifyButton" disabled title="Modify voucher">
                                         <i class="bi bi-pencil"></i> Modify
                                     </button>
-                                    <button type="button" class="btn btn-danger btn-sm" id="deleteButton" disabled>
+                                    <button type="button" class="btn btn-outline-danger btn-sm bg-white"
+                                        id="deleteButton" disabled title="Delete voucher">
                                         <i class="bi bi-trash"></i> Delete
                                     </button>
-                                    <button type="button" class="btn btn-info btn-sm" id="printButton" disabled>
+                                    <button type="button" class="btn btn-outline-info btn-sm bg-white" id="printButton"
+                                        disabled title="Print voucher">
                                         <i class="bi bi-printer"></i> Print
                                     </button>
-                                    <button type="button" class="btn btn-success btn-sm" id="saveButton"
-                                        data-mode="insert">
-                                        <i class="bi bi-save"></i> Save
+                                    <button type="button" class="btn btn-primary btn-sm px-4 shadow-sm" id="saveButton"
+                                        data-mode="insert" title="Save voucher">
+                                        <i class="bi bi-check2-circle"></i> Save
                                     </button>
                                 </div>
+
                                 <div>
                                     <select id="selectCompany" class="form-select form-select-sm d-none"
-                                        style="width:250px;">
+                                        style="width: 250px;">
                                     </select>
                                 </div>
                             </div>
-                        </div>
-                    </div>
 
-                    <!-- Hidden Fields -->
-                    <input type="hidden" id="voucherID">
-                    <input type="hidden" id="companyID">
-                    <input type="hidden" id="partyGST">
+                            <!-- Hidden Fields -->
+                            <input type="hidden" id="voucherID">
+                            <input type="hidden" id="companyID">
+                            <input type="hidden" id="partyGST">
 
-                    <!-- ===================================================== -->
-                    <!-- VOUCHER INFORMATION -->
-                    <!-- ===================================================== -->
-                    <div class="card shadow-sm mb-3">
-                        <div class="card-header bg-primary text-white"> Voucher Information </div>
-                        <div class="card-body">
+                            <!-- ===================================================== -->
+                            <!-- SECTION: VOUCHER INFORMATION -->
+                            <!-- ===================================================== -->
+                            <h6 class="section-header">
+                                <i class="bi bi-file-text"></i> Voucher Information
+                            </h6>
+
                             <div class="row g-3">
                                 <!-- Voucher Type -->
                                 <div class="col-lg-2 col-md-4">
-                                    <label class="form-label required" for="voucherType"> Voucher Type </label>
+                                    <label class="form-label required" for="voucherType">Voucher Type</label>
                                     <select id="voucherType" class="form-select form-select-sm">
                                         <option value="JV">Journal Voucher</option>
                                         <option value="RV">Receipt Voucher</option>
@@ -131,11 +452,12 @@
 
                                 <!-- Voucher No -->
                                 <div class="col-lg-2 col-md-4">
-                                    <label class="form-label required" for="voucherNo"> Voucher No </label>
+                                    <label class="form-label required" for="voucherNo">Voucher No</label>
                                     <div class="input-group input-group-sm">
                                         <input type="text" id="voucherNo" class="form-control"
                                             placeholder="Select Voucher No" readonly>
-                                        <button type="button" class="btn btn-outline-secondary" id="voucherNoSearch">
+                                        <button type="button" class="btn btn-outline-secondary" id="voucherNoSearch"
+                                            title="Search voucher">
                                             <i class="bi bi-search"></i>
                                         </button>
                                     </div>
@@ -143,35 +465,36 @@
 
                                 <!-- Voucher Date -->
                                 <div class="col-lg-2 col-md-4">
-                                    <label class="form-label required" for="voucherDate"> Voucher Date </label>
+                                    <label class="form-label required" for="voucherDate">Voucher Date</label>
                                     <input type="date" id="voucherDate" class="form-control form-control-sm">
                                 </div>
 
                                 <!-- Branch -->
                                 <div class="col-lg-2 col-md-4">
-                                    <label class="form-label required" for="branch"> Branch </label>
-                                    <select id="branch" class="form-select form-select-sm"> </select>
+                                    <label class="form-label required" for="branch">Branch</label>
+                                    <select id="branch" class="form-select form-select-sm"></select>
                                 </div>
 
                                 <!-- Cost Center -->
                                 <div class="col-lg-2 col-md-4">
-                                    <label class="form-label" for="costCenter"> Cost Center </label>
-                                    <select id="costCenter" class="form-select form-select-sm"> </select>
+                                    <label class="form-label" for="costCenter">Cost Center</label>
+                                    <select id="costCenter" class="form-select form-select-sm"></select>
                                 </div>
 
                                 <!-- Reference -->
                                 <div class="col-lg-2 col-md-4">
-                                    <label class="form-label" for="referenceNo"> Reference No </label>
-                                    <input type="text" id="referenceNo" class="form-control form-control-sm">
+                                    <label class="form-label" for="referenceNo">Reference No</label>
+                                    <input type="text" id="referenceNo" class="form-control form-control-sm"
+                                        placeholder="Optional">
                                 </div>
                             </div>
 
                             <hr>
 
                             <div class="row g-3">
-                                <!-- Transaction -->
+                                <!-- Transaction Mode -->
                                 <div class="col-lg-2 col-md-4">
-                                    <label class="form-label" for="transactionMode"> Transaction Mode </label>
+                                    <label class="form-label" for="transactionMode">Transaction Mode</label>
                                     <select id="transactionMode" class="form-select form-select-sm">
                                         <option value="Bank">Bank</option>
                                         <option value="Cash">Cash</option>
@@ -187,44 +510,45 @@
 
                                 <!-- Bank -->
                                 <div class="col-lg-2 col-md-8" id="bankSection">
-                                    <label class="form-label" for="bankAccount"> Bank Account </label>
+                                    <label class="form-label" for="bankAccount">Bank Account</label>
                                     <select id="bankAccount" class="form-select form-select-sm">
-                                        <option value=""> Select Bank </option>
+                                        <option value="">Select Bank</option>
                                     </select>
                                 </div>
 
                                 <!-- Cheque -->
                                 <div class="col-lg-2 col-md-4" id="instrumentSection">
-                                    <label class="form-label" for="instrumentNo"> Cheque / UTR No </label>
-                                    <input type="text" id="instrumentNo" class="form-control form-control-sm">
+                                    <label class="form-label" for="instrumentNo">Cheque / UTR No</label>
+                                    <input type="text" id="instrumentNo" class="form-control form-control-sm"
+                                        placeholder="Instrument no">
                                 </div>
 
                                 <!-- Narration -->
                                 <div class="col-lg-2 col-md-8" id="narrationSection">
-                                    <label class="form-label" for="narration"> Narration </label>
-                                    <textarea id="narration" rows="1" class="form-control form-control-sm"></textarea>
+                                    <label class="form-label" for="narration">Narration</label>
+                                    <textarea id="narration" rows="1" class="form-control form-control-sm"
+                                        placeholder="Enter narration"></textarea>
                                 </div>
                             </div>
-                        </div>
-                    </div>
 
-                    <!-- ===================================================== -->
-                    <!-- ACCOUNTING ENTRY -->
-                    <!-- ===================================================== -->
-                    <div class="card shadow-sm mb-3">
-                        <div class="card-header bg-success text-white"> Accounting Entry </div>
-                        <div class="card-body">
+                            <!-- ===================================================== -->
+                            <!-- SECTION: ACCOUNTING ENTRY -->
+                            <!-- ===================================================== -->
+                            <h6 class="section-header success mt-4" style="margin-top: 2rem;">
+                                <i class="bi bi-journal-text"></i> Accounting Entry
+                            </h6>
 
                             <!-- Account & Party -->
                             <div class="row g-3">
                                 <!-- Account -->
                                 <div class="col-lg-4">
-                                    <label class="form-label required" for="accountName"> Account </label>
+                                    <label class="form-label required" for="accountName">Account</label>
                                     <div class="input-group input-group-sm">
                                         <input type="text" id="accountName" class="form-control"
                                             placeholder="Select Ledger" readonly>
                                         <input type="hidden" id="accountCode">
-                                        <button type="button" class="btn btn-outline-secondary" id="btnAccountSearch">
+                                        <button type="button" class="btn btn-outline-secondary" id="btnAccountSearch"
+                                            title="Search ledger">
                                             <i class="bi bi-search"></i>
                                         </button>
                                     </div>
@@ -232,12 +556,13 @@
 
                                 <!-- Party -->
                                 <div class="col-lg-5">
-                                    <label class="form-label" for="partyName"> Party </label>
+                                    <label class="form-label" for="partyName">Party</label>
                                     <div class="input-group input-group-sm">
                                         <input type="text" id="partyName" class="form-control"
                                             placeholder="Select Party" readonly>
                                         <input type="hidden" id="partyCode">
-                                        <button type="button" class="btn btn-outline-secondary" id="btnPartySearch">
+                                        <button type="button" class="btn btn-outline-secondary" id="btnPartySearch"
+                                            title="Search party">
                                             <i class="bi bi-search"></i>
                                         </button>
                                     </div>
@@ -245,8 +570,9 @@
 
                                 <!-- GSTIN -->
                                 <div class="col-lg-3">
-                                    <label class="form-label" for="partyGSTIN"> GSTIN </label>
-                                    <input type="text" id="partyGSTIN" class="form-control form-control-sm" readonly>
+                                    <label class="form-label" for="partyGSTIN">GSTIN</label>
+                                    <input type="text" id="partyGSTIN"
+                                        class="form-control form-control-sm text-uppercase" readonly>
                                 </div>
                             </div>
 
@@ -255,27 +581,27 @@
                             <!-- Debit / Credit -->
                             <div class="row g-3">
                                 <div class="col-lg-2">
-                                    <label class="form-label required" for="debit"> Debit </label>
+                                    <label class="form-label required" for="debit">Debit</label>
                                     <input type="number" id="debit" class="form-control form-control-sm text-end"
                                         step="0.01" min="0" placeholder="0.00">
                                 </div>
 
                                 <div class="col-lg-2">
-                                    <label class="form-label required" for="credit"> Credit </label>
+                                    <label class="form-label required" for="credit">Credit</label>
                                     <input type="number" id="credit" class="form-control form-control-sm text-end"
                                         step="0.01" min="0" placeholder="0.00">
                                 </div>
 
                                 <div class="col-lg-2">
-                                    <label class="form-label" for="gstType"> GST Type </label>
+                                    <label class="form-label" for="gstType">GST Type</label>
                                     <select id="gstType" class="form-select form-select-sm">
-                                        <option value="Exclusive"> Exclusive </option>
-                                        <option value="Inclusive"> Inclusive </option>
+                                        <option value="Exclusive">Exclusive</option>
+                                        <option value="Inclusive">Inclusive</option>
                                     </select>
                                 </div>
 
                                 <div class="col-lg-2">
-                                    <label class="form-label" for="gstRate"> GST % </label>
+                                    <label class="form-label" for="gstRate">GST %</label>
                                     <select id="gstRate" class="form-select form-select-sm">
                                         <option value="0">0%</option>
                                         <option value="5">5%</option>
@@ -291,33 +617,34 @@
                             <!-- GST Details -->
                             <div class="row g-3">
                                 <div class="col-lg-2">
-                                    <label class="form-label" for="cgstAmount"> CGST </label>
+                                    <label class="form-label" for="cgstAmount">CGST</label>
                                     <input type="number" id="cgstAmount"
                                         class="form-control form-control-sm text-end readonly" readonly value="0.00">
                                 </div>
                                 <div class="col-lg-2">
-                                    <label class="form-label" for="sgstAmount"> SGST </label>
+                                    <label class="form-label" for="sgstAmount">SGST</label>
                                     <input type="number" id="sgstAmount"
                                         class="form-control form-control-sm text-end readonly" readonly value="0.00">
                                 </div>
                                 <div class="col-lg-2">
-                                    <label class="form-label" for="igstAmount"> IGST </label>
+                                    <label class="form-label" for="igstAmount">IGST</label>
                                     <input type="number" id="igstAmount"
                                         class="form-control form-control-sm text-end readonly" readonly value="0.00">
                                 </div>
                                 <div class="col-lg-2">
-                                    <label class="form-label" for="gstAmount"> GST Amount </label>
+                                    <label class="form-label" for="gstAmount">GST Amount</label>
                                     <input type="number" id="gstAmount"
                                         class="form-control form-control-sm text-end readonly fw-bold" readonly
                                         value="0.00">
                                 </div>
                                 <div class="col-lg-4">
-                                    <label class="form-label" for="totalAmount"> Total Amount </label>
+                                    <label class="form-label" for="totalAmount">Total Amount</label>
                                     <input type="number" id="totalAmount"
                                         class="form-control form-control-sm text-end readonly fw-bold" readonly
                                         value="0.00">
                                 </div>
                             </div>
+
                         </div>
                     </div>
 
@@ -337,7 +664,7 @@
                                         data-bs-dismiss="modal"></button>
                                 </div>
                                 <div class="modal-body">
-                                    <div class="row mb-3">
+                                    <div class="row mb-3 align-items-center">
                                         <div class="col-md-8">
                                             <input type="search" id="accountSearch" class="form-control"
                                                 placeholder="Search by Ledger Name / Code..." autocomplete="off">
@@ -346,13 +673,14 @@
                                             <span id="accountCount" class="badge bg-secondary">0 Records</span>
                                         </div>
                                     </div>
-                                    <div class="table-responsive">
-                                        <table class="table table-hover table-bordered table-sm align-middle">
-                                            <thead class="table-light">
+                                    <div class="table-responsive"
+                                        style="max-height: 55vh; border: 1px solid var(--border-color); border-radius: var(--radius-md);">
+                                        <table class="table table-hover align-middle">
+                                            <thead>
                                                 <tr>
-                                                    <th width="120"> Code </th>
-                                                    <th> Ledger Name </th>
-                                                    <th width="180"> Group </th>
+                                                    <th width="120">Code</th>
+                                                    <th>Ledger Name</th>
+                                                    <th width="180">Group</th>
                                                 </tr>
                                             </thead>
                                             <tbody id="accountListBody"></tbody>
@@ -360,7 +688,7 @@
                                     </div>
                                 </div>
                                 <div class="modal-footer">
-                                    <button type="button" class="btn btn-secondary"
+                                    <button type="button" class="btn btn-outline-secondary btn-sm"
                                         data-bs-dismiss="modal">Close</button>
                                 </div>
                             </div>
@@ -379,7 +707,7 @@
                                         data-bs-dismiss="modal"></button>
                                 </div>
                                 <div class="modal-body">
-                                    <div class="row mb-3">
+                                    <div class="row mb-3 align-items-center">
                                         <div class="col-md-8">
                                             <input type="search" id="partySearch" class="form-control"
                                                 placeholder="Search by Party Name / GSTIN / Mobile..."
@@ -389,14 +717,15 @@
                                             <span id="partyCountBadge" class="badge bg-secondary">0 Records</span>
                                         </div>
                                     </div>
-                                    <div class="table-responsive">
-                                        <table class="table table-hover table-bordered table-sm align-middle">
-                                            <thead class="table-light">
+                                    <div class="table-responsive"
+                                        style="max-height: 55vh; border: 1px solid var(--border-color); border-radius: var(--radius-md);">
+                                        <table class="table table-hover align-middle">
+                                            <thead>
                                                 <tr>
-                                                    <th width="120"> Code </th>
-                                                    <th> Party Name </th>
-                                                    <th width="170"> GSTIN </th>
-                                                    <th width="150"> State </th>
+                                                    <th width="120">Code</th>
+                                                    <th>Party Name</th>
+                                                    <th width="170">GSTIN</th>
+                                                    <th width="150">State</th>
                                                 </tr>
                                             </thead>
                                             <tbody id="partyListBody"></tbody>
@@ -404,24 +733,23 @@
                                     </div>
                                 </div>
                                 <div class="modal-footer">
-                                    <button type="button" class="btn btn-secondary"
+                                    <button type="button" class="btn btn-outline-secondary btn-sm"
                                         data-bs-dismiss="modal">Close</button>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-
-
                 </div>
             </form>
         </main>
     </div>
+
     <!-- VOUCHER SEARCH MODAL -->
     <div class="modal fade" id="voucherModal" tabindex="-1" aria-labelledby="voucherModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-xl modal-dialog-scrollable">
             <div class="modal-content shadow">
-                <div class="modal-header bg-success text-white py-2">
+                <div class="modal-header bg-success text-white">
                     <h5 class="modal-title" id="voucherModalLabel">
                         <i class="bi bi-receipt-cutoff me-2"></i> Select Voucher
                     </h5>
@@ -440,20 +768,20 @@
                             </div>
                         </div>
                         <div class="col-lg-3 col-md-4 text-md-end">
-                            <span id="voucherCountBadge" class="badge bg-secondary fs-6 px-3 py-2">0
-                                Records</span>
+                            <span id="voucherCountBadge" class="badge bg-secondary">0 Records</span>
                         </div>
                     </div>
-                    <div class="table-responsive" style="max-height: 60vh;">
-                        <table class="table table-hover table-bordered table-sm align-middle mb-0">
-                            <thead class="table-success sticky-top">
+                    <div class="table-responsive"
+                        style="max-height: 60vh; border: 1px solid var(--border-color); border-radius: var(--radius-md);">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead>
                                 <tr>
-                                    <th style="width:200px;">Voucher No</th>
-                                    <th style="width:120px;">Date</th>
+                                    <th style="width: 200px;">Voucher No</th>
+                                    <th style="width: 120px;">Date</th>
                                     <th>Branch</th>
                                     <th>Cost Center</th>
                                     <th>Bank Account</th>
-                                    <th class="text-end" style="width:140px;">Amount</th>
+                                    <th class="text-end" style="width: 140px;">Amount</th>
                                 </tr>
                             </thead>
                             <tbody id="voucherListBody">
@@ -461,21 +789,22 @@
                             </tbody>
                         </table>
                     </div>
+                    <div class="d-flex justify-content-between align-items-center mt-3">
+                        <div id="voucherCount" class="text-muted small">0 Records</div>
+                        <div id="voucherPagination"></div>
+                    </div>
                 </div>
-                <div class="d-flex justify-content-between align-items-center mt-3 px-3">
-                    <div id="voucherCount" class="text-muted">0 Records</div>
-                    <div id="voucherPagination"></div>
-                </div>
-                <div class="modal-footer py-2">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">
                         <i class="bi bi-x-circle me-1"></i> Close
                     </button>
                 </div>
             </div>
         </div>
     </div>
+
     <!-- Alert Container -->
-    <div id="alertContainer" class="position-fixed top-0 end-0 p-3" style="z-index:1055;"></div>
+    <div id="alertContainer" class="position-fixed top-0 end-0 p-3" style="z-index: 1055;"></div>
 
     <!-- ==========================================
       JAVASCRIPT LIBRARIES

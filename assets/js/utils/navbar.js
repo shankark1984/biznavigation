@@ -1,11 +1,10 @@
 const Navbar = (() => {
-
     // ==========================
     // MENU CONFIG
     // ==========================
     const MENU = [
         {
-            title: " Master",
+            title: "Master",
             icon: "bi-folder2-open",
             children: [
                 { label: "Company", icon: "bi-buildings", href: "/pages/master/companyProfile.html" },
@@ -17,7 +16,7 @@ const Navbar = (() => {
             ]
         },
         {
-            title: " Operations",
+            title: "Operations",
             icon: "bi-gear",
             children: [
                 { label: "Enquiry", icon: "bi-search", href: "/pages/Functions/Enquiry.html" },
@@ -26,12 +25,11 @@ const Navbar = (() => {
                 { label: "Domestic", icon: "bi-truck", href: "/pages/Functions/DomesticBooking.html" },
                 { label: "Customs Clearance", icon: "bi-box-seam", href: "/pages/Functions/CustomsClearance.html" },
                 { label: "Full Truck Load", icon: "bi-truck-front", href: "/pages/Functions/fulltruckload.html" },
-                // { label: "Local Transportation", icon: "bi-truck", href: "/pages/Functions/localtransportation.html" },
                 { label: "Dedicated Vehicle Trips", icon: "bi-truck-flatbed", href: "/pages/Functions/dedicatedvehicletrips.html" }
             ]
         },
         {
-            title: " Accounts",
+            title: "Accounts",
             icon: "bi-cash-stack",
             children: [
                 { label: "Customer Invoice", icon: "bi-receipt", href: "/pages/Accounting/CustomerInvoice.html" },
@@ -44,16 +42,16 @@ const Navbar = (() => {
             ]
         },
         {
-            title: " Reports",
-            icon: "bi-cash-stack",
+            title: "Reports",
+            icon: "bi-file-bar-graph",
             children: [
                 { label: "International Report", icon: "bi-globe", href: "/pages/Reports/reportInternationalShipmentDetails.html" },
                 { label: "Domestic Report", icon: "bi-truck", href: "/pages/Reports/reportDomesticDetails.html" },
-                { label: "Customs Clearance Report", icon: "bi-box-seam", href: "/pages/Reports/reportCustomsClearance.html" },
-                { label: "Full Truck Load Report", icon: "bi-truck-front", href: "/pages/Reports/reportFulltruckDetails.html" },
-                { label: "Customer Invoice Report", icon: "bi-receipt-cutoff", href: "/pages/Reports/reportCustomerInvoiceDetails.html" },
+                { label: "Customs Clearance", icon: "bi-box-seam", href: "/pages/Reports/reportCustomsClearance.html" },
+                { label: "Full Truck Load", icon: "bi-truck-front", href: "/pages/Reports/reportFulltruckDetails.html" },
+                { label: "Customer Invoice", icon: "bi-receipt-cutoff", href: "/pages/Reports/reportCustomerInvoiceDetails.html" },
                 { label: "Payment Details", icon: "bi-wallet2", href: "/pages/Reports/PaymentDetails.html" },
-                { label: "Vendor Billing Report", icon: "bi-file-bar-graph", href: "/pages/Reports/reportVendorBillingDetails.html" },
+                { label: "Vendor Billing", icon: "bi-file-bar-graph", href: "/pages/Reports/reportVendorBillingDetails.html" },
                 { label: "Payment Receivable", icon: "bi-cash-coin", href: "#" },
                 { label: "Outstanding Details", icon: "bi-currency-rupee", href: "/pages/Reports/outstandingDetails.html" },
                 { label: "Tax Details", icon: "bi-percent", href: "/pages/Reports/reportGSTDetails.html" },
@@ -62,7 +60,7 @@ const Navbar = (() => {
             ]
         },
         {
-            title: " Tools",
+            title: "Tools",
             icon: "bi-tools",
             children: [
                 { label: "Settings", icon: "bi-gear-fill", href: "/pages/Tools/setting.html" },
@@ -70,7 +68,7 @@ const Navbar = (() => {
                 { label: "Docket Master", icon: "bi-file-earmark-richtext", href: "#" },
                 { label: "Reset Database", icon: "bi-database-x", href: "#" },
                 { label: "Route Master", icon: "bi-sign-turn-right", href: "/pages/Tools/routemaster.html" },
-                { label: "Application Settings", icon: "bi-sliders", href: "/pages/Tools/ApplicationSettings.html" },
+                { label: "Application Settings", icon: "bi-sliders", href: "/pages/Tools/ApplicationSettings.html" }
             ]
         }
     ];
@@ -79,28 +77,37 @@ const Navbar = (() => {
     // INIT
     // ==========================
     async function init() {
-        const userLoginID = localStorage.getItem("UserLoginID");
+        try {
+            const userLoginID = localStorage.getItem("UserLoginID");
 
-        if (!userLoginID) {
-            location.replace("/index.html");
-            return;
+            if (!userLoginID) {
+                location.replace("/index.html");
+                return;
+            }
+
+            setDynamicPageTitle();
+
+            // Core UI Build
+            renderSidebar();
+            createTopNavbar();
+            createFooter();
+
+            // Interaction Setup
+            setupMobileSidebarActions();
+            mobileToggle();
+            setupMenuToggle();
+            setActiveMenu();
+            setupSidebarHoverExpand();
+            createCollapseButton();
+            setupPageAnimation();
+            setupGlobalClickDelegation();
+
+            // Permissions
+            await applyPermissions(userLoginID);
+
+        } catch (error) {
+            console.error("Initialization Error:", error);
         }
-
-        setDynamicPageTitle();
-
-        renderSidebar();
-        setupMobileSidebarActions();
-        createTopNavbar();
-        mobileToggle();
-        setupMenuToggle();
-        setActiveMenu();
-        await applyPermissions(userLoginID);
-
-        setupPageAnimation();
-        setupGlobalClickDelegation(); // Consolidates page transitions
-        createCollapseButton();
-        setupSidebarHoverExpand();
-        createFooter();
     }
 
     function setDynamicPageTitle() {
@@ -127,30 +134,35 @@ const Navbar = (() => {
     // SIDEBAR RENDER
     // ==========================
     function renderSidebar() {
-        const userName = localStorage.getItem("UserName") || "User";
+        const userName = localStorage.getItem("UserName") ?? "User";
+        const sidebarContainer = document.getElementById("sidebar");
 
-        document.getElementById("sidebar").innerHTML = `
-        <div class="sidebar" id="sidebarMenu">
+        if (!sidebarContainer) return;
+
+        sidebarContainer.innerHTML = `
+        <nav class="sidebar" id="sidebarMenu" aria-label="Main Navigation">
             <div class="logo">
-                <a href="/pages/Tools/home.html" class="logo-box" data-transition="true">
-                    <img src="../../assets/img/applogo.png" alt="Logo" class="logo-img" />
+                <a href="/pages/Tools/home.html" class="logo-box" data-transition="true" aria-label="Go to Dashboard">
+                    <img src="../../assets/img/applogo.png" alt="" class="logo-img" aria-hidden="true" />
                     <span class="logo-text">BizNavigation</span>
                 </a>
             </div>
 
-            <ul class="menu">
+            <ul class="menu" role="menu">
                 ${MENU.map(section => `
-                    <li class="menu-group">
-                        <div class="menu-title">
-                            <i class="bi ${section.icon}"></i>
+                    <li class="menu-group" role="none">
+                        <div class="menu-title" role="menuitem" aria-haspopup="true" aria-expanded="false" tabindex="0">
+                            <i class="bi ${section.icon}" aria-hidden="true"></i>
                             <span>${section.title}</span>
-                            <i class="bi bi-chevron-down arrow"></i>
+                            <i class="bi bi-chevron-down arrow" aria-hidden="true"></i>
                         </div>
-                        <ul class="submenu">
+                        <ul class="submenu" role="menu">
                             ${section.children.map(item => `
-                                <li class="menu-item" data-href="${item.href}" data-label="${item.label}">
-                                    <i class="bi ${item.icon}"></i>
-                                    <span>${item.label}</span>
+                                <li class="menu-item" data-href="${item.href}" data-label="${item.label}" role="none">
+                                    <a role="menuitem" tabindex="-1">
+                                        <i class="bi ${item.icon}" aria-hidden="true"></i>
+                                        <span>${item.label}</span>
+                                    </a>
                                 </li>
                             `).join("")}
                         </ul>
@@ -160,15 +172,15 @@ const Navbar = (() => {
 
             <div class="sidebar-user-panel d-md-none">
                 <div class="user-box">
-                    <div class="avatar">${userName.charAt(0).toUpperCase()}</div>
+                    <div class="avatar" aria-hidden="true">${userName.charAt(0).toUpperCase()}</div>
                     <span class="username">${userName}</span>
                 </div>
                 <div class="sidebar-actions">
-                    <button id="mobileThemeToggle" class="theme-btn" title="Theme"><i class="bi bi-moon"></i></button>
-                    <button id="mobileLogoutBtn" class="logout-btn" title="Logout"><i class="bi bi-power"></i></button>
+                    <button id="mobileThemeToggle" class="theme-btn" title="Toggle Theme" aria-label="Toggle Theme"><i class="bi bi-moon"></i></button>
+                    <button id="mobileLogoutBtn" class="logout-btn" title="Logout" aria-label="Logout"><i class="bi bi-power"></i></button>
                 </div>
             </div>
-        </div>`;
+        </nav>`;
     }
 
     // ==========================
@@ -178,15 +190,30 @@ const Navbar = (() => {
         const menuGroups = document.querySelectorAll(".menu-group");
 
         document.querySelectorAll(".menu-title").forEach(el => {
-            el.onclick = () => {
+            // Support keyboard navigation (Enter/Space)
+            el.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    el.click();
+                }
+            });
+
+            el.addEventListener('click', () => {
                 const parent = el.parentElement;
+                const isOpen = parent.classList.contains("open");
+
                 // Close all other menus
                 menuGroups.forEach(group => {
-                    if (group !== parent) group.classList.remove("open");
+                    group.classList.remove("open");
+                    group.querySelector('.menu-title').setAttribute('aria-expanded', 'false');
                 });
+
                 // Toggle current menu
-                parent.classList.toggle("open");
-            };
+                if (!isOpen) {
+                    parent.classList.add("open");
+                    el.setAttribute('aria-expanded', 'true');
+                }
+            });
         });
     }
 
@@ -197,38 +224,54 @@ const Navbar = (() => {
         const currentPath = window.location.pathname.toLowerCase();
 
         document.querySelectorAll(".menu-item").forEach(item => {
-            const menuPath = item.dataset.href.toLowerCase();
+            const menuPath = item.dataset.href?.toLowerCase();
 
             if (currentPath === menuPath) {
                 item.classList.add("active");
-                item.closest(".menu-group").classList.add("open");
+                const parentGroup = item.closest(".menu-group");
+
+                if (parentGroup) {
+                    parentGroup.classList.add("open");
+                    parentGroup.querySelector('.menu-title')?.setAttribute('aria-expanded', 'true');
+                }
 
                 const breadcrumb = document.getElementById("breadcrumb");
                 if (breadcrumb) {
-                    breadcrumb.innerHTML = `<div class="breadcrumb-box">Home / ${item.innerText}</div>`;
+                    breadcrumb.innerHTML = `<div class="breadcrumb-box">Home / <span class="text-primary">${item.dataset.label}</span></div>`;
                 }
             }
         });
     }
 
     // ==========================
-    // PERMISSIONS (🔥 OPTIMIZED)
+    // PERMISSIONS
     // ==========================
     async function applyPermissions(userLoginID) {
-        const cacheKey = `permissions_${userLoginID}`; // Unique key per user
-        let permissions = JSON.parse(localStorage.getItem(cacheKey));
+        const cacheKey = `permissions_${userLoginID}`;
+        let permissions = null;
+
+        try {
+            const cached = localStorage.getItem(cacheKey);
+            if (cached) permissions = JSON.parse(cached);
+        } catch (e) {
+            console.warn("Error reading permissions from cache", e);
+        }
 
         if (!permissions) {
             permissions = await fetchPermissions(userLoginID);
-            localStorage.setItem(cacheKey, JSON.stringify(permissions));
+            if (permissions) {
+                localStorage.setItem(cacheKey, JSON.stringify(permissions));
+            }
         }
 
-        document.querySelectorAll(".menu-item").forEach(item => {
-            const id = generateFormID(item.dataset.href);
-            if (!permissions[id]?.CanRead) {
-                item.style.display = "none";
-            }
-        });
+        if (permissions) {
+            document.querySelectorAll(".menu-item").forEach(item => {
+                const id = generateFormID(item.dataset.href);
+                if (!permissions[id]?.CanRead) {
+                    item.style.display = "none";
+                }
+            });
+        }
     }
 
     // ==========================
@@ -242,27 +285,31 @@ const Navbar = (() => {
 
         const btn = document.createElement("button");
         btn.id = "toggleSidebar";
-        btn.className = "btn btn-sm btn-primary d-md-none me-2";
+        btn.className = "btn btn-sm btn-primary d-md-none me-3";
+        btn.setAttribute("aria-label", "Toggle sidebar");
+        btn.setAttribute("aria-expanded", "false");
 
         let isOpen = false;
-        const updateIcon = () => btn.innerHTML = isOpen ? '<i class="bi bi-x-lg"></i>' : '<i class="bi bi-list"></i>';
+        const updateState = () => {
+            btn.innerHTML = isOpen ? '<i class="bi bi-x-lg"></i>' : '<i class="bi bi-list"></i>';
+            btn.setAttribute("aria-expanded", String(isOpen));
+            sidebar.classList.toggle("show", isOpen);
+        };
 
         btn.addEventListener("click", (e) => {
             e.stopPropagation();
             isOpen = !isOpen;
-            sidebar.classList.toggle("show", isOpen);
-            updateIcon();
+            updateState();
         });
 
         document.addEventListener("click", (e) => {
             if (isOpen && !sidebar.contains(e.target) && !btn.contains(e.target)) {
                 isOpen = false;
-                sidebar.classList.remove("show");
-                updateIcon();
+                updateState();
             }
         });
 
-        updateIcon();
+        updateState();
         navbarLeft.prepend(btn);
     }
 
@@ -280,8 +327,9 @@ const Navbar = (() => {
     // PAGE ANIMATION & TRANSITION
     // ==========================
     function setupPageAnimation() {
-        document.body.style.opacity = 0;
-        requestAnimationFrame(() => document.body.style.opacity = 1);
+        document.body.style.opacity = '0';
+        document.body.style.transition = 'opacity 0.25s ease-in-out';
+        requestAnimationFrame(() => document.body.style.opacity = '1');
     }
 
     function setupGlobalClickDelegation() {
@@ -289,12 +337,9 @@ const Navbar = (() => {
             const menuItem = event.target.closest(".menu-item");
             const transitionLink = event.target.closest("a[data-transition='true']");
 
-            let href = null;
+            let href = menuItem?.dataset.href || transitionLink?.href;
 
-            if (menuItem && menuItem.dataset.href) href = menuItem.dataset.href;
-            else if (transitionLink) href = transitionLink.href;
-
-            if (href && href !== "#") {
+            if (href && href !== "#" && !href.startsWith("javascript:")) {
                 event.preventDefault();
                 navigateWithAnimation(href);
             }
@@ -304,11 +349,9 @@ const Navbar = (() => {
     function navigateWithAnimation(href) {
         document.getElementById("sidebarMenu")?.classList.remove("show");
         document.body.classList.remove("page-enter");
-        document.body.classList.add("page-exit");
+        document.body.style.opacity = '0'; // Smooth fade out
 
-        setTimeout(() => {
-            window.location.href = href;
-        }, 250);
+        setTimeout(() => window.location.href = href, 250);
     }
 
     // ==========================
@@ -320,13 +363,15 @@ const Navbar = (() => {
 
         const btn = document.createElement("button");
         btn.innerHTML = '<i class="bi bi-chevron-left"></i>';
-        btn.className = "collapse-btn";
+        btn.className = "collapse-btn shadow-sm";
+        btn.setAttribute("aria-label", "Collapse sidebar");
         sidebar.appendChild(btn);
 
         btn.onclick = () => {
-            sidebar.classList.toggle("collapsed");
-            document.body.classList.toggle("sidebar-collapsed");
-            btn.innerHTML = sidebar.classList.contains("collapsed") ? '<i class="bi bi-chevron-right"></i>' : '<i class="bi bi-chevron-left"></i>';
+            const isCollapsed = sidebar.classList.toggle("collapsed");
+            document.body.classList.toggle("sidebar-collapsed", isCollapsed);
+            btn.innerHTML = isCollapsed ? '<i class="bi bi-chevron-right"></i>' : '<i class="bi bi-chevron-left"></i>';
+            btn.setAttribute("aria-expanded", String(!isCollapsed));
         };
     }
 
@@ -334,6 +379,7 @@ const Navbar = (() => {
     // HELPERS
     // ==========================
     function generateFormID(href) {
+        if (!href) return "";
         if (href.includes("PaymentDetails")) {
             const type = new URL(href, location.origin).searchParams.get("type") || "";
             return `PaymentDetails${type}`;
@@ -342,66 +388,51 @@ const Navbar = (() => {
     }
 
     async function fetchPermissions(userLoginID) {
-        const { data, error } = await supabaseClient
-            .from("UserAccessRules")
-            .select("*")
-            .eq("UserLoginID", userLoginID);
+        try {
+            // Added try-catch for network/API safety
+            const { data, error } = await supabaseClient
+                .from("UserAccessRules")
+                .select("*")
+                .eq("UserLoginID", userLoginID);
 
-        if (error) return {};
-        return Object.fromEntries(data.map(r => [r.FormID, r]));
+            if (error) throw error;
+            return Object.fromEntries(data.map(r => [r.FormID, r]));
+        } catch (err) {
+            console.error("Failed to fetch permissions:", err);
+            return null; // Return null to prevent caching bad states
+        }
     }
 
     // ==========================
     // UI BUILDERS
     // ==========================
-    function createFooter() {
-        const container = document.querySelector(".main-content");
-        if (!container) return;
-
-        const footer = document.createElement("footer");
-        footer.className = "bg-dark text-white mt-4";
-        footer.innerHTML = `
-            <div class="container py-3">
-                <div class="d-flex flex-column flex-md-row justify-content-between align-items-center text-center">
-                    <p class="mb-3 mb-md-0 fs-6">&copy; 2024 BizNavigation - All Rights Reserved.</p>
-                    <ul class="list-inline mb-3 mb-md-0 fs-6">
-                        <li class="list-inline-item"><a href="#" class="text-white text-decoration-none">Privacy Policy</a></li>
-                        <li class="list-inline-item">|</li>
-                        <li class="list-inline-item"><a href="#" class="text-white text-decoration-none">Terms of Service</a></li>
-                        <li class="list-inline-item">|</li>
-                        <li class="list-inline-item"><a href="#" class="text-white text-decoration-none">Contact Us</a></li>
-                    </ul>
-                    <div>
-                        <a href="#" class="mx-2"><img src="../../assets/img/icons/facebook.svg" width="24"></a>
-                        <a href="#" class="mx-2"><img src="../../assets/img/icons/twitter.svg" width="24"></a>
-                        <a href="#" class="mx-2"><img src="../../assets/img/icons/linkedin.svg" width="24"></a>
-                    </div>
-                </div>
-            </div>
-        `;
-        container.appendChild(footer);
-    }
-
     function createTopNavbar() {
         const container = document.querySelector(".main-content");
         if (!container) return;
 
-        const userName = localStorage.getItem("UserName") || "User";
+        const userName = localStorage.getItem("UserName") ?? "User";
         const pageTitle = document.title || "Dashboard";
 
-        const navbar = document.createElement("div");
-        navbar.className = "top-navbar";
+        const navbar = document.createElement("header");
+        navbar.className = "top-navbar d-flex align-items-center justify-content-between shadow-sm";
         navbar.innerHTML = `
-            <div class="navbar-left">
-                <h5 class="mb-0">${pageTitle}</h5>
+            <div class="navbar-left d-flex align-items-center">
+                <h5 class="mb-0 fw-semibold text-truncate" style="max-width: 300px;">Intelligent Logistics Solutions</h5>
             </div>
-            <div class="navbar-right">
-                <button id="themeToggle" class="theme-btn"><i class="bi bi-moon"></i></button>
-                <div class="user-box">
-                    <div class="avatar">${userName.charAt(0).toUpperCase()}</div>
-                    <span class="username">${userName}</span>
+            <div class="navbar-right d-flex align-items-center gap-3">
+                <button id="themeToggle" class="theme-btn btn btn-light rounded-circle shadow-sm" aria-label="Toggle Dark Mode">
+                    <i class="bi bi-moon-fill"></i>
+                </button>
+                
+                <div class="user-profile-badge d-flex align-items-center bg-light rounded-pill px-3 py-1 shadow-sm border">
+                    <div class="avatar bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px; font-weight: 600;">
+                        ${userName.charAt(0).toUpperCase()}
+                    </div>
+                    <span class="username fw-medium text-dark me-3 d-none d-sm-block">${userName}</span>
+                    <button id="logoutBtn" class="logout-btn btn btn-sm btn-outline-danger rounded-pill" aria-label="Logout" title="Logout">
+                        <i class="bi bi-power"></i>
+                    </button>
                 </div>
-                <button id="logoutBtn" class="logout-btn"><i class="bi bi-power"></i></button>
             </div>
         `;
 
@@ -409,29 +440,67 @@ const Navbar = (() => {
         setupThemeToggle();
 
         navbar.querySelector("#logoutBtn").addEventListener("click", async () => {
-            const user = JSON.parse(localStorage.getItem("user"));
-            if (user?.id && typeof logoutOtherSessions === "function") {
-                await logoutOtherSessions(user.id);
+            try {
+                const userRaw = localStorage.getItem("user");
+                if (userRaw) {
+                    const user = JSON.parse(userRaw);
+                    if (user?.id && typeof logoutOtherSessions === "function") {
+                        await logoutOtherSessions(user.id);
+                    }
+                }
+            } catch (e) {
+                console.error("Logout session error:", e);
+            } finally {
+                if (typeof logoutUser === "function") logoutUser();
+                else window.location.replace("/index.html");
+                localStorage.clear();
             }
-
-            if (typeof logoutUser === "function") logoutUser();
-            else window.location.replace("/index.html");
-            localStorage.clear();
         });
     }
 
+    function createFooter() {
+        const container = document.querySelector(".main-content");
+        if (!container) return;
+
+        const footer = document.createElement("footer");
+        footer.className = "bg-dark text-white mt-auto rounded-top-3 shadow-lg";
+        footer.innerHTML = `
+            <div class="container py-3">
+                <div class="d-flex flex-column flex-md-row justify-content-between align-items-center text-center">
+                    <p class="mb-2 mb-md-0 fs-6 text-white-50">&copy; ${new Date().getFullYear()} BizNavigation. All Rights Reserved.</p>
+                    <ul class="list-inline mb-2 mb-md-0 fs-6">
+                        <li class="list-inline-item"><a href="#" class="text-white-50 text-decoration-none hover-white">Privacy</a></li>
+                        <li class="list-inline-item text-white-50">•</li>
+                        <li class="list-inline-item"><a href="#" class="text-white-50 text-decoration-none hover-white">Terms</a></li>
+                        <li class="list-inline-item text-white-50">•</li>
+                        <li class="list-inline-item"><a href="#" class="text-white-50 text-decoration-none hover-white">Support</a></li>
+                    </ul>
+                </div>
+            </div>
+        `;
+        container.appendChild(footer);
+    }
 
     function setupThemeToggle() {
         const btn = document.getElementById("themeToggle");
         if (!btn) return;
 
-        if (localStorage.getItem("theme") === "dark") {
+        const updateIcon = (isDark) => {
+            btn.innerHTML = isDark ? '<i class="bi bi-sun-fill text-warning"></i>' : '<i class="bi bi-moon-fill"></i>';
+        };
+
+        const isDarkTheme = localStorage.getItem("theme") === "dark";
+        if (isDarkTheme) {
             document.body.classList.add("dark-mode");
+            updateIcon(true);
+        } else {
+            updateIcon(false);
         }
 
         btn.onclick = () => {
             const isDark = document.body.classList.toggle("dark-mode");
             localStorage.setItem("theme", isDark ? "dark" : "light");
+            updateIcon(isDark);
         };
     }
 
