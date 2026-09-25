@@ -4,10 +4,19 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>BizNavigation - Home</title>
+    <title>BizNavigation - Dashboard</title>
 
     <!-- Favicon -->
     <link rel="icon" href="../../assets/img/favicon.ico" />
+
+    <!-- Resource Hints -->
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <!-- Modern Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
     <!-- Bootstrap -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
@@ -15,57 +24,552 @@
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
 
-    <!-- Sidebar CSS -->
+    <!-- Sidebar & Base CSS -->
     <link rel="stylesheet" href="../../assets/css/navbar.css" />
+    <link rel="stylesheet" href="../../assets/css/dashboard.css" />
+
+    <!-- UI Background & Modern Enhancements -->
+    <style>
+        :root {
+            --app-bg: #f8fafc;
+            --card-bg: #ffffff;
+            --border-color: #e2e8f0;
+            --primary-color: #0d6efd;
+            --text-muted: #64748b;
+            --text-dark: #1e293b;
+        }
+
+        body {
+            background-color: var(--app-bg);
+            font-family: 'Inter', sans-serif;
+            color: var(--text-dark);
+        }
+
+        .app-wrapper {
+            display: flex;
+            background-color: var(--app-bg);
+            min-height: 100vh;
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: var(--app-bg);
+            overflow-x: hidden;
+        }
+
+        .page-content {
+            flex: 1;
+        }
+
+        /* Card Modernization */
+        .card,
+        .kpi-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.02), 0 1px 2px -1px rgba(0, 0, 0, 0.02);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .kpi-card:hover,
+        .card:hover {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.04), 0 2px 4px -2px rgba(0, 0, 0, 0.04);
+        }
+
+        /* =========================================
+           NEW MODERN TABS UI
+           ========================================= */
+
+        /* 1. Main Tabs (Segmented Control / Pills) */
+        .custom-main-tabs {
+            background-color: #e2e8f0;
+            padding: 4px;
+            border-radius: 10px;
+            display: inline-flex;
+            border: none;
+            gap: 4px;
+            margin-bottom: 1.5rem;
+        }
+
+        .custom-main-tabs .nav-item {
+            margin: 0;
+        }
+
+        .custom-main-tabs .nav-link {
+            border: none !important;
+            border-radius: 6px !important;
+            color: var(--text-muted);
+            font-weight: 500;
+            padding: 8px 20px;
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+            background: transparent;
+        }
+
+        .custom-main-tabs .nav-link:hover {
+            color: var(--text-dark);
+            background-color: rgba(255, 255, 255, 0.5);
+        }
+
+        .custom-main-tabs .nav-link.active {
+            background-color: #ffffff !important;
+            color: var(--text-dark) !important;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            font-weight: 600;
+        }
+
+        /* 2. Inner Chart Tabs (Clean Underline) */
+        .custom-inner-tabs {
+            border-bottom: 1px solid var(--border-color);
+            gap: 20px;
+            padding-bottom: 0;
+        }
+
+        .custom-inner-tabs .nav-item {
+            margin-bottom: -1px;
+            /* Align with border */
+        }
+
+        .custom-inner-tabs .nav-link {
+            border: none;
+            border-bottom: 2px solid transparent !important;
+            color: var(--text-muted);
+            font-weight: 500;
+            padding: 10px 4px;
+            background: transparent !important;
+            transition: all 0.2s ease;
+            border-radius: 0;
+        }
+
+        .custom-inner-tabs .nav-link:hover {
+            color: var(--text-dark);
+            border-bottom-color: #cbd5e1 !important;
+        }
+
+        .custom-inner-tabs .nav-link.active {
+            color: var(--primary-color) !important;
+            border-bottom-color: var(--primary-color) !important;
+            font-weight: 600;
+        }
+
+        /* Remove the old connected border from the tab-content wrapper */
+        .main-tab-wrapper {
+            background: transparent;
+            border: none !important;
+            padding: 0 !important;
+        }
+    </style>
 </head>
 
 <body>
 
-    <!-- 🔥 APP WRAPPER (IMPORTANT) -->
     <div class="app-wrapper">
-
         <!-- Sidebar -->
-        <div id="sidebar"></div>
+        <aside id="sidebar"></aside>
 
         <!-- Main Content -->
         <div class="main-content">
-
-            <!-- Top Navbar will be injected -->
-
-            <!-- Breadcrumb -->
             <div id="breadcrumb"></div>
 
-            <!-- 🔥 PAGE CONTENT (IMPORTANT FOR FOOTER) -->
-            <div class="page-content">
+            <div class="page-content px-4">
 
-                <main class="container-fluid">
-                    <!-- Your dashboard content -->
-                    <h4>Dashboard</h4>
-                </main>
+                <!-- NEW UI: Main Tabs (Segmented Pills) -->
+                <ul class="nav custom-main-tabs mt-2" id="mainTabs" role="tablist">
+                    <li class="nav-item privilege-tab" role="presentation" data-required-role="operations">
+                        <button class="nav-link active" id="tab-operations" data-bs-toggle="tab"
+                            data-bs-target="#pane-operations" type="button" role="tab" aria-controls="pane-operations"
+                            aria-selected="true">Operations</button>
+                    </li>
+                    <li class="nav-item privilege-tab" role="presentation" data-required-role="accounts">
+                        <button class="nav-link" id="tab-accounts" data-bs-toggle="tab" data-bs-target="#pane-accounts"
+                            type="button" role="tab" aria-controls="pane-accounts"
+                            aria-selected="false">Accounts</button>
+                    </li>
+                    <li class="nav-item privilege-tab" role="presentation" data-required-role="management">
+                        <button class="nav-link" id="tab-management" data-bs-toggle="tab"
+                            data-bs-target="#pane-management" type="button" role="tab" aria-controls="pane-management"
+                            aria-selected="false">Management</button>
+                    </li>
+                </ul>
 
+                <div class="tab-content main-tab-wrapper" id="mainTabContent">
+                    <!-- Operations Tab -->
+                    <div class="tab-pane fade show active" id="pane-operations" role="tabpanel"
+                        aria-labelledby="tab-operations">
+                        <main class="container-fluid p-0 mb-5">
+                            <h4 class="fw-bold mb-3">Accounts Dashboard</h4>
+                            <div class="card p-5 text-center bg-white border-0 shadow-sm mt-4">
+                                <i class="bi bi-wallet2 text-muted mb-3" style="font-size: 3rem;"></i>
+                                <h5 class="text-dark fw-bold">Coming Soon</h5>
+                                <p class="text-muted">Accounts overview module pending implementation.</p>
+                            </div>
+                        </main>
+
+                    </div>
+
+                    <!-- Accounts Tab Pane -->
+                    <div class="tab-pane fade" id="pane-accounts" role="tabpanel" aria-labelledby="tab-accounts">
+                        <main class="container-fluid p-0 mb-5">
+
+                            <!-- Action Bar -->
+                            <div
+                                class="d-flex flex-column flex-md-row gap-3 align-items-md-center justify-content-between mb-4">
+                                <div>
+                                    <h4 class="m-0 fw-bolder text-dark">Dashboard</h4>
+                                    <p class="m-0 text-muted">Here's an overview of your business performance</p>
+                                </div>
+
+                                <div class="d-flex flex-wrap gap-2">
+                                    <button type="button" class="btn btn-light btn-modern border shadow-sm"
+                                        id="refreshBtn">
+                                        <i class="bi bi-arrow-clockwise"></i> Refresh
+                                    </button>
+                                    <button type="button" class="btn btn-primary btn-modern shadow-sm" id="exportBtn">
+                                        <i class="bi bi-download"></i> Export Report
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- KPI CARDS -->
+                            <div class="row g-4 mb-4">
+                                <!-- Sales KPI -->
+                                <div class="col-xl-3 col-lg-6 col-md-6 col-sm-12">
+                                    <div class="kpi-card p-3">
+                                        <div class="d-flex align-items-start justify-content-between">
+                                            <div>
+                                                <div class="kpi-label text-muted small fw-semibold">Sales</div>
+                                                <div class="kpi-value fs-4 fw-bold text-dark mt-1"
+                                                    id="kpiCustomerBilling">
+                                                    ₹0.00
+                                                </div>
+                                                <div class="kpi-delta up mt-1">
+                                                    <i class="bi bi-graph-up text-success"></i>
+                                                    <span id="kpiCustomerBillingDelta"
+                                                        class="fw-bold text-success">+0%</span>
+                                                    <span class="text-muted ms-1 fw-normal small">vs last FY</span>
+                                                </div>
+                                            </div>
+                                            <div class="icon-box bg-blue-soft p-2 rounded-3 text-primary">
+                                                <i class="bi bi-receipt-cutoff fs-4"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Purchase KPI -->
+                                <div class="col-xl-3 col-lg-6 col-md-6 col-sm-12">
+                                    <div class="kpi-card p-3">
+                                        <div class="d-flex align-items-start justify-content-between">
+                                            <div>
+                                                <div class="kpi-label text-muted small fw-semibold">Purchase</div>
+                                                <div class="kpi-value fs-4 fw-bold text-dark mt-1"
+                                                    id="kpiVendorCosting">
+                                                    ₹0.00
+                                                </div>
+                                                <div class="kpi-delta down mt-1">
+                                                    <i class="bi bi-graph-down text-danger"></i>
+                                                    <span id="kpiVendorCostingDelta"
+                                                        class="fw-bold text-danger">-0%</span>
+                                                    <span class="text-muted ms-1 fw-normal small">vs last FY</span>
+                                                </div>
+                                            </div>
+                                            <div class="icon-box bg-orange-soft p-2 rounded-3 text-warning">
+                                                <i class="bi bi-shop fs-4"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Other Expenses KPI -->
+                                <div class="col-xl-3 col-lg-6 col-md-6 col-sm-12">
+                                    <div class="kpi-card p-3">
+                                        <div class="d-flex align-items-start justify-content-between">
+                                            <div>
+                                                <div class="kpi-label text-muted small fw-semibold">Other Expenses</div>
+                                                <div class="kpi-value fs-4 fw-bold text-dark mt-1" id="kpiExpenses">
+                                                    ₹0.00
+                                                </div>
+                                                <div class="kpi-delta down mt-1">
+                                                    <i class="bi bi-graph-down text-danger"></i>
+                                                    <span id="kpikpiExpensesDelta"
+                                                        class="fw-bold text-danger">-0%</span>
+                                                    <span class="text-muted ms-1 fw-normal small">vs last FY</span>
+                                                </div>
+                                            </div>
+                                            <div class="icon-box bg-orange-soft p-2 rounded-3 text-warning">
+                                                <i class="bi bi-wallet2 fs-4"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Total Margin KPI -->
+                                <div class="col-xl-3 col-lg-6 col-md-6 col-sm-12">
+                                    <div class="kpi-card p-3">
+                                        <div class="d-flex align-items-start justify-content-between">
+                                            <div>
+                                                <div class="kpi-label text-muted small fw-semibold">Total Margin</div>
+                                                <div class="kpi-value fs-4 fw-bold text-dark mt-1" id="kpiTotalMargin">
+                                                    ₹0.00
+                                                </div>
+                                                <div class="kpi-delta up mt-1">
+                                                    <i class="bi bi-graph-up text-success"></i>
+                                                    <span id="kpiTotalMarginDelta"
+                                                        class="fw-bold text-success">+0%</span>
+                                                    <span class="text-muted ms-1 fw-normal small">vs last FY</span>
+                                                </div>
+                                            </div>
+                                            <div class="icon-box bg-green-soft p-2 rounded-3 text-success">
+                                                <i class="bi bi-pie-chart-fill fs-4"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Customer Outstanding -->
+                                <div class="col-xl-3 col-lg-6 col-md-6 col-sm-12">
+                                    <div class="kpi-card p-3">
+                                        <div class="d-flex align-items-start justify-content-between">
+                                            <div>
+                                                <div class="kpi-label text-muted small fw-semibold">Customer Outstanding
+                                                </div>
+                                                <div class="kpi-value fs-4 fw-bold text-dark mt-1"
+                                                    id="kpiCustomerOutstanding">
+                                                    ₹0.00</div>
+                                                <div class="kpi-delta mt-1">
+                                                    <span class="text-muted fw-normal small">Awaiting action</span>
+                                                </div>
+                                            </div>
+                                            <div class="icon-box bg-green-soft p-2 rounded-3 text-success">
+                                                <i class="bi bi-person-lines-fill fs-4"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Vendor Outstanding -->
+                                <div class="col-xl-3 col-lg-6 col-md-6 col-sm-12">
+                                    <div class="kpi-card p-3">
+                                        <div class="d-flex align-items-start justify-content-between">
+                                            <div>
+                                                <div class="kpi-label text-muted small fw-semibold">Vendor Outstanding
+                                                </div>
+                                                <div class="kpi-value fs-4 fw-bold text-dark mt-1"
+                                                    id="kpiVendorOutstanding">
+                                                    ₹0.00</div>
+                                                <div class="kpi-delta mt-1">
+                                                    <span class="text-muted fw-normal small">Awaiting action</span>
+                                                </div>
+                                            </div>
+                                            <div class="icon-box bg-green-soft p-2 rounded-3 text-success">
+                                                <i class="bi bi-truck fs-4"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Pending Invoices -->
+                                <div class="col-xl-3 col-lg-6 col-md-6 col-sm-12">
+                                    <div class="kpi-card p-3">
+                                        <div class="d-flex align-items-start justify-content-between">
+                                            <div>
+                                                <div class="kpi-label text-muted small fw-semibold">Pending Invoices
+                                                </div>
+                                                <div class="kpi-value fs-4 fw-bold text-dark mt-1"
+                                                    id="kpiPendingInvoices">0
+                                                </div>
+                                                <div class="kpi-delta mt-1">
+                                                    <span class="text-muted fw-normal small">Awaiting action</span>
+                                                </div>
+                                            </div>
+                                            <div class="icon-box bg-purple-soft p-2 rounded-3 text-info">
+                                                <i class="bi bi-clock-history fs-4"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- MAIN CHART -->
+                            <div class="row mb-4">
+                                <div class="col-12">
+                                    <div class="card p-4 border-0 shadow-sm">
+                                        <div
+                                            class="d-flex flex-column flex-md-row justify-content-between align-items-start mb-2 gap-3">
+                                            <div>
+                                                <h5 class="fw-bold mb-1">Financial Overview</h5>
+                                                <p class="text-muted small mb-0">Monitor billing, costing, and margins
+                                                </p>
+                                            </div>
+
+                                            <div class="d-flex flex-wrap gap-2">
+                                                <select id="fyFilter"
+                                                    class="form-select border-0 bg-light text-dark fw-medium"
+                                                    style="min-width: 130px;">
+                                                    <option value="2024-25">FY 2024-25</option>
+                                                    <option value="2025-26" selected>FY 2025-26</option>
+                                                    <option value="2026-27">FY 2026-27</option>
+                                                </select>
+                                                <select id="viewFilter"
+                                                    class="form-select border-0 bg-light text-dark fw-medium"
+                                                    style="min-width: 130px;">
+                                                    <option value="Monthly" selected>Monthly</option>
+                                                    <option value="Quarterly">Quarterly</option>
+                                                    <option value="Yearly">Yearly</option>
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        <!-- NEW UI: INNER CHART TABS (Clean Underline) -->
+                                        <ul class="nav custom-inner-tabs mb-4" id="innerChartTabs" role="tablist">
+                                            <li class="nav-item" role="presentation">
+                                                <button class="nav-link active" id="tab-customer" data-bs-toggle="tab"
+                                                    data-bs-target="#pane-customer-billing" type="button" role="tab"
+                                                    aria-controls="pane-customer-billing" aria-selected="true">Customer
+                                                    Billing</button>
+                                            </li>
+                                            <li class="nav-item" role="presentation">
+                                                <button class="nav-link" id="tab-vendor" data-bs-toggle="tab"
+                                                    data-bs-target="#pane-vendor-costing" type="button" role="tab"
+                                                    aria-controls="pane-vendor-costing" aria-selected="false">Vendor
+                                                    Costing</button>
+                                            </li>
+                                            <li class="nav-item" role="presentation">
+                                                <button class="nav-link" id="tab-margin" data-bs-toggle="tab"
+                                                    data-bs-target="#pane-total-margin" type="button" role="tab"
+                                                    aria-controls="pane-total-margin" aria-selected="false">Total
+                                                    Margin</button>
+                                            </li>
+                                        </ul>
+
+                                        <!-- INNER CHART PANES -->
+                                        <div class="tab-content" id="innerChartTabContent">
+                                            <!-- Customer Billing Chart -->
+                                            <div class="tab-pane fade show active" id="pane-customer-billing"
+                                                role="tabpanel" aria-labelledby="tab-customer">
+                                                <div class="chart-wrapper" style="position: relative; height: 350px;">
+                                                    <canvas id="financeChart"></canvas>
+                                                </div>
+                                            </div>
+                                            <!-- Vendor Costing Chart Placeholder -->
+                                            <div class="tab-pane fade" id="pane-vendor-costing" role="tabpanel"
+                                                aria-labelledby="tab-vendor">
+                                                <div class="chart-wrapper d-flex align-items-center justify-content-center bg-light rounded"
+                                                    style="position: relative; height: 350px;">
+                                                    <p class="text-muted">Vendor Costing Chart Data</p>
+                                                    <!-- Add <canvas id="vendorChart"></canvas> here if needed -->
+                                                </div>
+                                            </div>
+                                            <!-- Total Margin Chart Placeholder -->
+                                            <div class="tab-pane fade" id="pane-total-margin" role="tabpanel"
+                                                aria-labelledby="tab-margin">
+                                                <div class="chart-wrapper d-flex align-items-center justify-content-center bg-light rounded"
+                                                    style="position: relative; height: 350px;">
+                                                    <p class="text-muted">Total Margin Chart Data</p>
+                                                    <!-- Add <canvas id="marginChart"></canvas> here if needed -->
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- BOTTOM SECTION -->
+                            <div class="row g-4">
+                                <!-- Recent Activity -->
+                                <div class="col-lg-8">
+                                    <div class="card p-4 h-100 border-0 shadow-sm">
+                                        <div class="d-flex justify-content-between align-items-center mb-4">
+                                            <h5 class="fw-bold m-0">Recent Invoices</h5>
+                                            <button
+                                                class="btn btn-light btn-sm fw-semibold px-3 rounded-pill border">View
+                                                All</button>
+                                        </div>
+
+                                        <div id="recentInvoicesList" class="table-responsive">
+                                            <div class="text-center text-muted py-5">
+                                                <div class="spinner-border spinner-border-sm text-primary mb-2"
+                                                    role="status">
+                                                </div>
+                                                <div class="fw-medium">Syncing latest invoices...</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Quick Actions -->
+                                <div class="col-lg-4">
+                                    <div class="card p-4 h-100 border-0 shadow-sm">
+                                        <h5 class="fw-bold mb-4">Quick Actions</h5>
+                                        <div class="d-grid gap-3">
+                                            <a href="../CustomerInvoice/CustomerInvoice.html"
+                                                class="quick-action-link text-decoration-none p-3 rounded-3 border-0 d-flex align-items-center gap-3 text-dark bg-light custom-hover-action">
+                                                <i class="bi bi-receipt-cutoff text-primary fs-4"></i> <span
+                                                    class="fw-medium">Create New Invoice</span>
+                                            </a>
+                                            <a href="../Payment/Credit_Payments.html"
+                                                class="quick-action-link text-decoration-none p-3 rounded-3 border-0 d-flex align-items-center gap-3 text-dark bg-light custom-hover-action">
+                                                <i class="bi bi-credit-card-fill text-success fs-4"></i> <span
+                                                    class="fw-medium">Record Payment</span>
+                                            </a>
+                                            <a href="../VendorBilling/VendorBilling.html"
+                                                class="quick-action-link text-decoration-none p-3 rounded-3 border-0 d-flex align-items-center gap-3 text-dark bg-light custom-hover-action">
+                                                <i class="bi bi-cart-check-fill text-warning fs-4"></i> <span
+                                                    class="fw-medium">Add Vendor Bill</span>
+                                            </a>
+                                            <a href="../Reports/reportCustomerInvoiceDetails.html"
+                                                class="quick-action-link text-decoration-none p-3 rounded-3 border-0 d-flex align-items-center gap-3 text-dark bg-light custom-hover-action">
+                                                <i class="bi bi-file-earmark-bar-graph-fill text-info fs-4"></i> <span
+                                                    class="fw-medium">View Full Reports</span>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </main>
+                    </div>
+
+                    <!-- Management Tab Pane -->
+                    <div class="tab-pane fade" id="pane-management" role="tabpanel" aria-labelledby="tab-management">
+                        <main class="container-fluid p-0 mb-5">
+                            <h4 class="fw-bold mb-3">Management Dashboard</h4>
+                            <div class="card p-5 text-center bg-white border-0 shadow-sm mt-4">
+                                <i class="bi bi-bar-chart-steps text-muted mb-3" style="font-size: 3rem;"></i>
+                                <h5 class="text-dark fw-bold">Coming Soon</h5>
+                                <p class="text-muted">Management reporting module pending implementation.</p>
+                            </div>
+                        </main>
+                    </div>
+
+                </div>
             </div>
-
-            <!-- 🔥 FOOTER AUTO APPENDED -->
         </div>
-
     </div>
 
-    <!-- ================= JS ================= -->
+    <!-- Quick styling for the hover states on the quick actions -->
+    <style>
+        .custom-hover-action {
+            transition: all 0.2s ease;
+        }
 
-    <!-- Supabase -->
+        .custom-hover-action:hover {
+            background-color: #f1f5f9 !important;
+            /* Slightly darker gray */
+            transform: translateY(-2px);
+        }
+    </style>
+
+    <!-- Scripts -->
     <script src="https://unpkg.com/@supabase/supabase-js"></script>
-
-    <!-- Core -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="../../assets/js/utils/server.js"></script>
-
-    <!-- Navbar -->
     <script src="../../assets/js/utils/navbar.js"></script>
-
-    <!-- Page Scripts -->
     <script src="../../assets/js/utils/home.js"></script>
     <script src="../../assets/js/utils/logout.js"></script>
-    <!-- <script src="../../assets/js/utils/utils.js" defer></script> -->
-
 
 </body>
 

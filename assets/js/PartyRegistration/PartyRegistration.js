@@ -36,7 +36,8 @@ const fields = {
     partyContactPerson: document.getElementById("partyContactPerson"),
     partyContactNumber: document.getElementById("partyContactNumber"),
     partyEmailID: document.getElementById("partyEmailID"),
-    defaultTax: document.getElementById("defaultTax")
+    defaultTax: document.getElementById("defaultTax"),
+    rcm: document.getElementById("rcm")
 };
 
 // Modify button handler
@@ -147,7 +148,8 @@ async function fetchSelectedPartyDetails(partyCode) {
             partyContactPerson: 'ContactPerson',
             partyContactNumber: 'ContactNumber',
             partyEmailID: 'EmailID',
-            defaultTax: 'DefaultTax'
+            defaultTax: 'DefaultTax',
+            rcm: 'RCM'
         };
 
         Object.entries(fieldMap).forEach(([id, column]) => {
@@ -202,6 +204,7 @@ saveButton.addEventListener('click', async (e) => {
         PanNumber: fields.panNumber.value || null,
         GSTNumber: fields.gstNumber.value || null,
         DefaultTax: fields.defaultTax.value || 'CGST 0% SGST 0% IGST 0%',
+        RCM: fields.rcm.value,
         CurrentStatus: partyStatus,
         DeactiveDate: fields.partyDeActiveDate.value || null,
         company_id: CompanyID
@@ -227,6 +230,7 @@ saveButton.addEventListener('click', async (e) => {
                 updated_at: localtimeStamp
             })
             .eq('PartyCode', partyCode)
+            .eq('company_id', CompanyID) // ✅ Scope to current company
             .select();
     }
 

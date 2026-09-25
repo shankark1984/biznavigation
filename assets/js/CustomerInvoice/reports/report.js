@@ -55,9 +55,14 @@ async function fetchCompanyDetails(header) {
 }
 
 async function fetchPartyDetails(header) {
+    if (!header?.PartyCode) return { name: "-", rcm: "Yes", address: "-", gst: "-", state: "-" };
+
     const data = await getPartyProfile(header.PartyCode);
+
     return {
         name: data?.PartyName || "-",
+        // ✅ Fix: Check both uppercase RCM and lowercase rcm, and default to 'Yes'
+        rcm: data?.RCM || data?.rcm || "Yes",
         address: [
             data?.Address,
             data?.City && `${data.City} - ${data.PinCode}`,
@@ -65,7 +70,7 @@ async function fetchPartyDetails(header) {
             data?.Country
         ].filter(Boolean).join(", "),
         gst: data?.GSTNumber || "-",
-        state: data?.State
+        state: data?.State || "-"
     };
 }
 
@@ -309,6 +314,7 @@ function drawPartySection(doc, PAGE, FONT, header, party, company, opNo, y) {
     const rightData = [
         ["Invoice No. :", safe(header?.InvoiceNo)],
         ["Invoice Date :", (typeof formatDate === "function" ? formatDate(header?.InvoiceDate) : header?.InvoiceDate) || "-"],
+        ["Tax Payable under RCM :", safe(party?.rcm, "Yes")], // ✅ Uses safe helper with default fallback
         ["SAC Code :", safe(header?.SACCode)],
         ["PO No :", safe(opNo)]
     ];

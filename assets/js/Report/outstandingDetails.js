@@ -38,6 +38,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 const partyLists = { Customer: [], Vendor: [] };
 const BUCKET_KEYS = ['0_10', '11_20', '21_30', '41_50', '51_60', '71_80', '91_100', '111_120', 'gt_121'];
 
+const createZeroFilledTotals = () => Object.fromEntries([...BUCKET_KEYS, 'overall', 'totalAmount'].map(k => [k, 0]));
+
 function populatePartyFilter(type) {
     const filter = document.getElementById('partyFilter');
     if (!filter) return;
@@ -62,8 +64,7 @@ function resetAndApplyFilter(tbodyId, selectedParty = '') {
     const allSummaryRows = tbody.querySelectorAll('[class*="summary-row-"]');
     tbody.querySelectorAll('[class*="group-child-"]').forEach(row => row.style.display = 'none');
 
-    // Track filtered grand totals
-    const filteredGrandTotals = Object.fromEntries([...BUCKET_KEYS, 'overall', 'totalAmount'].map(k => [k, 0]));
+    const filteredGrandTotals = createZeroFilledTotals();
 
     allSummaryRows.forEach(row => {
         const partyName = row.getAttribute('data-party');
@@ -77,16 +78,12 @@ function resetAndApplyFilter(tbodyId, selectedParty = '') {
                 btn.dataset.collapsed = 'true';
                 btn.innerHTML = '<i class="bi bi-plus-square text-secondary"></i>';
             }
-            // When "All Parties" is selected, add summary row totals to grand total
             addSummaryRowTotalsToGrandTotal(row, filteredGrandTotals);
-
         } else if (partyName === selectedParty) {
             row.style.display = 'none';
             if (groupIndex) {
-                const childRows = tbody.querySelectorAll(`.group-child-${groupIndex}`);
-                childRows.forEach(child => {
+                tbody.querySelectorAll(`.group-child-${groupIndex}`).forEach(child => {
                     child.style.display = '';
-                    // If it's the subtotal row of this group, extract its numbers for the grand total
                     if (child.classList.value.includes('table-info')) {
                         addSubtotalRowTotalsToGrandTotal(child, filteredGrandTotals);
                     }
@@ -97,20 +94,15 @@ function resetAndApplyFilter(tbodyId, selectedParty = '') {
         }
     });
 
-    // Update the table footer with the newly calculated totals
     updateFooterTotals(tbodyId, filteredGrandTotals);
 }
 
 // Helper to extract totals from a collapsed summary row
 function addSummaryRowTotalsToGrandTotal(row, totalsObj) {
     const cells = row.querySelectorAll('td');
-    // For summary rows:
-    // Customer: Amt at index 3, Buckets 4-12, Overall 13
-    // Vendor: Amt at index 3, Buckets 4-12, Overall 13 (Symmetrical layout now)
     totalsObj['totalAmount'] += parseCurrencyValue(cells[3].textContent);
     BUCKET_KEYS.forEach((key, index) => {
-        const cellValue = parseCurrencyValue(cells[4 + index].textContent);
-        totalsObj[key] += cellValue;
+        totalsObj[key] += parseCurrencyValue(cells[4 + index].textContent);
     });
     totalsObj['overall'] += parseCurrencyValue(cells[13].textContent);
 }
@@ -118,12 +110,9 @@ function addSummaryRowTotalsToGrandTotal(row, totalsObj) {
 // Helper to extract totals from an expanded subtotal row
 function addSubtotalRowTotalsToGrandTotal(row, totalsObj) {
     const cells = row.querySelectorAll('td');
-    // In subtotal rows with colspan="3":
-    // Amount is at index 1, Buckets start at index 2 to 10, overall at index 11
     totalsObj['totalAmount'] += parseCurrencyValue(cells[1].textContent);
     BUCKET_KEYS.forEach((key, index) => {
-        const cellValue = parseCurrencyValue(cells[2 + index].textContent);
-        totalsObj[key] += cellValue;
+        totalsObj[key] += parseCurrencyValue(cells[2 + index].textContent);
     });
     totalsObj['overall'] += parseCurrencyValue(cells[11].textContent);
 }
@@ -137,7 +126,7 @@ function parseCurrencyValue(text) {
 // Data Fetching
 // ==========================================
 
-async function fetchOutstandingData(viewName, dateColumn) {
+async function fetchOutstandingData(viewName, dateColumn, noColumn) {
     const { data, error } = await supabaseClient
         .from(viewName)
         .select('*')
@@ -145,7 +134,8 @@ async function fetchOutstandingData(viewName, dateColumn) {
         .neq('PaymentStatus', 'Paid')
         .gt('BalanceAmount', 0)
         .order('PartyName', { ascending: true })
-        .order(dateColumn, { ascending: true });
+        .order(dateColumn, { ascending: true })
+        .order(noColumn, { ascending: true }); // Corrected: Order by Document/Invoice/Bill Number
 
     if (error) throw error;
     return data;
@@ -153,7 +143,7 @@ async function fetchOutstandingData(viewName, dateColumn) {
 
 async function loadCustomerOutstanding() {
     try {
-        const data = await fetchOutstandingData('InvoicePaymentView', 'InvoiceDate');
+        const data = await fetchOutstandingData('InvoicePaymentView', 'InvoiceDate', 'InvoiceNo');
         renderTableData(data, 'customerTableBody', 'Customer');
     } catch (err) {
         console.error('Error loading customer outstanding:', err);
@@ -164,7 +154,7 @@ async function loadCustomerOutstanding() {
 
 async function loadVendorOutstanding() {
     try {
-        const data = await fetchOutstandingData('VendorBillPaymentView', 'BillDate');
+        const data = await fetchOutstandingData('VendorBillPaymentView', 'BillDate', 'BillNo');
         renderTableData(data, 'vendorTableBody', 'Vendor');
     } catch (err) {
         console.error('Error loading vendor outstanding:', err);
@@ -201,15 +191,13 @@ function renderTableData(data, tbodyId, type) {
         populatePartyFilter(type);
     }
 
-    const grandTotals = Object.fromEntries([...BUCKET_KEYS, 'overall', 'totalAmount'].map(k => [k, 0]));
+    const grandTotals = createZeroFilledTotals();
     const currentDate = new Date();
     currentDate.setHours(0, 0, 0, 0);
 
     const isCustomer = type === 'Customer';
     const dateField = isCustomer ? 'InvoiceDate' : 'BillDate';
     const noField = isCustomer ? 'InvoiceNo' : 'BillNo';
-
-    // Select the correct Amount Field based on the view type
     const amountField = isCustomer ? 'GrandTotalAmount' : 'ChargeTotalAmount';
 
     const fragment = document.createDocumentFragment();
@@ -218,15 +206,13 @@ function renderTableData(data, tbodyId, type) {
     for (const [partyName, rows] of Object.entries(groupedData)) {
         groupIndex++;
         const safePartyName = partyName.replace(/"/g, '&quot;');
-        const partyTotals = Object.fromEntries([...BUCKET_KEYS, 'overall', 'totalAmount'].map(k => [k, 0]));
+        const partyTotals = createZeroFilledTotals();
 
         let childRowsHTML = '';
         const invoiceRowsCount = rows.length;
 
         rows.forEach((row, index) => {
             const balanceAmount = parseFloat(row.BalanceAmount) || 0;
-
-            // Map the total document amount using the specific field for Customer or Vendor
             const docAmount = parseFloat(row[amountField]) || 0;
 
             const billDate = new Date(row[dateField]);
@@ -235,13 +221,13 @@ function renderTableData(data, tbodyId, type) {
             const pendingDays = Math.ceil(Math.abs(currentDate - billDate) / (1000 * 60 * 60 * 24));
             const bucketKey = getBucketKey(pendingDays);
 
-            partyTotals['totalAmount'] += docAmount;
+            partyTotals.totalAmount += docAmount;
             partyTotals[bucketKey] += balanceAmount;
-            partyTotals['overall'] += balanceAmount;
+            partyTotals.overall += balanceAmount;
 
-            grandTotals['totalAmount'] += docAmount;
+            grandTotals.totalAmount += docAmount;
             grandTotals[bucketKey] += balanceAmount;
-            grandTotals['overall'] += balanceAmount;
+            grandTotals.overall += balanceAmount;
 
             const rowspanCell = index === 0 ? `
                 <td class="align-top fw-bold border-end" rowspan="${invoiceRowsCount}" style="width: 250px;">
@@ -270,9 +256,9 @@ function renderTableData(data, tbodyId, type) {
         childRowsHTML += `
             <tr class="group-child-${groupIndex} fw-bold table-info" data-party="${safePartyName}" style="display: none;">
                 <td colspan="3" class="text-center border-end text-dark">${partyName} Total</td>
-                <td class="text-end text-dark">${formatCurrency(partyTotals['totalAmount'])}</td>
+                <td class="text-end text-dark">${formatCurrency(partyTotals.totalAmount)}</td>
                 ${generateSummaryBucketsHTML(partyTotals)}
-                <td class="text-end text-primary">${formatCurrency(partyTotals['overall'])}</td>
+                <td class="text-end text-primary">${formatCurrency(partyTotals.overall)}</td>
                 <td></td>
             </tr>
         `;
@@ -292,9 +278,9 @@ function renderTableData(data, tbodyId, type) {
             </td>
             <td></td>
             <td></td>
-            <td class="text-end">${formatCurrency(partyTotals['totalAmount'])}</td>
+            <td class="text-end">${formatCurrency(partyTotals.totalAmount)}</td>
             ${generateSummaryBucketsHTML(partyTotals)}
-            <td class="text-end text-primary">${formatCurrency(partyTotals['overall'])}</td>
+            <td class="text-end text-primary">${formatCurrency(partyTotals.overall)}</td>
             <td></td>
         `;
 
@@ -311,6 +297,7 @@ function renderTableData(data, tbodyId, type) {
     setupEventDelegation(tbody);
     updateFooterTotals(tbodyId, grandTotals);
 }
+
 // ==========================================
 // Toggle Click Handler
 // ==========================================
@@ -392,16 +379,12 @@ function updateFooterTotals(tbodyId, totals) {
     if (!tfoot) return;
 
     const footerCells = tfoot.querySelectorAll('td');
-    // Footer indices mapping with Document Amount + 9 Buckets + Overall Total:
-    // Index 0: Total Document Amount
-    // Indices 1-9: Bucket Totals
-    // Index 10: Overall Grand Total
     if (footerCells.length >= 11) {
-        footerCells[0].textContent = formatCurrency(totals['totalAmount']);
+        footerCells[0].textContent = formatCurrency(totals.totalAmount);
         BUCKET_KEYS.forEach((key, index) => {
             footerCells[1 + index].textContent = formatCurrency(totals[key]);
         });
-        footerCells[10].textContent = formatCurrency(totals['overall']);
+        footerCells[10].textContent = formatCurrency(totals.overall);
     }
 }
 
@@ -434,7 +417,7 @@ function getActiveTableAndType() {
 }
 
 // ==========================================
-// Export Functionality (Filtered, Expanded & Cleaned)
+// Export Functionality
 // ==========================================
 
 function getFilteredExportTable() {

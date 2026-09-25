@@ -348,27 +348,36 @@ function FTL_FCL_createPendingShipmentTableHeaderAndFooter() {
     table.appendChild(tfoot);
 }
 
-function ftl_removeRow(button) {
+async function ftl_removeRow(button) {
     const row = button.closest('tr');
     if (!row) return;
 
     const shipId = parseInt(row.getAttribute('data-ship-id'));
+    const cachedCharges = ftlState.rowCharges[shipId];
 
-    // 1. Untrack + unlock
+    // 1. Unlock the specific shipment in Supabase
     if (shipId) {
         ftlState.lockedBookingIds = ftlState.lockedBookingIds.filter(id => id !== shipId);
-        if (typeof unlockShipmentRecord_ftl === 'function') {
-            unlockShipmentRecord_ftl(shipId);   // fire & forget
+        try {
+            await supabaseClient
+                .from('FullLoadBookingDetails')
+                .update({ IsLocked: false, LockedBy: null, LockedAt: null })
+                .eq('id', shipId);
+        } catch (err) {
+            console.error("❌ Failed to unlock row on deletion:", err.message);
         }
     }
 
-    // 2. Subtract from state using cached per-row charges (precise)
-    const cachedCharges = ftlState.rowCharges[shipId];
-
+    // 2. Subtract from state using cached per-row charges & data attributes (precise)
     if (cachedCharges) {
         const t = ftlState.totals;
-        t.qty -= parseFloatSafe(row.cells[TABLE_CONFIG_FTL.CELL_INDEX.QTY].textContent);
-        t.weight -= parseFloatSafe(row.cells[TABLE_CONFIG_FTL.CELL_INDEX.WEIGHT].textContent);
+
+        // Grab numeric values directly from data attributes or safe parsing
+        const qty = parseFloatSafe(row.querySelector('td:nth-child(11)')?.textContent);
+        const weight = parseFloatSafe(row.querySelector('td:nth-child(12)')?.textContent);
+
+        t.qty -= qty;
+        t.weight -= weight;
         t.freight -= cachedCharges.BasicFrightAmt;
         t.other -= cachedCharges.OtherAmt;
         t.sgst -= cachedCharges.totalSGST;

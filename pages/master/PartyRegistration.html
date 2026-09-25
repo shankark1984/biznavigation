@@ -12,6 +12,55 @@
 
     <!-- Sidebar CSS -->
     <link rel="stylesheet" href="../../assets/css/navbar.css" />
+    <style>
+        .toggle-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Style the checkbox into a toggle switch */
+        .toggle-input {
+            appearance: none;
+            -webkit-appearance: none;
+            width: 44px;
+            height: 24px;
+            background-color: #ccc;
+            border-radius: 12px;
+            position: relative;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        /* The sliding circle inside the toggle */
+        .toggle-input::after {
+            content: "";
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 20px;
+            height: 20px;
+            background-color: white;
+            border-radius: 50%;
+            transition: left 0.2s ease;
+        }
+
+        /* Checked state (ON) */
+        .toggle-input:checked {
+            background-color: #4f46e5;
+            /* Primary accent color */
+        }
+
+        .toggle-input:checked::after {
+            left: 22px;
+        }
+
+        /* Label styling */
+        .toggle-label {
+            cursor: pointer;
+            user-select: none;
+        }
+    </style>
 </head>
 
 <body class="bg-light">
@@ -165,7 +214,14 @@
                                             <option value="" disabled selected>Select Default Tax</option>
                                         </select>
                                     </div>
-
+                                    <div class="col-md-2">
+                                        <label for="rcm" class="form-label">RCM</label>
+                                        <select name="rcm" id="rcm" class="form-select" required>
+                                            <option value="" selected disabled>Choose...</option>
+                                            <option value="Yes">Yes</option>
+                                            <option value="No">No</option>
+                                        </select>
+                                    </div>
                                 </div>
 
                                 <!-- Tab Navigation -->

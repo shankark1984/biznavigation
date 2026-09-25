@@ -14,8 +14,9 @@
     --sidebar-hover: rgba(255, 255, 255, 0.08);
     --primary-color: #2563eb;
     --primary-dark: #1d4ed8;
-    /* --bg-main: linear-gradient(135deg, #4e6379 0%, #354453 100%); */
-    --bg-main: linear-gradient(180deg, #00084f 0.000%, #001e78 25.000%, #0034a6 50.000%, #0049d8 75.000%, #005eff 100.000%);
+    --bg-main: #a0a2a4;
+    /* linear-gradient(135deg, #4e6379 0%, #354453 100%); */
+    /* --bg-main: linear-gradient(180deg, #00084f 0.000%, #001e78 25.000%, #0034a6 50.000%, #0049d8 75.000%, #005eff 100.000%); */
 
     /* EFFECTS */
     --transition-speed: 0.3s;

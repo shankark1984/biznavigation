@@ -103,10 +103,9 @@ async function generate_FullTruckReports_InvoicePDF(header, lines = []) {
 }
 
 // ==========================================
-// TERMS & TAX SECTION
+// TERMS & TAX SECTION (CORRECTED HEIGHT)
 // ==========================================
-async function drawTermsAndTaxSection_ftl(doc, PAGE, FONT, company, header, totals, y, bank, totalPaymentReceived, tandcData
-) {
+async function drawTermsAndTaxSection_ftl(doc, PAGE, FONT, company, header, totals, y, bank, totalPaymentReceived, tandcData) {
 
     // ==========================================
     // CONFIG
@@ -119,9 +118,6 @@ async function drawTermsAndTaxSection_ftl(doc, PAGE, FONT, company, header, tota
         colDescription: 23,
         colNonTax: 23,
         colTax: 23,
-
-        bankTopGap: 1,
-        bankRowHeight: 4,
 
         bottomMargin: 34.05,
     };
@@ -150,67 +146,48 @@ async function drawTermsAndTaxSection_ftl(doc, PAGE, FONT, company, header, tota
     };
 
     // ==========================================
-    // HEIGHT CALCULATIONS
+    // HEIGHT CALCULATIONS (FIXED)
     // ==========================================
     const termsHeight = calculateTermsHeight_ftl(doc, tandcData, COL.terms, CONFIG);
 
-    const bankHeight = 20;
+    // Left height is purely based on the terms content + padding
+    const leftHeight = termsHeight + 4;
 
-    const leftHeight = termsHeight + CONFIG.bankTopGap + bankHeight + 2;
+    // Right height: 1 Header row + 5 Tax rows + 3 Summary rows = 9 rows total
+    const totalRowsCount = 9;
+    const rightHeight = totalRowsCount * CONFIG.headerH;
 
-    const taxRows = 8;
-
-    const rightHeight = (taxRows + 1) * CONFIG.headerH;
-
+    // Table height takes the max of terms content or tax rows, ensuring a tight, clean fit
     const tableH = Math.max(leftHeight, rightHeight);
 
     // ==========================================
     // POSITION AT BOTTOM OF LAST PAGE
     // ==========================================
     const pageHeight = doc.internal.pageSize.getHeight();
-
     const bottomY = pageHeight - CONFIG.bottomMargin - tableH;
 
-    // If enough space remains on current page,
-    // move section to bottom.
     if (bottomY > y) {
-
         y = bottomY;
-
     } else {
-
-        // Move to new page
         doc.addPage();
-
         const newPageHeight = doc.internal.pageSize.getHeight();
-
         y = newPageHeight - CONFIG.bottomMargin - tableH;
     }
 
     // ==========================================
-    // OUTER BORDER
+    // DRAW SECTIONS
     // ==========================================
     drawOuterTable_ftl(doc, PAGE, X, y, tableH);
-    // ==========================================
-    // HEADER ROW
-    // ==========================================
     drawHeaderRow_ftl(doc, FONT, X, COL, y, CONFIG.headerH);
-
-    // ==========================================
-    // TERMS CONTENT
-    // ==========================================
     drawTermsContent_ftl(doc, FONT, tandcData, X, COL, y, CONFIG);
 
-    // ==========================================
-    // TAX DETAILS
-    // ==========================================
-    drawTaxSection_ftl(doc, FONT, totals, totalPaymentReceived, X, COL, y, CONFIG);
+    const taxResult = drawTaxSection_ftl(doc, FONT, totals, totalPaymentReceived, X, COL, y, CONFIG);
 
     return y + tableH;
 }
 
 // ==========================================
-// HEIGHT OF TERMS
+// HEIGHT OF TERMS (FIXED LINE HEIGHT & SIZING)
 // ==========================================
 function calculateTermsHeight_ftl(
     doc,
@@ -218,36 +195,26 @@ function calculateTermsHeight_ftl(
     termsWidth,
     CONFIG
 ) {
+    // Set proper font size for calculation
+    doc.setFont("times", "normal");
+    doc.setFontSize(8); // Matches FONT.body
 
-    let height =
-        CONFIG.headerH + 1.8;
+    let height = CONFIG.headerH - 40; // Header padding offset
+    const textWidth = termsWidth - 9; // Available width considering margins
 
     tandcData.forEach((item, i) => {
+        const txt = `${i + 1}. ${item.Description || ""}`;
+        const split = doc.splitTextToSize(txt, textWidth);
 
-        const txt =
-            `${i + 1}. ${item.Description || ""}`;
+        // Use realistic line height (e.g., 3mm per line for font size 8)
+        height += split.length * 3;
 
-        const split =
-            doc.splitTextToSize(
-                txt,
-                termsWidth - 10
-            );
-
-        height +=
-            split.length *
-            CONFIG.lineHeight;
-
-        if (
-            i <
-            tandcData.length - 1
-        ) {
-            height +=
-                CONFIG.paragraphGap;
+        if (i < tandcData.length - 1) {
+            height += CONFIG.paragraphGap + 1; // Gap between terms
         }
-
     });
 
-    return height;
+    return Math.max(height, 25); // Minimum fallback height
 }
 
 // ==========================================
@@ -286,7 +253,7 @@ function drawHeaderRow_ftl(doc, FONT, X, COL, y, rowH) {
 }
 
 // ==========================================
-// TERMS CONTENT
+// TERMS CONTENT (WITH AUTO-FITTING & BOUNDS)
 // ==========================================
 function drawTermsContent_ftl(
     doc,
@@ -297,44 +264,47 @@ function drawTermsContent_ftl(
     y,
     CONFIG
 ) {
-    PDF_FONT.normal(doc, FONT.body);
+    // Dynamic font size adjustment if content is too large
+    let currentFontSize = FONT.body; // usually 8
+    let lineHeight = 3; // standard line height in mm for body text
 
-    let currentY = y + CONFIG.headerH + 4;
+    doc.setFont("times", "normal");
+    doc.setFontSize(currentFontSize);
 
-    const leftMargin = X.terms + 4;
-    const textWidth = COL.terms - 5;
-    const indent = 2; // hanging indent
+    let currentY = y + CONFIG.headerH + 3.5;
+    const leftMargin = X.terms + 3;
+    const textWidth = COL.terms - 6;
+    const indent = 2; // hanging indent for multi-line text
 
     tandcData.forEach((item, index) => {
-
         const prefix = `${index + 1}. `;
+        const descriptionText = item.Description || "";
 
-        const lines = doc.splitTextToSize(
-            item.Description || "",
-            textWidth - indent
-        );
+        // Split text to fit perfectly within the column width
+        const lines = doc.splitTextToSize(descriptionText, textWidth - indent);
 
-        // First line with numbering
-        doc.text(
-            prefix + (lines[0] || ""),
-            leftMargin,
-            currentY
-        );
-
-        currentY += 3;
-
-        // Remaining lines aligned
-        for (let i = 1; i < lines.length; i++) {
-            doc.text(
-                lines[i],
-                leftMargin + indent,
-                currentY
-            );
-            currentY += 3;
+        // Safety check to ensure we don't draw outside the bottom of the box
+        // (Optional safeguard: shrink font slightly if text is exceptionally long)
+        if (lines.length > 15 && currentFontSize > 6) {
+            currentFontSize = 6;
+            doc.setFontSize(currentFontSize);
+            lineHeight = 2.5;
         }
 
-        // Gap between terms
-        currentY += 1;
+        // Render first line with the numbering prefix
+        if (lines.length > 0) {
+            doc.text(prefix + lines[0], leftMargin, currentY);
+            currentY += lineHeight;
+        }
+
+        // Render remaining lines with hanging indent alignment
+        for (let i = 1; i < lines.length; i++) {
+            doc.text(lines[i], leftMargin + indent, currentY);
+            currentY += lineHeight;
+        }
+
+        // Add a small paragraph gap between individual terms
+        currentY += 1.5;
     });
 
     return currentY;

@@ -157,6 +157,46 @@ textarea.form-control {
     background: var(--surface-color);
 }
 
+/* Ensure proper table container scrolling behavior */
+.table-container {
+    max-height: 320px;
+    overflow: auto;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    background: var(--surface-color);
+    position: relative;
+    /* Fixes sticky header positioning context */
+}
+
+/* Force table layout to respect min-width so columns don't crunch up */
+.table-container .table {
+    width: 100%;
+    min-width: 1100px;
+    /* Adjust this value depending on your content width */
+}
+
+/* Prevent awkward text-wrapping inside columns like Address or Names */
+.table-container th,
+.table-container td {
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+/* Specifically target the Address column to allow multi-line text and a comfortable reading width */
+.table-container td:nth-child(3),
+.table-container th:nth-child(3) {
+    min-width: 220px;
+    max-width: 300px;
+    white-space: normal !important;
+    word-break: break-word;
+}
+
+/* Allow specific wider columns (like Address) to wrap if desired */
+.table-container td.allow-wrap {
+    white-space: normal;
+    min-width: 180px;
+}
+
 .table {
     margin-bottom: 0;
     border-collapse: separate;
@@ -282,4 +322,20 @@ input[type="number"] {
 
 .modal-header.bg-warning .modal-title {
     color: #92400e;
+}
+
+/* Custom styling for all tables inside containers */
+.table-container table.table {
+    border: 1px solid #dee2e6;
+}
+
+.table-container table.table th,
+.table-container table.table td {
+    border: 1px solid #dee2e6;
+    vertical-align: middle;
+}
+
+.table-container table.table th {
+    text-align: center;
+    vertical-align: middle;
 }
